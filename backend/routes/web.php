@@ -6,6 +6,3 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/test-db', function () {
-    return DB::select("SHOW TABLES");
-});
