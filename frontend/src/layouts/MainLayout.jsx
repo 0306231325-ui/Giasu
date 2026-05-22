@@ -6,6 +6,7 @@ function MainLayout() {
   return (
     <div className="bg-[#040B3D] min-h-screen text-white overflow-hidden flex flex-col">
       
+      
       <Navbar />
       
       <main className="flex-grow">
