@@ -2,6 +2,7 @@
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BannerController;
+use App\Http\Controllers\Api\BaiVietController;
 
 Route::get('/test-db', function () {
     return DB::select("SHOW TABLES");
@@ -13,6 +14,10 @@ Route::get('/test', function () {
     ]);
 });
 
+
+Route::get('/baiviet-moi', [BaiVietController::class, 'baiVietMoi']);
+
+Route::get('/baiviet/{slug}', [BaiVietController::class, 'chiTiet']);
 
 
 Route::get('/banner', [BannerController::class, 'index']);
