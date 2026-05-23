@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 
 function BaiVietMoi() {
 
   const [baiviet, setBaiViet] = useState([]);
 
+  const navigate = useNavigate();
+
   useEffect(() => {
 
     const fetchBaiViet = async () => {
+
       try {
 
         const res = await api.get("/baiviet-moi");
@@ -15,8 +19,11 @@ function BaiVietMoi() {
         setBaiViet(res.data);
 
       } catch (error) {
+
         console.log(error);
+
       }
+
     };
 
     fetchBaiViet();
@@ -24,10 +31,11 @@ function BaiVietMoi() {
   }, []);
 
   return (
+
     <section className="max-w-7xl mx-auto px-5 mt-24">
 
       <h2 className="text-4xl font-bold text-white mb-12">
-        Bài Viết Mới
+        Tin Moi Nhat
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -61,10 +69,13 @@ function BaiVietMoi() {
               <div className="flex justify-between items-center mt-6">
 
                 <span className="text-gray-500 text-sm">
-                  luot xem:  {item.luot_xem}
+                  Lượt xem: {item.luot_xem}
                 </span>
 
-                <button className="text-blue-400 hover:text-blue-300">
+                <button
+                  onClick={() => navigate(`/baiviet/${item.slug}`)}
+                  className="text-blue-400 hover:text-blue-300"
+                >
                   Xem thêm
                 </button>
 
@@ -79,6 +90,7 @@ function BaiVietMoi() {
       </div>
 
     </section>
+
   );
 }
 
