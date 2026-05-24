@@ -43,7 +43,51 @@ class UsersSeeder extends Seeder
                 'trang_thai' => 'hoatdong',
                 'created_at' => $now,
                 'updated_at' => $now
-            ]
+            ],
+
+            [
+                'ho_ten' => 'Nguyen Duc Anh',
+                'email' => 'nguyenducanh@gmail.com',
+                'password' => '@Thienphu2005',
+                'sdt' => '0902789456',
+                'vai_tro' => 'giasu',
+                'trang_thai' => 'hoatdong',
+                'created_at' => $now,
+                'updated_at' => $now
+            ],
+
+            [
+                'ho_ten' => 'Le Thi Hong Nhung',
+                'email' => 'lehongnhung@gmail.com',
+                'password' => '@Thienphu2005',
+                'sdt' => '0916543789',
+                'vai_tro' => 'giasu',
+                'trang_thai' => 'hoatdong',
+                'created_at' => $now,
+                'updated_at' => $now
+            ],
+
+            [
+                'ho_ten' => 'Tran Quoc Bao',
+                'email' => 'tranquocbao@gmail.com',
+                'password' => '@Thienphu2005',
+                'sdt' => '0398765432',
+                'vai_tro' => 'giasu',
+                'trang_thai' => 'hoatdong',
+                'created_at' => $now,
+                'updated_at' => $now
+            ],
+
+            [
+                'ho_ten' => 'Pham Minh Tam',
+                'email' => 'phamminhtam@gmail.com',
+                'password' => '@Thienphu2005',
+                'sdt' => '0876234591',
+                'vai_tro' => 'giasu',
+                'trang_thai' => 'hoatdong',
+                'created_at' => $now,
+                'updated_at' => $now
+            ],
 
         ]);
     }
