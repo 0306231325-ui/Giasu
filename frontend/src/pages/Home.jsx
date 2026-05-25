@@ -1,6 +1,7 @@
 import Hero from "../components/Hero";
 import BaiVietMoi from "../components/BaiVietMoi";
 import Login from "./login/Login";
+import Register from "./register/Register";
 
 function Home() {
   return (
@@ -8,6 +9,7 @@ function Home() {
       <Hero />
       <BaiVietMoi />
       <Login />
+      <Register />
     </>
   );
 }

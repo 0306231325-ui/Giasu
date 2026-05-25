@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -104,7 +105,9 @@ function Login() {
 
         <p style={styles.text}>
           Chưa có tài khoản?{" "}
-          <span style={styles.register}>Đăng ký</span>
+          <Link to="/register" style={styles.register}>
+            Đăng ký
+          </Link>
         </p>
       </div>
     </div>

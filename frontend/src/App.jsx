@@ -6,6 +6,7 @@ import MainLayout from "./layouts/MainLayout";
 import BaiVietDetail from "./pages/BaiVietDetail";
 import DanhSachGiaSu from './pages/tutor/DanhSachGiaSu';
 import Login from "./pages/login/Login";
+import Register from "./pages/register/Register";
 function App() {
 
   useEffect(() => {
@@ -28,7 +29,7 @@ function App() {
 
         <Route path="/gia-su" element={<DanhSachGiaSu />} />
         <Route path="/login" element={<Login />} />
-
+        <Route path="/register" element={<Register />} />
         <Route
           path="/baiviet/:slug"
           element={<BaiVietDetail />}

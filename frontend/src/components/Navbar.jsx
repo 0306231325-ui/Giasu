@@ -27,9 +27,12 @@ function Navbar() {
 
         
 
-        <button className="bg-blue-500 hover:bg-blue-600 px-5 py-2 rounded-xl transition">
-          Đăng Ký
-        </button>
+            <Link
+        to="/register"
+        className="bg-blue-500 hover:bg-blue-600 px-5 py-2 rounded-xl transition"
+      >
+        Đăng Ký
+      </Link>
 
       </div>
 
