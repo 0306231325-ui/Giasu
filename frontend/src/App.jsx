@@ -6,6 +6,9 @@ import MainLayout from "./layouts/MainLayout";
 import BaiVietDetail from "./pages/BaiVietDetail";
 import DanhSachGiaSu from './pages/tutor/DanhSachGiaSu';
 import DanhSachMonHoc from './pages/subject/DanhSachMonHoc';
+import Login from "./pages/login/Login";
+import Register from "./pages/register/Register";
+
 function App() {
 
   useEffect(() => {
@@ -30,18 +33,19 @@ function App() {
 
         <Route path="/mon-hoc" element={<DanhSachMonHoc />} />
 
+        <Route path="/login" element={<Login />} />
+
+        <Route path="/register" element={<Register />} />
+
         <Route
           path="/baiviet/:slug"
           element={<BaiVietDetail />}
         />
 
       </Route>
-      
 
     </Routes>
   );
 }
-
-  
 
 export default App

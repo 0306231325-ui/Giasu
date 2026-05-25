@@ -30,12 +30,17 @@ function Navbar() {
         };
 
         document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+
+        return () =>
+            document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     return (
         <header className="flex justify-between items-center px-10 py-6 bg-gray-900 text-white">
-            <Link to="/" className="text-3xl font-bold hover:text-blue-400 transition">
+            <Link
+                to="/"
+                className="text-3xl font-bold hover:text-blue-400 transition"
+            >
                 DATN_GIASU
             </Link>
 
@@ -43,11 +48,15 @@ function Navbar() {
                 <Link to="/home" className="hover:text-white transition">
                     Trang Chủ
                 </Link>
+
                 <Link to="/gia-su" className="hover:text-white transition">
                     Gia Sư
                 </Link>
 
-                <div className="relative flex items-center gap-1" ref={dropdownRef}>
+                <div
+                    className="relative flex items-center gap-1"
+                    ref={dropdownRef}
+                >
                     <Link
                         to="/mon-hoc"
                         className="hover:text-white transition"
@@ -82,7 +91,9 @@ function Navbar() {
                                         <Link
                                             key={mon.id}
                                             to={`/mon-hoc?mon=${mon.id}`}
-                                            onClick={() => setDropdownOpen(false)}
+                                            onClick={() =>
+                                                setDropdownOpen(false)
+                                            }
                                             className="block px-4 py-2.5 text-sm font-medium hover:bg-gray-700 hover:text-white transition border-b border-gray-700/50 last:border-0"
                                         >
                                             {mon.ten_mon}
@@ -108,12 +119,19 @@ function Navbar() {
             </nav>
 
             <div className="flex gap-4">
-                <button className="px-5 py-2 hover:text-blue-400 transition">
+                <Link
+                    to="/login"
+                    className="px-5 py-2 hover:text-blue-400 transition"
+                >
                     Đăng Nhập
-                </button>
-                <button className="bg-blue-500 hover:bg-blue-600 px-5 py-2 rounded-xl transition">
+                </Link>
+
+                <Link
+                    to="/register"
+                    className="bg-blue-500 hover:bg-blue-600 px-5 py-2 rounded-xl transition"
+                >
                     Đăng Ký
-                </button>
+                </Link>
             </div>
         </header>
     );
