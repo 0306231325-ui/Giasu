@@ -18,10 +18,14 @@ function Navbar() {
       </nav>
 
       <div className="flex gap-4">
+      <Link
+        to="/login"
+        className="px-5 py-2 hover:text-blue-400 transition"
+      >
+        Đăng Nhập
+      </Link>
 
-        <button className="px-5 py-2 hover:text-blue-400 transition">
-          Đăng Nhập
-        </button>
+        
 
         <button className="bg-blue-500 hover:bg-blue-600 px-5 py-2 rounded-xl transition">
           Đăng Ký

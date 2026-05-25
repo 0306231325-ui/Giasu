@@ -5,6 +5,7 @@ import { Routes, Route } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
 import BaiVietDetail from "./pages/BaiVietDetail";
 import DanhSachGiaSu from './pages/tutor/DanhSachGiaSu';
+import Login from "./pages/login/Login";
 function App() {
 
   useEffect(() => {
@@ -26,6 +27,7 @@ function App() {
         <Route path="/home" element={<Home />} />
 
         <Route path="/gia-su" element={<DanhSachGiaSu />} />
+        <Route path="/login" element={<Login />} />
 
         <Route
           path="/baiviet/:slug"
