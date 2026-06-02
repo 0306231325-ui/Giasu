@@ -16,9 +16,12 @@ class Giasu extends Model
         'mo_ta',
         'kinh_nghiem',
         'hoc_van',
-        'gia_theogio',
         'dia_chi',
         'avatar',
+        'trang_thai_ho_so',
+        'duyet_boi',
+        'duyet_luc',
+        'ly_do_tu_choi',
     ];
 
     public function user()
@@ -41,5 +44,20 @@ class Giasu extends Model
             'id',
             'id'
         );
+    }
+
+    public function monLops()
+    {
+        return $this->hasMany(GiasuMonLop::class, 'giasu_id');
+    }
+
+    public function giaTheoMonLop()
+    {
+        return $this->hasMany(GiasuGia::class, 'giasu_id');
+    }
+
+    public function bangCaps()
+    {
+        return $this->hasMany(GiasuBangCap::class, 'giasu_id');
     }
 }

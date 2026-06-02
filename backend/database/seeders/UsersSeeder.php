@@ -10,8 +10,7 @@ class UsersSeeder extends Seeder
     {
         $now = Carbon::now();
 
-        DB::table('users')->insert([
-
+        $rows = [
             [
                 'ho_ten' => 'Vu Thien Phu (Admin)',
                 'email' => 'vul53290@gmail.com',
@@ -19,7 +18,6 @@ class UsersSeeder extends Seeder
                 'sdt' => '0328778433',
                 'vai_tro' => 'admin',
                 'trang_thai' => 'hoatdong',
-                'created_at' => $now,
                 'updated_at' => $now
             ],
 
@@ -30,7 +28,6 @@ class UsersSeeder extends Seeder
                 'sdt' => '0912345678',
                 'vai_tro' => 'hocvien',
                 'trang_thai' => 'hoatdong',
-                'created_at' => $now,
                 'updated_at' => $now
             ],
 
@@ -41,7 +38,6 @@ class UsersSeeder extends Seeder
                 'sdt' => '0933334444',
                 'vai_tro' => 'giasu',
                 'trang_thai' => 'hoatdong',
-                'created_at' => $now,
                 'updated_at' => $now
             ],
 
@@ -52,7 +48,6 @@ class UsersSeeder extends Seeder
                 'sdt' => '0902789456',
                 'vai_tro' => 'giasu',
                 'trang_thai' => 'hoatdong',
-                'created_at' => $now,
                 'updated_at' => $now
             ],
 
@@ -63,7 +58,6 @@ class UsersSeeder extends Seeder
                 'sdt' => '0916543789',
                 'vai_tro' => 'giasu',
                 'trang_thai' => 'hoatdong',
-                'created_at' => $now,
                 'updated_at' => $now
             ],
 
@@ -74,7 +68,6 @@ class UsersSeeder extends Seeder
                 'sdt' => '0398765432',
                 'vai_tro' => 'giasu',
                 'trang_thai' => 'hoatdong',
-                'created_at' => $now,
                 'updated_at' => $now
             ],
 
@@ -85,10 +78,16 @@ class UsersSeeder extends Seeder
                 'sdt' => '0876234591',
                 'vai_tro' => 'giasu',
                 'trang_thai' => 'hoatdong',
-                'created_at' => $now,
                 'updated_at' => $now
             ],
 
-        ]);
+        ];
+
+        foreach ($rows as $row) {
+            DB::table('users')->updateOrInsert(
+                ['email' => $row['email']],
+                array_merge($row, ['created_at' => $now, 'updated_at' => $now])
+            );
+        }
     }
 }

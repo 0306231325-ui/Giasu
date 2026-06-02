@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 function Navbar() {
+    const navigate = useNavigate();
+    const { user, logout, isAuthenticated } = useAuth();
     const [monHocs, setMonHocs] = useState([]);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
@@ -118,20 +121,46 @@ function Navbar() {
                 </Link>
             </nav>
 
-            <div className="flex gap-4">
-                <Link
-                    to="/login"
-                    className="px-5 py-2 hover:text-blue-400 transition"
-                >
-                    Đăng Nhập
-                </Link>
+            <div className="flex gap-4 items-center">
+                {isAuthenticated ? (
+                    <>
+                        <span className="text-sm text-gray-300">
+                            Xin chào,{" "}
+                            <span className="text-white font-semibold">
+                                {user?.ho_ten}
+                            </span>
+                            <span className="ml-2 text-xs uppercase text-blue-400">
+                                ({user?.vai_tro})
+                            </span>
+                        </span>
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                await logout();
+                                navigate("/login");
+                            }}
+                            className="px-5 py-2 border border-gray-600 rounded-xl hover:bg-gray-800 transition"
+                        >
+                            Đăng Xuất
+                        </button>
+                    </>
+                ) : (
+                    <>
+                        <Link
+                            to="/login"
+                            className="px-5 py-2 hover:text-blue-400 transition"
+                        >
+                            Đăng Nhập
+                        </Link>
 
-                <Link
-                    to="/register"
-                    className="bg-blue-500 hover:bg-blue-600 px-5 py-2 rounded-xl transition"
-                >
-                    Đăng Ký
-                </Link>
+                        <Link
+                            to="/register"
+                            className="bg-blue-500 hover:bg-blue-600 px-5 py-2 rounded-xl transition"
+                        >
+                            Đăng Ký
+                        </Link>
+                    </>
+                )}
             </div>
         </header>
     );

@@ -9,10 +9,17 @@ class MonHocSeeder extends Seeder
     public function run(): void
     {
         $now = Carbon::now();
-        DB::table('monhoc')->insert([
-            ['ten_mon' => 'Toán Học', 'mo_ta' => 'Toán từ lớp 1 đến lớp 12', 'created_at' => $now, 'updated_at' => $now],
-            ['ten_mon' => 'Vật Lý', 'mo_ta' => 'Lý cấp 2, cấp 3', 'created_at' => $now, 'updated_at' => $now],
-            ['ten_mon' => 'Tiếng Anh', 'mo_ta' => 'Tiếng Anh giao tiếp, IELTS', 'created_at' => $now, 'updated_at' => $now],
-        ]);
+        $rows = [
+            ['ten_mon' => 'Toán Học', 'mo_ta' => 'Toán Hoc Dai So Hinh Hoc'],
+            ['ten_mon' => 'Vật Lý', 'mo_ta' => 'Lý Day Ly Thuyet Co Ca Thuc Hanh'],
+            ['ten_mon' => 'Tiếng Anh', 'mo_ta' => 'Tiếng Anh giao tiếp, IELTS'],
+        ];
+
+        foreach ($rows as $row) {
+            DB::table('monhoc')->updateOrInsert(
+                ['ten_mon' => $row['ten_mon']],
+                array_merge($row, ['created_at' => $now, 'updated_at' => $now])
+            );
+        }
     }
 }

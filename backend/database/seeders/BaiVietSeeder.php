@@ -9,8 +9,9 @@ class BaiVietSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('baiviet')->insert([
+        $now = Carbon::now();
 
+        $rows = [
             [
                 'user_id' => 1,
 
@@ -46,9 +47,8 @@ class BaiVietSeeder extends Seeder
 
                 'luot_xem' => 150,
 
-                'created_at' => Carbon::now(),
-
-                'updated_at' => Carbon::now()
+                'created_at' => $now,
+                'updated_at' => $now
             ],
 
             [
@@ -90,9 +90,8 @@ class BaiVietSeeder extends Seeder
 
                 'luot_xem' => 98,
 
-                'created_at' => Carbon::now(),
-
-                'updated_at' => Carbon::now()
+                'created_at' => $now,
+                'updated_at' => $now
             ],
 
             [
@@ -134,9 +133,8 @@ class BaiVietSeeder extends Seeder
 
                 'luot_xem' => 205,
 
-                'created_at' => Carbon::now(),
-
-                'updated_at' => Carbon::now()
+                'created_at' => $now,
+                'updated_at' => $now
             ],
 
             [
@@ -178,9 +176,8 @@ class BaiVietSeeder extends Seeder
 
                 'luot_xem' => 132,
 
-                'created_at' => Carbon::now(),
-
-                'updated_at' => Carbon::now()
+                'created_at' => $now,
+                'updated_at' => $now
             ],
 
             [
@@ -222,11 +219,17 @@ class BaiVietSeeder extends Seeder
 
                 'luot_xem' => 176,
 
-                'created_at' => Carbon::now(),
-
-                'updated_at' => Carbon::now()
+                'created_at' => $now,
+                'updated_at' => $now
             ]
 
-        ]);
+        ];
+
+        foreach ($rows as $row) {
+            DB::table('baiviet')->updateOrInsert(
+                ['slug' => $row['slug']],
+                $row
+            );
+        }
     }
 }

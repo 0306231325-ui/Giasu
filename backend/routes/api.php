@@ -5,6 +5,14 @@ use App\Http\Controllers\BannerController;
 use App\Http\Controllers\Api\BaiVietController;
 use App\Http\Controllers\Api\GiasuController;
 use App\Http\Controllers\Api\MonHocController;
+use App\Http\Controllers\Api\AuthController;
+
+Route::post('/login', [AuthController::class, 'login']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/me', [AuthController::class, 'me']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+});
 
 Route::get('/test-db', function () {
     return DB::select("SHOW TABLES");

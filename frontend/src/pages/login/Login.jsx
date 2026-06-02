@@ -1,14 +1,44 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import api from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
+import { getRedirectPath } from "../../services/auth";
 
 function Login() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    alert("Đăng nhập thành công");
+    try {
+      const response = await api.post("/login", { email, password });
+
+      if (response.data.success) {
+        const { token, user } = response.data.data;
+        login(token, user);
+        navigate(getRedirectPath(user.vai_tro));
+      }
+    } catch (err) {
+      const data = err.response?.data;
+
+      if (data?.errors?.email?.[0]) {
+        setError(data.errors.email[0]);
+      } else if (data?.message) {
+        setError(data.message);
+      } else {
+        setError("Không thể đăng nhập. Vui lòng thử lại.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const styles = {
@@ -19,7 +49,6 @@ function Login() {
       justifyContent: "center",
       alignItems: "center",
     },
-
     box: {
       width: "420px",
       background: "#fff",
@@ -27,7 +56,6 @@ function Login() {
       borderRadius: "15px",
       boxShadow: "0 0 20px rgba(0,0,0,0.3)",
     },
-
     title: {
       textAlign: "center",
       marginBottom: "30px",
@@ -35,13 +63,11 @@ function Login() {
       fontWeight: "bold",
       color: "#000",
     },
-
     form: {
       display: "flex",
       flexDirection: "column",
       gap: "20px",
     },
-
     input: {
       padding: "15px",
       borderRadius: "10px",
@@ -51,7 +77,6 @@ function Login() {
       background: "#fff",
       outline: "none",
     },
-
     button: {
       padding: "15px",
       border: "none",
@@ -60,18 +85,24 @@ function Login() {
       color: "#fff",
       fontSize: "18px",
       fontWeight: "bold",
-      cursor: "pointer",
+      cursor: loading ? "not-allowed" : "pointer",
+      opacity: loading ? 0.7 : 1,
     },
-
+    error: {
+      padding: "12px",
+      borderRadius: "8px",
+      background: "#fee2e2",
+      color: "#b91c1c",
+      fontSize: "14px",
+      textAlign: "center",
+    },
     text: {
       textAlign: "center",
       marginTop: "20px",
       color: "#000",
     },
-
     register: {
       color: "#2563eb",
-      cursor: "pointer",
       fontWeight: "bold",
     },
   };
@@ -81,6 +112,8 @@ function Login() {
       <div style={styles.box}>
         <h1 style={styles.title}>Đăng Nhập</h1>
 
+        {error && <div style={styles.error}>{error}</div>}
+
         <form onSubmit={handleLogin} style={styles.form}>
           <input
             type="email"
@@ -88,6 +121,8 @@ function Login() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             style={styles.input}
+            required
+            autoComplete="email"
           />
 
           <input
@@ -96,10 +131,12 @@ function Login() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             style={styles.input}
+            required
+            autoComplete="current-password"
           />
 
-          <button type="submit" style={styles.button}>
-            Đăng Nhập
+          <button type="submit" style={styles.button} disabled={loading}>
+            {loading ? "Đang đăng nhập..." : "Đăng Nhập"}
           </button>
         </form>
 

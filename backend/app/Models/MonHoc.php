@@ -16,13 +16,13 @@ class MonHoc extends Model
         'mo_ta',
     ];
 
-    public function giasus()
+    public function giasuMonLops()
     {
-        return $this->belongsToMany(
-            Giasu::class,
-            'giasu_monhoc',
-            'monhoc_id',
-            'giasu_id'
-        );
+        return $this->hasMany(GiasuMonLop::class, 'monhoc_id');
+    }
+
+    public function bangGiaGocs()
+    {
+        return $this->hasMany(BangGiaGoc::class, 'monhoc_id');
     }
 }
