@@ -8,6 +8,10 @@ import DanhSachGiaSu from './pages/tutor/DanhSachGiaSu';
 import DanhSachMonHoc from './pages/subject/DanhSachMonHoc';
 import Login from "./pages/login/Login";
 import Register from "./pages/register/Register";
+import AdminLayout from "./layouts/AdminLayout";
+import AdminHome from "./pages/admin/AdminHome";
+import AdminHocVien from "./pages/admin/AdminHocVien";
+import AdminGiaSu from "./pages/admin/AdminGiaSu";
 
 function App() {
 
@@ -42,6 +46,12 @@ function App() {
           element={<BaiVietDetail />}
         />
 
+      </Route>
+
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<AdminHome />} />
+        <Route path="hoc-vien" element={<AdminHocVien />} />
+        <Route path="gia-su" element={<AdminGiaSu />} />
       </Route>
 
     </Routes>

@@ -10,7 +10,11 @@ class MonHocController extends Controller
     public function index()
     {
         try {
-            $danhSachMonHoc = MonHoc::withCount('giasus')
+            $danhSachMonHoc = MonHoc::withCount([
+                'giasuMonLops as giasus_count' => function ($q) {
+                    $q->select(\DB::raw('count(distinct giasu_id)'));
+                },
+            ])
                 ->orderBy('ten_mon')
                 ->get();
 
