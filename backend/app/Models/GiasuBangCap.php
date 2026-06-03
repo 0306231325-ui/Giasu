@@ -12,6 +12,7 @@ class GiasuBangCap extends Model
     protected $fillable = [
         'giasu_id',
         'ten_bang',
+        'loai_bang',
         'file_url',
         'trang_thai',
         'duyet_boi',

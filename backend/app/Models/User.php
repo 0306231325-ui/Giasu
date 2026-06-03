@@ -41,8 +41,13 @@ class User extends Authenticatable
         return $this->hasOne(Giasu::class, 'user_id', 'id');
     }
 
+    public function hocvien()
+    {
+        return $this->hasOne(HocVien::class, 'user_id', 'id');
+    }
+
     public function lichHocs()
-{
-    return $this->hasMany(LichHoc::class, 'user_id');
-}
+    {
+        return $this->hasMany(LichHoc::class, 'user_id');
+    }
 }

@@ -22,5 +22,16 @@ class CauHinhGiaSeeder extends Seeder
                 'updated_at' => $now,
             ]
         );
+
+        DB::table('cau_hinh_gia')->updateOrInsert(
+            ['ma' => 'tang_theo_cap'],
+            [
+                'ma' => 'tang_theo_cap',
+                'gia_tri' => 100000,
+                'mo_ta' => 'Mức cộng thêm mỗi cấp học (Tiểu -> THCS -> THPT ...)',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]
+        );
     }
 }

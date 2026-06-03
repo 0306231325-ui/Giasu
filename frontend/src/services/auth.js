@@ -29,7 +29,7 @@ export function clearAuth() {
 export function getRedirectPath(vaiTro) {
   switch (vaiTro) {
     case 'admin':
-      return '/home';
+      return '/admin';
     case 'giasu':
       return '/home';
     case 'hocvien':
