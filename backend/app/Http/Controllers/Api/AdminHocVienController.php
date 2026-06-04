@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 
 class AdminHocVienController extends Controller
 {
+    private const SO_TAI_KHOAN_MOI_TRANG = 10;
+
     public function danhSachHocVien(Request $request)
     {
         if ($request->user()?->vai_tro !== 'admin') {
@@ -19,7 +21,6 @@ class AdminHocVienController extends Controller
 
         $keyword = trim((string) $request->query('q', ''));
         $status = $request->query('trang_thai');
-        $perPage = min(max((int) $request->query('per_page', 10), 1), 50);
 
         $hocVien = User::query()
             ->with('hocvien')
@@ -36,7 +37,7 @@ class AdminHocVienController extends Controller
                 $query->where('trang_thai', $status);
             })
             ->orderByDesc('id')
-            ->paginate($perPage)
+            ->paginate(self::SO_TAI_KHOAN_MOI_TRANG)
             ->withQueryString();
 
         return response()->json([

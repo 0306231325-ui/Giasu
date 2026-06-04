@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import api from "../../services/api";
 import BangHocVien from "./hoc-vien/BangHocVien";
 import BoLocHocVien from "./hoc-vien/BoLocHocVien";
 import PhanTrangHocVien from "./hoc-vien/PhanTrangHocVien";
+
+const SO_TAI_KHOAN_MOI_TRANG = 10;
 
 function AdminHocVien() {
   const [danhSachHocVien, setDanhSachHocVien] = useState([]);
@@ -14,11 +16,12 @@ function AdminHocVien() {
   const [loi, setLoi] = useState("");
   const [dangCapNhatId, setDangCapNhatId] = useState(null);
   const [thongBao, setThongBao] = useState("");
+  const boDemAnThongBao = useRef(null);
 
   const thamSoTruyVan = useMemo(
     () => ({
       page: trangHienTai,
-      per_page: 10,
+      per_page: SO_TAI_KHOAN_MOI_TRANG,
       ...(tuKhoa.trim() ? { q: tuKhoa.trim() } : {}),
       ...(trangThai ? { trang_thai: trangThai } : {}),
     }),
@@ -62,6 +65,15 @@ function AdminHocVien() {
     };
   }, [thamSoTruyVan]);
 
+  useEffect(
+    () => () => {
+      if (boDemAnThongBao.current) {
+        clearTimeout(boDemAnThongBao.current);
+      }
+    },
+    []
+  );
+
   const xuLyDoiTuKhoa = (event) => {
     setTuKhoa(event.target.value);
     setTrangHienTai(1);
@@ -84,7 +96,7 @@ function AdminHocVien() {
 
     setDangCapNhatId(hocVien.id);
     setLoi("");
-    setThongBao("");
+    anThongBao();
 
     try {
       const response = await api.patch(
@@ -96,7 +108,7 @@ function AdminHocVien() {
         const hocVienDaCapNhat = response.data.data;
 
         capNhatDanhSachSauKhiDoiTrangThai(hocVienDaCapNhat);
-        setThongBao(response.data.message);
+        hienThongBaoTamThoi(response.data.message);
       }
     } catch (err) {
       setLoi(
@@ -106,6 +118,25 @@ function AdminHocVien() {
     } finally {
       setDangCapNhatId(null);
     }
+  };
+
+  const anThongBao = () => {
+    if (boDemAnThongBao.current) {
+      clearTimeout(boDemAnThongBao.current);
+      boDemAnThongBao.current = null;
+    }
+
+    setThongBao("");
+  };
+
+  const hienThongBaoTamThoi = (noiDung) => {
+    anThongBao();
+    setThongBao(noiDung);
+
+    boDemAnThongBao.current = setTimeout(() => {
+      setThongBao("");
+      boDemAnThongBao.current = null;
+    }, 3000);
   };
 
   const capNhatDanhSachSauKhiDoiTrangThai = (hocVienDaCapNhat) => {
