@@ -14,6 +14,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/admin/hoc-vien', [AdminHocVienController::class, 'danhSachHocVien']);
+    Route::patch('/admin/hoc-vien/{hocVienId}/trang-thai', [AdminHocVienController::class, 'capNhatTrangThaiHocVien']);
 });
 
 Route::get('/test-db', function () {

@@ -45,4 +45,45 @@ class AdminHocVienController extends Controller
             'data' => $hocVien,
         ]);
     }
+
+    public function capNhatTrangThaiHocVien(Request $request, int $hocVienId)
+    {
+        if ($request->user()?->vai_tro !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn không có quyền truy cập.',
+            ], 403);
+        }
+
+        $duLieu = $request->validate([
+            'trang_thai' => ['required', 'in:hoatdong,khoa'],
+        ]);
+
+        $hocVien = User::query()
+            ->with('hocvien')
+            ->where('vai_tro', 'hocvien')
+            ->find($hocVienId);
+
+        if (! $hocVien) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy tài khoản học viên.',
+            ], 404);
+        }
+
+        $hocVien->trang_thai = $duLieu['trang_thai'];
+        $hocVien->save();
+
+        if ($hocVien->trang_thai === 'khoa') {
+            $hocVien->tokens()->delete();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $hocVien->trang_thai === 'khoa'
+                ? 'Đã khóa tài khoản học viên.'
+                : 'Đã mở khóa tài khoản học viên.',
+            'data' => $hocVien->fresh('hocvien'),
+        ]);
+    }
 }
