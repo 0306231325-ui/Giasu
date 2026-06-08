@@ -1,27 +1,74 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
-
-const TRANG_THAI_BAI_VIET = [
-  { value: "xuat_ban", label: "Xuất bản" },
-  { value: "nhap", label: "Bản nháp" },
-  { value: "an", label: "Ẩn" },
-];
-
-const GIA_TRI_MAC_DINH = {
-  tieu_de: "",
-  tom_tat: "",
-  noi_dung: "",
-  trang_thai: "xuat_ban",
-};
+import DanhSachBaiViet from "./bai-viet/DanhSachBaiViet";
+import FormTaoBaiViet from "./bai-viet/FormTaoBaiViet";
+import TabButton from "./bai-viet/TabButton";
+import { GIA_TRI_BAI_VIET_MAC_DINH } from "./bai-viet/trangThaiBaiViet";
 
 function AdminBaiViet() {
-  const [form, setForm] = useState(GIA_TRI_MAC_DINH);
+  const navigate = useNavigate();
+  const [tabDangMo, setTabDangMo] = useState("danh_sach");
+  const [danhSachBaiViet, setDanhSachBaiViet] = useState([]);
+  const [meta, setMeta] = useState(null);
+  const [tuKhoa, setTuKhoa] = useState("");
+  const [locTrangThai, setLocTrangThai] = useState("");
+  const [trangHienTai, setTrangHienTai] = useState(1);
+  const [lanTaiLaiDanhSach, setLanTaiLaiDanhSach] = useState(0);
+  const [dangTaiDanhSach, setDangTaiDanhSach] = useState(false);
+  const [loiDanhSach, setLoiDanhSach] = useState("");
+  const [form, setForm] = useState(GIA_TRI_BAI_VIET_MAC_DINH);
   const [anhBia, setAnhBia] = useState(null);
   const [dangLuu, setDangLuu] = useState(false);
   const [loi, setLoi] = useState("");
   const [thongBao, setThongBao] = useState("");
   const [anhXemTruoc, setAnhXemTruoc] = useState("");
   const urlAnhXemTruoc = useRef("");
+
+  const thamSoDanhSach = useMemo(
+    () => ({
+      page: trangHienTai,
+      ...(tuKhoa.trim() ? { q: tuKhoa.trim() } : {}),
+      ...(locTrangThai ? { trang_thai: locTrangThai } : {}),
+    }),
+    [locTrangThai, trangHienTai, tuKhoa]
+  );
+
+  useEffect(() => {
+    let daHuy = false;
+
+    const taiDanhSachBaiViet = async () => {
+      setDangTaiDanhSach(true);
+      setLoiDanhSach("");
+
+      try {
+        const response = await api.get("/admin/baiviet", {
+          params: thamSoDanhSach,
+        });
+
+        if (!daHuy && response.data.success) {
+          setDanhSachBaiViet(response.data.data.data || []);
+          setMeta(response.data.data);
+        }
+      } catch (err) {
+        if (!daHuy) {
+          setDanhSachBaiViet([]);
+          setMeta(null);
+          setLoiDanhSach(
+            err.response?.data?.message || "Không tải được danh sách bài viết."
+          );
+        }
+      } finally {
+        if (!daHuy) setDangTaiDanhSach(false);
+      }
+    };
+
+    taiDanhSachBaiViet();
+
+    return () => {
+      daHuy = true;
+    };
+  }, [lanTaiLaiDanhSach, thamSoDanhSach]);
 
   useEffect(() => {
     return () => {
@@ -81,7 +128,7 @@ function AdminBaiViet() {
       });
 
       setThongBao(response.data.message || "Tạo bài viết thành công.");
-      setForm(GIA_TRI_MAC_DINH);
+      setForm(GIA_TRI_BAI_VIET_MAC_DINH);
       setAnhBia(null);
       if (urlAnhXemTruoc.current) {
         URL.revokeObjectURL(urlAnhXemTruoc.current);
@@ -89,6 +136,9 @@ function AdminBaiViet() {
       }
       setAnhXemTruoc("");
       event.target.reset();
+      setTrangHienTai(1);
+      setLanTaiLaiDanhSach((lanTaiLai) => lanTaiLai + 1);
+      setTabDangMo("danh_sach");
     } catch (err) {
       const loiValidate = err.response?.data?.errors;
       const loiDauTien = loiValidate
@@ -105,129 +155,73 @@ function AdminBaiViet() {
     }
   };
 
+  const doiTuKhoa = (event) => {
+    setTuKhoa(event.target.value);
+    setTrangHienTai(1);
+  };
+
+  const doiLocTrangThai = (event) => {
+    setLocTrangThai(event.target.value);
+    setTrangHienTai(1);
+  };
+
   return (
     <div>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="text-2xl font-extrabold">Tạo bài viết</div>
+          <div className="text-2xl font-extrabold">Quản lý bài viết</div>
           <div className="mt-2 text-sm text-white/70">
-            Đăng nội dung mới và tải ảnh bìa cho trang bài viết.
+            Xem danh sách bài viết và đăng nội dung mới cho trang người dùng.
           </div>
+        </div>
+
+        <div className="text-sm text-white/70">
+          Tổng:{" "}
+          <span className="font-bold text-white">{meta?.total ?? 0}</span>
         </div>
       </div>
 
-      <form
-        onSubmit={taoBaiViet}
-        className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]"
-      >
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <label className="block text-sm font-semibold text-white/90">
-              Tiêu đề
-            </label>
-            <input
-              name="tieu_de"
-              value={form.tieu_de}
-              onChange={capNhatForm}
-              required
-              maxLength={255}
-              className="mt-2 w-full rounded-xl border border-white/10 bg-[#0a0f24] px-4 py-3 text-white outline-none focus:border-blue-400"
-              placeholder="Nhập tiêu đề bài viết"
-            />
-          </div>
+      <div className="mt-6 flex w-full gap-2 rounded-2xl border border-white/10 bg-white/5 p-1 sm:w-fit">
+        <TabButton
+          dangMo={tabDangMo === "danh_sach"}
+          onClick={() => setTabDangMo("danh_sach")}
+        >
+          Danh sách bài viết
+        </TabButton>
+        <TabButton
+          dangMo={tabDangMo === "tao_moi"}
+          onClick={() => setTabDangMo("tao_moi")}
+        >
+          Tạo bài viết
+        </TabButton>
+      </div>
 
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <label className="block text-sm font-semibold text-white/90">
-              Tóm tắt
-            </label>
-            <textarea
-              name="tom_tat"
-              value={form.tom_tat}
-              onChange={capNhatForm}
-              rows={3}
-              className="mt-2 w-full resize-y rounded-xl border border-white/10 bg-[#0a0f24] px-4 py-3 text-white outline-none focus:border-blue-400"
-              placeholder="Nội dung ngắn hiển thị ngoài danh sách"
-            />
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <label className="block text-sm font-semibold text-white/90">
-              Nội dung
-            </label>
-            <textarea
-              name="noi_dung"
-              value={form.noi_dung}
-              onChange={capNhatForm}
-              required
-              rows={12}
-              className="mt-2 w-full resize-y rounded-xl border border-white/10 bg-[#0a0f24] px-4 py-3 text-white outline-none focus:border-blue-400"
-              placeholder="Nhập nội dung bài viết"
-            />
-          </div>
-        </div>
-
-        <aside className="space-y-4">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <label className="block text-sm font-semibold text-white/90">
-              Trạng thái
-            </label>
-            <select
-              name="trang_thai"
-              value={form.trang_thai}
-              onChange={capNhatForm}
-              className="mt-2 w-full rounded-xl border border-white/10 bg-[#0a0f24] px-4 py-3 text-white outline-none focus:border-blue-400"
-            >
-              {TRANG_THAI_BAI_VIET.map((trangThai) => (
-                <option key={trangThai.value} value={trangThai.value}>
-                  {trangThai.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <label className="block text-sm font-semibold text-white/90">
-              Ảnh bìa
-            </label>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={chonAnhBia}
-              className="mt-2 w-full text-sm text-white/80 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-600 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-blue-700"
-            />
-
-            {anhXemTruoc ? (
-              <img
-                src={anhXemTruoc}
-                alt="Ảnh bìa xem trước"
-                className="mt-4 aspect-video w-full rounded-xl object-cover"
-              />
-            ) : (
-              <div className="mt-4 aspect-video w-full rounded-xl border border-dashed border-white/20 bg-[#0a0f24]" />
-            )}
-          </div>
-
-          {loi ? (
-            <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
-              {loi}
-            </div>
-          ) : null}
-
-          {thongBao ? (
-            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
-              {thongBao}
-            </div>
-          ) : null}
-
-          <button
-            type="submit"
-            disabled={dangLuu}
-            className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {dangLuu ? "Đang lưu..." : "Tạo bài viết"}
-          </button>
-        </aside>
-      </form>
+      {tabDangMo === "danh_sach" ? (
+        <DanhSachBaiViet
+          danhSachBaiViet={danhSachBaiViet}
+          dangTai={dangTaiDanhSach}
+          loi={loiDanhSach}
+          meta={meta}
+          tuKhoa={tuKhoa}
+          locTrangThai={locTrangThai}
+          trangHienTai={trangHienTai}
+          doiTuKhoa={doiTuKhoa}
+          doiLocTrangThai={doiLocTrangThai}
+          chuyenTrang={setTrangHienTai}
+          navigate={navigate}
+        />
+      ) : (
+        <FormTaoBaiViet
+          form={form}
+          anhXemTruoc={anhXemTruoc}
+          dangLuu={dangLuu}
+          loi={loi}
+          thongBao={thongBao}
+          capNhatForm={capNhatForm}
+          chonAnhBia={chonAnhBia}
+          taoBaiViet={taoBaiViet}
+        />
+      )}
     </div>
   );
 }

@@ -10,6 +10,8 @@ use Illuminate\Support\Str;
 
 class BaiVietController extends Controller
 {
+    private const SO_BAI_VIET_MOI_TRANG = 10;
+
     public function baiVietMoi()
     {
         $baiviet = BaiViet::where('trang_thai', 'xuat_ban')
@@ -18,6 +20,41 @@ class BaiVietController extends Controller
             ->get();
 
         return response()->json($baiviet);
+    }
+
+    public function danhSachBaiVietAdmin(Request $request)
+    {
+        if ($request->user()?->vai_tro !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn không có quyền truy cập.',
+            ], 403);
+        }
+
+        $keyword = trim((string) $request->query('q', ''));
+        $trangThai = $request->query('trang_thai');
+
+        $baiViet = BaiViet::query()
+            ->when($keyword !== '', function ($query) use ($keyword) {
+                $query->where(function ($subQuery) use ($keyword) {
+                    $subQuery
+                        ->where('tieu_de', 'like', "%{$keyword}%")
+                        ->orWhere('tom_tat', 'like', "%{$keyword}%")
+                        ->orWhere('slug', 'like', "%{$keyword}%");
+                });
+            })
+            ->when(in_array($trangThai, ['xuat_ban', 'nhap', 'an'], true), function ($query) use ($trangThai) {
+                $query->where('trang_thai', $trangThai);
+            })
+            ->orderByDesc('id')
+            ->paginate(self::SO_BAI_VIET_MOI_TRANG)
+            ->withQueryString();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Lấy danh sách bài viết thành công.',
+            'data' => $baiViet,
+        ]);
     }
 
     public function chiTiet($slug)
