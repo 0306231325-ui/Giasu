@@ -29,6 +29,14 @@ function AdminBaiViet() {
     taiLaiDanhSach: danhSach.taiLaiDanhSach,
   });
 
+  const xoaBaiViet = async (baiViet) => {
+    const daXoa = await danhSach.xoaBaiViet(baiViet);
+
+    if (daXoa) {
+      thungRac.taiLaiThungRac();
+    }
+  };
+
   const renderNoiDungTab = () => {
     if (tabDangMo === "danh_sach") {
       return (
@@ -45,7 +53,7 @@ function AdminBaiViet() {
           chuyenTrang={danhSach.chuyenTrang}
           navigate={navigate}
           chonBaiVietDeSua={chinhSua.chonBaiVietDeSua}
-          xoaBaiViet={danhSach.xoaBaiViet}
+          xoaBaiViet={xoaBaiViet}
           dangXoaId={danhSach.dangXoaId}
         />
       );

@@ -77,7 +77,7 @@ function useDanhSachBaiViet() {
 
   const xoaBaiViet = async (baiViet) => {
     const xacNhan = window.confirm(`Đưa bài viết "${baiViet.tieu_de}" vào thùng rác?`);
-    if (!xacNhan) return;
+    if (!xacNhan) return false;
 
     setDangXoaId(baiViet.id);
     setLoiDanhSach("");
@@ -85,10 +85,12 @@ function useDanhSachBaiViet() {
     try {
       await api.delete(`/admin/baiviet/${baiViet.id}`);
       taiLaiDanhSach();
+      return true;
     } catch (err) {
       setLoiDanhSach(
         err.response?.data?.message || "Không xóa được bài viết."
       );
+      return false;
     } finally {
       setDangXoaId(null);
     }
