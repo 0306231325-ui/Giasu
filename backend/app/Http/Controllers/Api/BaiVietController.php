@@ -151,6 +151,8 @@ class BaiVietController extends Controller
                 File::makeDirectory($thuMucAnh, 0755, true);
             }
 
+            $this->xoaAnhBaiVietCu($baiViet->anh_bia);
+
             $slugMoi = $this->taoSlugKhongTrung($duLieu['tieu_de'], $baiViet->id);
             $file = $request->file('anh_bia');
             $tenFile = $slugMoi . '-' . time() . '.' . $file->getClientOriginalExtension();
@@ -194,5 +196,31 @@ class BaiVietController extends Controller
         }
 
         return $slug;
+    }
+
+    private function xoaAnhBaiVietCu(?string $anhBia): void
+    {
+        if (! $anhBia) {
+            return;
+        }
+
+        $duongDan = parse_url($anhBia, PHP_URL_PATH) ?: $anhBia;
+        $prefix = '/images/baiviet/';
+
+        if (! str_starts_with($duongDan, $prefix)) {
+            return;
+        }
+
+        $tenFile = basename($duongDan);
+
+        if ($tenFile === '' || $tenFile === '.gitkeep') {
+            return;
+        }
+
+        $duongDanFile = public_path('images/baiviet/' . $tenFile);
+
+        if (File::exists($duongDanFile)) {
+            File::delete($duongDanFile);
+        }
     }
 }
