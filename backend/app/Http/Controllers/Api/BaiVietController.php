@@ -116,14 +116,61 @@ class BaiVietController extends Controller
         ], 201);
     }
 
-    private function taoSlugKhongTrung(string $tieuDe): string
+    public function capNhatBaiVietAdmin(Request $request, int $baiVietId)
+    {
+        if ($request->user()?->vai_tro !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn không có quyền truy cập.',
+            ], 403);
+        }
+
+        $baiViet = BaiViet::find($baiVietId);
+
+        if (! $baiViet) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy bài viết.',
+            ], 404);
+        }
+
+        $duLieu = $request->validate([
+            'tieu_de' => ['required', 'string', 'max:255'],
+            'tom_tat' => ['nullable', 'string'],
+            'noi_dung' => ['required', 'string'],
+            'trang_thai' => ['required', 'in:xuat_ban,nhap,an'],
+        ]);
+
+        $baiViet->fill([
+            'tieu_de' => $duLieu['tieu_de'],
+            'slug' => $this->taoSlugKhongTrung($duLieu['tieu_de'], $baiViet->id),
+            'tom_tat' => $duLieu['tom_tat'] ?? null,
+            'noi_dung' => $duLieu['noi_dung'],
+            'trang_thai' => $duLieu['trang_thai'],
+        ]);
+        $baiViet->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cập nhật bài viết thành công.',
+            'data' => $baiViet,
+        ]);
+    }
+
+    private function taoSlugKhongTrung(string $tieuDe, ?int $boQuaBaiVietId = null): string
     {
         $slugGoc = Str::slug($tieuDe);
         $slugGoc = $slugGoc !== '' ? $slugGoc : 'bai-viet';
         $slug = $slugGoc;
         $dem = 2;
 
-        while (BaiViet::where('slug', $slug)->exists()) {
+        while (
+            BaiViet::where('slug', $slug)
+                ->when($boQuaBaiVietId, function ($query) use ($boQuaBaiVietId) {
+                    $query->where('id', '!=', $boQuaBaiVietId);
+                })
+                ->exists()
+        ) {
             $slug = $slugGoc . '-' . $dem;
             $dem++;
         }

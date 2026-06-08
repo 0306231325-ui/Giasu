@@ -1,0 +1,135 @@
+import { TRANG_THAI_BAI_VIET } from "./trangThaiBaiViet";
+
+function FormChinhSuaBaiViet({
+  baiVietDangChon,
+  form,
+  dangLuu,
+  loi,
+  thongBao,
+  capNhatForm,
+  capNhatBaiViet,
+  quayLaiDanhSach,
+}) {
+  if (!baiVietDangChon) {
+    return (
+      <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6 text-white/70">
+        Chọn một bài viết trong tab danh sách để chỉnh sửa.
+      </div>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={capNhatBaiViet}
+      className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]"
+    >
+      <div className="space-y-4">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <div className="text-sm text-white/60">Đang chỉnh sửa</div>
+          <div className="mt-1 font-semibold text-white">{baiVietDangChon.slug}</div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <label className="block text-sm font-semibold text-white/90">
+            Tiêu đề
+          </label>
+          <input
+            name="tieu_de"
+            value={form.tieu_de}
+            onChange={capNhatForm}
+            required
+            maxLength={255}
+            className="mt-2 w-full rounded-xl border border-white/10 bg-[#0a0f24] px-4 py-3 text-white outline-none focus:border-blue-400"
+            placeholder="Nhập tiêu đề bài viết"
+          />
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <label className="block text-sm font-semibold text-white/90">
+            Tóm tắt
+          </label>
+          <textarea
+            name="tom_tat"
+            value={form.tom_tat}
+            onChange={capNhatForm}
+            rows={3}
+            className="mt-2 w-full resize-y rounded-xl border border-white/10 bg-[#0a0f24] px-4 py-3 text-white outline-none focus:border-blue-400"
+            placeholder="Nội dung ngắn hiển thị ngoài danh sách"
+          />
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <label className="block text-sm font-semibold text-white/90">
+            Nội dung
+          </label>
+          <textarea
+            name="noi_dung"
+            value={form.noi_dung}
+            onChange={capNhatForm}
+            required
+            rows={12}
+            className="mt-2 w-full resize-y rounded-xl border border-white/10 bg-[#0a0f24] px-4 py-3 text-white outline-none focus:border-blue-400"
+            placeholder="Nhập nội dung bài viết"
+          />
+        </div>
+      </div>
+
+      <aside className="space-y-4">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <label className="block text-sm font-semibold text-white/90">
+            Trạng thái
+          </label>
+          <select
+            name="trang_thai"
+            value={form.trang_thai}
+            onChange={capNhatForm}
+            className="mt-2 w-full rounded-xl border border-white/10 bg-[#0a0f24] px-4 py-3 text-white outline-none focus:border-blue-400"
+          >
+            {TRANG_THAI_BAI_VIET.map((trangThai) => (
+              <option key={trangThai.value} value={trangThai.value}>
+                {trangThai.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {baiVietDangChon.anh_bia ? (
+          <img
+            src={baiVietDangChon.anh_bia}
+            alt=""
+            className="aspect-video w-full rounded-2xl object-cover"
+          />
+        ) : null}
+
+        {loi ? (
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+            {loi}
+          </div>
+        ) : null}
+
+        {thongBao ? (
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+            {thongBao}
+          </div>
+        ) : null}
+
+        <button
+          type="submit"
+          disabled={dangLuu}
+          className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {dangLuu ? "Đang lưu..." : "Lưu chỉnh sửa"}
+        </button>
+        <button
+          type="button"
+          onClick={quayLaiDanhSach}
+          className="w-full rounded-xl border border-white/10 px-4 py-3 text-sm font-bold text-white/80 transition hover:bg-white/10"
+        >
+          Quay lại danh sách
+        </button>
+      </aside>
+    </form>
+  );
+}
+
+export default FormChinhSuaBaiViet;

@@ -15,6 +15,7 @@ function DanhSachBaiViet({
   doiLocTrangThai,
   chuyenTrang,
   navigate,
+  chonBaiVietDeSua,
 }) {
   return (
     <div className="mt-6">
@@ -109,13 +110,22 @@ function DanhSachBaiViet({
                     {dinhDangNgay(baiViet.created_at)}
                   </td>
                   <td className="px-4 py-4 text-right">
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/baiviet/${baiViet.slug}`)}
-                      className="rounded-lg border border-white/10 px-3 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10"
-                    >
-                      Xem
-                    </button>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => chonBaiVietDeSua(baiViet)}
+                        className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                      >
+                        Chỉnh sửa
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/baiviet/${baiViet.slug}`)}
+                        className="rounded-lg border border-white/10 px-3 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10"
+                      >
+                        Xem
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

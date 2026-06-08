@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import DanhSachBaiViet from "./bai-viet/DanhSachBaiViet";
+import FormChinhSuaBaiViet from "./bai-viet/FormChinhSuaBaiViet";
 import FormTaoBaiViet from "./bai-viet/FormTaoBaiViet";
 import TabButton from "./bai-viet/TabButton";
 import { GIA_TRI_BAI_VIET_MAC_DINH } from "./bai-viet/trangThaiBaiViet";
@@ -22,6 +23,11 @@ function AdminBaiViet() {
   const [dangLuu, setDangLuu] = useState(false);
   const [loi, setLoi] = useState("");
   const [thongBao, setThongBao] = useState("");
+  const [baiVietDangChon, setBaiVietDangChon] = useState(null);
+  const [formChinhSua, setFormChinhSua] = useState(GIA_TRI_BAI_VIET_MAC_DINH);
+  const [dangCapNhat, setDangCapNhat] = useState(false);
+  const [loiChinhSua, setLoiChinhSua] = useState("");
+  const [thongBaoChinhSua, setThongBaoChinhSua] = useState("");
   const [anhXemTruoc, setAnhXemTruoc] = useState("");
   const urlAnhXemTruoc = useRef("");
 
@@ -81,6 +87,14 @@ function AdminBaiViet() {
   const capNhatForm = (event) => {
     const { name, value } = event.target;
     setForm((duLieuHienTai) => ({
+      ...duLieuHienTai,
+      [name]: value,
+    }));
+  };
+
+  const capNhatFormChinhSua = (event) => {
+    const { name, value } = event.target;
+    setFormChinhSua((duLieuHienTai) => ({
       ...duLieuHienTai,
       [name]: value,
     }));
@@ -155,6 +169,61 @@ function AdminBaiViet() {
     }
   };
 
+  const chonBaiVietDeSua = (baiViet) => {
+    setBaiVietDangChon(baiViet);
+    setFormChinhSua({
+      tieu_de: baiViet.tieu_de || "",
+      tom_tat: baiViet.tom_tat || "",
+      noi_dung: baiViet.noi_dung || "",
+      trang_thai: baiViet.trang_thai || "xuat_ban",
+    });
+    setLoiChinhSua("");
+    setThongBaoChinhSua("");
+    setTabDangMo("chinh_sua");
+  };
+
+  const capNhatBaiViet = async (event) => {
+    event.preventDefault();
+    if (!baiVietDangChon) return;
+
+    setDangCapNhat(true);
+    setLoiChinhSua("");
+    setThongBaoChinhSua("");
+
+    try {
+      const response = await api.patch(
+        `/admin/baiviet/${baiVietDangChon.id}`,
+        formChinhSua
+      );
+
+      const baiVietDaCapNhat = response.data.data;
+      setBaiVietDangChon(baiVietDaCapNhat);
+      setFormChinhSua({
+        tieu_de: baiVietDaCapNhat.tieu_de || "",
+        tom_tat: baiVietDaCapNhat.tom_tat || "",
+        noi_dung: baiVietDaCapNhat.noi_dung || "",
+        trang_thai: baiVietDaCapNhat.trang_thai || "xuat_ban",
+      });
+      setThongBaoChinhSua(
+        response.data.message || "Cập nhật bài viết thành công."
+      );
+      setLanTaiLaiDanhSach((lanTaiLai) => lanTaiLai + 1);
+    } catch (err) {
+      const loiValidate = err.response?.data?.errors;
+      const loiDauTien = loiValidate
+        ? Object.values(loiValidate).flat()[0]
+        : null;
+
+      setLoiChinhSua(
+        loiDauTien ||
+          err.response?.data?.message ||
+          "Không cập nhật được bài viết."
+      );
+    } finally {
+      setDangCapNhat(false);
+    }
+  };
+
   const doiTuKhoa = (event) => {
     setTuKhoa(event.target.value);
     setTrangHienTai(1);
@@ -194,6 +263,13 @@ function AdminBaiViet() {
         >
           Tạo bài viết
         </TabButton>
+        <TabButton
+          dangMo={tabDangMo === "chinh_sua"}
+          disabled={!baiVietDangChon}
+          onClick={() => setTabDangMo("chinh_sua")}
+        >
+          Chỉnh sửa
+        </TabButton>
       </div>
 
       {tabDangMo === "danh_sach" ? (
@@ -209,8 +285,9 @@ function AdminBaiViet() {
           doiLocTrangThai={doiLocTrangThai}
           chuyenTrang={setTrangHienTai}
           navigate={navigate}
+          chonBaiVietDeSua={chonBaiVietDeSua}
         />
-      ) : (
+      ) : tabDangMo === "tao_moi" ? (
         <FormTaoBaiViet
           form={form}
           anhXemTruoc={anhXemTruoc}
@@ -220,6 +297,17 @@ function AdminBaiViet() {
           capNhatForm={capNhatForm}
           chonAnhBia={chonAnhBia}
           taoBaiViet={taoBaiViet}
+        />
+      ) : (
+        <FormChinhSuaBaiViet
+          baiVietDangChon={baiVietDangChon}
+          form={formChinhSua}
+          dangLuu={dangCapNhat}
+          loi={loiChinhSua}
+          thongBao={thongBaoChinhSua}
+          capNhatForm={capNhatFormChinhSua}
+          capNhatBaiViet={capNhatBaiViet}
+          quayLaiDanhSach={() => setTabDangMo("danh_sach")}
         />
       )}
     </div>
