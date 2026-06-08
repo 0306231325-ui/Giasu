@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 class BaiVietController extends Controller
 {
-    private const SO_BAI_VIET_MOI_TRANG = 10;
+    private const SO_BAI_VIET_MOI_TRANG = 5;
 
     public function baiVietMoi()
     {
