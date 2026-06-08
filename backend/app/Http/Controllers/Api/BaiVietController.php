@@ -57,6 +57,37 @@ class BaiVietController extends Controller
         ]);
     }
 
+    public function thungRacBaiVietAdmin(Request $request)
+    {
+        if ($request->user()?->vai_tro !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn không có quyền truy cập.',
+            ], 403);
+        }
+
+        $keyword = trim((string) $request->query('q', ''));
+
+        $baiViet = BaiViet::onlyTrashed()
+            ->when($keyword !== '', function ($query) use ($keyword) {
+                $query->where(function ($subQuery) use ($keyword) {
+                    $subQuery
+                        ->where('tieu_de', 'like', "%{$keyword}%")
+                        ->orWhere('tom_tat', 'like', "%{$keyword}%")
+                        ->orWhere('slug', 'like', "%{$keyword}%");
+                });
+            })
+            ->orderByDesc('deleted_at')
+            ->paginate(self::SO_BAI_VIET_MOI_TRANG)
+            ->withQueryString();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Lấy danh sách bài viết đã xóa thành công.',
+            'data' => $baiViet,
+        ]);
+    }
+
     public function chiTiet($slug)
     {
         $baiviet = BaiViet::where('slug', $slug)->firstOrFail();
@@ -173,6 +204,59 @@ class BaiVietController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Cập nhật bài viết thành công.',
+            'data' => $baiViet,
+        ]);
+    }
+
+    public function xoaBaiVietAdmin(Request $request, int $baiVietId)
+    {
+        if ($request->user()?->vai_tro !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn không có quyền truy cập.',
+            ], 403);
+        }
+
+        $baiViet = BaiViet::find($baiVietId);
+
+        if (! $baiViet) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy bài viết.',
+            ], 404);
+        }
+
+        $baiViet->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã đưa bài viết vào thùng rác.',
+        ]);
+    }
+
+    public function khoiPhucBaiVietAdmin(Request $request, int $baiVietId)
+    {
+        if ($request->user()?->vai_tro !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn không có quyền truy cập.',
+            ], 403);
+        }
+
+        $baiViet = BaiViet::onlyTrashed()->find($baiVietId);
+
+        if (! $baiViet) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy bài viết trong thùng rác.',
+            ], 404);
+        }
+
+        $baiViet->restore();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Khôi phục bài viết thành công.',
             'data' => $baiViet,
         ]);
     }

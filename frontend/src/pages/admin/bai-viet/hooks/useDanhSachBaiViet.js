@@ -9,6 +9,7 @@ function useDanhSachBaiViet() {
   const [trangHienTai, setTrangHienTai] = useState(1);
   const [lanTaiLaiDanhSach, setLanTaiLaiDanhSach] = useState(0);
   const [dangTaiDanhSach, setDangTaiDanhSach] = useState(false);
+  const [dangXoaId, setDangXoaId] = useState(null);
   const [loiDanhSach, setLoiDanhSach] = useState("");
 
   const thamSoDanhSach = useMemo(
@@ -74,6 +75,25 @@ function useDanhSachBaiViet() {
     setTrangHienTai(1);
   };
 
+  const xoaBaiViet = async (baiViet) => {
+    const xacNhan = window.confirm(`Đưa bài viết "${baiViet.tieu_de}" vào thùng rác?`);
+    if (!xacNhan) return;
+
+    setDangXoaId(baiViet.id);
+    setLoiDanhSach("");
+
+    try {
+      await api.delete(`/admin/baiviet/${baiViet.id}`);
+      taiLaiDanhSach();
+    } catch (err) {
+      setLoiDanhSach(
+        err.response?.data?.message || "Không xóa được bài viết."
+      );
+    } finally {
+      setDangXoaId(null);
+    }
+  };
+
   return {
     danhSachBaiViet,
     meta,
@@ -81,12 +101,14 @@ function useDanhSachBaiViet() {
     locTrangThai,
     trangHienTai,
     dangTaiDanhSach,
+    dangXoaId,
     loiDanhSach,
     doiTuKhoa,
     doiLocTrangThai,
     chuyenTrang: setTrangHienTai,
     taiLaiDanhSach,
     veTrangDau,
+    xoaBaiViet,
   };
 }
 

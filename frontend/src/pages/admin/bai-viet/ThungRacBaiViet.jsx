@@ -1,79 +1,63 @@
-import {
-  NHAN_TRANG_THAI_BAI_VIET,
-  TRANG_THAI_BAI_VIET,
-} from "./trangThaiBaiViet";
-
-function DanhSachBaiViet({
-  danhSachBaiViet,
-  dangTai,
-  loi,
+function ThungRacBaiViet({
+  danhSachDaXoa,
   meta,
   tuKhoa,
-  locTrangThai,
   trangHienTai,
+  dangTai,
+  dangXuLyId,
+  loi,
+  thongBao,
   doiTuKhoa,
-  doiLocTrangThai,
   chuyenTrang,
-  navigate,
-  chonBaiVietDeSua,
-  xoaBaiViet,
-  dangXoaId,
+  khoiPhucBaiViet,
 }) {
   return (
     <div className="mt-6">
-      <div className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 md:grid-cols-[minmax(0,1fr)_220px]">
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
         <input
           value={tuKhoa}
           onChange={doiTuKhoa}
           className="w-full rounded-xl border border-white/10 bg-[#0a0f24] px-4 py-3 text-white outline-none focus:border-blue-400"
-          placeholder="Tìm theo tiêu đề, tóm tắt hoặc slug"
+          placeholder="Tìm bài đã xóa theo tiêu đề, tóm tắt hoặc slug"
         />
-        <select
-          value={locTrangThai}
-          onChange={doiLocTrangThai}
-          className="w-full rounded-xl border border-white/10 bg-[#0a0f24] px-4 py-3 text-white outline-none focus:border-blue-400"
-        >
-          <option value="">Tất cả trạng thái</option>
-          {TRANG_THAI_BAI_VIET.map((trangThai) => (
-            <option key={trangThai.value} value={trangThai.value}>
-              {trangThai.label}
-            </option>
-          ))}
-        </select>
       </div>
+
+      {thongBao ? (
+        <div className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+          {thongBao}
+        </div>
+      ) : null}
 
       <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
         <table className="min-w-full divide-y divide-white/10">
           <thead className="bg-white/5">
             <tr className="text-left text-xs uppercase tracking-wide text-white/60">
               <th className="px-4 py-3">Bài viết</th>
-              <th className="px-4 py-3">Trạng thái</th>
-              <th className="px-4 py-3">Lượt xem</th>
-              <th className="px-4 py-3">Ngày tạo</th>
+              <th className="px-4 py-3">Ngày xóa</th>
               <th className="px-4 py-3 text-right">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/10">
             {dangTai ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-white/70">
-                  Đang tải danh sách bài viết...
+                <td colSpan={3} className="px-4 py-8 text-center text-white/70">
+                  Đang tải thùng rác...
                 </td>
               </tr>
             ) : loi ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-red-200">
+                <td colSpan={3} className="px-4 py-8 text-center text-red-200">
                   {loi}
                 </td>
               </tr>
-            ) : danhSachBaiViet.length === 0 ? (
+            ) : danhSachDaXoa.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-white/70">
-                  Chưa có bài viết phù hợp.
+                <td colSpan={3} className="px-4 py-8 text-center text-white/70">
+                  Không có bài viết nào trong thùng rác.
                 </td>
               </tr>
             ) : (
-              danhSachBaiViet.map((baiViet) => (
+              danhSachDaXoa.map((baiViet) => (
                 <tr key={baiViet.id} className="align-top">
                   <td className="px-4 py-4">
                     <div className="flex gap-3">
@@ -99,43 +83,18 @@ function DanhSachBaiViet({
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-4">
-                    <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold text-white/80">
-                      {NHAN_TRANG_THAI_BAI_VIET[baiViet.trang_thai] ||
-                        baiViet.trang_thai}
-                    </span>
-                  </td>
                   <td className="px-4 py-4 text-sm text-white/75">
-                    {baiViet.luot_xem}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-white/75">
-                    {dinhDangNgay(baiViet.created_at)}
+                    {dinhDangNgay(baiViet.deleted_at)}
                   </td>
                   <td className="px-4 py-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => chonBaiVietDeSua(baiViet)}
-                        className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
-                      >
-                        Chỉnh sửa
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/baiviet/${baiViet.slug}`)}
-                        className="rounded-lg border border-white/10 px-3 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10"
-                      >
-                        Xem
-                      </button>
-                      <button
-                        type="button"
-                        disabled={dangXoaId === baiViet.id}
-                        onClick={() => xoaBaiViet(baiViet)}
-                        className="rounded-lg border border-red-400/30 px-3 py-2 text-sm font-semibold text-red-100 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {dangXoaId === baiViet.id ? "Đang xóa..." : "Xóa"}
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      disabled={dangXuLyId === baiViet.id}
+                      onClick={() => khoiPhucBaiViet(baiViet)}
+                      className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {dangXuLyId === baiViet.id ? "Đang khôi phục..." : "Khôi phục"}
+                    </button>
                   </td>
                 </tr>
               ))
@@ -183,4 +142,4 @@ function dinhDangNgay(ngay) {
   }).format(new Date(ngay));
 }
 
-export default DanhSachBaiViet;
+export default ThungRacBaiViet;

@@ -4,9 +4,11 @@ import DanhSachBaiViet from "./bai-viet/DanhSachBaiViet";
 import FormChinhSuaBaiViet from "./bai-viet/FormChinhSuaBaiViet";
 import FormTaoBaiViet from "./bai-viet/FormTaoBaiViet";
 import TabButton from "./bai-viet/TabButton";
+import ThungRacBaiViet from "./bai-viet/ThungRacBaiViet";
 import useChinhSuaBaiViet from "./bai-viet/hooks/useChinhSuaBaiViet";
 import useDanhSachBaiViet from "./bai-viet/hooks/useDanhSachBaiViet";
 import useTaoBaiViet from "./bai-viet/hooks/useTaoBaiViet";
+import useThungRacBaiViet from "./bai-viet/hooks/useThungRacBaiViet";
 
 function AdminBaiViet() {
   const navigate = useNavigate();
@@ -23,6 +25,84 @@ function AdminBaiViet() {
     moTabChinhSua: () => setTabDangMo("chinh_sua"),
     sauKhiCapNhatThanhCong: danhSach.taiLaiDanhSach,
   });
+  const thungRac = useThungRacBaiViet({
+    taiLaiDanhSach: danhSach.taiLaiDanhSach,
+  });
+
+  const renderNoiDungTab = () => {
+    if (tabDangMo === "danh_sach") {
+      return (
+        <DanhSachBaiViet
+          danhSachBaiViet={danhSach.danhSachBaiViet}
+          dangTai={danhSach.dangTaiDanhSach}
+          loi={danhSach.loiDanhSach}
+          meta={danhSach.meta}
+          tuKhoa={danhSach.tuKhoa}
+          locTrangThai={danhSach.locTrangThai}
+          trangHienTai={danhSach.trangHienTai}
+          doiTuKhoa={danhSach.doiTuKhoa}
+          doiLocTrangThai={danhSach.doiLocTrangThai}
+          chuyenTrang={danhSach.chuyenTrang}
+          navigate={navigate}
+          chonBaiVietDeSua={chinhSua.chonBaiVietDeSua}
+          xoaBaiViet={danhSach.xoaBaiViet}
+          dangXoaId={danhSach.dangXoaId}
+        />
+      );
+    }
+
+    if (tabDangMo === "tao_moi") {
+      return (
+        <FormTaoBaiViet
+          form={taoMoi.form}
+          anhXemTruoc={taoMoi.anhXemTruoc}
+          dangLuu={taoMoi.dangLuu}
+          loi={taoMoi.loi}
+          thongBao={taoMoi.thongBao}
+          capNhatForm={taoMoi.capNhatForm}
+          chonAnhBia={taoMoi.chonAnhBia}
+          taoBaiViet={taoMoi.taoBaiViet}
+        />
+      );
+    }
+
+    if (tabDangMo === "chinh_sua") {
+      return (
+        <FormChinhSuaBaiViet
+          baiVietDangChon={chinhSua.baiVietDangChon}
+          form={chinhSua.formChinhSua}
+          anhXemTruoc={chinhSua.anhChinhSuaXemTruoc}
+          dangLuu={chinhSua.dangCapNhat}
+          loi={chinhSua.loiChinhSua}
+          thongBao={chinhSua.thongBaoChinhSua}
+          capNhatForm={chinhSua.capNhatFormChinhSua}
+          chonAnhBia={chinhSua.chonAnhBiaChinhSua}
+          capNhatBaiViet={chinhSua.capNhatBaiViet}
+          quayLaiDanhSach={() => setTabDangMo("danh_sach")}
+        />
+      );
+    }
+
+    if (tabDangMo === "thung_rac") {
+      return (
+        <ThungRacBaiViet
+          danhSachDaXoa={thungRac.danhSachDaXoa}
+          meta={thungRac.meta}
+          tuKhoa={thungRac.tuKhoa}
+          trangHienTai={thungRac.trangHienTai}
+          dangTai={thungRac.dangTai}
+          dangXuLyId={thungRac.dangXuLyId}
+          loi={thungRac.loi}
+          thongBao={thungRac.thongBao}
+          doiTuKhoa={thungRac.doiTuKhoa}
+          chuyenTrang={thungRac.chuyenTrang}
+          khoiPhucBaiViet={thungRac.khoiPhucBaiViet}
+        />
+      );
+    }
+
+    return null;
+  };
 
   return (
     <div>
@@ -60,48 +140,15 @@ function AdminBaiViet() {
         >
           Chỉnh sửa
         </TabButton>
+        <TabButton
+          dangMo={tabDangMo === "thung_rac"}
+          onClick={() => setTabDangMo("thung_rac")}
+        >
+          Thùng rác
+        </TabButton>
       </div>
 
-      {tabDangMo === "danh_sach" ? (
-        <DanhSachBaiViet
-          danhSachBaiViet={danhSach.danhSachBaiViet}
-          dangTai={danhSach.dangTaiDanhSach}
-          loi={danhSach.loiDanhSach}
-          meta={danhSach.meta}
-          tuKhoa={danhSach.tuKhoa}
-          locTrangThai={danhSach.locTrangThai}
-          trangHienTai={danhSach.trangHienTai}
-          doiTuKhoa={danhSach.doiTuKhoa}
-          doiLocTrangThai={danhSach.doiLocTrangThai}
-          chuyenTrang={danhSach.chuyenTrang}
-          navigate={navigate}
-          chonBaiVietDeSua={chinhSua.chonBaiVietDeSua}
-        />
-      ) : tabDangMo === "tao_moi" ? (
-        <FormTaoBaiViet
-          form={taoMoi.form}
-          anhXemTruoc={taoMoi.anhXemTruoc}
-          dangLuu={taoMoi.dangLuu}
-          loi={taoMoi.loi}
-          thongBao={taoMoi.thongBao}
-          capNhatForm={taoMoi.capNhatForm}
-          chonAnhBia={taoMoi.chonAnhBia}
-          taoBaiViet={taoMoi.taoBaiViet}
-        />
-      ) : (
-        <FormChinhSuaBaiViet
-          baiVietDangChon={chinhSua.baiVietDangChon}
-          form={chinhSua.formChinhSua}
-          anhXemTruoc={chinhSua.anhChinhSuaXemTruoc}
-          dangLuu={chinhSua.dangCapNhat}
-          loi={chinhSua.loiChinhSua}
-          thongBao={chinhSua.thongBaoChinhSua}
-          capNhatForm={chinhSua.capNhatFormChinhSua}
-          chonAnhBia={chinhSua.chonAnhBiaChinhSua}
-          capNhatBaiViet={chinhSua.capNhatBaiViet}
-          quayLaiDanhSach={() => setTabDangMo("danh_sach")}
-        />
-      )}
+      {renderNoiDungTab()}
     </div>
   );
 }
