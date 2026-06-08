@@ -105,6 +105,7 @@ function AdminBaiViet() {
           doiTuKhoa={thungRac.doiTuKhoa}
           chuyenTrang={thungRac.chuyenTrang}
           khoiPhucBaiViet={thungRac.khoiPhucBaiViet}
+          xoaVinhVienBaiViet={thungRac.xoaVinhVienBaiViet}
         />
       );
     }

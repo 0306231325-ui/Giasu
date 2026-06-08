@@ -266,6 +266,33 @@ class BaiVietController extends Controller
         ]);
     }
 
+    public function xoaVinhVienBaiVietAdmin(Request $request, int $baiVietId)
+    {
+        if ($request->user()?->vai_tro !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn không có quyền truy cập.',
+            ], 403);
+        }
+
+        $baiViet = BaiViet::onlyTrashed()->find($baiVietId);
+
+        if (! $baiViet) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy bài viết trong thùng rác.',
+            ], 404);
+        }
+
+        $this->xoaAnhBaiVietCu($baiViet->anh_bia);
+        $baiViet->forceDelete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã xóa vĩnh viễn bài viết.',
+        ]);
+    }
+
     private function taoSlugKhongTrung(string $tieuDe, ?int $boQuaBaiVietId = null): string
     {
         $slugGoc = Str::slug($tieuDe);

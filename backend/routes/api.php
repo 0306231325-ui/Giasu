@@ -22,6 +22,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/baiviet/{baiVietId}/cap-nhat', [BaiVietController::class, 'capNhatBaiVietAdmin']);
     Route::delete('/admin/baiviet/{baiVietId}', [BaiVietController::class, 'xoaBaiVietAdmin']);
     Route::patch('/admin/baiviet/{baiVietId}/khoi-phuc', [BaiVietController::class, 'khoiPhucBaiVietAdmin']);
+    Route::delete('/admin/baiviet/{baiVietId}/xoa-vinh-vien', [BaiVietController::class, 'xoaVinhVienBaiVietAdmin']);
 });
 
 Route::get('/test-db', function () {

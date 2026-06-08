@@ -90,6 +90,33 @@ function useThungRacBaiViet({ taiLaiDanhSach }) {
     }
   };
 
+  const xoaVinhVienBaiViet = async (baiViet) => {
+    const xacNhan = window.confirm(
+      `Xóa vĩnh viễn bài viết "${baiViet.tieu_de}"? Thao tác này không thể khôi phục.`
+    );
+    if (!xacNhan) return;
+
+    setDangXuLyId(baiViet.id);
+    setLoi("");
+    anThongBao();
+
+    try {
+      const response = await api.delete(
+        `/admin/baiviet/${baiViet.id}/xoa-vinh-vien`
+      );
+      hienThongBaoTamThoi(
+        response.data.message || "Đã xóa vĩnh viễn bài viết."
+      );
+      taiLaiThungRac();
+    } catch (err) {
+      setLoi(
+        err.response?.data?.message || "Không xóa vĩnh viễn được bài viết."
+      );
+    } finally {
+      setDangXuLyId(null);
+    }
+  };
+
   return {
     danhSachDaXoa,
     meta,
@@ -103,6 +130,7 @@ function useThungRacBaiViet({ taiLaiDanhSach }) {
     chuyenTrang: setTrangHienTai,
     taiLaiThungRac,
     khoiPhucBaiViet,
+    xoaVinhVienBaiViet,
   };
 }
 
