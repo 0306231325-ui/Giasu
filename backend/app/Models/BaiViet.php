@@ -19,6 +19,12 @@ class BaiViet extends Model
         'noi_dung',
         'anh_bia',
         'luot_xem',
-        'trang_thai'
+        'trang_thai',
+        'deleted_by_id',
     ];
+
+    public function nguoiXoa()
+    {
+        return $this->belongsTo(User::class, 'deleted_by_id');
+    }
 }

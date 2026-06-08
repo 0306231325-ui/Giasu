@@ -69,6 +69,7 @@ class BaiVietController extends Controller
         $keyword = trim((string) $request->query('q', ''));
 
         $baiViet = BaiViet::onlyTrashed()
+            ->with('nguoiXoa:id,ho_ten,email')
             ->when($keyword !== '', function ($query) use ($keyword) {
                 $query->where(function ($subQuery) use ($keyword) {
                     $subQuery
@@ -226,6 +227,8 @@ class BaiVietController extends Controller
             ], 404);
         }
 
+        $baiViet->deleted_by_id = $request->user()->id;
+        $baiViet->save();
         $baiViet->delete();
 
         return response()->json([
@@ -253,6 +256,8 @@ class BaiVietController extends Controller
         }
 
         $baiViet->restore();
+        $baiViet->deleted_by_id = null;
+        $baiViet->save();
 
         return response()->json([
             'success' => true,

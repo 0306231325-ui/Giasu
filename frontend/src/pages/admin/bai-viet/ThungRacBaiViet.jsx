@@ -33,6 +33,7 @@ function ThungRacBaiViet({
           <thead className="bg-white/5">
             <tr className="text-left text-xs uppercase tracking-wide text-white/60">
               <th className="px-4 py-3">Bài viết</th>
+              <th className="px-4 py-3">Người xóa</th>
               <th className="px-4 py-3">Ngày xóa</th>
               <th className="px-4 py-3 text-right">Thao tác</th>
             </tr>
@@ -40,19 +41,19 @@ function ThungRacBaiViet({
           <tbody className="divide-y divide-white/10">
             {dangTai ? (
               <tr>
-                <td colSpan={3} className="px-4 py-8 text-center text-white/70">
+                <td colSpan={4} className="px-4 py-8 text-center text-white/70">
                   Đang tải thùng rác...
                 </td>
               </tr>
             ) : loi ? (
               <tr>
-                <td colSpan={3} className="px-4 py-8 text-center text-red-200">
+                <td colSpan={4} className="px-4 py-8 text-center text-red-200">
                   {loi}
                 </td>
               </tr>
             ) : danhSachDaXoa.length === 0 ? (
               <tr>
-                <td colSpan={3} className="px-4 py-8 text-center text-white/70">
+                <td colSpan={4} className="px-4 py-8 text-center text-white/70">
                   Không có bài viết nào trong thùng rác.
                 </td>
               </tr>
@@ -82,6 +83,16 @@ function ThungRacBaiViet({
                         </div>
                       </div>
                     </div>
+                  </td>
+                  <td className="px-4 py-4 text-sm text-white/75">
+                    <div className="font-semibold text-white/85">
+                      {baiViet.nguoi_xoa?.ho_ten || "Không rõ"}
+                    </div>
+                    {baiViet.nguoi_xoa?.email ? (
+                      <div className="mt-1 text-xs text-white/50">
+                        {baiViet.nguoi_xoa.email}
+                      </div>
+                    ) : null}
                   </td>
                   <td className="px-4 py-4 text-sm text-white/75">
                     {dinhDangNgay(baiViet.deleted_at)}
