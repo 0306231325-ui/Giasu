@@ -10,14 +10,12 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             CapHocSeeder::class,
+            TrinhDoGiasuSeeder::class,
             MonHocSeeder::class,
-            LopSeeder::class,
-            BangGiaGocSeeder::class,
-            CauHinhGiaSeeder::class,
             UsersSeeder::class,
             HocVienSeeder::class,
             GiaSuSeeder::class,
-            GiaSuMonLopSeeder::class, // sau GiaSuSeeder: giasu_mon_lop + giasu_gia
+            GiaSuGiaSeeder::class,
             BaiVietSeeder::class,
             GoiHocSeeder::class,
             LichHocSeeder::class,

@@ -16,6 +16,7 @@ class Giasu extends Model
         'mo_ta',
         'kinh_nghiem',
         'hoc_van',
+        'trinh_do_giasu_id',
         'dia_chi',
         'avatar',
         'trang_thai_ho_so',
@@ -46,14 +47,27 @@ class Giasu extends Model
         );
     }
 
-    public function monLops()
-    {
-        return $this->hasMany(GiasuMonLop::class, 'giasu_id');
-    }
-
-    public function giaTheoMonLop()
+    public function giasuGias()
     {
         return $this->hasMany(GiasuGia::class, 'giasu_id');
+    }
+
+    public function monHocs()
+    {
+        return $this->belongsToMany(MonHoc::class, 'giasu_gia', 'giasu_id', 'monhoc_id')
+            ->withPivot('trinh_do_giasu_id', 'gia_mon', 'gia_cong_them', 'tong_gia')
+            ->withTimestamps();
+    }
+
+    public function trinhDo()
+    {
+        return $this->belongsTo(TrinhDoGiasu::class, 'trinh_do_giasu_id');
+    }
+
+    public function capHocs()
+    {
+        return $this->belongsToMany(CapHoc::class, 'giasu_cap_hoc', 'giasu_id', 'cap_hoc_id')
+            ->withTimestamps();
     }
 
     public function bangCaps()

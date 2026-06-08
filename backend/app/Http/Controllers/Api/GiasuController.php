@@ -20,6 +20,8 @@ class GiasuController extends Controller
                                             $query->whereHas('danhGia');
                                         },
                                     ])
+                                    ->withMin('giasuGias as gia_tu', 'tong_gia')
+                                    ->withMax('giasuGias as gia_den', 'tong_gia')
                                     ->addSelect([
                                         'danh_gias_avg_so_sao' => DanhGia::selectRaw('coalesce(avg(danhgia.so_sao), 0)')
                                             ->join('lichhoc', 'lichhoc.id', '=', 'danhgia.lichhoc_id')

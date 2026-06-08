@@ -12,6 +12,7 @@ import AdminLayout from "./layouts/AdminLayout";
 import AdminHome from "./pages/admin/AdminHome";
 import AdminHocVien from "./pages/admin/AdminHocVien";
 import AdminGiaSu from "./pages/admin/AdminGiaSu";
+import AdminBaiViet from "./pages/admin/AdminBaiViet";
 
 function App() {
 
@@ -52,6 +53,7 @@ function App() {
         <Route index element={<AdminHome />} />
         <Route path="hoc-vien" element={<AdminHocVien />} />
         <Route path="gia-su" element={<AdminGiaSu />} />
+        <Route path="bai-viet" element={<AdminBaiViet />} />
       </Route>
 
     </Routes>

@@ -2,81 +2,50 @@
 
 namespace App\Services;
 
-use App\Models\BangGiaGoc;
-use App\Models\CauHinhGia;
-use App\Models\Lop;
+use App\Models\Giasu;
+use App\Models\MonHoc;
 
 class GiaTinhService
 {
-    public static function tinhGiaChuan(int $monhocId, int $lopId): ?float
+    public static function tinhGiaGiasu(int $monhocId, int $giasuId): ?array
     {
-        $lop = Lop::find($lopId);
-        if (! $lop) {
+        $monhoc = MonHoc::find($monhocId);
+        $giasu = Giasu::with('trinhDo')->find($giasuId);
+
+        if (! $monhoc || ! $giasu) {
             return null;
         }
 
-        $goc = BangGiaGoc::where('monhoc_id', $monhocId)->first();
+        $giaMon = (float) $monhoc->gia;
+        $giaCongThem = (float) ($giasu->trinhDo?->gia_cong_them ?? 0);
 
-        if (! $goc) {
-            return null;
-        }
-
-        $tangTheoLop = (float) (CauHinhGia::where('ma', 'tang_theo_lop')->value('gia_tri') ?? 0);
-        $tangTheoCap = (float) (CauHinhGia::where('ma', 'tang_theo_cap')->value('gia_tri') ?? 0);
-
-        $thuTuCap = (int) optional($lop->capHoc)->thu_tu;
-        $thuTuCap = $thuTuCap > 0 ? $thuTuCap : 1;
-
-        return (float) $goc->gia_goc
-            + max(0, $thuTuCap - 1) * $tangTheoCap
-            + max(0, $lop->thu_tu_trong_cap - 1) * $tangTheoLop;
+        return [
+            'giasu_id' => $giasuId,
+            'monhoc_id' => $monhocId,
+            'trinh_do_giasu_id' => $giasu->trinh_do_giasu_id,
+            'gia_mon' => $giaMon,
+            'gia_cong_them' => $giaCongThem,
+            'tong_gia' => $giaMon + $giaCongThem,
+        ];
     }
 
-    public static function tinhGiaMin(int $monhocId, int $lopId): ?float
+    /** @deprecated Dùng tinhGiaGiasu */
+    public static function tinhGiaGiasuMon(int $monhocId, int $giasuId): ?float
     {
-        $giaChuan = self::tinhGiaChuan($monhocId, $lopId);
-        if ($giaChuan === null) {
-            return null;
-        }
+        $result = self::tinhGiaGiasu($monhocId, $giasuId);
 
-        $lop = Lop::find($lopId);
-        $goc = BangGiaGoc::where('monhoc_id', $monhocId)->first();
-
-        if ($goc?->gia_min !== null) {
-            $tangTheoLop = (float) (CauHinhGia::where('ma', 'tang_theo_lop')->value('gia_tri') ?? 0);
-            $tangTheoCap = (float) (CauHinhGia::where('ma', 'tang_theo_cap')->value('gia_tri') ?? 0);
-            $thuTuCap = (int) optional($lop->capHoc)->thu_tu;
-            $thuTuCap = $thuTuCap > 0 ? $thuTuCap : 1;
-
-            return (float) $goc->gia_min
-                + max(0, $thuTuCap - 1) * $tangTheoCap
-                + max(0, $lop->thu_tu_trong_cap - 1) * $tangTheoLop;
-        }
-
-        return $giaChuan * 0.9;
+        return $result ? $result['tong_gia'] : null;
     }
 
-    public static function tinhGiaMax(int $monhocId, int $lopId): ?float
+    /** @deprecated Dùng tinhGiaGiasu */
+    public static function tinhGiaChuan(int $monhocId, ?int $lopId = null, ?int $giasuId = null): ?float
     {
-        $giaChuan = self::tinhGiaChuan($monhocId, $lopId);
-        if ($giaChuan === null) {
-            return null;
+        if ($giasuId) {
+            return self::tinhGiaGiasuMon($monhocId, $giasuId);
         }
 
-        $lop = Lop::find($lopId);
-        $goc = BangGiaGoc::where('monhoc_id', $monhocId)->first();
+        $monhoc = MonHoc::find($monhocId);
 
-        if ($goc?->gia_max !== null) {
-            $tangTheoLop = (float) (CauHinhGia::where('ma', 'tang_theo_lop')->value('gia_tri') ?? 0);
-            $tangTheoCap = (float) (CauHinhGia::where('ma', 'tang_theo_cap')->value('gia_tri') ?? 0);
-            $thuTuCap = (int) optional($lop->capHoc)->thu_tu;
-            $thuTuCap = $thuTuCap > 0 ? $thuTuCap : 1;
-
-            return (float) $goc->gia_max
-                + max(0, $thuTuCap - 1) * $tangTheoCap
-                + max(0, $lop->thu_tu_trong_cap - 1) * $tangTheoLop;
-        }
-
-        return $giaChuan * 1.1;
+        return $monhoc ? (float) $monhoc->gia : null;
     }
 }

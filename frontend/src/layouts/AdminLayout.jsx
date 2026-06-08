@@ -21,7 +21,7 @@ function AdminLayout() {
       <aside className="w-72 shrink-0 border-r border-white/10 bg-[#0a0f24]">
         <div className="px-6 py-5 border-b border-white/10">
           <div className="text-xl font-extrabold tracking-wide">
-            ADMIN PANEL
+            ADMIN | CDTH23 WEBC
           </div>
           <div className="mt-2 text-sm text-white/70">
             {isAdmin ? (
@@ -39,6 +39,7 @@ function AdminLayout() {
           <NavItem to="/admin" end label="Trang chủ" />
           <NavItem to="/admin/hoc-vien" label="Tài khoản học viên" />
           <NavItem to="/admin/gia-su" label="Tài khoản gia sư" />
+          <NavItem to="/admin/bai-viet" label="Bài viết" />
         </nav>
 
         <div className="p-4 border-t border-white/10 mt-auto">
@@ -107,4 +108,3 @@ function NavItem({ to, end, label }) {
 }
 
 export default AdminLayout;
-

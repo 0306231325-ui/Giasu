@@ -15,21 +15,20 @@ class GoiHoc extends Model
         'hocvien_id',
         'giasu_id',
         'monhoc_id',
-        'lop_id',
         'ngay_batdau',
         'ngay_ketthuc',
         'so_buoi',
         'hoc_dinhky',
+        'dia_chi_hoc',
+        'hinh_thuc_hoc',
         'tong_tien',
         'don_gia_theogio',
-        'giasu_gia_id',
         'trang_thai',
     ];
 
-    public function lop()
-    {
-        return $this->belongsTo(Lop::class, 'lop_id');
-    }
+    protected $casts = [
+        'hoc_dinhky' => 'boolean',
+    ];
 
     public function monHoc()
     {
@@ -44,5 +43,10 @@ class GoiHoc extends Model
     public function lichHocs()
     {
         return $this->hasMany(LichHoc::class, 'goihoc_id');
+    }
+
+    public function lichDinhKys()
+    {
+        return $this->hasMany(GoiHocLichDinhKy::class, 'goihoc_id');
     }
 }

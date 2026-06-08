@@ -28,4 +28,3 @@ class CapHocSeeder extends Seeder
         }
     }
 }
-

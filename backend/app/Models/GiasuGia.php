@@ -12,9 +12,10 @@ class GiasuGia extends Model
     protected $fillable = [
         'giasu_id',
         'monhoc_id',
-        'lop_id',
-        'gia_theogio',
-        'yeu_cau_gia_id',
+        'trinh_do_giasu_id',
+        'gia_mon',
+        'gia_cong_them',
+        'tong_gia',
     ];
 
     public function giasu(): BelongsTo
@@ -27,8 +28,8 @@ class GiasuGia extends Model
         return $this->belongsTo(MonHoc::class, 'monhoc_id');
     }
 
-    public function lop(): BelongsTo
+    public function trinhDo(): BelongsTo
     {
-        return $this->belongsTo(Lop::class, 'lop_id');
+        return $this->belongsTo(TrinhDoGiasu::class, 'trinh_do_giasu_id');
     }
 }

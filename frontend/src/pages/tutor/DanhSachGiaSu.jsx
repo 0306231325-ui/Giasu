@@ -71,8 +71,10 @@ const GiaSuCard = memo(({ giasu }) => (
                 </p>
                 <p className="font-bold text-blue-400">
                     💰{" "}
-                    {giasu.gia_theogio
-                        ? `${Number(giasu.gia_theogio).toLocaleString("vi-VN")} đ/h`
+                    {giasu.gia_tu
+                        ? giasu.gia_den && Number(giasu.gia_den) > Number(giasu.gia_tu)
+                            ? `${Number(giasu.gia_tu).toLocaleString("vi-VN")} - ${Number(giasu.gia_den).toLocaleString("vi-VN")} đ/h`
+                            : `${Number(giasu.gia_tu).toLocaleString("vi-VN")} đ/h`
                         : "Thỏa thuận"}
                 </p>
                 <p className="line-clamp-2">

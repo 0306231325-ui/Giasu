@@ -15,13 +15,8 @@ class CapHoc extends Model
         'thu_tu',
     ];
 
-    public function lops(): HasMany
+    public function monHocs(): HasMany
     {
-        return $this->hasMany(Lop::class, 'cap_hoc_id');
-    }
-
-    public function bangGiaGocs(): HasMany
-    {
-        return $this->hasMany(BangGiaGoc::class, 'cap_hoc_id');
+        return $this->hasMany(MonHoc::class, 'cap_hoc_id');
     }
 }
