@@ -139,13 +139,31 @@ class BaiVietController extends Controller
             'tom_tat' => ['nullable', 'string'],
             'noi_dung' => ['required', 'string'],
             'trang_thai' => ['required', 'in:xuat_ban,nhap,an'],
+            'anh_bia' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
+
+        $anhBiaUrl = $baiViet->anh_bia;
+
+        if ($request->hasFile('anh_bia')) {
+            $thuMucAnh = public_path('images/baiviet');
+
+            if (! File::isDirectory($thuMucAnh)) {
+                File::makeDirectory($thuMucAnh, 0755, true);
+            }
+
+            $slugMoi = $this->taoSlugKhongTrung($duLieu['tieu_de'], $baiViet->id);
+            $file = $request->file('anh_bia');
+            $tenFile = $slugMoi . '-' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move($thuMucAnh, $tenFile);
+            $anhBiaUrl = url('images/baiviet/' . $tenFile);
+        }
 
         $baiViet->fill([
             'tieu_de' => $duLieu['tieu_de'],
             'slug' => $this->taoSlugKhongTrung($duLieu['tieu_de'], $baiViet->id),
             'tom_tat' => $duLieu['tom_tat'] ?? null,
             'noi_dung' => $duLieu['noi_dung'],
+            'anh_bia' => $anhBiaUrl,
             'trang_thai' => $duLieu['trang_thai'],
         ]);
         $baiViet->save();

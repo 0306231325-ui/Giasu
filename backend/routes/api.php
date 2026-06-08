@@ -18,6 +18,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/baiviet', [BaiVietController::class, 'danhSachBaiVietAdmin']);
     Route::post('/admin/baiviet', [BaiVietController::class, 'taoBaiVietAdmin']);
     Route::patch('/admin/baiviet/{baiVietId}', [BaiVietController::class, 'capNhatBaiVietAdmin']);
+    Route::post('/admin/baiviet/{baiVietId}/cap-nhat', [BaiVietController::class, 'capNhatBaiVietAdmin']);
 });
 
 Route::get('/test-db', function () {

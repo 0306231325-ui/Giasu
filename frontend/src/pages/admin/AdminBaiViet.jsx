@@ -29,7 +29,10 @@ function AdminBaiViet() {
   const [loiChinhSua, setLoiChinhSua] = useState("");
   const [thongBaoChinhSua, setThongBaoChinhSua] = useState("");
   const [anhXemTruoc, setAnhXemTruoc] = useState("");
+  const [anhBiaChinhSua, setAnhBiaChinhSua] = useState(null);
+  const [anhChinhSuaXemTruoc, setAnhChinhSuaXemTruoc] = useState("");
   const urlAnhXemTruoc = useRef("");
+  const urlAnhChinhSuaXemTruoc = useRef("");
 
   const thamSoDanhSach = useMemo(
     () => ({
@@ -81,6 +84,9 @@ function AdminBaiViet() {
       if (urlAnhXemTruoc.current) {
         URL.revokeObjectURL(urlAnhXemTruoc.current);
       }
+      if (urlAnhChinhSuaXemTruoc.current) {
+        URL.revokeObjectURL(urlAnhChinhSuaXemTruoc.current);
+      }
     };
   }, []);
 
@@ -115,6 +121,24 @@ function AdminBaiViet() {
       setAnhXemTruoc(url);
     } else {
       setAnhXemTruoc("");
+    }
+  };
+
+  const chonAnhBiaChinhSua = (event) => {
+    const file = event.target.files?.[0] || null;
+
+    if (urlAnhChinhSuaXemTruoc.current) {
+      URL.revokeObjectURL(urlAnhChinhSuaXemTruoc.current);
+      urlAnhChinhSuaXemTruoc.current = "";
+    }
+
+    setAnhBiaChinhSua(file);
+    if (file) {
+      const url = URL.createObjectURL(file);
+      urlAnhChinhSuaXemTruoc.current = url;
+      setAnhChinhSuaXemTruoc(url);
+    } else {
+      setAnhChinhSuaXemTruoc("");
     }
   };
 
@@ -179,6 +203,12 @@ function AdminBaiViet() {
     });
     setLoiChinhSua("");
     setThongBaoChinhSua("");
+    setAnhBiaChinhSua(null);
+    if (urlAnhChinhSuaXemTruoc.current) {
+      URL.revokeObjectURL(urlAnhChinhSuaXemTruoc.current);
+      urlAnhChinhSuaXemTruoc.current = "";
+    }
+    setAnhChinhSuaXemTruoc("");
     setTabDangMo("chinh_sua");
   };
 
@@ -191,9 +221,24 @@ function AdminBaiViet() {
     setThongBaoChinhSua("");
 
     try {
-      const response = await api.patch(
-        `/admin/baiviet/${baiVietDangChon.id}`,
-        formChinhSua
+      const duLieu = new FormData();
+      duLieu.append("tieu_de", formChinhSua.tieu_de);
+      duLieu.append("tom_tat", formChinhSua.tom_tat);
+      duLieu.append("noi_dung", formChinhSua.noi_dung);
+      duLieu.append("trang_thai", formChinhSua.trang_thai);
+
+      if (anhBiaChinhSua) {
+        duLieu.append("anh_bia", anhBiaChinhSua);
+      }
+
+      const response = await api.post(
+        `/admin/baiviet/${baiVietDangChon.id}/cap-nhat`,
+        duLieu,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
 
       const baiVietDaCapNhat = response.data.data;
@@ -207,6 +252,12 @@ function AdminBaiViet() {
       setThongBaoChinhSua(
         response.data.message || "Cập nhật bài viết thành công."
       );
+      setAnhBiaChinhSua(null);
+      if (urlAnhChinhSuaXemTruoc.current) {
+        URL.revokeObjectURL(urlAnhChinhSuaXemTruoc.current);
+        urlAnhChinhSuaXemTruoc.current = "";
+      }
+      setAnhChinhSuaXemTruoc("");
       setLanTaiLaiDanhSach((lanTaiLai) => lanTaiLai + 1);
     } catch (err) {
       const loiValidate = err.response?.data?.errors;
@@ -302,10 +353,12 @@ function AdminBaiViet() {
         <FormChinhSuaBaiViet
           baiVietDangChon={baiVietDangChon}
           form={formChinhSua}
+          anhXemTruoc={anhChinhSuaXemTruoc}
           dangLuu={dangCapNhat}
           loi={loiChinhSua}
           thongBao={thongBaoChinhSua}
           capNhatForm={capNhatFormChinhSua}
+          chonAnhBia={chonAnhBiaChinhSua}
           capNhatBaiViet={capNhatBaiViet}
           quayLaiDanhSach={() => setTabDangMo("danh_sach")}
         />

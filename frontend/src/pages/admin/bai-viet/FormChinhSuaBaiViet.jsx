@@ -3,10 +3,12 @@ import { TRANG_THAI_BAI_VIET } from "./trangThaiBaiViet";
 function FormChinhSuaBaiViet({
   baiVietDangChon,
   form,
+  anhXemTruoc,
   dangLuu,
   loi,
   thongBao,
   capNhatForm,
+  chonAnhBia,
   capNhatBaiViet,
   quayLaiDanhSach,
 }) {
@@ -94,12 +96,39 @@ function FormChinhSuaBaiViet({
         </div>
 
         {baiVietDangChon.anh_bia ? (
-          <img
-            src={baiVietDangChon.anh_bia}
-            alt=""
-            className="aspect-video w-full rounded-2xl object-cover"
-          />
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div className="text-sm font-semibold text-white/90">
+              Ảnh bìa hiện tại
+            </div>
+            <img
+              src={baiVietDangChon.anh_bia}
+              alt=""
+              className="mt-3 aspect-video w-full rounded-xl object-cover"
+            />
+          </div>
         ) : null}
+
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <label className="block text-sm font-semibold text-white/90">
+            Ảnh bìa mới
+          </label>
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={chonAnhBia}
+            className="mt-2 w-full text-sm text-white/80 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-600 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-blue-700"
+          />
+
+          {anhXemTruoc ? (
+            <img
+              src={anhXemTruoc}
+              alt="Ảnh bìa mới xem trước"
+              className="mt-4 aspect-video w-full rounded-xl object-cover"
+            />
+          ) : (
+            <div className="mt-4 aspect-video w-full rounded-xl border border-dashed border-white/20 bg-[#0a0f24]" />
+          )}
+        </div>
 
         {loi ? (
           <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
