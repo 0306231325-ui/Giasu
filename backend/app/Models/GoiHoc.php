@@ -15,10 +15,15 @@ class GoiHoc extends Model
         'hocvien_id',
         'giasu_id',
         'monhoc_id',
+        'giasu_gia_id',
+        'chietkhau_id',
         'ngay_batdau',
         'ngay_ketthuc',
         'so_buoi',
         'hoc_dinhky',
+        'thu',
+        'gio_batdau',
+        'gio_ketthuc',
         'dia_chi_hoc',
         'hinh_thuc_hoc',
         'tong_tien',
@@ -40,13 +45,23 @@ class GoiHoc extends Model
         return $this->belongsTo(Giasu::class, 'giasu_id');
     }
 
+    public function giasuGia()
+    {
+        return $this->belongsTo(GiasuGia::class, 'giasu_gia_id');
+    }
+
+    public function chietKhau()
+    {
+        return $this->belongsTo(ChietKhau::class, 'chietkhau_id');
+    }
+
     public function lichHocs()
     {
         return $this->hasMany(LichHoc::class, 'goihoc_id');
     }
 
-    public function lichDinhKys()
+    public function phanHois()
     {
-        return $this->hasMany(GoiHocLichDinhKy::class, 'goihoc_id');
+        return $this->hasMany(PhanHoi::class, 'goi_hoc_id');
     }
 }

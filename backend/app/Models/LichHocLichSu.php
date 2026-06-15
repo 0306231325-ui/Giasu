@@ -14,6 +14,8 @@ class LichHocLichSu extends Model
         'nguoi_thay_doi_id',
         'trang_thai_cu',
         'trang_thai_moi',
+        'ngay_tao',
+        'ngay_ap_dung',
     ];
 
     public function lichHoc(): BelongsTo

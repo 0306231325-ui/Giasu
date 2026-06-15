@@ -16,9 +16,14 @@ class DanhGiaSeeder extends Seeder
         }
 
         $now = Carbon::now();
+        $userId = DB::table('lichhoc')
+            ->join('goihoc', 'goihoc.id', '=', 'lichhoc.goihoc_id')
+            ->where('lichhoc.id', $lichHocId)
+            ->value('goihoc.hocvien_id');
 
         DB::table('danhgia')->insert([
             'lichhoc_id' => $lichHocId,
+            'user_id' => $userId,
             'so_sao' => 5,
             'noi_dung' => 'Dạy rất dễ hiểu!',
             'created_at' => $now,

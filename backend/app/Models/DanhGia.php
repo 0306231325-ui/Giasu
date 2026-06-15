@@ -13,6 +13,7 @@ class DanhGia extends Model
 
     protected $fillable = [
         'lichhoc_id',
+        'user_id',
         'so_sao',
         'noi_dung',
     ];
@@ -20,5 +21,10 @@ class DanhGia extends Model
     public function lichHoc()
     {
         return $this->belongsTo(LichHoc::class, 'lichhoc_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

@@ -33,6 +33,7 @@ class UsersSeeder extends Seeder
 
             [
                 'ho_ten' => 'Vo Tan Hien',
+                'ngay_sinh' => '2003-04-15',
                 'email' => 'tanhien@gmail.com',
                 'password' => '@Thienphu2005',
                 'sdt' => '0933334444',
@@ -43,6 +44,7 @@ class UsersSeeder extends Seeder
 
             [
                 'ho_ten' => 'Nguyen Duc Anh',
+                'ngay_sinh' => '1998-09-20',
                 'email' => 'nguyenducanh@gmail.com',
                 'password' => '@Thienphu2005',
                 'sdt' => '0902789456',
@@ -53,6 +55,7 @@ class UsersSeeder extends Seeder
 
             [
                 'ho_ten' => 'Le Thi Hong Nhung',
+                'ngay_sinh' => '1995-02-11',
                 'email' => 'lehongnhung@gmail.com',
                 'password' => '@Thienphu2005',
                 'sdt' => '0916543789',
@@ -63,6 +66,7 @@ class UsersSeeder extends Seeder
 
             [
                 'ho_ten' => 'Tran Quoc Bao',
+                'ngay_sinh' => '1990-07-08',
                 'email' => 'tranquocbao@gmail.com',
                 'password' => '@Thienphu2005',
                 'sdt' => '0398765432',
@@ -73,6 +77,7 @@ class UsersSeeder extends Seeder
 
             [
                 'ho_ten' => 'Pham Minh Tam',
+                'ngay_sinh' => '2000-12-25',
                 'email' => 'phamminhtam@gmail.com',
                 'password' => '@Thienphu2005',
                 'sdt' => '0876234591',

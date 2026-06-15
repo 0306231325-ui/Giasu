@@ -16,13 +16,19 @@ class GoiHocSeeder extends Seeder
         $monhocId = DB::table('monhoc')
             ->where('ten_mon', 'Toán Học')
             ->where('cap_hoc_id', $capThptId)
-            ->where('so_lop', 10)
+            ->where('lop', 'Lớp 10')
             ->value('id');
 
-        $donGia = DB::table('giasu_gia')
+        $giaGiasu = DB::table('giasu_gia')
             ->where('giasu_id', 1)
             ->where('monhoc_id', $monhocId)
-            ->value('tong_gia');
+            ->first(['id', 'tong_gia']);
+        $donGia = $giaGiasu?->tong_gia;
+        $soBuoi = 12;
+        $chietKhauId = DB::table('chietkhau')
+            ->where('so_buoi', '<=', $soBuoi)
+            ->orderByDesc('so_buoi')
+            ->value('id');
 
         $exists = DB::table('goihoc')
             ->where('hocvien_id', 2)
@@ -34,14 +40,19 @@ class GoiHocSeeder extends Seeder
             return;
         }
 
-        $goiHocId = DB::table('goihoc')->insertGetId([
+        DB::table('goihoc')->insert([
             'hocvien_id' => 2,
             'giasu_id' => 1,
             'monhoc_id' => $monhocId,
+            'giasu_gia_id' => $giaGiasu?->id,
+            'chietkhau_id' => $chietKhauId,
             'ngay_batdau' => $now->copy()->addDays(1)->toDateString(),
             'ngay_ketthuc' => $now->copy()->addDays(30)->toDateString(),
-            'so_buoi' => 12,
+            'so_buoi' => $soBuoi,
             'hoc_dinhky' => true,
+            'thu' => 2,
+            'gio_batdau' => '18:00:00',
+            'gio_ketthuc' => '20:00:00',
             'dia_chi_hoc' => '12 Nguyễn Văn Cừ, Quận 5, TP.HCM',
             'hinh_thuc_hoc' => 'offline',
             'tong_tien' => 1800000.00,
@@ -50,24 +61,5 @@ class GoiHocSeeder extends Seeder
             'created_at' => $now,
             'updated_at' => $now,
         ]);
-
-        foreach ([2, 6] as $thu) {
-            DB::table('goihoc_lich_dinhky')->updateOrInsert(
-                [
-                    'goihoc_id' => $goiHocId,
-                    'thu' => $thu,
-                    'gio_batdau' => $thu === 2 ? '18:00:00' : '14:00:00',
-                    'gio_ketthuc' => $thu === 2 ? '20:00:00' : '16:00:00',
-                ],
-                [
-                    'goihoc_id' => $goiHocId,
-                    'thu' => $thu,
-                    'gio_batdau' => $thu === 2 ? '18:00:00' : '14:00:00',
-                    'gio_ketthuc' => $thu === 2 ? '20:00:00' : '16:00:00',
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]
-            );
-        }
     }
 }

@@ -19,4 +19,9 @@ class CapHoc extends Model
     {
         return $this->hasMany(MonHoc::class, 'cap_hoc_id');
     }
+
+    public function giasus(): HasMany
+    {
+        return $this->hasMany(Giasu::class, 'cap_hoc_id');
+    }
 }

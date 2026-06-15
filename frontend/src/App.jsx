@@ -13,6 +13,7 @@ import AdminHome from "./pages/admin/AdminHome";
 import AdminHocVien from "./pages/admin/AdminHocVien";
 import AdminGiaSu from "./pages/admin/AdminGiaSu";
 import AdminBaiViet from "./pages/admin/AdminBaiViet";
+import DangKyLamGiaSu from "./pages/tutor/DangKyLamGiaSu";
 
 function App() {
 
@@ -35,6 +36,8 @@ function App() {
         <Route path="/home" element={<Home />} />
 
         <Route path="/gia-su" element={<DanhSachGiaSu />} />
+
+        <Route path="/dang-ky-lam-gia-su" element={<DangKyLamGiaSu />} />
 
         <Route path="/mon-hoc" element={<DanhSachMonHoc />} />
 

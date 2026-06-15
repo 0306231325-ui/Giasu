@@ -56,6 +56,13 @@ function Navbar() {
                     Gia Sư
                 </Link>
 
+                <Link
+                    to="/dang-ky-lam-gia-su"
+                    className="hover:text-white transition"
+                >
+                    Đăng Ký Làm Gia Sư
+                </Link>
+
                 <div
                     className="relative flex items-center gap-1"
                     ref={dropdownRef}

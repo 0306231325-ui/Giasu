@@ -10,22 +10,24 @@ class GiaTinhService
     public static function tinhGiaGiasu(int $monhocId, int $giasuId): ?array
     {
         $monhoc = MonHoc::find($monhocId);
-        $giasu = Giasu::with('trinhDo')->find($giasuId);
+        $giasu = Giasu::with(['trinhDo', 'mucKinhNghiem'])->find($giasuId);
 
         if (! $monhoc || ! $giasu) {
             return null;
         }
 
         $giaMon = (float) $monhoc->gia;
-        $giaCongThem = (float) ($giasu->trinhDo?->gia_cong_them ?? 0);
+        $giaCongTrinhDo = (float) ($giasu->trinhDo?->gia_cong_them ?? 0);
+        $giaCongKinhNghiem = (float) ($giasu->mucKinhNghiem?->gia_cong_them ?? 0);
 
         return [
             'giasu_id' => $giasuId,
             'monhoc_id' => $monhocId,
             'trinh_do_giasu_id' => $giasu->trinh_do_giasu_id,
             'gia_mon' => $giaMon,
-            'gia_cong_them' => $giaCongThem,
-            'tong_gia' => $giaMon + $giaCongThem,
+            'gia_cong_trinh_do' => $giaCongTrinhDo,
+            'gia_cong_kinh_nghiem' => $giaCongKinhNghiem,
+            'tong_gia' => $giaMon + $giaCongTrinhDo + $giaCongKinhNghiem,
         ];
     }
 

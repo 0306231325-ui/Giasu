@@ -17,8 +17,7 @@ class MonHoc extends Model
         'ten_mon',
         'mo_ta',
         'cap_hoc_id',
-        'so_lop',
-        'thu_tu_trong_cap',
+        'lop',
         'gia',
     ];
 

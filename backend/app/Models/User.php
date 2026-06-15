@@ -15,6 +15,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'ho_ten',
+        'ngay_sinh',
         'email',
         'password',
         'sdt',
@@ -33,6 +34,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'ngay_sinh' => 'date',
         ];
     }
 
@@ -49,5 +51,10 @@ class User extends Authenticatable
     public function lichHocs()
     {
         return $this->hasMany(LichHoc::class, 'user_id');
+    }
+
+    public function danhGias()
+    {
+        return $this->hasMany(DanhGia::class, 'user_id');
     }
 }

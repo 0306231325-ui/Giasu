@@ -19,11 +19,11 @@ class ThanhToanSeeder extends Seeder
 
         DB::table('thanhtoan')->insert([
             'goihoc_id' => $goiHocId,
-            'tien_goi' => 1800000.00,
-            'tien_hoan' => 0.00,
-            'tong_tien' => 1800000.00,
+            'so_tien' => 1800000.00,
             'phuong_thuc' => 'banking',
+            'so_tai_khoan' => '0123456789',
             'ma_giaodich' => 'VN123456789',
+            'ngay_thanhtoan' => $now,
             'trang_thai' => 'da_thanhtoan',
             'created_at' => $now,
             'updated_at' => $now,

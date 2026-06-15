@@ -25,21 +25,23 @@ class LichHocSeeder extends Seeder
         }
 
         $now = Carbon::now();
-        $lichDinhKyId = DB::table('goihoc_lich_dinhky')
-            ->where('goihoc_id', $goiHocId)
-            ->where('thu', 2)
-            ->where('gio_batdau', '18:00:00')
-            ->where('gio_ketthuc', '20:00:00')
-            ->value('id');
+        $phanTramGiam = DB::table('goihoc')
+            ->leftJoin('chietkhau', 'chietkhau.id', '=', 'goihoc.chietkhau_id')
+            ->where('goihoc.id', $goiHocId)
+            ->value('chietkhau.phan_tram_giam') ?? 0;
+        $tienHocGoc = 300000.00;
+        $tienHocSauGiam = $tienHocGoc * (1 - ((float) $phanTramGiam / 100));
 
         DB::table('lichhoc')->insert([
             'goihoc_id' => $goiHocId,
-            'goihoc_lich_dinhky_id' => $lichDinhKyId,
+            'loai_buoi' => 'hoc_thuong',
             'ngay_hoc' => $now->copy()->addDays(2)->toDateString(),
             'gio_batdau' => '18:00:00',
             'gio_ketthuc' => '20:00:00',
             'dia_chi_hoc' => '12 Nguyễn Văn Cừ, Quận 5, TP.HCM',
             'hinh_thuc_hoc' => 'offline',
+            'tien_hoc' => $tienHocSauGiam,
+            'da_giam' => $phanTramGiam,
             'phi_hoahong' => 30000.00,
             'tien_giasu_nhan' => 270000.00,
             'trang_thai' => 'da_nhan',

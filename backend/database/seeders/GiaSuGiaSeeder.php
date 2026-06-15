@@ -34,7 +34,7 @@ class GiaSuGiaSeeder extends Seeder
                 $monhocId = DB::table('monhoc')
                     ->where('ten_mon', $item['ten_mon'])
                     ->where('cap_hoc_id', $capHocId)
-                    ->where('so_lop', $soLop)
+                    ->where('lop', 'Lớp ' . $soLop)
                     ->value('id');
 
                 if (! $monhocId) {

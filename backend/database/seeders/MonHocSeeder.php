@@ -11,55 +11,81 @@ class MonHocSeeder extends Seeder
     public function run(): void
     {
         $now = Carbon::now();
-        $capMap = DB::table('cap_hoc')->pluck('id', 'ma');
-
-        $giaGocTheoMon = [
-            'Toán Học' => 100000,
-            'Vật Lý' => 120000,
-            'Tiếng Anh' => 200000,
+        $cacCapHoc = [
+            'tieu_hoc' => range(1, 5),
+            'thcs' => range(6, 9),
+            'thpt' => range(10, 12),
         ];
 
-        $lopTheoCap = [
-            'tieu_hoc' => [1, 2, 3, 4, 5],
-            'thcs' => [6, 7, 8, 9],
-            'thpt' => [10, 11, 12],
-            'cao_dang' => [1, 2, 3],
-            'dai_hoc' => [1, 2, 3, 4],
+        $monTheoCap = [
+            'tieu_hoc' => [
+                'Toán Học' => 100000,
+                'Tiếng Việt' => 100000,
+                'Tiếng Anh' => 140000,
+            ],
+            'thcs' => [
+                'Toán Học' => 180000,
+                'Ngữ Văn' => 170000,
+                'Vật Lý' => 190000,
+                'Hóa Học' => 190000,
+                'Tiếng Anh' => 200000,
+            ],
+            'thpt' => [
+                'Toán Học' => 280000,
+                'Ngữ Văn' => 250000,
+                'Vật Lý' => 300000,
+                'Hóa Học' => 300000,
+                'Sinh Học' => 280000,
+                'Tiếng Anh' => 320000,
+            ],
         ];
 
-        foreach ($giaGocTheoMon as $tenMon => $giaGoc) {
-            foreach ($lopTheoCap as $maCap => $soLops) {
-                if (! isset($capMap[$maCap])) {
-                    continue;
-                }
+        foreach ($monTheoCap as $maCap => $cacMon) {
+            $capHocId = DB::table('cap_hoc')->where('ma', $maCap)->value('id');
+            if (! $capHocId) {
+                continue;
+            }
 
-                $cap = DB::table('cap_hoc')->where('ma', $maCap)->first();
-                $thuTuTrongCap = 1;
+            DB::table('monhoc')
+                ->where('cap_hoc_id', $capHocId)
+                ->whereNotIn('ten_mon', array_keys($cacMon))
+                ->whereNotExists(function ($query) {
+                    $query->selectRaw('1')
+                        ->from('giasu_gia')
+                        ->whereColumn('giasu_gia.monhoc_id', 'monhoc.id');
+                })
+                ->whereNotExists(function ($query) {
+                    $query->selectRaw('1')
+                        ->from('goihoc')
+                        ->whereColumn('goihoc.monhoc_id', 'monhoc.id');
+                })
+                ->delete();
+        }
 
-                foreach ($soLops as $soLop) {
-                    $gia = $giaGoc
-                        + max(0, ((int) $cap->thu_tu) - 1) * 100000
-                        + max(0, $thuTuTrongCap - 1) * 50000;
+        foreach ($cacCapHoc as $maCap => $cacLop) {
+            $cap = DB::table('cap_hoc')->where('ma', $maCap)->first();
+            if (! $cap) {
+                continue;
+            }
+
+            foreach ($monTheoCap[$maCap] as $tenMon => $giaGoc) {
+                foreach ($cacLop as $soLop) {
+                    $lop = 'Lớp ' . $soLop;
+                    $gia = $giaGoc;
 
                     DB::table('monhoc')->updateOrInsert(
                         [
                             'cap_hoc_id' => $cap->id,
                             'ten_mon' => $tenMon,
-                            'so_lop' => $soLop,
+                            'lop' => $lop,
                         ],
                         [
-                            'cap_hoc_id' => $cap->id,
-                            'ten_mon' => $tenMon,
-                            'so_lop' => $soLop,
-                            'thu_tu_trong_cap' => $thuTuTrongCap,
                             'gia' => $gia,
-                            'mo_ta' => $tenMon . ' - ' . $cap->ten . ' - Lớp ' . $soLop,
+                            'mo_ta' => $tenMon . ' ' . $lop . ' - ' . $cap->ten,
                             'created_at' => $now,
                             'updated_at' => $now,
                         ]
                     );
-
-                    $thuTuTrongCap++;
                 }
             }
         }

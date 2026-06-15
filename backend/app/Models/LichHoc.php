@@ -13,12 +13,14 @@ class LichHoc extends Model
 
     protected $fillable = [
         'goihoc_id',
-        'goihoc_lich_dinhky_id',
+        'loai_buoi',
         'ngay_hoc',
         'gio_batdau',
         'gio_ketthuc',
         'dia_chi_hoc',
         'hinh_thuc_hoc',
+        'tien_hoc',
+        'da_giam',
         'phi_hoahong',
         'tien_giasu_nhan',
         'trang_thai',
@@ -26,16 +28,12 @@ class LichHoc extends Model
         'nguoi_huy_id',
         'lydo_huy',
         'thoigian_huy',
+        'hinh_thuc_xu_ly',
     ];
 
     public function goiHoc()
     {
         return $this->belongsTo(GoiHoc::class, 'goihoc_id');
-    }
-
-    public function lichDinhKy()
-    {
-        return $this->belongsTo(GoiHocLichDinhKy::class, 'goihoc_lich_dinhky_id');
     }
 
     public function danhGia()
@@ -48,8 +46,4 @@ class LichHoc extends Model
         return $this->hasMany(LichHocLichSu::class, 'lichhoc_id');
     }
 
-    public function hocBus()
-    {
-        return $this->hasMany(HocBu::class, 'lichhoc_id');
-    }
 }

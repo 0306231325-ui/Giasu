@@ -15,7 +15,10 @@ class Giasu extends Model
         'user_id',
         'mo_ta',
         'kinh_nghiem',
+        'muc_kinh_nghiem_id',
         'hoc_van',
+        'truong_hoc',
+        'cap_hoc_id',
         'trinh_do_giasu_id',
         'dia_chi',
         'avatar',
@@ -55,7 +58,7 @@ class Giasu extends Model
     public function monHocs()
     {
         return $this->belongsToMany(MonHoc::class, 'giasu_gia', 'giasu_id', 'monhoc_id')
-            ->withPivot('trinh_do_giasu_id', 'gia_mon', 'gia_cong_them', 'tong_gia')
+            ->withPivot('trinh_do_giasu_id', 'gia_mon', 'gia_cong_trinh_do', 'gia_cong_kinh_nghiem', 'tong_gia')
             ->withTimestamps();
     }
 
@@ -64,14 +67,24 @@ class Giasu extends Model
         return $this->belongsTo(TrinhDoGiasu::class, 'trinh_do_giasu_id');
     }
 
-    public function capHocs()
+    public function mucKinhNghiem()
     {
-        return $this->belongsToMany(CapHoc::class, 'giasu_cap_hoc', 'giasu_id', 'cap_hoc_id')
-            ->withTimestamps();
+        return $this->belongsTo(MucKinhNghiem::class, 'muc_kinh_nghiem_id');
+    }
+
+    public function capHoc()
+    {
+        return $this->belongsTo(CapHoc::class, 'cap_hoc_id');
     }
 
     public function bangCaps()
     {
         return $this->hasMany(GiasuBangCap::class, 'giasu_id');
     }
+
+    public function phanHois()
+    {
+        return $this->hasMany(PhanHoi::class, 'gia_su_id');
+    }
+
 }

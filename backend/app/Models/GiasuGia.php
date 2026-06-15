@@ -14,7 +14,8 @@ class GiasuGia extends Model
         'monhoc_id',
         'trinh_do_giasu_id',
         'gia_mon',
-        'gia_cong_them',
+        'gia_cong_trinh_do',
+        'gia_cong_kinh_nghiem',
         'tong_gia',
     ];
 
