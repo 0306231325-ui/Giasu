@@ -1,3 +1,6 @@
+import { useState } from "react";
+import useTutorRegistrationOptions from "./hooks/useTutorRegistrationOptions";
+
 const inputClass =
     "mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100";
 
@@ -21,7 +24,25 @@ function RequiredMark() {
     return <span className="text-red-500"> *</span>;
 }
 
+function formatExperienceLevel(level) {
+    if (level.tu_khoang === 0 && level.den_khoang === 0) {
+        return "Chưa có kinh nghiệm";
+    }
+
+    if (level.den_khoang === null) {
+        return `Từ ${level.tu_khoang} năm trở lên`;
+    }
+
+    return `Từ ${level.tu_khoang} đến ${level.den_khoang} năm`;
+}
+
 function DangKyLamGiaSu() {
+    const { options, loading, error } = useTutorRegistrationOptions();
+    const [selectedCapHocId, setSelectedCapHocId] = useState("");
+    const monHocTheoCap = options.mon_hoc.filter(
+        (monHoc) => String(monHoc.cap_hoc_id) === selectedCapHocId,
+    );
+
     return (
         <section className="relative bg-slate-50 px-4 py-12 text-slate-900 sm:px-6 lg:py-16">
             <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-blue-950 to-slate-50" />
@@ -41,6 +62,12 @@ function DangKyLamGiaSu() {
                 </div>
 
                 <form className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-blue-950/10">
+                    {error && (
+                        <div className="border-b border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700 sm:px-8 lg:px-10">
+                            {error}
+                        </div>
+                    )}
+
                     <div className="border-b border-slate-100 p-6 sm:p-8 lg:p-10">
                         <SectionTitle
                             number="1"
@@ -110,16 +137,20 @@ function DangKyLamGiaSu() {
                         <div className="grid gap-5 md:grid-cols-2">
                             <label className={labelClass}>
                                 Trình độ hiện tại<RequiredMark />
-                                <select className={inputClass} name="trinh_do" defaultValue="">
+                                <select
+                                    className={inputClass}
+                                    name="trinh_do_giasu_id"
+                                    defaultValue=""
+                                    disabled={loading}
+                                >
                                     <option value="" disabled>
-                                        Chọn trình độ
+                                        {loading ? "Đang tải trình độ..." : "Chọn trình độ"}
                                     </option>
-                                    <option>Sinh viên</option>
-                                    <option>Cao đẳng</option>
-                                    <option>Đại học</option>
-                                    <option>Thạc sĩ</option>
-                                    <option>Tiến sĩ</option>
-                                    <option>Giáo viên / Giảng viên</option>
+                                    {options.trinh_do.map((trinhDo) => (
+                                        <option key={trinhDo.id} value={trinhDo.id}>
+                                            {trinhDo.ten}
+                                        </option>
+                                    ))}
                                 </select>
                             </label>
 
@@ -145,15 +176,21 @@ function DangKyLamGiaSu() {
 
                             <label className={labelClass}>
                                 Cấp học có thể dạy<RequiredMark />
-                                <select className={inputClass} name="cap_hoc" defaultValue="">
+                                <select
+                                    className={inputClass}
+                                    name="cap_hoc_id"
+                                    value={selectedCapHocId}
+                                    onChange={(event) => setSelectedCapHocId(event.target.value)}
+                                    disabled={loading}
+                                >
                                     <option value="" disabled>
-                                        Chọn cấp học
+                                        {loading ? "Đang tải cấp học..." : "Chọn cấp học"}
                                     </option>
-                                    <option>Tiểu học</option>
-                                    <option>Trung học cơ sở</option>
-                                    <option>Trung học phổ thông</option>
-                                    <option>Đại học</option>
-                                    <option>Ngoại ngữ / Kỹ năng</option>
+                                    {options.cap_hoc.map((capHoc) => (
+                                        <option key={capHoc.id} value={capHoc.id}>
+                                            {capHoc.ten}
+                                        </option>
+                                    ))}
                                 </select>
                             </label>
 
@@ -161,24 +198,32 @@ function DangKyLamGiaSu() {
                                 <legend className={labelClass}>
                                     Môn học đăng ký dạy<RequiredMark />
                                 </legend>
-                                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-                                    {["Toán", "Ngữ văn", "Tiếng Anh", "Vật lý", "Hóa học", "Sinh học"].map(
-                                        (subject) => (
+                                {!selectedCapHocId ? (
+                                    <p className="mt-3 rounded-xl bg-slate-50 px-4 py-3 text-sm font-normal text-slate-500">
+                                        Chọn cấp học để hiển thị môn học.
+                                    </p>
+                                ) : monHocTheoCap.length === 0 ? (
+                                    <p className="mt-3 rounded-xl bg-slate-50 px-4 py-3 text-sm font-normal text-slate-500">
+                                        Cấp học này chưa có môn học.
+                                    </p>
+                                ) : (
+                                    <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                                        {monHocTheoCap.map((monHoc) => (
                                             <label
-                                                key={subject}
+                                                key={monHoc.id}
                                                 className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-3 py-3 text-sm font-medium text-slate-700 hover:border-blue-300 hover:bg-blue-50"
                                             >
                                                 <input
                                                     type="checkbox"
-                                                    name="mon_hoc"
-                                                    value={subject}
+                                                    name="mon_hoc_ids[]"
+                                                    value={monHoc.id}
                                                     className="h-4 w-4 accent-blue-600"
                                                 />
-                                                {subject}
+                                                {monHoc.ten_mon}
                                             </label>
-                                        ),
-                                    )}
-                                </div>
+                                        ))}
+                                    </div>
+                                )}
                             </fieldset>
                         </div>
                     </div>
@@ -197,14 +242,18 @@ function DangKyLamGiaSu() {
                                     className={inputClass}
                                     name="muc_kinh_nghiem_id"
                                     defaultValue=""
+                                    disabled={loading}
                                 >
                                     <option value="" disabled>
-                                        Chọn mức kinh nghiệm
+                                        {loading
+                                            ? "Đang tải mức kinh nghiệm..."
+                                            : "Chọn mức kinh nghiệm"}
                                     </option>
-                                    <option value="1">Chưa có kinh nghiệm</option>
-                                    <option value="2">Từ 1 đến 2 năm</option>
-                                    <option value="3">Từ 3 đến 5 năm</option>
-                                    <option value="4">Từ 6 năm trở lên</option>
+                                    {options.muc_kinh_nghiem.map((level) => (
+                                        <option key={level.id} value={level.id}>
+                                            {formatExperienceLevel(level)}
+                                        </option>
+                                    ))}
                                 </select>
                             </label>
 

@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\GiasuController;
 use App\Http\Controllers\Api\MonHocController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminHocVienController;
+use App\Http\Controllers\Api\DangKyGiaSuController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -45,5 +46,7 @@ Route::get('/baiviet/{slug}', [BaiVietController::class, 'chiTiet']);
 Route::get('/banner', [BannerController::class, 'index']);
 
 Route::get('/gia-su', [GiasuController::class, 'index']);
+
+Route::get('/dang-ky-gia-su/danh-muc', [DangKyGiaSuController::class, 'danhMuc']);
 
 Route::get('/mon-hoc', [MonHocController::class, 'index']);
