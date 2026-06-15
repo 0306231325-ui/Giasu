@@ -4,9 +4,45 @@ namespace App\Services;
 
 use App\Models\Giasu;
 use App\Models\MonHoc;
+use App\Models\MucKinhNghiem;
+use App\Models\TrinhDoGiasu;
 
 class GiaTinhService
 {
+    public static function tinhGiaDuKien(
+        array $monhocIds,
+        int $trinhDoGiasuId,
+        int $mucKinhNghiemId
+    ): array {
+        $trinhDo = TrinhDoGiasu::find($trinhDoGiasuId);
+        $mucKinhNghiem = MucKinhNghiem::find($mucKinhNghiemId);
+
+        if (! $trinhDo || ! $mucKinhNghiem) {
+            return [];
+        }
+
+        $giaCongTrinhDo = (float) $trinhDo->gia_cong_them;
+        $giaCongKinhNghiem = (float) $mucKinhNghiem->gia_cong_them;
+
+        return MonHoc::query()
+            ->whereIn('id', $monhocIds)
+            ->orderBy('ten_mon')
+            ->get(['id', 'ten_mon', 'gia'])
+            ->map(function (MonHoc $monhoc) use ($giaCongTrinhDo, $giaCongKinhNghiem) {
+                $giaMon = (float) $monhoc->gia;
+
+                return [
+                    'monhoc_id' => $monhoc->id,
+                    'ten_mon' => $monhoc->ten_mon,
+                    'gia_mon' => $giaMon,
+                    'gia_cong_trinh_do' => $giaCongTrinhDo,
+                    'gia_cong_kinh_nghiem' => $giaCongKinhNghiem,
+                    'tong_gia' => $giaMon + $giaCongTrinhDo + $giaCongKinhNghiem,
+                ];
+            })
+            ->all();
+    }
+
     public static function tinhGiaGiasu(int $monhocId, int $giasuId): ?array
     {
         $monhoc = MonHoc::find($monhocId);

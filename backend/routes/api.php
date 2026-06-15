@@ -48,5 +48,6 @@ Route::get('/banner', [BannerController::class, 'index']);
 Route::get('/gia-su', [GiasuController::class, 'index']);
 
 Route::get('/dang-ky-gia-su/danh-muc', [DangKyGiaSuController::class, 'danhMuc']);
+Route::post('/dang-ky-gia-su/tinh-gia', [DangKyGiaSuController::class, 'tinhGia']);
 
 Route::get('/mon-hoc', [MonHocController::class, 'index']);

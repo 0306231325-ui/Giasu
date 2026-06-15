@@ -1,47 +1,75 @@
 import { useState } from "react";
-import useTutorRegistrationOptions from "./hooks/useTutorRegistrationOptions";
+import useDanhMucDangKyGiaSu from "./hooks/useDanhMucDangKyGiaSu";
+import useGiaDuKienGiaSu from "./hooks/useGiaDuKienGiaSu";
 
-const inputClass =
+const lopInput =
     "mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100";
 
-const labelClass = "block text-sm font-semibold text-slate-700";
+const lopNhan = "block text-sm font-semibold text-slate-700";
 
-function SectionTitle({ number, title, description }) {
+function TieuDePhan({ soThuTu, tieuDe, moTa }) {
     return (
         <div className="mb-6 flex items-start gap-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
-                {number}
+                {soThuTu}
             </span>
             <div>
-                <h2 className="text-lg font-bold text-slate-900">{title}</h2>
-                <p className="mt-1 text-sm text-slate-500">{description}</p>
+                <h2 className="text-lg font-bold text-slate-900">{tieuDe}</h2>
+                <p className="mt-1 text-sm text-slate-500">{moTa}</p>
             </div>
         </div>
     );
 }
 
-function RequiredMark() {
+function DauBatBuoc() {
     return <span className="text-red-500"> *</span>;
 }
 
-function formatExperienceLevel(level) {
-    if (level.tu_khoang === 0 && level.den_khoang === 0) {
+function dinhDangMucKinhNghiem(mucKinhNghiem) {
+    if (mucKinhNghiem.tu_khoang === 0 && mucKinhNghiem.den_khoang === 0) {
         return "Chưa có kinh nghiệm";
     }
 
-    if (level.den_khoang === null) {
-        return `Từ ${level.tu_khoang} năm trở lên`;
+    if (mucKinhNghiem.den_khoang === null) {
+        return `Từ ${mucKinhNghiem.tu_khoang} năm trở lên`;
     }
 
-    return `Từ ${level.tu_khoang} đến ${level.den_khoang} năm`;
+    return `Từ ${mucKinhNghiem.tu_khoang} đến ${mucKinhNghiem.den_khoang} năm`;
+}
+
+function dinhDangTien(giaTri) {
+    return `${Number(giaTri).toLocaleString("vi-VN")}đ`;
 }
 
 function DangKyLamGiaSu() {
-    const { options, loading, error } = useTutorRegistrationOptions();
-    const [selectedCapHocId, setSelectedCapHocId] = useState("");
-    const monHocTheoCap = options.mon_hoc.filter(
-        (monHoc) => String(monHoc.cap_hoc_id) === selectedCapHocId,
+    const { danhMuc, dangTai: dangTaiDanhMuc, loi: loiDanhMuc } =
+        useDanhMucDangKyGiaSu();
+    const [capHocIdDaChon, setCapHocIdDaChon] = useState("");
+    const [trinhDoIdDaChon, setTrinhDoIdDaChon] = useState("");
+    const [mucKinhNghiemIdDaChon, setMucKinhNghiemIdDaChon] = useState("");
+    const [monHocIdsDaChon, setMonHocIdsDaChon] = useState([]);
+    const monHocTheoCap = danhMuc.mon_hoc.filter(
+        (monHoc) => String(monHoc.cap_hoc_id) === capHocIdDaChon,
     );
+    const {
+        giaDuKien,
+        dangTai: dangTinhGia,
+        loi: loiTinhGia,
+    } = useGiaDuKienGiaSu({
+        monHocIdsDaChon,
+        trinhDoIdDaChon,
+        mucKinhNghiemIdDaChon,
+    });
+
+    const xuLyChonMonHoc = (suKien) => {
+        const monHocId = suKien.target.value;
+
+        setMonHocIdsDaChon((danhSachHienTai) =>
+            suKien.target.checked
+                ? [...danhSachHienTai, monHocId]
+                : danhSachHienTai.filter((id) => id !== monHocId),
+        );
+    };
 
     return (
         <section className="relative bg-slate-50 px-4 py-12 text-slate-900 sm:px-6 lg:py-16">
@@ -62,63 +90,63 @@ function DangKyLamGiaSu() {
                 </div>
 
                 <form className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-blue-950/10">
-                    {error && (
+                    {loiDanhMuc && (
                         <div className="border-b border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700 sm:px-8 lg:px-10">
-                            {error}
+                            {loiDanhMuc}
                         </div>
                     )}
 
                     <div className="border-b border-slate-100 p-6 sm:p-8 lg:p-10">
-                        <SectionTitle
-                            number="1"
-                            title="Thông tin cá nhân"
-                            description="Thông tin dùng để liên hệ và xác minh hồ sơ của bạn."
+                        <TieuDePhan
+                            soThuTu="1"
+                            tieuDe="Thông tin cá nhân"
+                            moTa="Thông tin dùng để liên hệ và xác minh hồ sơ của bạn."
                         />
 
                         <div className="grid gap-5 md:grid-cols-2">
-                            <label className={labelClass}>
-                                Họ và tên<RequiredMark />
+                            <label className={lopNhan}>
+                                Họ và tên<DauBatBuoc />
                                 <input
-                                    className={inputClass}
+                                    className={lopInput}
                                     type="text"
                                     name="ho_ten"
                                     placeholder="Nguyễn Văn An"
                                 />
                             </label>
 
-                            <label className={labelClass}>
-                                Ngày sinh<RequiredMark />
+                            <label className={lopNhan}>
+                                Ngày sinh<DauBatBuoc />
                                 <input
-                                    className={inputClass}
+                                    className={lopInput}
                                     type="date"
                                     name="ngay_sinh"
                                 />
                             </label>
 
-                            <label className={labelClass}>
-                                Số điện thoại<RequiredMark />
+                            <label className={lopNhan}>
+                                Số điện thoại<DauBatBuoc />
                                 <input
-                                    className={inputClass}
+                                    className={lopInput}
                                     type="tel"
                                     name="so_dien_thoai"
                                     placeholder="09xx xxx xxx"
                                 />
                             </label>
 
-                            <label className={labelClass}>
-                                Email<RequiredMark />
+                            <label className={lopNhan}>
+                                Email<DauBatBuoc />
                                 <input
-                                    className={inputClass}
+                                    className={lopInput}
                                     type="email"
                                     name="email"
                                     placeholder="email@example.com"
                                 />
                             </label>
 
-                            <label className={`${labelClass} md:col-span-2`}>
-                                Địa chỉ hiện tại<RequiredMark />
+                            <label className={`${lopNhan} md:col-span-2`}>
+                                Địa chỉ hiện tại<DauBatBuoc />
                                 <input
-                                    className={inputClass}
+                                    className={lopInput}
                                     type="text"
                                     name="dia_chi"
                                     placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"
@@ -128,25 +156,28 @@ function DangKyLamGiaSu() {
                     </div>
 
                     <div className="border-b border-slate-100 p-6 sm:p-8 lg:p-10">
-                        <SectionTitle
-                            number="2"
-                            title="Học vấn và chuyên môn"
-                            description="Cung cấp nền tảng chuyên môn phù hợp với môn học bạn muốn giảng dạy."
+                        <TieuDePhan
+                            soThuTu="2"
+                            tieuDe="Học vấn và chuyên môn"
+                            moTa="Cung cấp nền tảng chuyên môn phù hợp với môn học bạn muốn giảng dạy."
                         />
 
                         <div className="grid gap-5 md:grid-cols-2">
-                            <label className={labelClass}>
-                                Trình độ hiện tại<RequiredMark />
+                            <label className={lopNhan}>
+                                Trình độ hiện tại<DauBatBuoc />
                                 <select
-                                    className={inputClass}
+                                    className={lopInput}
                                     name="trinh_do_giasu_id"
-                                    defaultValue=""
-                                    disabled={loading}
+                                    value={trinhDoIdDaChon}
+                                    onChange={(suKien) =>
+                                        setTrinhDoIdDaChon(suKien.target.value)
+                                    }
+                                    disabled={dangTaiDanhMuc}
                                 >
                                     <option value="" disabled>
-                                        {loading ? "Đang tải trình độ..." : "Chọn trình độ"}
+                                        {dangTaiDanhMuc ? "Đang tải trình độ..." : "Chọn trình độ"}
                                     </option>
-                                    {options.trinh_do.map((trinhDo) => (
+                                    {danhMuc.trinh_do.map((trinhDo) => (
                                         <option key={trinhDo.id} value={trinhDo.id}>
                                             {trinhDo.ten}
                                         </option>
@@ -154,39 +185,42 @@ function DangKyLamGiaSu() {
                                 </select>
                             </label>
 
-                            <label className={labelClass}>
-                                Trường học<RequiredMark />
+                            <label className={lopNhan}>
+                                Trường học<DauBatBuoc />
                                 <input
-                                    className={inputClass}
+                                    className={lopInput}
                                     type="text"
                                     name="truong_hoc"
                                     placeholder="Tên trường đang học hoặc đã tốt nghiệp"
                                 />
                             </label>
 
-                            <label className={labelClass}>
-                                Chuyên ngành<RequiredMark />
+                            <label className={lopNhan}>
+                                Chuyên ngành<DauBatBuoc />
                                 <input
-                                    className={inputClass}
+                                    className={lopInput}
                                     type="text"
                                     name="chuyen_nganh"
                                     placeholder="Ví dụ: Sư phạm Toán học"
                                 />
                             </label>
 
-                            <label className={labelClass}>
-                                Cấp học có thể dạy<RequiredMark />
+                            <label className={lopNhan}>
+                                Cấp học có thể dạy<DauBatBuoc />
                                 <select
-                                    className={inputClass}
+                                    className={lopInput}
                                     name="cap_hoc_id"
-                                    value={selectedCapHocId}
-                                    onChange={(event) => setSelectedCapHocId(event.target.value)}
-                                    disabled={loading}
+                                    value={capHocIdDaChon}
+                                    onChange={(suKien) => {
+                                        setCapHocIdDaChon(suKien.target.value);
+                                        setMonHocIdsDaChon([]);
+                                    }}
+                                    disabled={dangTaiDanhMuc}
                                 >
                                     <option value="" disabled>
-                                        {loading ? "Đang tải cấp học..." : "Chọn cấp học"}
+                                        {dangTaiDanhMuc ? "Đang tải cấp học..." : "Chọn cấp học"}
                                     </option>
-                                    {options.cap_hoc.map((capHoc) => (
+                                    {danhMuc.cap_hoc.map((capHoc) => (
                                         <option key={capHoc.id} value={capHoc.id}>
                                             {capHoc.ten}
                                         </option>
@@ -195,10 +229,10 @@ function DangKyLamGiaSu() {
                             </label>
 
                             <fieldset className="md:col-span-2">
-                                <legend className={labelClass}>
-                                    Môn học đăng ký dạy<RequiredMark />
+                                <legend className={lopNhan}>
+                                    Môn học đăng ký dạy<DauBatBuoc />
                                 </legend>
-                                {!selectedCapHocId ? (
+                                {!capHocIdDaChon ? (
                                     <p className="mt-3 rounded-xl bg-slate-50 px-4 py-3 text-sm font-normal text-slate-500">
                                         Chọn cấp học để hiển thị môn học.
                                     </p>
@@ -217,6 +251,10 @@ function DangKyLamGiaSu() {
                                                     type="checkbox"
                                                     name="mon_hoc_ids[]"
                                                     value={monHoc.id}
+                                                    checked={monHocIdsDaChon.includes(
+                                                        String(monHoc.id),
+                                                    )}
+                                                    onChange={xuLyChonMonHoc}
                                                     className="h-4 w-4 accent-blue-600"
                                                 />
                                                 {monHoc.ten_mon}
@@ -229,47 +267,53 @@ function DangKyLamGiaSu() {
                     </div>
 
                     <div className="border-b border-slate-100 p-6 sm:p-8 lg:p-10">
-                        <SectionTitle
-                            number="3"
-                            title="Kinh nghiệm giảng dạy"
-                            description="Mô tả kinh nghiệm và phương pháp giúp bạn tạo ra kết quả học tập tốt."
+                        <TieuDePhan
+                            soThuTu="3"
+                            tieuDe="Kinh nghiệm giảng dạy"
+                            moTa="Mô tả kinh nghiệm và phương pháp giúp bạn tạo ra kết quả học tập tốt."
                         />
 
                         <div className="grid gap-5">
-                            <label className={labelClass}>
-                                Mức kinh nghiệm<RequiredMark />
+                            <label className={lopNhan}>
+                                Mức kinh nghiệm<DauBatBuoc />
                                 <select
-                                    className={inputClass}
+                                    className={lopInput}
                                     name="muc_kinh_nghiem_id"
-                                    defaultValue=""
-                                    disabled={loading}
+                                    value={mucKinhNghiemIdDaChon}
+                                    onChange={(suKien) =>
+                                        setMucKinhNghiemIdDaChon(suKien.target.value)
+                                    }
+                                    disabled={dangTaiDanhMuc}
                                 >
                                     <option value="" disabled>
-                                        {loading
+                                        {dangTaiDanhMuc
                                             ? "Đang tải mức kinh nghiệm..."
                                             : "Chọn mức kinh nghiệm"}
                                     </option>
-                                    {options.muc_kinh_nghiem.map((level) => (
-                                        <option key={level.id} value={level.id}>
-                                            {formatExperienceLevel(level)}
+                                    {danhMuc.muc_kinh_nghiem.map((mucKinhNghiem) => (
+                                        <option
+                                            key={mucKinhNghiem.id}
+                                            value={mucKinhNghiem.id}
+                                        >
+                                            {dinhDangMucKinhNghiem(mucKinhNghiem)}
                                         </option>
                                     ))}
                                 </select>
                             </label>
 
-                            <label className={labelClass}>
-                                Kinh nghiệm giảng dạy<RequiredMark />
+                            <label className={lopNhan}>
+                                Kinh nghiệm giảng dạy<DauBatBuoc />
                                 <textarea
-                                    className={`${inputClass} min-h-32 resize-y`}
+                                    className={`${lopInput} min-h-32 resize-y`}
                                     name="kinh_nghiem"
                                     placeholder="Chia sẻ kinh nghiệm, thành tích giảng dạy hoặc đối tượng học viên từng phụ trách..."
                                 />
                             </label>
 
-                            <label className={labelClass}>
-                                Giới thiệu bản thân và phương pháp dạy<RequiredMark />
+                            <label className={lopNhan}>
+                                Giới thiệu bản thân và phương pháp dạy<DauBatBuoc />
                                 <textarea
-                                    className={`${inputClass} min-h-36 resize-y`}
+                                    className={`${lopInput} min-h-36 resize-y`}
                                     name="gioi_thieu"
                                     placeholder="Giới thiệu ngắn gọn về bản thân, phong cách và phương pháp giảng dạy của bạn..."
                                 />
@@ -277,28 +321,98 @@ function DangKyLamGiaSu() {
                         </div>
                     </div>
 
+                    <div className="border-b border-slate-100 p-6 sm:p-8 lg:p-10">
+                        <TieuDePhan
+                            soThuTu="4"
+                            tieuDe="Giá giảng dạy dự kiến"
+                            moTa="Giá được tính từ giá môn, trình độ và mức kinh nghiệm đã chọn."
+                        />
+
+                        {dangTinhGia ? (
+                            <div className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-8 text-center text-sm text-blue-700">
+                                Đang tính giá dự kiến...
+                            </div>
+                        ) : loiTinhGia ? (
+                            <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+                                {loiTinhGia}
+                            </div>
+                        ) : giaDuKien.length === 0 ? (
+                            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-center text-sm text-slate-500">
+                                Chọn trình độ, mức kinh nghiệm và ít nhất một môn học để
+                                xem giá dự kiến.
+                            </div>
+                        ) : (
+                            <div className="overflow-hidden rounded-2xl border border-slate-200">
+                                <div className="hidden grid-cols-[1.4fr_repeat(4,1fr)] gap-4 bg-slate-100 px-5 py-3 text-xs font-bold uppercase tracking-wide text-slate-500 md:grid">
+                                    <span>Môn học</span>
+                                    <span>Giá môn</span>
+                                    <span>Trình độ</span>
+                                    <span>Kinh nghiệm</span>
+                                    <span className="text-right">Tổng dự kiến</span>
+                                </div>
+
+                                {giaDuKien.map((mucGia) => (
+                                    <div
+                                        key={mucGia.monhoc_id}
+                                        className="grid gap-3 border-t border-slate-100 px-5 py-4 first:border-t-0 md:grid-cols-[1.4fr_repeat(4,1fr)] md:items-center md:gap-4"
+                                    >
+                                        <span className="font-bold text-slate-900">
+                                            {mucGia.ten_mon}
+                                        </span>
+                                        <span className="text-sm text-slate-600">
+                                            <span className="mr-2 text-slate-400 md:hidden">
+                                                Giá môn:
+                                            </span>
+                                            {dinhDangTien(mucGia.gia_mon)}
+                                        </span>
+                                        <span className="text-sm text-slate-600">
+                                            <span className="mr-2 text-slate-400 md:hidden">
+                                                Trình độ:
+                                            </span>
+                                            +{dinhDangTien(mucGia.gia_cong_trinh_do)}
+                                        </span>
+                                        <span className="text-sm text-slate-600">
+                                            <span className="mr-2 text-slate-400 md:hidden">
+                                                Kinh nghiệm:
+                                            </span>
+                                            +{dinhDangTien(mucGia.gia_cong_kinh_nghiem)}
+                                        </span>
+                                        <span className="text-lg font-extrabold text-blue-600 md:text-right">
+                                            {dinhDangTien(mucGia.tong_gia)}/giờ
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <p className="mt-4 text-xs leading-5 text-slate-500">
+                            Đây là giá tham khảo. Hệ thống sẽ tính lại giá chính thức khi
+                            hồ sơ được gửi và xét duyệt.
+                        </p>
+                    </div>
+
                     <div className="p-6 sm:p-8 lg:p-10">
-                        <SectionTitle
-                            number="4"
-                            title="Hồ sơ xác minh"
-                            description="Tải lên giấy tờ rõ nét để quá trình xét duyệt diễn ra thuận lợi."
+                        <TieuDePhan
+                            soThuTu="5"
+                            tieuDe="Hồ sơ xác minh"
+                            moTa="Tải lên giấy tờ rõ nét để quá trình xét duyệt diễn ra thuận lợi."
                         />
 
                         <div className="grid gap-5 md:grid-cols-2">
-                            <label className={labelClass}>
-                                Ảnh chân dung<RequiredMark />
+                            <label className={lopNhan}>
+                                Ảnh chân dung<DauBatBuoc />
                                 <input
-                                    className={`${inputClass} file:mr-4 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-blue-700`}
+                                    className={`${lopInput} file:mr-4 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-blue-700`}
                                     type="file"
                                     name="anh_chan_dung"
                                     accept="image/*"
                                 />
                             </label>
 
-                            <label className={labelClass}>
-                                Bằng cấp / Thẻ sinh viên<RequiredMark />
+                            <label className={lopNhan}>
+                                Bằng cấp / Thẻ sinh viên<DauBatBuoc />
                                 <input
-                                    className={`${inputClass} file:mr-4 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-blue-700`}
+                                    className={`${lopInput} file:mr-4 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-blue-700`}
                                     type="file"
                                     name="bang_cap[]"
                                     accept="image/*"
@@ -319,7 +433,7 @@ function DangKyLamGiaSu() {
                             <span>
                                 Tôi cam kết các thông tin cung cấp là chính xác và đồng ý
                                 với điều khoản sử dụng, chính sách bảo mật của hệ thống.
-                                <RequiredMark />
+                                <DauBatBuoc />
                             </span>
                         </label>
 
