@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import { getRedirectPath } from "../../services/auth";
 
 function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
+  const redirect = new URLSearchParams(location.search).get("redirect");
+  const redirectPath = redirect?.startsWith("/") ? redirect : null;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,7 +27,7 @@ function Login() {
       if (response.data.success) {
         const { token, user } = response.data.data;
         login(token, user);
-        navigate(getRedirectPath(user.vai_tro));
+        navigate(redirectPath || getRedirectPath(user.vai_tro), { replace: true });
       }
     } catch (err) {
       const data = err.response?.data;

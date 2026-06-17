@@ -9,12 +9,12 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::hasTable('goihoc') && ! Schema::hasColumn('goihoc', 'chietkhau_id')) {
+        if (Schema::hasTable('goihoc') && ! Schema::hasColumn('goihoc', 'loai_goi_id')) {
             Schema::table('goihoc', function (Blueprint $table) {
-                $table->foreignId('chietkhau_id')
+                $table->foreignId('loai_goi_id')
                     ->nullable()
                     ->after('monhoc_id')
-                    ->constrained('chietkhau')
+                    ->constrained('loai_goi')
                     ->nullOnDelete();
             });
         }
@@ -25,19 +25,20 @@ return new class extends Migration
             });
         }
 
-        if (Schema::hasTable('goihoc') && Schema::hasTable('chietkhau') && Schema::hasColumn('goihoc', 'chietkhau_id')) {
-            $goiHocs = DB::table('goihoc')->whereNull('chietkhau_id')->get(['id', 'so_buoi']);
+        if (Schema::hasTable('goihoc') && Schema::hasTable('loai_goi') && Schema::hasColumn('goihoc', 'loai_goi_id')) {
+            $goiHocs = DB::table('goihoc')->whereNull('loai_goi_id')->get(['id', 'ngay_batdau', 'ngay_ketthuc']);
 
             foreach ($goiHocs as $goiHoc) {
-                $chietKhauId = DB::table('chietkhau')
-                    ->where('so_buoi', '<=', $goiHoc->so_buoi)
-                    ->orderByDesc('so_buoi')
+                $soThang = max(1, (int) ceil(abs(strtotime($goiHoc->ngay_ketthuc) - strtotime($goiHoc->ngay_batdau)) / 2592000));
+                $loaiGoiId = DB::table('loai_goi')
+                    ->where('so_thang', '<=', $soThang)
+                    ->orderByDesc('so_thang')
                     ->value('id');
 
-                if ($chietKhauId) {
+                if ($loaiGoiId) {
                     DB::table('goihoc')
                         ->where('id', $goiHoc->id)
-                        ->update(['chietkhau_id' => $chietKhauId]);
+                        ->update(['loai_goi_id' => $loaiGoiId]);
                 }
             }
         }
@@ -45,9 +46,9 @@ return new class extends Migration
         if (Schema::hasTable('lichhoc') && Schema::hasColumn('lichhoc', 'da_giam')) {
             DB::table('lichhoc')
                 ->join('goihoc', 'goihoc.id', '=', 'lichhoc.goihoc_id')
-                ->leftJoin('chietkhau', 'chietkhau.id', '=', 'goihoc.chietkhau_id')
+                ->leftJoin('loai_goi', 'loai_goi.id', '=', 'goihoc.loai_goi_id')
                 ->update([
-                    'lichhoc.da_giam' => DB::raw('COALESCE(chietkhau.phan_tram_giam, 0)'),
+                    'lichhoc.da_giam' => DB::raw('COALESCE(loai_goi.phan_tram_giam, 0)'),
                 ]);
         }
     }
@@ -60,9 +61,9 @@ return new class extends Migration
             });
         }
 
-        if (Schema::hasTable('goihoc') && Schema::hasColumn('goihoc', 'chietkhau_id')) {
+        if (Schema::hasTable('goihoc') && Schema::hasColumn('goihoc', 'loai_goi_id')) {
             Schema::table('goihoc', function (Blueprint $table) {
-                $table->dropConstrainedForeignId('chietkhau_id');
+                $table->dropConstrainedForeignId('loai_goi_id');
             });
         }
     }

@@ -16,7 +16,7 @@ class GoiHoc extends Model
         'giasu_id',
         'monhoc_id',
         'giasu_gia_id',
-        'chietkhau_id',
+        'loai_goi_id',
         'ngay_batdau',
         'ngay_ketthuc',
         'so_buoi',
@@ -50,9 +50,9 @@ class GoiHoc extends Model
         return $this->belongsTo(GiasuGia::class, 'giasu_gia_id');
     }
 
-    public function chietKhau()
+    public function loaiGoi()
     {
-        return $this->belongsTo(ChietKhau::class, 'chietkhau_id');
+        return $this->belongsTo(LoaiGoi::class, 'loai_goi_id');
     }
 
     public function lichHocs()

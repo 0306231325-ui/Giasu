@@ -23,6 +23,8 @@ class ThanhToanSeeder extends Seeder
             'phuong_thuc' => 'banking',
             'so_tai_khoan' => '0123456789',
             'ma_giaodich' => 'VN123456789',
+            'noi_dung_thanhtoan' => 'Thanh toán gói học Toán Học 1 tháng',
+            'anh_minh_chung' => 'images/thanhtoan/minh-chung-mau.jpg',
             'ngay_thanhtoan' => $now,
             'trang_thai' => 'da_thanhtoan',
             'created_at' => $now,

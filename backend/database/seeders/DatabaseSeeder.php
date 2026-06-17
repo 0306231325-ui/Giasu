@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
             HocVienSeeder::class,
             GiaSuSeeder::class,
             GiaSuGiaSeeder::class,
-            ChietKhauSeeder::class,
+            LoaiGoiSeeder::class,
             BaiVietSeeder::class,
             GoiHocSeeder::class,
             LichHocSeeder::class,

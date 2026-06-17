@@ -26,9 +26,9 @@ class LichHocSeeder extends Seeder
 
         $now = Carbon::now();
         $phanTramGiam = DB::table('goihoc')
-            ->leftJoin('chietkhau', 'chietkhau.id', '=', 'goihoc.chietkhau_id')
+            ->leftJoin('loai_goi', 'loai_goi.id', '=', 'goihoc.loai_goi_id')
             ->where('goihoc.id', $goiHocId)
-            ->value('chietkhau.phan_tram_giam') ?? 0;
+            ->value('loai_goi.phan_tram_giam') ?? 0;
         $tienHocGoc = 300000.00;
         $tienHocSauGiam = $tienHocGoc * (1 - ((float) $phanTramGiam / 100));
 

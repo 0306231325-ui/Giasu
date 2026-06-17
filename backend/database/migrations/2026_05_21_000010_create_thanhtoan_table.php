@@ -16,6 +16,8 @@ return new class extends Migration
             $table->decimal('tong_tien', 10, 2)->default(0);
             $table->enum('phuong_thuc', ['tienmat', 'momo', 'zalopay', 'banking'])->default('tienmat');
             $table->string('ma_giaodich', 255)->nullable();
+            $table->text('noi_dung_thanhtoan')->nullable();
+            $table->string('anh_minh_chung', 255)->nullable();
             $table->enum('trang_thai', ['cho_thanhtoan', 'da_thanhtoan', 'that_bai'])->default('cho_thanhtoan');
             $table->timestamps();
         });

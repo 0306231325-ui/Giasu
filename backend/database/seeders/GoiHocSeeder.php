@@ -25,9 +25,10 @@ class GoiHocSeeder extends Seeder
             ->first(['id', 'tong_gia']);
         $donGia = $giaGiasu?->tong_gia;
         $soBuoi = 12;
-        $chietKhauId = DB::table('chietkhau')
-            ->where('so_buoi', '<=', $soBuoi)
-            ->orderByDesc('so_buoi')
+        $soThang = 1;
+        $loaiGoiId = DB::table('loai_goi')
+            ->where('so_thang', '<=', $soThang)
+            ->orderByDesc('so_thang')
             ->value('id');
 
         $exists = DB::table('goihoc')
@@ -45,7 +46,7 @@ class GoiHocSeeder extends Seeder
             'giasu_id' => 1,
             'monhoc_id' => $monhocId,
             'giasu_gia_id' => $giaGiasu?->id,
-            'chietkhau_id' => $chietKhauId,
+            'loai_goi_id' => $loaiGoiId,
             'ngay_batdau' => $now->copy()->addDays(1)->toDateString(),
             'ngay_ketthuc' => $now->copy()->addDays(30)->toDateString(),
             'so_buoi' => $soBuoi,

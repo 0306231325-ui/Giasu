@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import useDanhMucDangKyGiaSu from "./hooks/useDanhMucDangKyGiaSu";
 import useGiaDuKienGiaSu from "./hooks/useGiaDuKienGiaSu";
 
@@ -42,6 +44,9 @@ function dinhDangTien(giaTri) {
 }
 
 function DangKyLamGiaSu() {
+    const dieuHuong = useNavigate();
+    const viTri = useLocation();
+    const { isAuthenticated, loading: dangTaiXacThuc } = useAuth();
     const { danhMuc, dangTai: dangTaiDanhMuc, loi: loiDanhMuc } =
         useDanhMucDangKyGiaSu();
     const [capHocIdDaChon, setCapHocIdDaChon] = useState("");
@@ -70,6 +75,27 @@ function DangKyLamGiaSu() {
                 : danhSachHienTai.filter((id) => id !== monHocId),
         );
     };
+
+    useEffect(() => {
+        if (!dangTaiXacThuc && !isAuthenticated) {
+            dieuHuong(
+                `/login?redirect=${encodeURIComponent(viTri.pathname)}`,
+                { replace: true },
+            );
+        }
+    }, [dangTaiXacThuc, dieuHuong, isAuthenticated, viTri.pathname]);
+
+    if (dangTaiXacThuc || !isAuthenticated) {
+        return (
+            <section className="flex min-h-[60vh] items-center justify-center bg-slate-50 px-4 text-slate-900">
+                <div className="rounded-2xl border border-slate-200 bg-white px-6 py-5 text-center shadow-lg">
+                    <p className="text-sm font-semibold text-slate-700">
+                        Đang kiểm tra đăng nhập...
+                    </p>
+                </div>
+            </section>
+        );
+    }
 
     return (
         <section className="relative bg-slate-50 px-4 py-12 text-slate-900 sm:px-6 lg:py-16">
