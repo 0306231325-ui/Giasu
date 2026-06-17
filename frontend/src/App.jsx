@@ -14,6 +14,11 @@ import AdminHocVien from "./pages/admin/AdminHocVien";
 import AdminGiaSu from "./pages/admin/AdminGiaSu";
 import AdminBaiViet from "./pages/admin/AdminBaiViet";
 import DangKyLamGiaSu from "./pages/tutor/DangKyLamGiaSu";
+import GiaSuLayout from "./layouts/GiaSuLayout";
+import GiaSuTongQuan from "./pages/tutor/quan-ly/GiaSuTongQuan";
+import GiaSuHoSo from "./pages/tutor/quan-ly/GiaSuHoSo";
+import GiaSuLichDay from "./pages/tutor/quan-ly/GiaSuLichDay";
+import GiaSuThuNhap from "./pages/tutor/quan-ly/GiaSuThuNhap";
 
 function App() {
 
@@ -57,6 +62,13 @@ function App() {
         <Route path="hoc-vien" element={<AdminHocVien />} />
         <Route path="gia-su" element={<AdminGiaSu />} />
         <Route path="bai-viet" element={<AdminBaiViet />} />
+      </Route>
+
+      <Route path="/gia-su/quan-ly" element={<GiaSuLayout />}>
+        <Route index element={<GiaSuTongQuan />} />
+        <Route path="ho-so" element={<GiaSuHoSo />} />
+        <Route path="lich-day" element={<GiaSuLichDay />} />
+        <Route path="thu-nhap" element={<GiaSuThuNhap />} />
       </Route>
 
     </Routes>
