@@ -8,7 +8,7 @@ function useTaoBaiViet({ sauKhiTaoThanhCong }) {
   const [form, setForm] = useState(GIA_TRI_BAI_VIET_MAC_DINH);
   const [dangLuu, setDangLuu] = useState(false);
   const [loi, setLoi] = useState("");
-  const { fileAnh, anhXemTruoc, chonAnh, xoaAnh } = useAnhXemTruoc();
+  const { fileAnh, anhXemTruoc, loiAnh, chonAnh, xoaAnh } = useAnhXemTruoc();
   const { thongBao, anThongBao, hienThongBaoTamThoi } = useThongBaoTamThoi();
 
   const capNhatForm = (event) => {
@@ -66,6 +66,7 @@ function useTaoBaiViet({ sauKhiTaoThanhCong }) {
   return {
     form,
     anhXemTruoc,
+    loiAnh,
     dangLuu,
     loi,
     thongBao,

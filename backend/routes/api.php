@@ -26,15 +26,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/admin/baiviet/{baiVietId}/xoa-vinh-vien', [BaiVietController::class, 'xoaVinhVienBaiVietAdmin']);
 });
 
-Route::get('/test-db', function () {
-    return DB::select("SHOW TABLES");
-});
-
-Route::get('/test', function () {
-    return response()->json([
-        'message' => 'Laravel API ok'
-    ]);
-});
 
 
 

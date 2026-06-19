@@ -328,15 +328,6 @@ function DangKyLamGiaSu() {
                             </label>
 
                             <label className={lopNhan}>
-                                Kinh nghiệm giảng dạy<DauBatBuoc />
-                                <textarea
-                                    className={`${lopInput} min-h-32 resize-y`}
-                                    name="kinh_nghiem"
-                                    placeholder="Chia sẻ kinh nghiệm, thành tích giảng dạy hoặc đối tượng học viên từng phụ trách..."
-                                />
-                            </label>
-
-                            <label className={lopNhan}>
                                 Giới thiệu bản thân và phương pháp dạy<DauBatBuoc />
                                 <textarea
                                     className={`${lopInput} min-h-36 resize-y`}
@@ -369,18 +360,19 @@ function DangKyLamGiaSu() {
                             </div>
                         ) : (
                             <div className="overflow-hidden rounded-2xl border border-slate-200">
-                                <div className="hidden grid-cols-[1.4fr_repeat(4,1fr)] gap-4 bg-slate-100 px-5 py-3 text-xs font-bold uppercase tracking-wide text-slate-500 md:grid">
+                                <div className="hidden grid-cols-[1.4fr_repeat(5,1fr)] gap-4 bg-slate-100 px-5 py-3 text-xs font-bold uppercase tracking-wide text-slate-500 md:grid">
                                     <span>Môn học</span>
                                     <span>Giá môn</span>
                                     <span>Trình độ</span>
                                     <span>Kinh nghiệm</span>
+                                    <span>Điều chỉnh</span>
                                     <span className="text-right">Tổng dự kiến</span>
                                 </div>
 
                                 {giaDuKien.map((mucGia) => (
                                     <div
                                         key={mucGia.monhoc_id}
-                                        className="grid gap-3 border-t border-slate-100 px-5 py-4 first:border-t-0 md:grid-cols-[1.4fr_repeat(4,1fr)] md:items-center md:gap-4"
+                                        className="grid gap-3 border-t border-slate-100 px-5 py-4 first:border-t-0 md:grid-cols-[1.4fr_repeat(5,1fr)] md:items-center md:gap-4"
                                     >
                                         <span className="font-bold text-slate-900">
                                             {mucGia.ten_mon}
@@ -402,6 +394,12 @@ function DangKyLamGiaSu() {
                                                 Kinh nghiệm:
                                             </span>
                                             +{dinhDangTien(mucGia.gia_cong_kinh_nghiem)}
+                                        </span>
+                                        <span className="text-sm text-slate-600">
+                                            <span className="mr-2 text-slate-400 md:hidden">
+                                                Điều chỉnh:
+                                            </span>
+                                            +{dinhDangTien(mucGia.gia_cong_them)}
                                         </span>
                                         <span className="text-lg font-extrabold text-blue-600 md:text-right">
                                             {dinhDangTien(mucGia.tong_gia)}/giờ

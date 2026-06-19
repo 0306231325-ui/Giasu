@@ -12,6 +12,7 @@ class Banner extends Model
         'tieu_de',
         'mo_ta',
         'anh',
+        'link',
         'trang_thai'
     ];
 }

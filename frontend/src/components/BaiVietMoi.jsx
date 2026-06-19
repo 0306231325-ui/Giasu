@@ -44,29 +44,28 @@ function BaiVietMoi() {
 
           <div
             key={item.id}
-            className="bg-[#111827] rounded-2xl overflow-hidden border border-white/10 hover:translate-y-[-5px] transition"
+            className="flex h-full flex-col bg-[#111827] rounded-2xl overflow-hidden border border-white/10 hover:translate-y-[-5px] transition"
           >
 
-            <img
-              src={
-                item.anh_bia ||
-                "https://images.unsplash.com/photo-1522202176988-66273c2fd55f"
-              }
-              alt=""
-              className="w-full h-52 object-cover"
-            />
+            {item.anh_bia && (
+              <img
+                src={item.anh_bia}
+                alt={item.tieu_de || "Bài viết"}
+                className="w-full h-52 object-cover"
+              />
+            )}
 
-            <div className="p-5">
+            <div className="flex flex-1 flex-col p-5">
 
               <h3 className="text-white text-xl font-semibold line-clamp-2">
                 {item.tieu_de}
               </h3>
 
-              <p className="text-gray-400 mt-4 text-sm line-clamp-3">
+              <p className="text-gray-400 mt-4 min-h-[60px] text-sm line-clamp-3">
                 {item.tom_tat}
               </p>
 
-              <div className="flex justify-between items-center mt-6">
+              <div className="mt-auto flex items-center justify-between pt-6">
 
                 <span className="text-gray-500 text-sm">
                   Lượt xem: {item.luot_xem}
