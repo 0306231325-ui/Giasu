@@ -25,9 +25,10 @@ class GiaTinhService
         $giaCongKinhNghiem = (float) $mucKinhNghiem->gia_cong_them;
 
         return MonHoc::query()
+            ->with('capHoc:id,ten')
             ->whereIn('id', $monhocIds)
             ->orderBy('ten_mon')
-            ->get(['id', 'ten_mon', 'gia'])
+            ->get(['id', 'ten_mon', 'cap_hoc_id', 'gia'])
             ->map(function (MonHoc $monhoc) use ($giaCongTrinhDo, $giaCongKinhNghiem) {
                 $giaMon = (float) $monhoc->gia;
                 $giaCoBan = $giaMon + $giaCongTrinhDo + $giaCongKinhNghiem;
@@ -35,6 +36,7 @@ class GiaTinhService
                 return [
                     'monhoc_id' => $monhoc->id,
                     'ten_mon' => $monhoc->ten_mon,
+                    'cap_hoc' => $monhoc->capHoc?->ten,
                     'gia_mon' => $giaMon,
                     'gia_cong_trinh_do' => $giaCongTrinhDo,
                     'gia_cong_kinh_nghiem' => $giaCongKinhNghiem,

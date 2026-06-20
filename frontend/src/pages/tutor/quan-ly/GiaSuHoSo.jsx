@@ -509,10 +509,6 @@ function GiaSuHoSo() {
                                 giaTri="Từ 3 đến 5 năm"
                             />
                             <TruongThongTin
-                                nhan="Trường học"
-                                giaTri="Đại học Sư phạm TP. Hồ Chí Minh"
-                            />
-                            <TruongThongTin
                                 nhan="Chuyên ngành"
                                 giaTri="Sư phạm Toán học"
                             />

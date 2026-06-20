@@ -49,13 +49,18 @@ function DangKyLamGiaSu() {
     const { isAuthenticated, loading: dangTaiXacThuc } = useAuth();
     const { danhMuc, dangTai: dangTaiDanhMuc, loi: loiDanhMuc } =
         useDanhMucDangKyGiaSu();
-    const [capHocIdDaChon, setCapHocIdDaChon] = useState("");
+    const [capHocIdsDaChon, setCapHocIdsDaChon] = useState([]);
     const [trinhDoIdDaChon, setTrinhDoIdDaChon] = useState("");
     const [mucKinhNghiemIdDaChon, setMucKinhNghiemIdDaChon] = useState("");
     const [monHocIdsDaChon, setMonHocIdsDaChon] = useState([]);
-    const monHocTheoCap = danhMuc.mon_hoc.filter(
-        (monHoc) => String(monHoc.cap_hoc_id) === capHocIdDaChon,
-    );
+    const monHocTheoCap = danhMuc.cap_hoc
+        .filter((capHoc) => capHocIdsDaChon.includes(String(capHoc.id)))
+        .map((capHoc) => ({
+            ...capHoc,
+            monHoc: danhMuc.mon_hoc.filter(
+                (monHoc) => String(monHoc.cap_hoc_id) === String(capHoc.id),
+            ),
+        }));
     const {
         giaDuKien,
         dangTai: dangTinhGia,
@@ -73,6 +78,28 @@ function DangKyLamGiaSu() {
             suKien.target.checked
                 ? [...danhSachHienTai, monHocId]
                 : danhSachHienTai.filter((id) => id !== monHocId),
+        );
+    };
+
+    const xuLyChonCapHoc = (suKien) => {
+        const capHocId = suKien.target.value;
+
+        if (suKien.target.checked) {
+            setCapHocIdsDaChon((hienTai) => [...hienTai, capHocId]);
+            return;
+        }
+
+        const monHocIdsThuocCap = danhMuc.mon_hoc
+            .filter(
+                (monHoc) => String(monHoc.cap_hoc_id) === capHocId,
+            )
+            .map((monHoc) => String(monHoc.id));
+
+        setCapHocIdsDaChon((hienTai) =>
+            hienTai.filter((id) => id !== capHocId),
+        );
+        setMonHocIdsDaChon((hienTai) =>
+            hienTai.filter((id) => !monHocIdsThuocCap.includes(id)),
         );
     };
 
@@ -212,16 +239,6 @@ function DangKyLamGiaSu() {
                             </label>
 
                             <label className={lopNhan}>
-                                Trường học<DauBatBuoc />
-                                <input
-                                    className={lopInput}
-                                    type="text"
-                                    name="truong_hoc"
-                                    placeholder="Tên trường đang học hoặc đã tốt nghiệp"
-                                />
-                            </label>
-
-                            <label className={lopNhan}>
                                 Chuyên ngành<DauBatBuoc />
                                 <input
                                     className={lopInput}
@@ -230,61 +247,94 @@ function DangKyLamGiaSu() {
                                     placeholder="Ví dụ: Sư phạm Toán học"
                                 />
                             </label>
+                        </div>
+                    </div>
 
-                            <label className={lopNhan}>
-                                Cấp học có thể dạy<DauBatBuoc />
-                                <select
-                                    className={lopInput}
-                                    name="cap_hoc_id"
-                                    value={capHocIdDaChon}
-                                    onChange={(suKien) => {
-                                        setCapHocIdDaChon(suKien.target.value);
-                                        setMonHocIdsDaChon([]);
-                                    }}
-                                    disabled={dangTaiDanhMuc}
-                                >
-                                    <option value="" disabled>
-                                        {dangTaiDanhMuc ? "Đang tải cấp học..." : "Chọn cấp học"}
-                                    </option>
+                    <div className="border-b border-slate-100 p-6 sm:p-8 lg:p-10">
+                        <TieuDePhan
+                            soThuTu="3"
+                            tieuDe="Cấp học và môn giảng dạy"
+                            moTa="Chọn các cấp học bạn có thể dạy và môn học phù hợp trong từng cấp."
+                        />
+
+                        <div className="grid gap-5">
+                            <fieldset className="md:col-span-2">
+                                <legend className={lopNhan}>
+                                    Cấp học có thể dạy<DauBatBuoc />
+                                </legend>
+                                <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                                     {danhMuc.cap_hoc.map((capHoc) => (
-                                        <option key={capHoc.id} value={capHoc.id}>
+                                        <label
+                                            key={capHoc.id}
+                                            className={[
+                                                "flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm font-semibold transition",
+                                                capHocIdsDaChon.includes(String(capHoc.id))
+                                                    ? "border-blue-400 bg-blue-50 text-blue-700"
+                                                    : "border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50/50",
+                                            ].join(" ")}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                name="cap_hoc_ids[]"
+                                                value={capHoc.id}
+                                                checked={capHocIdsDaChon.includes(
+                                                    String(capHoc.id),
+                                                )}
+                                                onChange={xuLyChonCapHoc}
+                                                disabled={dangTaiDanhMuc}
+                                                className="h-4 w-4 accent-blue-600"
+                                            />
                                             {capHoc.ten}
-                                        </option>
+                                        </label>
                                     ))}
-                                </select>
-                            </label>
+                                </div>
+                            </fieldset>
 
                             <fieldset className="md:col-span-2">
                                 <legend className={lopNhan}>
                                     Môn học đăng ký dạy<DauBatBuoc />
                                 </legend>
-                                {!capHocIdDaChon ? (
+                                {capHocIdsDaChon.length === 0 ? (
                                     <p className="mt-3 rounded-xl bg-slate-50 px-4 py-3 text-sm font-normal text-slate-500">
-                                        Chọn cấp học để hiển thị môn học.
-                                    </p>
-                                ) : monHocTheoCap.length === 0 ? (
-                                    <p className="mt-3 rounded-xl bg-slate-50 px-4 py-3 text-sm font-normal text-slate-500">
-                                        Cấp học này chưa có môn học.
+                                        Chọn ít nhất một cấp học để hiển thị môn học.
                                     </p>
                                 ) : (
-                                    <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                                        {monHocTheoCap.map((monHoc) => (
-                                            <label
-                                                key={monHoc.id}
-                                                className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-3 py-3 text-sm font-medium text-slate-700 hover:border-blue-300 hover:bg-blue-50"
+                                    <div className="mt-3 space-y-4">
+                                        {monHocTheoCap.map((capHoc) => (
+                                            <div
+                                                key={capHoc.id}
+                                                className="rounded-2xl border border-slate-200 p-4"
                                             >
-                                                <input
-                                                    type="checkbox"
-                                                    name="mon_hoc_ids[]"
-                                                    value={monHoc.id}
-                                                    checked={monHocIdsDaChon.includes(
-                                                        String(monHoc.id),
-                                                    )}
-                                                    onChange={xuLyChonMonHoc}
-                                                    className="h-4 w-4 accent-blue-600"
-                                                />
-                                                {monHoc.ten_mon}
-                                            </label>
+                                                <h3 className="font-bold text-slate-800">
+                                                    {capHoc.ten}
+                                                </h3>
+                                                {capHoc.monHoc.length === 0 ? (
+                                                    <p className="mt-2 text-sm font-normal text-slate-500">
+                                                        Cấp học này chưa có môn học.
+                                                    </p>
+                                                ) : (
+                                                    <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                                                        {capHoc.monHoc.map((monHoc) => (
+                                                            <label
+                                                                key={monHoc.id}
+                                                                className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-3 py-3 text-sm font-medium text-slate-700 hover:border-blue-300 hover:bg-blue-50"
+                                                            >
+                                                                <input
+                                                                    type="checkbox"
+                                                                    name="mon_hoc_ids[]"
+                                                                    value={monHoc.id}
+                                                                    checked={monHocIdsDaChon.includes(
+                                                                        String(monHoc.id),
+                                                                    )}
+                                                                    onChange={xuLyChonMonHoc}
+                                                                    className="h-4 w-4 accent-blue-600"
+                                                                />
+                                                                {monHoc.ten_mon}
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                         ))}
                                     </div>
                                 )}
@@ -294,7 +344,7 @@ function DangKyLamGiaSu() {
 
                     <div className="border-b border-slate-100 p-6 sm:p-8 lg:p-10">
                         <TieuDePhan
-                            soThuTu="3"
+                            soThuTu="4"
                             tieuDe="Kinh nghiệm giảng dạy"
                             moTa="Mô tả kinh nghiệm và phương pháp giúp bạn tạo ra kết quả học tập tốt."
                         />
@@ -340,7 +390,7 @@ function DangKyLamGiaSu() {
 
                     <div className="border-b border-slate-100 p-6 sm:p-8 lg:p-10">
                         <TieuDePhan
-                            soThuTu="4"
+                            soThuTu="5"
                             tieuDe="Giá giảng dạy dự kiến"
                             moTa="Giá được tính từ giá môn, trình độ và mức kinh nghiệm đã chọn."
                         />
@@ -374,9 +424,16 @@ function DangKyLamGiaSu() {
                                         key={mucGia.monhoc_id}
                                         className="grid gap-3 border-t border-slate-100 px-5 py-4 first:border-t-0 md:grid-cols-[1.4fr_repeat(5,1fr)] md:items-center md:gap-4"
                                     >
-                                        <span className="font-bold text-slate-900">
-                                            {mucGia.ten_mon}
-                                        </span>
+                                        <div>
+                                            <span className="font-bold text-slate-900">
+                                                {mucGia.ten_mon}
+                                            </span>
+                                            {mucGia.cap_hoc && (
+                                                <span className="mt-1 block text-xs font-semibold text-blue-600">
+                                                    {mucGia.cap_hoc}
+                                                </span>
+                                            )}
+                                        </div>
                                         <span className="text-sm text-slate-600">
                                             <span className="mr-2 text-slate-400 md:hidden">
                                                 Giá môn:
@@ -417,7 +474,7 @@ function DangKyLamGiaSu() {
 
                     <div className="p-6 sm:p-8 lg:p-10">
                         <TieuDePhan
-                            soThuTu="5"
+                            soThuTu="6"
                             tieuDe="Hồ sơ xác minh"
                             moTa="Tải lên giấy tờ rõ nét để quá trình xét duyệt diễn ra thuận lợi."
                         />

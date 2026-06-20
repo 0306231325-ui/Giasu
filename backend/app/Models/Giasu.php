@@ -17,8 +17,6 @@ class Giasu extends Model
         'muc_kinh_nghiem_id',
         'he_so_gia',
         'hoc_van',
-        'truong_hoc',
-        'cap_hoc_id',
         'trinh_do_giasu_id',
         'dia_chi',
         'avatar',
@@ -80,9 +78,14 @@ class Giasu extends Model
         return $this->belongsTo(MucKinhNghiem::class, 'muc_kinh_nghiem_id');
     }
 
-    public function capHoc()
+    public function capHocs()
     {
-        return $this->belongsTo(CapHoc::class, 'cap_hoc_id');
+        return $this->belongsToMany(
+            CapHoc::class,
+            'giasu_cap_hoc',
+            'giasu_id',
+            'cap_hoc_id',
+        )->withTimestamps();
     }
 
     public function bangCaps()
