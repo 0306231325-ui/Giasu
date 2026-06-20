@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -45,6 +46,37 @@ class AuthController extends Controller
         ]);
     }
 
+    public function register(Request $request)
+    {
+        $validated = $request->validate([
+            'ho_ten' => ['required', 'string', 'min:3', 'max:100'],
+            'email' => ['required', 'email', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:6', 'confirmed'],
+            'vai_tro' => ['required', 'in:hoc_vien,gia_su'],
+        ]);
+
+        $vai_tro_map = [
+            'hoc_vien' => 'hocvien',
+            'gia_su' => 'giasu',
+        ];
+
+        $user = User::create([
+            'ho_ten' => $validated['ho_ten'],
+            'email' => $validated['email'],
+            'password' => $validated['password'], // ⚠️ Plaintext - chỉ cho đồ án
+            'vai_tro' => $vai_tro_map[$validated['vai_tro']],
+            'trang_thai' => 'hoatdong',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đăng ký thành công. Vui lòng đăng nhập.',
+            'data' => [
+                'user' => $this->formatUser($user),
+            ],
+        ], 201);
+    }
+
     public function me(Request $request)
     {
         return response()->json([
@@ -65,7 +97,7 @@ class AuthController extends Controller
 
     private function verifyPassword(User $user, string $password): bool
     {
-        return hash_equals((string) $user->password, $password);
+        return $user->password === $password; // ⚠️ Plaintext - chỉ cho đồ án
     }
 
     private function formatUser(User $user): array
