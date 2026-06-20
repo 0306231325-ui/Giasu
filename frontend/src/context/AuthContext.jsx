@@ -11,7 +11,6 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const token = getToken();
     if (!token) {
-      setLoading(false);
       return;
     }
 
@@ -35,6 +34,12 @@ export function AuthProvider({ children }) {
     setUser(userData);
   };
 
+  const updateUser = (userData) => {
+    const updatedUser = { ...user, ...userData };
+    setUser(updatedUser);
+    setAuth(getToken(), updatedUser);
+  };
+
   const logout = async () => {
     try {
       await api.post('/logout');
@@ -47,12 +52,14 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, updateUser, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
+// AuthProvider và hook được đặt chung để giữ API context hiện có của ứng dụng.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) {

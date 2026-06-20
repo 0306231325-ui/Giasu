@@ -73,6 +73,7 @@ class AuthController extends Controller
         return [
             'id' => $user->id,
             'ho_ten' => $user->ho_ten,
+            'ngay_sinh' => $user->ngay_sinh?->format('Y-m-d'),
             'email' => $user->email,
             'sdt' => $user->sdt,
             'vai_tro' => $user->vai_tro,

@@ -1,4 +1,18 @@
+import { useEffect, useState } from "react";
 import { useAuth } from "../../../context/AuthContext";
+import api from "../../../services/api";
+
+const thongTinCaNhanMacDinh = {
+    ho_ten: "",
+    ngay_sinh: "",
+    sdt: "",
+    email: "",
+    dia_chi: "",
+    mo_ta: "",
+};
+
+const lopNhapLieu =
+    "mt-2 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-500";
 
 const monDangDay = [
     {
@@ -41,8 +55,101 @@ const bangCap = [
 ];
 
 function GiaSuHoSo() {
-    const { user } = useAuth();
-    const tenGiaSu = user?.ho_ten || "Nguyễn Minh Anh";
+    const { user, updateUser } = useAuth();
+    const [thongTinCaNhan, setThongTinCaNhan] = useState(thongTinCaNhanMacDinh);
+    const [banNhap, setBanNhap] = useState(thongTinCaNhanMacDinh);
+    const [dangTai, setDangTai] = useState(true);
+    const [dangLuu, setDangLuu] = useState(false);
+    const [dangChinhSua, setDangChinhSua] = useState(false);
+    const [loi, setLoi] = useState({});
+    const [thongBao, setThongBao] = useState(null);
+    const tenGiaSu = thongTinCaNhan.ho_ten || user?.ho_ten || "Gia sư";
+
+    useEffect(() => {
+        let conHieuLuc = true;
+
+        api.get("/gia-su/ho-so/ca-nhan")
+            .then((phanHoi) => {
+                if (!conHieuLuc) return;
+                const duLieu = { ...thongTinCaNhanMacDinh, ...phanHoi.data.data };
+                setThongTinCaNhan(duLieu);
+                setBanNhap(duLieu);
+            })
+            .catch((error) => {
+                if (!conHieuLuc) return;
+                setThongBao({
+                    loai: "loi",
+                    noiDung:
+                        error.response?.data?.message ||
+                        "Không thể tải thông tin cá nhân. Vui lòng thử lại.",
+                });
+            })
+            .finally(() => {
+                if (conHieuLuc) setDangTai(false);
+            });
+
+        return () => {
+            conHieuLuc = false;
+        };
+    }, []);
+
+    const batDauChinhSua = () => {
+        setBanNhap(thongTinCaNhan);
+        setLoi({});
+        setThongBao(null);
+        setDangChinhSua(true);
+    };
+
+    const huyChinhSua = () => {
+        setBanNhap(thongTinCaNhan);
+        setLoi({});
+        setDangChinhSua(false);
+    };
+
+    const thayDoiTruong = (suKien) => {
+        const { name, value } = suKien.target;
+        setBanNhap((duLieuHienTai) => ({ ...duLieuHienTai, [name]: value }));
+        setLoi((loiHienTai) => ({ ...loiHienTai, [name]: undefined }));
+    };
+
+    const luuThongTinCaNhan = async (suKien) => {
+        suKien.preventDefault();
+        setDangLuu(true);
+        setLoi({});
+        setThongBao(null);
+
+        try {
+            const phanHoi = await api.patch("/gia-su/ho-so/ca-nhan", banNhap);
+            const duLieu = { ...thongTinCaNhanMacDinh, ...phanHoi.data.data };
+
+            setThongTinCaNhan(duLieu);
+            setBanNhap(duLieu);
+            setDangChinhSua(false);
+            updateUser({
+                ho_ten: duLieu.ho_ten,
+                ngay_sinh: duLieu.ngay_sinh,
+                sdt: duLieu.sdt,
+                email: duLieu.email,
+            });
+            setThongBao({
+                loai: "thanh_cong",
+                noiDung: phanHoi.data.message,
+            });
+        } catch (error) {
+            if (error.response?.status === 422) {
+                setLoi(error.response.data.errors || {});
+            } else {
+                setThongBao({
+                    loai: "loi",
+                    noiDung:
+                        error.response?.data?.message ||
+                        "Không thể lưu thông tin cá nhân. Vui lòng thử lại.",
+                });
+            }
+        } finally {
+            setDangLuu(false);
+        }
+    };
 
     return (
         <div className="mx-auto max-w-7xl pb-10">
@@ -62,13 +169,29 @@ function GiaSuHoSo() {
                 </div>
 
                 <button
-                    type="button"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-500"
+                    type="submit"
+                    form="form-thong-tin-ca-nhan"
+                    disabled={!dangChinhSua || dangLuu}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     <BieuTuong ten="save" />
-                    Lưu thay đổi
+                    {dangLuu ? "Đang lưu..." : "Lưu thay đổi"}
                 </button>
             </div>
+
+            {thongBao && (
+                <div
+                    role="status"
+                    className={[
+                        "mt-5 rounded-2xl border px-4 py-3 text-sm font-semibold",
+                        thongBao.loai === "thanh_cong"
+                            ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200"
+                            : "border-red-400/30 bg-red-400/10 text-red-200",
+                    ].join(" ")}
+                >
+                    {thongBao.noiDung}
+                </div>
+            )}
 
             <section className="mt-7 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#101d43] to-[#0b1533] shadow-2xl shadow-black/20">
                 <div className="relative p-6 sm:p-8">
@@ -142,33 +265,102 @@ function GiaSuHoSo() {
                         bieuTuong="user"
                         tieuDe="Thông tin cá nhân"
                         moTa="Thông tin liên hệ và giới thiệu hiển thị trên hồ sơ."
-                        hanhDong="Chỉnh sửa"
+                        hanhDong={dangChinhSua ? "Hủy" : "Chỉnh sửa"}
+                        onHanhDong={dangChinhSua ? huyChinhSua : batDauChinhSua}
+                        voHieuHoaHanhDong={dangTai || dangLuu}
                     >
-                        <div className="grid gap-5 md:grid-cols-2">
-                            <TruongThongTin nhan="Họ và tên" giaTri={tenGiaSu} />
-                            <TruongThongTin nhan="Ngày sinh" giaTri="15/06/2000" />
-                            <TruongThongTin
-                                nhan="Số điện thoại"
-                                giaTri={user?.sdt || "090 123 4567"}
-                            />
-                            <TruongThongTin
-                                nhan="Email"
-                                giaTri={user?.email || "minhanh@example.com"}
-                            />
-                            <div className="md:col-span-2">
-                                <TruongThongTin
+                        {dangTai ? (
+                            <p className="text-sm font-semibold text-slate-500">
+                                Đang tải thông tin cá nhân...
+                            </p>
+                        ) : (
+                            <form
+                                id="form-thong-tin-ca-nhan"
+                                onSubmit={luuThongTinCaNhan}
+                                className="grid gap-5 md:grid-cols-2"
+                            >
+                                <TruongCaNhan
+                                    nhan="Họ và tên"
+                                    name="ho_ten"
+                                    value={banNhap.ho_ten}
+                                    dangChinhSua={dangChinhSua}
+                                    onChange={thayDoiTruong}
+                                    loi={loi.ho_ten}
+                                    batBuoc
+                                />
+                                <TruongCaNhan
+                                    nhan="Ngày sinh"
+                                    name="ngay_sinh"
+                                    type="date"
+                                    value={banNhap.ngay_sinh}
+                                    giaTriHienThi={dinhDangNgay(banNhap.ngay_sinh)}
+                                    dangChinhSua={dangChinhSua}
+                                    onChange={thayDoiTruong}
+                                    loi={loi.ngay_sinh}
+                                    batBuoc
+                                />
+                                <TruongCaNhan
+                                    nhan="Số điện thoại"
+                                    name="sdt"
+                                    type="tel"
+                                    value={banNhap.sdt}
+                                    dangChinhSua={dangChinhSua}
+                                    onChange={thayDoiTruong}
+                                    loi={loi.sdt}
+                                    batBuoc
+                                />
+                                <TruongCaNhan
+                                    nhan="Email"
+                                    name="email"
+                                    type="email"
+                                    value={banNhap.email}
+                                    dangChinhSua={dangChinhSua}
+                                    onChange={thayDoiTruong}
+                                    loi={loi.email}
+                                    batBuoc
+                                />
+                                <TruongCaNhan
                                     nhan="Địa chỉ hiện tại"
-                                    giaTri="25 Nguyễn Gia Trí, Phường 25, Quận Bình Thạnh, TP. Hồ Chí Minh"
+                                    name="dia_chi"
+                                    value={banNhap.dia_chi}
+                                    dangChinhSua={dangChinhSua}
+                                    onChange={thayDoiTruong}
+                                    loi={loi.dia_chi}
+                                    batBuoc
+                                    className="md:col-span-2"
                                 />
-                            </div>
-                            <div className="md:col-span-2">
-                                <TruongThongTin
+                                <TruongCaNhan
                                     nhan="Giới thiệu bản thân"
-                                    giaTri="Tôi yêu thích việc giúp học sinh hiểu bản chất vấn đề thay vì học thuộc công thức. Mỗi buổi học được thiết kế phù hợp với năng lực và mục tiêu riêng của từng bạn."
+                                    name="mo_ta"
+                                    value={banNhap.mo_ta}
+                                    dangChinhSua={dangChinhSua}
+                                    onChange={thayDoiTruong}
+                                    loi={loi.mo_ta}
                                     nhieuDong
+                                    className="md:col-span-2"
                                 />
-                            </div>
-                        </div>
+
+                                {dangChinhSua && (
+                                    <div className="flex flex-wrap justify-end gap-3 md:col-span-2">
+                                        <button
+                                            type="button"
+                                            onClick={huyChinhSua}
+                                            disabled={dangLuu}
+                                            className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+                                        >
+                                            Hủy
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={dangLuu}
+                                            className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-500 disabled:opacity-50"
+                                        >
+                                            {dangLuu ? "Đang lưu..." : "Lưu thông tin"}
+                                        </button>
+                                    </div>
+                                )}
+                            </form>
+                        )}
                     </KhoiNoiDung>
 
                     <KhoiNoiDung
@@ -319,6 +511,8 @@ function KhoiNoiDung({
     tieuDe,
     moTa,
     hanhDong,
+    onHanhDong,
+    voHieuHoaHanhDong = false,
     noiBat = false,
     children,
 }) {
@@ -349,7 +543,9 @@ function KhoiNoiDung({
                 {hanhDong && (
                     <button
                         type="button"
-                        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 sm:self-center"
+                        onClick={onHanhDong}
+                        disabled={voHieuHoaHanhDong}
+                        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:self-center"
                     >
                         <BieuTuong ten={hanhDong === "Thêm môn dạy" || hanhDong === "Thêm tài liệu" ? "plus" : "edit"} />
                         {hanhDong}
@@ -359,6 +555,69 @@ function KhoiNoiDung({
             <div className="p-5 sm:p-6">{children}</div>
         </section>
     );
+}
+
+function TruongCaNhan({
+    nhan,
+    name,
+    value,
+    giaTriHienThi,
+    type = "text",
+    dangChinhSua,
+    onChange,
+    loi,
+    batBuoc = false,
+    nhieuDong = false,
+    className = "",
+}) {
+    if (!dangChinhSua) {
+        return (
+            <div className={className}>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                    {nhan}
+                </p>
+                <p className={`mt-2 text-sm font-semibold text-slate-800 ${nhieuDong ? "leading-7" : ""}`}>
+                    {giaTriHienThi || value || "Chưa cập nhật"}
+                </p>
+            </div>
+        );
+    }
+
+    const thuocTinhChung = {
+        id: `thong-tin-${name}`,
+        name,
+        value: value || "",
+        onChange,
+        required: batBuoc,
+        "aria-invalid": Boolean(loi),
+        "aria-describedby": loi ? `loi-${name}` : undefined,
+        className: `${lopNhapLieu} ${loi ? "border-red-400 focus:border-red-500 focus:ring-red-100" : ""}`,
+    };
+
+    return (
+        <label htmlFor={`thong-tin-${name}`} className={`block ${className}`}>
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                {nhan}
+                {batBuoc && <span className="text-red-500"> *</span>}
+            </span>
+            {nhieuDong ? (
+                <textarea {...thuocTinhChung} rows={5} maxLength={2000} />
+            ) : (
+                <input {...thuocTinhChung} type={type} />
+            )}
+            {loi && (
+                <span id={`loi-${name}`} className="mt-1.5 block text-xs font-semibold text-red-600">
+                    {Array.isArray(loi) ? loi[0] : loi}
+                </span>
+            )}
+        </label>
+    );
+}
+
+function dinhDangNgay(ngay) {
+    if (!ngay) return "";
+    const [nam, thang, ngayTrongThang] = ngay.split("-");
+    return `${ngayTrongThang}/${thang}/${nam}`;
 }
 
 function TruongThongTin({ nhan, giaTri, nhieuDong = false }) {

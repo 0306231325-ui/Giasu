@@ -14,6 +14,8 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/gia-su/ho-so/ca-nhan', [GiasuController::class, 'hoSoCaNhan']);
+    Route::patch('/gia-su/ho-so/ca-nhan', [GiasuController::class, 'capNhatHoSoCaNhan']);
     Route::get('/admin/hoc-vien', [AdminHocVienController::class, 'danhSachHocVien']);
     Route::patch('/admin/hoc-vien/{hocVienId}/trang-thai', [AdminHocVienController::class, 'capNhatTrangThaiHocVien']);
     Route::get('/admin/baiviet', [BaiVietController::class, 'danhSachBaiVietAdmin']);
