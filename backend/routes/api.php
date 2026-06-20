@@ -16,6 +16,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/gia-su/ho-so/ca-nhan', [GiasuController::class, 'hoSoCaNhan']);
     Route::patch('/gia-su/ho-so/ca-nhan', [GiasuController::class, 'capNhatHoSoCaNhan']);
+    Route::get('/gia-su/ho-so/chuyen-mon', [GiasuController::class, 'chuyenMon']);
+    Route::patch('/gia-su/ho-so/chuyen-mon', [GiasuController::class, 'capNhatChuyenMon']);
     Route::get('/gia-su/ho-so/bang-cap', [GiasuController::class, 'danhSachBangCap']);
     Route::post('/gia-su/ho-so/bang-cap', [GiasuController::class, 'themBangCap']);
     Route::get('/gia-su/ho-so/bang-cap/{bangCapId}/xem', [GiasuController::class, 'xemBangCap'])

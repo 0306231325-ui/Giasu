@@ -211,8 +211,8 @@ function DangKyLamGiaSu() {
                     <div className="border-b border-slate-100 p-6 sm:p-8 lg:p-10">
                         <TieuDePhan
                             soThuTu="2"
-                            tieuDe="Học vấn và chuyên môn"
-                            moTa="Cung cấp nền tảng chuyên môn phù hợp với môn học bạn muốn giảng dạy."
+                            tieuDe="Trình độ"
+                            moTa="Chọn trình độ hiện tại của bạn."
                         />
 
                         <div className="grid gap-5 md:grid-cols-2">
@@ -243,10 +243,11 @@ function DangKyLamGiaSu() {
                                 <input
                                     className={lopInput}
                                     type="text"
-                                    name="chuyen_nganh"
+                                    name="chuyen_nganh_bang_cap"
                                     placeholder="Ví dụ: Sư phạm Toán học"
                                 />
                             </label>
+
                         </div>
                     </div>
 
@@ -490,7 +491,7 @@ function DangKyLamGiaSu() {
                                 />
                             </label>
 
-                            <label className={lopNhan}>
+                            <label className={`${lopNhan} md:col-span-2`}>
                                 Bằng cấp / Thẻ sinh viên<DauBatBuoc />
                                 <input
                                     className={`${lopInput} file:mr-4 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-blue-700`}

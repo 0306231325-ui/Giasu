@@ -47,6 +47,13 @@ const bangCapMacDinh = {
     tai_lieu: null,
 };
 
+const chuyenMonMacDinh = {
+    trinh_do_giasu_id: "",
+    muc_kinh_nghiem_id: "",
+    ten_trinh_do: "",
+    muc_kinh_nghiem: null,
+};
+
 function GiaSuHoSo() {
     const { user, updateUser } = useAuth();
     const [thongTinCaNhan, setThongTinCaNhan] = useState(thongTinCaNhanMacDinh);
@@ -63,6 +70,17 @@ function GiaSuHoSo() {
     const [loiBangCap, setLoiBangCap] = useState({});
     const [dangThemBangCap, setDangThemBangCap] = useState(false);
     const [bangCapDangXoa, setBangCapDangXoa] = useState(null);
+    const [chuyenMon, setChuyenMon] = useState(chuyenMonMacDinh);
+    const [banNhapChuyenMon, setBanNhapChuyenMon] =
+        useState(chuyenMonMacDinh);
+    const [danhMucChuyenMon, setDanhMucChuyenMon] = useState({
+        trinh_do: [],
+        muc_kinh_nghiem: [],
+    });
+    const [dangTaiChuyenMon, setDangTaiChuyenMon] = useState(true);
+    const [dangSuaChuyenMon, setDangSuaChuyenMon] = useState(false);
+    const [dangLuuChuyenMon, setDangLuuChuyenMon] = useState(false);
+    const [loiChuyenMon, setLoiChuyenMon] = useState({});
     const tenGiaSu = thongTinCaNhan.ho_ten || user?.ho_ten || "Gia sư";
 
     useEffect(() => {
@@ -86,6 +104,42 @@ function GiaSuHoSo() {
             })
             .finally(() => {
                 if (conHieuLuc) setDangTai(false);
+            });
+
+        return () => {
+            conHieuLuc = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        let conHieuLuc = true;
+
+        api.get("/gia-su/ho-so/chuyen-mon")
+            .then((phanHoi) => {
+                if (!conHieuLuc) return;
+                const duLieu = {
+                    ...chuyenMonMacDinh,
+                    ...phanHoi.data.data.thong_tin,
+                };
+                setChuyenMon(duLieu);
+                setBanNhapChuyenMon(duLieu);
+                setDanhMucChuyenMon({
+                    trinh_do: phanHoi.data.data.trinh_do || [],
+                    muc_kinh_nghiem:
+                        phanHoi.data.data.muc_kinh_nghiem || [],
+                });
+            })
+            .catch((error) => {
+                if (!conHieuLuc) return;
+                setThongBao({
+                    loai: "loi",
+                    noiDung:
+                        error.response?.data?.message ||
+                        "Không thể tải thông tin chuyên môn.",
+                });
+            })
+            .finally(() => {
+                if (conHieuLuc) setDangTaiChuyenMon(false);
             });
 
         return () => {
@@ -275,6 +329,68 @@ function GiaSuHoSo() {
             });
         } finally {
             setBangCapDangXoa(null);
+        }
+    };
+
+    const batDauSuaChuyenMon = () => {
+        setBanNhapChuyenMon(chuyenMon);
+        setLoiChuyenMon({});
+        setThongBao(null);
+        setDangSuaChuyenMon(true);
+    };
+
+    const huySuaChuyenMon = () => {
+        setBanNhapChuyenMon(chuyenMon);
+        setLoiChuyenMon({});
+        setDangSuaChuyenMon(false);
+    };
+
+    const thayDoiChuyenMon = (suKien) => {
+        const { name, value } = suKien.target;
+        setBanNhapChuyenMon((hienTai) => ({ ...hienTai, [name]: value }));
+        setLoiChuyenMon((hienTai) => ({ ...hienTai, [name]: undefined }));
+    };
+
+    const luuChuyenMon = async (suKien) => {
+        suKien.preventDefault();
+        setDangLuuChuyenMon(true);
+        setLoiChuyenMon({});
+        setThongBao(null);
+
+        try {
+            const phanHoi = await api.patch("/gia-su/ho-so/chuyen-mon", {
+                trinh_do_giasu_id: Number(
+                    banNhapChuyenMon.trinh_do_giasu_id,
+                ),
+                muc_kinh_nghiem_id: Number(
+                    banNhapChuyenMon.muc_kinh_nghiem_id,
+                ),
+            });
+            const duLieu = {
+                ...chuyenMonMacDinh,
+                ...phanHoi.data.data,
+            };
+
+            setChuyenMon(duLieu);
+            setBanNhapChuyenMon(duLieu);
+            setDangSuaChuyenMon(false);
+            setThongBao({
+                loai: "thanh_cong",
+                noiDung: phanHoi.data.message,
+            });
+        } catch (error) {
+            if (error.response?.status === 422) {
+                setLoiChuyenMon(error.response.data.errors || {});
+            } else {
+                setThongBao({
+                    loai: "loi",
+                    noiDung:
+                        error.response?.data?.message ||
+                        "Không thể lưu thông tin chuyên môn.",
+                });
+            }
+        } finally {
+            setDangLuuChuyenMon(false);
         }
     };
 
@@ -495,24 +611,88 @@ function GiaSuHoSo() {
 
                     <KhoiNoiDung
                         bieuTuong="book"
-                        tieuDe="Chuyên môn và kinh nghiệm"
-                        moTa="Nền tảng học vấn và năng lực giảng dạy hiện tại."
-                        hanhDong="Chỉnh sửa"
+                        tieuDe="Trình độ và kinh nghiệm"
+                        moTa="Trình độ hiện tại và kinh nghiệm giảng dạy."
+                        hanhDong={dangSuaChuyenMon ? "Hủy" : "Chỉnh sửa"}
+                        onHanhDong={
+                            dangSuaChuyenMon
+                                ? huySuaChuyenMon
+                                : batDauSuaChuyenMon
+                        }
+                        voHieuHoaHanhDong={
+                            dangTaiChuyenMon || dangLuuChuyenMon
+                        }
                     >
-                        <div className="grid gap-5 md:grid-cols-2">
-                            <TruongThongTin
-                                nhan="Trình độ"
-                                giaTri="Đã tốt nghiệp Đại học"
-                            />
-                            <TruongThongTin
-                                nhan="Mức kinh nghiệm"
-                                giaTri="Từ 3 đến 5 năm"
-                            />
-                            <TruongThongTin
-                                nhan="Chuyên ngành"
-                                giaTri="Sư phạm Toán học"
-                            />
-                        </div>
+                        {dangTaiChuyenMon ? (
+                            <p className="text-sm font-semibold text-slate-500">
+                                Đang tải thông tin chuyên môn...
+                            </p>
+                        ) : (
+                            <form
+                                onSubmit={luuChuyenMon}
+                                className="grid gap-5 md:grid-cols-2"
+                            >
+                                <TruongChuyenMon
+                                    nhan="Trình độ"
+                                    name="trinh_do_giasu_id"
+                                    value={
+                                        banNhapChuyenMon.trinh_do_giasu_id || ""
+                                    }
+                                    giaTriHienThi={
+                                        chuyenMon.ten_trinh_do || "Chưa cập nhật"
+                                    }
+                                    dangChinhSua={dangSuaChuyenMon}
+                                    onChange={thayDoiChuyenMon}
+                                    loi={loiChuyenMon.trinh_do_giasu_id}
+                                    luaChon={danhMucChuyenMon.trinh_do.map(
+                                        (muc) => ({
+                                            value: muc.id,
+                                            label: muc.ten,
+                                        }),
+                                    )}
+                                />
+                                <TruongChuyenMon
+                                    nhan="Mức kinh nghiệm"
+                                    name="muc_kinh_nghiem_id"
+                                    value={
+                                        banNhapChuyenMon.muc_kinh_nghiem_id || ""
+                                    }
+                                    giaTriHienThi={dinhDangMucKinhNghiem(
+                                        chuyenMon.muc_kinh_nghiem,
+                                    )}
+                                    dangChinhSua={dangSuaChuyenMon}
+                                    onChange={thayDoiChuyenMon}
+                                    loi={loiChuyenMon.muc_kinh_nghiem_id}
+                                    luaChon={danhMucChuyenMon.muc_kinh_nghiem.map(
+                                        (muc) => ({
+                                            value: muc.id,
+                                            label: dinhDangMucKinhNghiem(muc),
+                                        }),
+                                    )}
+                                />
+                                {dangSuaChuyenMon && (
+                                    <div className="flex justify-end gap-3 md:col-span-2">
+                                        <button
+                                            type="button"
+                                            onClick={huySuaChuyenMon}
+                                            disabled={dangLuuChuyenMon}
+                                            className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+                                        >
+                                            Hủy
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={dangLuuChuyenMon}
+                                            className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-500 disabled:opacity-50"
+                                        >
+                                            {dangLuuChuyenMon
+                                                ? "Đang lưu..."
+                                                : "Lưu thông tin"}
+                                        </button>
+                                    </div>
+                                )}
+                            </form>
+                        )}
                     </KhoiNoiDung>
 
                     <KhoiNoiDung
@@ -522,7 +702,15 @@ function GiaSuHoSo() {
                         hanhDong="Thêm môn dạy"
                         noiBat
                     >
-                        <div className="space-y-3">
+                        <div className="mb-3 flex items-center justify-between gap-3 text-xs">
+                            <span className="font-semibold text-slate-500">
+                                {monDangDay.length} môn đang đăng ký
+                            </span>
+                            <span className="text-slate-400">
+                                Cuộn để xem thêm
+                            </span>
+                        </div>
+                        <div className="max-h-[430px] space-y-3 overflow-y-auto overscroll-contain pr-2 [scrollbar-color:#94a3b8_#f1f5f9] [scrollbar-width:thin]">
                             {monDangDay.map((mon) => (
                                 <MonDay key={mon.id} mon={mon} />
                             ))}
@@ -675,6 +863,85 @@ function GiaSuHoSo() {
             )}
         </div>
     );
+}
+
+function TruongChuyenMon({
+    nhan,
+    name,
+    value,
+    giaTriHienThi,
+    dangChinhSua,
+    onChange,
+    loi,
+    luaChon,
+    className = "",
+}) {
+    if (!dangChinhSua) {
+        return (
+            <div className={className}>
+                <TruongThongTin
+                    nhan={nhan}
+                    giaTri={giaTriHienThi}
+                />
+            </div>
+        );
+    }
+
+    const loiDauTien = Array.isArray(loi) ? loi[0] : loi;
+
+    return (
+        <label className={`block ${className}`}>
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                {nhan} <span className="text-red-500">*</span>
+            </span>
+            {luaChon ? (
+                <select
+                    name={name}
+                    value={value}
+                    onChange={onChange}
+                    required
+                    className={`${lopNhapLieu} ${loi ? "border-red-400" : ""}`}
+                >
+                    <option value="" disabled>
+                        Chọn {nhan.toLowerCase()}
+                    </option>
+                    {luaChon.map((muc) => (
+                        <option key={muc.value} value={muc.value}>
+                            {muc.label}
+                        </option>
+                    ))}
+                </select>
+            ) : (
+                <input
+                    type="text"
+                    name={name}
+                    value={value}
+                    onChange={onChange}
+                    required
+                    className={`${lopNhapLieu} ${loi ? "border-red-400" : ""}`}
+                />
+            )}
+            {loiDauTien && (
+                <span className="mt-1.5 block text-xs font-semibold text-red-600">
+                    {loiDauTien}
+                </span>
+            )}
+        </label>
+    );
+}
+
+function dinhDangMucKinhNghiem(mucKinhNghiem) {
+    if (!mucKinhNghiem) return "Chưa cập nhật";
+    if (
+        Number(mucKinhNghiem.tu_khoang) === 0 &&
+        Number(mucKinhNghiem.den_khoang) === 0
+    ) {
+        return "Chưa có kinh nghiệm";
+    }
+    if (mucKinhNghiem.den_khoang === null) {
+        return `Từ ${mucKinhNghiem.tu_khoang} năm trở lên`;
+    }
+    return `Từ ${mucKinhNghiem.tu_khoang} đến ${mucKinhNghiem.den_khoang} năm`;
 }
 
 function FormBangCap({ duLieu, loi, dangGui, onChange, onSubmit, onDong }) {

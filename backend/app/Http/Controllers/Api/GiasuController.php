@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\DanhGia;
 use App\Models\Giasu;
 use App\Models\GiasuBangCap;
+use App\Models\MucKinhNghiem;
+use App\Models\TrinhDoGiasu;
+use App\Services\GiaTinhService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -147,6 +150,81 @@ class GiasuController extends Controller
             'success' => true,
             'message' => 'Cập nhật thông tin cá nhân thành công.',
             'data' => $this->dinhDangThongTinCaNhan($user->fresh(), $giaSu->fresh()),
+        ]);
+    }
+
+    public function chuyenMon(Request $request): JsonResponse
+    {
+        $giaSu = $this->layHoSoGiaSu($request);
+
+        if (! $giaSu) {
+            return $this->phanHoiKhongCoHoSo($request);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'thong_tin' => $this->dinhDangChuyenMon($giaSu),
+                'trinh_do' => TrinhDoGiasu::query()
+                    ->select('id', 'ten')
+                    ->orderBy('thu_tu')
+                    ->get(),
+                'muc_kinh_nghiem' => MucKinhNghiem::query()
+                    ->select('id', 'tu_khoang', 'den_khoang')
+                    ->orderBy('tu_khoang')
+                    ->get(),
+            ],
+        ]);
+    }
+
+    public function capNhatChuyenMon(Request $request): JsonResponse
+    {
+        $giaSu = $this->layHoSoGiaSu($request);
+
+        if (! $giaSu) {
+            return $this->phanHoiKhongCoHoSo($request);
+        }
+
+        $duLieu = $request->validate([
+            'trinh_do_giasu_id' => [
+                'required',
+                'integer',
+                'exists:trinh_do_giasu,id',
+            ],
+            'muc_kinh_nghiem_id' => [
+                'required',
+                'integer',
+                'exists:muc_kinh_nghiem,id',
+            ],
+        ], [
+            'trinh_do_giasu_id.required' => 'Vui lòng chọn trình độ.',
+            'trinh_do_giasu_id.exists' => 'Trình độ không hợp lệ.',
+            'muc_kinh_nghiem_id.required' => 'Vui lòng chọn mức kinh nghiệm.',
+            'muc_kinh_nghiem_id.exists' => 'Mức kinh nghiệm không hợp lệ.',
+        ]);
+
+        DB::transaction(function () use ($duLieu, $giaSu) {
+            $giaSu->update([
+                'trinh_do_giasu_id' => $duLieu['trinh_do_giasu_id'],
+                'muc_kinh_nghiem_id' => $duLieu['muc_kinh_nghiem_id'],
+            ]);
+
+            foreach ($giaSu->giasuGias()->get() as $mucGia) {
+                $giaMoi = GiaTinhService::tinhGiaGiasu(
+                    $mucGia->monhoc_id,
+                    $giaSu->id,
+                );
+
+                if ($giaMoi) {
+                    $mucGia->update($giaMoi);
+                }
+            }
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cập nhật trình độ và kinh nghiệm thành công.',
+            'data' => $this->dinhDangChuyenMon($giaSu->fresh()),
         ]);
     }
 
@@ -324,6 +402,23 @@ class GiasuController extends Controller
             'duyet_luc' => $bangCap->duyet_luc?->toISOString(),
             'created_at' => $bangCap->created_at?->toISOString(),
             'url_xem' => "/gia-su/ho-so/bang-cap/{$bangCap->id}/xem",
+        ];
+    }
+
+    private function dinhDangChuyenMon(Giasu $giaSu): array
+    {
+        $giaSu->loadMissing(['trinhDo:id,ten', 'mucKinhNghiem:id,tu_khoang,den_khoang']);
+
+        return [
+            'trinh_do_giasu_id' => $giaSu->trinh_do_giasu_id,
+            'ten_trinh_do' => $giaSu->trinhDo?->ten,
+            'muc_kinh_nghiem_id' => $giaSu->muc_kinh_nghiem_id,
+            'muc_kinh_nghiem' => $giaSu->mucKinhNghiem
+                ? [
+                    'tu_khoang' => $giaSu->mucKinhNghiem->tu_khoang,
+                    'den_khoang' => $giaSu->mucKinhNghiem->den_khoang,
+                ]
+                : null,
         ];
     }
 
