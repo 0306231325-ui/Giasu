@@ -39,20 +39,13 @@ const monDangDay = [
     },
 ];
 
-const bangCap = [
-    {
-        id: 1,
-        ten: "Bằng tốt nghiệp Đại học",
-        chiTiet: "Đại học Sư phạm TP. Hồ Chí Minh",
-        trangThai: "Đã xác minh",
-    },
-    {
-        id: 2,
-        ten: "Chứng chỉ nghiệp vụ sư phạm",
-        chiTiet: "Cấp ngày 12/08/2024",
-        trangThai: "Đang xét duyệt",
-    },
-];
+const bangCapMacDinh = {
+    ten_bang: "",
+    loai_bang: "bang_cap",
+    chuyen_nganh: "",
+    truong_don_vi: "",
+    tai_lieu: null,
+};
 
 function GiaSuHoSo() {
     const { user, updateUser } = useAuth();
@@ -63,6 +56,13 @@ function GiaSuHoSo() {
     const [dangChinhSua, setDangChinhSua] = useState(false);
     const [loi, setLoi] = useState({});
     const [thongBao, setThongBao] = useState(null);
+    const [danhSachBangCap, setDanhSachBangCap] = useState([]);
+    const [dangTaiBangCap, setDangTaiBangCap] = useState(true);
+    const [hienFormBangCap, setHienFormBangCap] = useState(false);
+    const [formBangCap, setFormBangCap] = useState(bangCapMacDinh);
+    const [loiBangCap, setLoiBangCap] = useState({});
+    const [dangThemBangCap, setDangThemBangCap] = useState(false);
+    const [bangCapDangXoa, setBangCapDangXoa] = useState(null);
     const tenGiaSu = thongTinCaNhan.ho_ten || user?.ho_ten || "Gia sư";
 
     useEffect(() => {
@@ -86,6 +86,31 @@ function GiaSuHoSo() {
             })
             .finally(() => {
                 if (conHieuLuc) setDangTai(false);
+            });
+
+        return () => {
+            conHieuLuc = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        let conHieuLuc = true;
+
+        api.get("/gia-su/ho-so/bang-cap")
+            .then((phanHoi) => {
+                if (conHieuLuc) setDanhSachBangCap(phanHoi.data.data || []);
+            })
+            .catch((error) => {
+                if (!conHieuLuc) return;
+                setThongBao({
+                    loai: "loi",
+                    noiDung:
+                        error.response?.data?.message ||
+                        "Không thể tải danh sách bằng cấp và chứng chỉ.",
+                });
+            })
+            .finally(() => {
+                if (conHieuLuc) setDangTaiBangCap(false);
             });
 
         return () => {
@@ -148,6 +173,108 @@ function GiaSuHoSo() {
             }
         } finally {
             setDangLuu(false);
+        }
+    };
+
+    const thayDoiBangCap = (suKien) => {
+        const { name, value, files } = suKien.target;
+        setFormBangCap((hienTai) => ({
+            ...hienTai,
+            [name]: files ? files[0] || null : value,
+        }));
+        setLoiBangCap((hienTai) => ({ ...hienTai, [name]: undefined }));
+    };
+
+    const dongFormBangCap = () => {
+        if (dangThemBangCap) return;
+        setHienFormBangCap(false);
+        setFormBangCap(bangCapMacDinh);
+        setLoiBangCap({});
+    };
+
+    const themBangCap = async (suKien) => {
+        suKien.preventDefault();
+        setDangThemBangCap(true);
+        setLoiBangCap({});
+        setThongBao(null);
+
+        const duLieuGui = new FormData();
+        Object.entries(formBangCap).forEach(([ten, giaTri]) => {
+            if (giaTri !== null && giaTri !== "") duLieuGui.append(ten, giaTri);
+        });
+
+        try {
+            const phanHoi = await api.post(
+                "/gia-su/ho-so/bang-cap",
+                duLieuGui,
+                { headers: { "Content-Type": "multipart/form-data" } },
+            );
+            setDanhSachBangCap((hienTai) => [phanHoi.data.data, ...hienTai]);
+            setThongBao({
+                loai: "thanh_cong",
+                noiDung: phanHoi.data.message,
+            });
+            setHienFormBangCap(false);
+            setFormBangCap(bangCapMacDinh);
+            setLoiBangCap({});
+        } catch (error) {
+            if (error.response?.status === 422) {
+                setLoiBangCap(error.response.data.errors || {});
+            } else {
+                setThongBao({
+                    loai: "loi",
+                    noiDung:
+                        error.response?.data?.message ||
+                        "Không thể thêm tài liệu. Vui lòng thử lại.",
+                });
+            }
+        } finally {
+            setDangThemBangCap(false);
+        }
+    };
+
+    const xemBangCap = async (bangCap) => {
+        try {
+            const phanHoi = await api.get(bangCap.url_xem, {
+                responseType: "blob",
+            });
+            const urlTam = URL.createObjectURL(phanHoi.data);
+            window.open(urlTam, "_blank", "noopener,noreferrer");
+            window.setTimeout(() => URL.revokeObjectURL(urlTam), 60000);
+        } catch {
+            setThongBao({
+                loai: "loi",
+                noiDung: "Không thể mở file tài liệu.",
+            });
+        }
+    };
+
+    const xoaBangCap = async (bangCap) => {
+        if (!window.confirm(`Xóa tài liệu "${bangCap.ten_bang}"?`)) return;
+
+        setBangCapDangXoa(bangCap.id);
+        setThongBao(null);
+
+        try {
+            const phanHoi = await api.delete(
+                `/gia-su/ho-so/bang-cap/${bangCap.id}`,
+            );
+            setDanhSachBangCap((hienTai) =>
+                hienTai.filter((taiLieu) => taiLieu.id !== bangCap.id),
+            );
+            setThongBao({
+                loai: "thanh_cong",
+                noiDung: phanHoi.data.message,
+            });
+        } catch (error) {
+            setThongBao({
+                loai: "loi",
+                noiDung:
+                    error.response?.data?.message ||
+                    "Không thể xóa tài liệu. Vui lòng thử lại.",
+            });
+        } finally {
+            setBangCapDangXoa(null);
         }
     };
 
@@ -254,7 +381,10 @@ function GiaSuHoSo() {
 
                 <div className="grid border-t border-white/10 bg-black/10 sm:grid-cols-3">
                     <ThongKe giaTri="3" nhan="Môn đăng ký dạy" />
-                    <ThongKe giaTri="2" nhan="Bằng cấp, chứng chỉ" />
+                    <ThongKe
+                        giaTri={dangTaiBangCap ? "..." : String(danhSachBangCap.length)}
+                        nhan="Bằng cấp, chứng chỉ"
+                    />
                     <ThongKe giaTri="350.000đ" nhan="Giá dạy từ" />
                 </div>
             </section>
@@ -443,9 +573,24 @@ function GiaSuHoSo() {
                         tieuDe="Bằng cấp và chứng chỉ"
                         moTa="Tài liệu dùng để xác minh chuyên môn."
                         hanhDong="Thêm tài liệu"
+                        onHanhDong={() => setHienFormBangCap(true)}
                     >
-                        <div className="space-y-3">
-                            {bangCap.map((taiLieu) => (
+                        {dangTaiBangCap ? (
+                            <p className="text-sm font-semibold text-slate-500">
+                                Đang tải tài liệu...
+                            </p>
+                        ) : danhSachBangCap.length === 0 ? (
+                            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-7 text-center">
+                                <p className="text-sm font-bold text-slate-700">
+                                    Chưa có bằng cấp hoặc chứng chỉ
+                                </p>
+                                <p className="mt-1 text-xs leading-5 text-slate-500">
+                                    Thêm file minh chứng để hồ sơ được xác minh đầy đủ hơn.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                            {danhSachBangCap.map((taiLieu) => (
                                 <div
                                     key={taiLieu.id}
                                     className="rounded-2xl border border-slate-200 p-4 transition hover:border-blue-200 hover:bg-blue-50/40"
@@ -456,33 +601,52 @@ function GiaSuHoSo() {
                                         </span>
                                         <div className="min-w-0 flex-1">
                                             <p className="truncate text-sm font-bold text-slate-900">
-                                                {taiLieu.ten}
+                                                {taiLieu.ten_bang}
                                             </p>
                                             <p className="mt-1 text-xs leading-5 text-slate-500">
-                                                {taiLieu.chiTiet}
+                                                {[taiLieu.chuyen_nganh, taiLieu.truong_don_vi]
+                                                    .filter(Boolean)
+                                                    .join(" · ") || "Chưa cập nhật chi tiết"}
                                             </p>
                                             <span
                                                 className={[
                                                     "mt-2 inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold",
-                                                    taiLieu.trangThai === "Đã xác minh"
-                                                        ? "bg-emerald-50 text-emerald-700"
-                                                        : "bg-amber-50 text-amber-700",
+                                                    lopTrangThaiBangCap(taiLieu.trang_thai),
                                                 ].join(" ")}
                                             >
-                                                {taiLieu.trangThai}
+                                                {nhanTrangThaiBangCap(taiLieu.trang_thai)}
                                             </span>
+                                            {taiLieu.ly_do && (
+                                                <p className="mt-2 text-xs leading-5 text-red-600">
+                                                    <span className="font-bold">Lý do:</span>{" "}
+                                                    {taiLieu.ly_do}
+                                                </p>
+                                            )}
                                         </div>
-                                        <button
-                                            type="button"
-                                            aria-label={`Xem ${taiLieu.ten}`}
-                                            className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-blue-600"
-                                        >
-                                            <BieuTuong ten="eye" />
-                                        </button>
+                                        <div className="flex shrink-0 gap-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => xemBangCap(taiLieu)}
+                                                aria-label={`Xem ${taiLieu.ten_bang}`}
+                                                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-blue-600"
+                                            >
+                                                <BieuTuong ten="eye" />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => xoaBangCap(taiLieu)}
+                                                disabled={bangCapDangXoa === taiLieu.id}
+                                                aria-label={`Xóa ${taiLieu.ten_bang}`}
+                                                className="rounded-lg p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                                            >
+                                                <BieuTuong ten="trash" />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
-                        </div>
+                            </div>
+                        )}
                     </KhoiNoiDung>
 
                     <div className="rounded-3xl border border-blue-400/20 bg-blue-500/10 p-5">
@@ -502,8 +666,199 @@ function GiaSuHoSo() {
                     </div>
                 </div>
             </div>
+
+            {hienFormBangCap && (
+                <FormBangCap
+                    duLieu={formBangCap}
+                    loi={loiBangCap}
+                    dangGui={dangThemBangCap}
+                    onChange={thayDoiBangCap}
+                    onSubmit={themBangCap}
+                    onDong={dongFormBangCap}
+                />
+            )}
         </div>
     );
+}
+
+function FormBangCap({ duLieu, loi, dangGui, onChange, onSubmit, onDong }) {
+    const loiDauTien = (tenTruong) =>
+        Array.isArray(loi[tenTruong]) ? loi[tenTruong][0] : loi[tenTruong];
+
+    return (
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tieu-de-form-bang-cap"
+        >
+            <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white text-slate-900 shadow-2xl">
+                <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
+                    <div>
+                        <h2 id="tieu-de-form-bang-cap" className="text-xl font-extrabold">
+                            Thêm bằng cấp hoặc chứng chỉ
+                        </h2>
+                        <p className="mt-1 text-sm text-slate-500">
+                            File tải lên sẽ được gửi quản trị viên xét duyệt.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onDong}
+                        disabled={dangGui}
+                        aria-label="Đóng"
+                        className="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
+                    >
+                        <BieuTuong ten="x" />
+                    </button>
+                </div>
+
+                <form onSubmit={onSubmit} className="grid gap-5 p-6 md:grid-cols-2">
+                    <TruongBangCap
+                        nhan="Tên bằng cấp/chứng chỉ"
+                        name="ten_bang"
+                        value={duLieu.ten_bang}
+                        onChange={onChange}
+                        loi={loiDauTien("ten_bang")}
+                        placeholder="Ví dụ: Bằng tốt nghiệp Đại học"
+                        className="md:col-span-2"
+                        batBuoc
+                    />
+
+                    <label className="block">
+                        <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                            Loại tài liệu <span className="text-red-500">*</span>
+                        </span>
+                        <select
+                            name="loai_bang"
+                            value={duLieu.loai_bang}
+                            onChange={onChange}
+                            className={lopNhapLieu}
+                            required
+                        >
+                            <option value="bang_cap">Bằng cấp</option>
+                            <option value="chung_chi">Chứng chỉ</option>
+                            <option value="khac">Tài liệu khác</option>
+                        </select>
+                        {loiDauTien("loai_bang") && (
+                            <p className="mt-1.5 text-xs font-semibold text-red-600">
+                                {loiDauTien("loai_bang")}
+                            </p>
+                        )}
+                    </label>
+
+                    <TruongBangCap
+                        nhan="Chuyên ngành"
+                        name="chuyen_nganh"
+                        value={duLieu.chuyen_nganh}
+                        onChange={onChange}
+                        loi={loiDauTien("chuyen_nganh")}
+                        placeholder="Ví dụ: Sư phạm Toán"
+                    />
+
+                    <TruongBangCap
+                        nhan="Trường/đơn vị cấp"
+                        name="truong_don_vi"
+                        value={duLieu.truong_don_vi}
+                        onChange={onChange}
+                        loi={loiDauTien("truong_don_vi")}
+                        placeholder="Tên trường hoặc đơn vị cấp"
+                        className="md:col-span-2"
+                        batBuoc
+                    />
+
+                    <label className="block md:col-span-2">
+                        <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                            File minh chứng <span className="text-red-500">*</span>
+                        </span>
+                        <input
+                            type="file"
+                            name="tai_lieu"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            onChange={onChange}
+                            required
+                            className={`${lopNhapLieu} file:mr-4 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-xs file:font-bold file:text-blue-700 hover:file:bg-blue-100`}
+                        />
+                        <p className="mt-1.5 text-xs text-slate-400">
+                            Hỗ trợ PDF, JPG, JPEG, PNG; tối đa 5MB.
+                        </p>
+                        {loiDauTien("tai_lieu") && (
+                            <p className="mt-1.5 text-xs font-semibold text-red-600">
+                                {loiDauTien("tai_lieu")}
+                            </p>
+                        )}
+                    </label>
+
+                    <div className="flex justify-end gap-3 border-t border-slate-100 pt-5 md:col-span-2">
+                        <button
+                            type="button"
+                            onClick={onDong}
+                            disabled={dangGui}
+                            className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+                        >
+                            Hủy
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={dangGui}
+                            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-500 disabled:opacity-50"
+                        >
+                            <BieuTuong ten="upload" />
+                            {dangGui ? "Đang tải lên..." : "Thêm tài liệu"}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
+function TruongBangCap({
+    nhan,
+    name,
+    value,
+    onChange,
+    loi,
+    placeholder,
+    className = "",
+    batBuoc = false,
+}) {
+    return (
+        <label className={`block ${className}`}>
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                {nhan}
+                {batBuoc && <span className="text-red-500"> *</span>}
+            </span>
+            <input
+                type="text"
+                name={name}
+                value={value}
+                onChange={onChange}
+                placeholder={placeholder}
+                required={batBuoc}
+                className={`${lopNhapLieu} ${loi ? "border-red-400" : ""}`}
+            />
+            {loi && (
+                <p className="mt-1.5 text-xs font-semibold text-red-600">{loi}</p>
+            )}
+        </label>
+    );
+}
+
+function nhanTrangThaiBangCap(trangThai) {
+    return {
+        cho_duyet: "Đang xét duyệt",
+        duyet: "Đã xác minh",
+        tu_choi: "Bị từ chối",
+    }[trangThai] || "Chưa xác định";
+}
+
+function lopTrangThaiBangCap(trangThai) {
+    return {
+        cho_duyet: "bg-amber-50 text-amber-700",
+        duyet: "bg-emerald-50 text-emerald-700",
+        tu_choi: "bg-red-50 text-red-700",
+    }[trangThai] || "bg-slate-100 text-slate-600";
 }
 
 function KhoiNoiDung({
@@ -742,6 +1097,9 @@ function BieuTuong({ ten }) {
         certificate: <><circle cx="12" cy="9" r="6" /><path d="m8 14-1 8 5-3 5 3-1-8" /></>,
         document: <><path d="M6 2h8l4 4v16H6z" /><path d="M14 2v5h5M9 12h6M9 16h6" /></>,
         eye: <><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" /><circle cx="12" cy="12" r="2.5" /></>,
+        trash: <><path d="M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14M10 11v6M14 11v6" /></>,
+        x: <path d="m6 6 12 12M18 6 6 18" />,
+        upload: <><path d="M12 16V4M7 9l5-5 5 5" /><path d="M5 20h14" /></>,
         bulb: <><path d="M9 18h6M10 22h4" /><path d="M8 14a7 7 0 1 1 8 0c-1 1-1 2-1 4H9c0-2 0-3-1-4Z" /></>,
         plus: <path d="M12 5v14M5 12h14" />,
         edit: <><path d="m4 20 4-1 11-11-3-3L5 16z" /><path d="m14 7 3 3" /></>,

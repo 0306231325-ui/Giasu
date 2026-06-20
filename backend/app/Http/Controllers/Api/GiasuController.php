@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\DanhGia;
 use App\Models\Giasu;
+use App\Models\GiasuBangCap;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class GiasuController extends Controller
@@ -146,6 +148,183 @@ class GiasuController extends Controller
             'message' => 'Cập nhật thông tin cá nhân thành công.',
             'data' => $this->dinhDangThongTinCaNhan($user->fresh(), $giaSu->fresh()),
         ]);
+    }
+
+    public function danhSachBangCap(Request $request): JsonResponse
+    {
+        $giaSu = $this->layHoSoGiaSu($request);
+
+        if (! $giaSu) {
+            return $this->phanHoiKhongCoHoSo($request);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $giaSu->bangCaps()
+                ->latest()
+                ->get()
+                ->map(fn (GiasuBangCap $bangCap) => $this->dinhDangBangCap($bangCap)),
+        ]);
+    }
+
+    public function themBangCap(Request $request): JsonResponse
+    {
+        $giaSu = $this->layHoSoGiaSu($request);
+
+        if (! $giaSu) {
+            return $this->phanHoiKhongCoHoSo($request);
+        }
+
+        $duLieu = $request->validate([
+            'ten_bang' => ['required', 'string', 'min:2', 'max:255'],
+            'loai_bang' => ['required', Rule::in(['bang_cap', 'chung_chi', 'khac'])],
+            'chuyen_nganh' => ['nullable', 'string', 'max:255'],
+            'truong_don_vi' => ['required', 'string', 'min:2', 'max:255'],
+            'tai_lieu' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+        ], [
+            'ten_bang.required' => 'Vui lòng nhập tên bằng cấp hoặc chứng chỉ.',
+            'ten_bang.min' => 'Tên tài liệu phải có ít nhất 2 ký tự.',
+            'loai_bang.required' => 'Vui lòng chọn loại tài liệu.',
+            'loai_bang.in' => 'Loại tài liệu không hợp lệ.',
+            'truong_don_vi.required' => 'Vui lòng nhập trường hoặc đơn vị cấp.',
+            'truong_don_vi.min' => 'Tên trường hoặc đơn vị phải có ít nhất 2 ký tự.',
+            'tai_lieu.required' => 'Vui lòng chọn file minh chứng.',
+            'tai_lieu.file' => 'File minh chứng không hợp lệ.',
+            'tai_lieu.mimes' => 'File minh chứng chỉ hỗ trợ PDF, JPG, JPEG hoặc PNG.',
+            'tai_lieu.max' => 'File minh chứng không được lớn hơn 5MB.',
+            'tai_lieu.uploaded' => 'Tải file thất bại. Vui lòng chọn file nhỏ hơn 5MB.',
+        ]);
+
+        $duongDan = $request->file('tai_lieu')->store(
+            "giasu/{$giaSu->id}/bang-cap",
+            'local',
+        );
+
+        if (! $duongDan) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể lưu file minh chứng. Vui lòng thử lại.',
+            ], 500);
+        }
+
+        try {
+            $bangCap = $giaSu->bangCaps()->create([
+                'ten_bang' => trim($duLieu['ten_bang']),
+                'loai_bang' => $duLieu['loai_bang'],
+                'chuyen_nganh' => filled($duLieu['chuyen_nganh'] ?? null)
+                    ? trim($duLieu['chuyen_nganh'])
+                    : null,
+                'truong_don_vi' => trim($duLieu['truong_don_vi']),
+                'file_url' => $duongDan,
+                'trang_thai' => 'cho_duyet',
+                'duyet_boi' => null,
+                'duyet_luc' => null,
+                'ly_do' => null,
+            ]);
+        } catch (\Throwable $exception) {
+            Storage::disk('local')->delete($duongDan);
+            throw $exception;
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã thêm tài liệu và gửi xét duyệt.',
+            'data' => $this->dinhDangBangCap($bangCap),
+        ], 201);
+    }
+
+    public function xemBangCap(Request $request, int $bangCapId)
+    {
+        $giaSu = $this->layHoSoGiaSu($request);
+
+        if (! $giaSu) {
+            return $this->phanHoiKhongCoHoSo($request);
+        }
+
+        $bangCap = $giaSu->bangCaps()->find($bangCapId);
+
+        if (! $bangCap) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy tài liệu.',
+            ], 404);
+        }
+
+        if (! Storage::disk('local')->exists($bangCap->file_url)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'File tài liệu không còn tồn tại.',
+            ], 404);
+        }
+
+        return response()->file(
+            Storage::disk('local')->path($bangCap->file_url),
+            ['Content-Disposition' => 'inline'],
+        );
+    }
+
+    public function xoaBangCap(Request $request, int $bangCapId): JsonResponse
+    {
+        $giaSu = $this->layHoSoGiaSu($request);
+
+        if (! $giaSu) {
+            return $this->phanHoiKhongCoHoSo($request);
+        }
+
+        $bangCap = $giaSu->bangCaps()->find($bangCapId);
+
+        if (! $bangCap) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy tài liệu.',
+            ], 404);
+        }
+
+        $duongDan = $bangCap->file_url;
+        $bangCap->delete();
+        Storage::disk('local')->delete($duongDan);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã xóa bằng cấp hoặc chứng chỉ.',
+        ]);
+    }
+
+    private function layHoSoGiaSu(Request $request): ?Giasu
+    {
+        if ($request->user()?->vai_tro !== 'giasu') {
+            return null;
+        }
+
+        return $request->user()->giasu()->first();
+    }
+
+    private function phanHoiKhongCoHoSo(Request $request): JsonResponse
+    {
+        $laGiaSu = $request->user()?->vai_tro === 'giasu';
+
+        return response()->json([
+            'success' => false,
+            'message' => $laGiaSu
+                ? 'Không tìm thấy hồ sơ gia sư.'
+                : 'Chỉ tài khoản gia sư mới có thể quản lý tài liệu.',
+        ], $laGiaSu ? 404 : 403);
+    }
+
+    private function dinhDangBangCap(GiasuBangCap $bangCap): array
+    {
+        return [
+            'id' => $bangCap->id,
+            'ten_bang' => $bangCap->ten_bang,
+            'loai_bang' => $bangCap->loai_bang,
+            'chuyen_nganh' => $bangCap->chuyen_nganh,
+            'truong_don_vi' => $bangCap->truong_don_vi,
+            'trang_thai' => $bangCap->trang_thai,
+            'ly_do' => $bangCap->ly_do,
+            'duyet_luc' => $bangCap->duyet_luc?->toISOString(),
+            'created_at' => $bangCap->created_at?->toISOString(),
+            'url_xem' => "/gia-su/ho-so/bang-cap/{$bangCap->id}/xem",
+        ];
     }
 
     private function dinhDangThongTinCaNhan($user, Giasu $giaSu): array

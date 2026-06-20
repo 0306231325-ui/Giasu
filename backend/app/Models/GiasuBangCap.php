@@ -22,6 +22,13 @@ class GiasuBangCap extends Model
         'ly_do',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'duyet_luc' => 'datetime',
+        ];
+    }
+
     public function giasu(): BelongsTo
     {
         return $this->belongsTo(Giasu::class, 'giasu_id');

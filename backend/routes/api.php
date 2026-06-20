@@ -16,6 +16,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/gia-su/ho-so/ca-nhan', [GiasuController::class, 'hoSoCaNhan']);
     Route::patch('/gia-su/ho-so/ca-nhan', [GiasuController::class, 'capNhatHoSoCaNhan']);
+    Route::get('/gia-su/ho-so/bang-cap', [GiasuController::class, 'danhSachBangCap']);
+    Route::post('/gia-su/ho-so/bang-cap', [GiasuController::class, 'themBangCap']);
+    Route::get('/gia-su/ho-so/bang-cap/{bangCapId}/xem', [GiasuController::class, 'xemBangCap'])
+        ->name('gia-su.bang-cap.xem');
+    Route::delete('/gia-su/ho-so/bang-cap/{bangCapId}', [GiasuController::class, 'xoaBangCap']);
     Route::get('/admin/hoc-vien', [AdminHocVienController::class, 'danhSachHocVien']);
     Route::patch('/admin/hoc-vien/{hocVienId}/trang-thai', [AdminHocVienController::class, 'capNhatTrangThaiHocVien']);
     Route::get('/admin/baiviet', [BaiVietController::class, 'danhSachBaiVietAdmin']);
