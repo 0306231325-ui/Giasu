@@ -496,7 +496,7 @@ function GiaSuHoSo() {
 
     return (
         <div className="mx-auto max-w-7xl pb-10">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
                 <div>
                     <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-400/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-blue-200">
                         <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
@@ -510,16 +510,6 @@ function GiaSuHoSo() {
                         hồ sơ xác minh của bạn.
                     </p>
                 </div>
-
-                <button
-                    type="submit"
-                    form="form-thong-tin-ca-nhan"
-                    disabled={!dangChinhSua || dangLuu}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                    <BieuTuong ten="save" />
-                    {dangLuu ? "Đang lưu..." : "Lưu thay đổi"}
-                </button>
             </div>
 
             {thongBao && (
@@ -539,7 +529,7 @@ function GiaSuHoSo() {
             <section className="mt-7 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#101d43] to-[#0b1533] shadow-2xl shadow-black/20">
                 <div className="relative p-6 sm:p-8">
                     <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl" />
-                    <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="relative">
                         <div className="flex flex-col items-center gap-5 text-center sm:flex-row sm:text-left">
                             <div className="relative">
                                 <div className="flex h-28 w-28 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-400 to-indigo-600 text-4xl font-black text-white shadow-xl shadow-blue-950/40">
@@ -576,32 +566,7 @@ function GiaSuHoSo() {
                                 </div>
                             </div>
                         </div>
-
-                        <div className="w-full max-w-sm">
-                            <div className="flex items-center justify-between text-sm">
-                                <span className="font-semibold text-white/70">
-                                    Mức độ hoàn thiện hồ sơ
-                                </span>
-                                <span className="font-extrabold text-blue-300">85%</span>
-                            </div>
-                            <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white/10">
-                                <div className="h-full w-[85%] rounded-full bg-gradient-to-r from-blue-500 to-cyan-400" />
-                            </div>
-                            <p className="mt-3 text-xs leading-5 text-white/45">
-                                Thêm chứng chỉ ngoại ngữ để hồ sơ nổi bật và đáng tin
-                                cậy hơn.
-                            </p>
-                        </div>
                     </div>
-                </div>
-
-                <div className="grid border-t border-white/10 bg-black/10 sm:grid-cols-3">
-                    <ThongKe giaTri="3" nhan="Môn đăng ký dạy" />
-                    <ThongKe
-                        giaTri={dangTaiBangCap ? "..." : String(danhSachBangCap.length)}
-                        nhan="Bằng cấp, chứng chỉ"
-                    />
-                    <ThongKe giaTri="350.000đ" nhan="Giá dạy từ" />
                 </div>
             </section>
 
@@ -1608,15 +1573,6 @@ function MonDay({ mon, onXoa, dangXoa }) {
     );
 }
 
-function ThongKe({ giaTri, nhan }) {
-    return (
-        <div className="border-white/10 px-6 py-4 text-center first:border-0 sm:border-l">
-            <p className="text-xl font-extrabold text-white">{giaTri}</p>
-            <p className="mt-1 text-xs text-white/45">{nhan}</p>
-        </div>
-    );
-}
-
 function DongThongTin({ nhan, giaTri }) {
     return (
         <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-4 last:border-0 last:pb-0">
@@ -1637,7 +1593,6 @@ function layChuCaiDau(hoTen) {
 
 function BieuTuong({ ten }) {
     const duongNet = {
-        save: <><path d="M5 3h11l3 3v15H5z" /><path d="M8 3v6h8V3M8 21v-7h8v7" /></>,
         camera: <><path d="M4 7h3l2-3h6l2 3h3v12H4z" /><circle cx="12" cy="13" r="4" /></>,
         location: <><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>,
         star: <path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z" />,
