@@ -134,7 +134,7 @@ class AuthController extends Controller
             'ten_phu_huynh' => ['nullable', 'string', 'max:100'],
             'sdt_phu_huynh' => ['nullable', 'regex:/^(0|\+84)[0-9]{9}$/'],
             'muc_tieu_hoc_tap' => ['nullable', 'string', 'max:2000'],
-            'anh_dai_dien' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'anh_dai_dien' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ], [
             'ho_ten.required' => 'Vui lòng nhập họ và tên.',
             'ho_ten.min' => 'Họ và tên phải có ít nhất 2 ký tự.',
@@ -151,7 +151,7 @@ class AuthController extends Controller
         $anhDaiDienUrl = $user->anh_dai_dien;
 
         if ($request->hasFile('anh_dai_dien')) {
-            $thuMucAnh = public_path('images/avatars');
+            $thuMucAnh = public_path('images/avatar-hoc-vien');
 
             if (! File::isDirectory($thuMucAnh)) {
                 File::makeDirectory($thuMucAnh, 0755, true);
@@ -162,7 +162,7 @@ class AuthController extends Controller
             $file = $request->file('anh_dai_dien');
             $tenFile = 'hoc-vien-' . $user->id . '-' . time() . '.' . $file->getClientOriginalExtension();
             $file->move($thuMucAnh, $tenFile);
-            $anhDaiDienUrl = url('images/avatars/' . $tenFile);
+            $anhDaiDienUrl = url('images/avatar-hoc-vien/' . $tenFile);
         }
 
         DB::transaction(function () use ($validated, $user, &$hocVien, $anhDaiDienUrl) {
@@ -234,7 +234,10 @@ class AuthController extends Controller
         $duongDan = parse_url($anhDaiDien, PHP_URL_PATH) ?: $anhDaiDien;
         $duongDan = ltrim($duongDan, '/');
 
-        if (! str_starts_with($duongDan, 'images/avatars/')) {
+        if (
+            ! str_starts_with($duongDan, 'images/avatar-hoc-vien/') &&
+            ! str_starts_with($duongDan, 'images/avatars/')
+        ) {
             return;
         }
 

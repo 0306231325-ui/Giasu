@@ -154,6 +154,16 @@ function HoSoHocVien() {
         };
     }, [anhXemTruoc]);
 
+    useEffect(() => {
+        if (!thongBao) return;
+
+        const timer = setTimeout(() => {
+            setThongBao(null);
+        }, 3000);
+
+        return () => clearTimeout(timer);
+    }, [thongBao]);
+
     const thayDoiTruong = (suKien) => {
         const { name, value } = suKien.target;
         setForm((hienTai) => ({ ...hienTai, [name]: value }));
@@ -301,7 +311,7 @@ function HoSoHocVien() {
                                 </p>
                                 <div className="mt-4 flex flex-wrap items-center gap-3">
                                     <span className="text-xs font-medium text-slate-400">
-                                        Bấm vào ảnh để đổi. JPG, PNG hoặc WebP, tối đa 2MB.
+                                        Bấm vào ảnh để đổi. JPG, PNG hoặc WebP, tối đa 5MB.
                                     </span>
                                 </div>
                                 {loi.anh_dai_dien && (
