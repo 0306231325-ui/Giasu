@@ -14,12 +14,18 @@ class LichHocLichSu extends Model
         'nguoi_thay_doi_id',
         'trang_thai_cu',
         'trang_thai_moi',
+        'ly_do',
+        'hinh_thuc_xu_ly',
         'ngay_tao',
-        'ngay_ap_dung',
     ];
 
     public function lichHoc(): BelongsTo
     {
         return $this->belongsTo(LichHoc::class, 'lichhoc_id');
+    }
+
+    public function nguoiThayDoi(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'nguoi_thay_doi_id');
     }
 }

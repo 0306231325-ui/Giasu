@@ -11,6 +11,33 @@ use Illuminate\Support\Str;
 class BaiVietController extends Controller
 {
     private const SO_BAI_VIET_MOI_TRANG = 5;
+    private const DUNG_LUONG_ANH_BIA_TOI_DA_KB = 2048;
+
+    private function quyTacValidateBaiViet(): array
+    {
+        return [
+            'tieu_de' => ['required', 'string', 'max:255'],
+            'tom_tat' => ['nullable', 'string'],
+            'noi_dung' => ['required', 'string'],
+            'trang_thai' => ['required', 'in:xuat_ban,nhap,an'],
+            'anh_bia' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:' . self::DUNG_LUONG_ANH_BIA_TOI_DA_KB,
+            ],
+        ];
+    }
+
+    private function thongBaoValidateBaiViet(): array
+    {
+        return [
+            'anh_bia.uploaded' => 'Ảnh bìa tải lên thất bại. Vui lòng chọn ảnh JPG, PNG hoặc WebP dưới 2MB.',
+            'anh_bia.image' => 'Ảnh bìa phải là một file ảnh hợp lệ.',
+            'anh_bia.mimes' => 'Ảnh bìa chỉ hỗ trợ định dạng JPG, PNG hoặc WebP.',
+            'anh_bia.max' => 'Ảnh bìa không được lớn hơn 2MB.',
+        ];
+    }
 
     public function baiVietMoi()
     {
@@ -107,13 +134,10 @@ class BaiVietController extends Controller
             ], 403);
         }
 
-        $duLieu = $request->validate([
-            'tieu_de' => ['required', 'string', 'max:255'],
-            'tom_tat' => ['nullable', 'string'],
-            'noi_dung' => ['required', 'string'],
-            'trang_thai' => ['required', 'in:xuat_ban,nhap,an'],
-            'anh_bia' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
-        ]);
+        $duLieu = $request->validate(
+            $this->quyTacValidateBaiViet(),
+            $this->thongBaoValidateBaiViet(),
+        );
 
         $slug = $this->taoSlugKhongTrung($duLieu['tieu_de']);
         $anhBiaUrl = null;
@@ -166,13 +190,10 @@ class BaiVietController extends Controller
             ], 404);
         }
 
-        $duLieu = $request->validate([
-            'tieu_de' => ['required', 'string', 'max:255'],
-            'tom_tat' => ['nullable', 'string'],
-            'noi_dung' => ['required', 'string'],
-            'trang_thai' => ['required', 'in:xuat_ban,nhap,an'],
-            'anh_bia' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
-        ]);
+        $duLieu = $request->validate(
+            $this->quyTacValidateBaiViet(),
+            $this->thongBaoValidateBaiViet(),
+        );
 
         $anhBiaUrl = $baiViet->anh_bia;
 

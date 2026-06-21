@@ -64,6 +64,7 @@ function AdminBaiViet() {
         <FormTaoBaiViet
           form={taoMoi.form}
           anhXemTruoc={taoMoi.anhXemTruoc}
+          loiAnh={taoMoi.loiAnh}
           dangLuu={taoMoi.dangLuu}
           loi={taoMoi.loi}
           thongBao={taoMoi.thongBao}
@@ -80,6 +81,7 @@ function AdminBaiViet() {
           baiVietDangChon={chinhSua.baiVietDangChon}
           form={chinhSua.formChinhSua}
           anhXemTruoc={chinhSua.anhChinhSuaXemTruoc}
+          loiAnh={chinhSua.loiAnhChinhSua}
           dangLuu={chinhSua.dangCapNhat}
           loi={chinhSua.loiChinhSua}
           thongBao={chinhSua.thongBaoChinhSua}

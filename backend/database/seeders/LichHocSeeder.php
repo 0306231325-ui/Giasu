@@ -2,23 +2,24 @@
 
 namespace Database\Seeders;
 
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class LichHocSeeder extends Seeder
 {
     public function run(): void
     {
-        $goiHocId = DB::table('goihoc')
+        $goiHoc = DB::table('goihoc')
             ->where('hocvien_id', 2)
             ->where('giasu_id', 1)
-            ->value('id');
+            ->first(['id', 'giasu_id']);
 
-        if (! $goiHocId) {
+        if (! $goiHoc) {
             return;
         }
 
+        $goiHocId = $goiHoc->id;
         $exists = DB::table('lichhoc')->where('goihoc_id', $goiHocId)->exists();
         if ($exists) {
             return;
@@ -41,7 +42,7 @@ class LichHocSeeder extends Seeder
             'dia_chi_hoc' => '12 Nguyễn Văn Cừ, Quận 5, TP.HCM',
             'hinh_thuc_hoc' => 'offline',
             'tien_hoc' => $tienHocSauGiam,
-            'da_giam' => $phanTramGiam,
+            'giasu_id' => $goiHoc->giasu_id,
             'phi_hoahong' => 30000.00,
             'tien_giasu_nhan' => 270000.00,
             'trang_thai' => 'da_nhan',

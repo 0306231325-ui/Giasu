@@ -20,9 +20,4 @@ class TrinhDoGiasu extends Model
     {
         return $this->hasMany(Giasu::class, 'trinh_do_giasu_id');
     }
-
-    public function giasuGias(): HasMany
-    {
-        return $this->hasMany(GiasuGia::class, 'trinh_do_giasu_id');
-    }
 }

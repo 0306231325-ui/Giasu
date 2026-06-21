@@ -8,7 +8,7 @@ class BannerController extends Controller
 {
     public function index()
     {
-        $banner = Banner::all();
+        $banner = Banner::where('trang_thai', 'hienthi')->get();
 
         $banner->transform(function ($item) {
 

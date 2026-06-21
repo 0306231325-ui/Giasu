@@ -1,44 +1,15 @@
 import { useState, useEffect, memo } from "react";
 import api from "../../services/api";
 
-const getInitials = (name) => {
-    if (!name) return "G";
-    const parts = name.trim().split(/\s+/);
-    if (parts.length === 1) return parts[0][0].toUpperCase();
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-};
-
-const AVATAR_COLORS = [
-    "bg-blue-600",
-    "bg-emerald-600",
-    "bg-violet-600",
-    "bg-rose-600",
-    "bg-amber-600",
-];
-
 const GiaSuAvatar = memo(({ giasu }) => {
-    if (giasu.avatar) {
-        return (
-            <img
-                src={`http://127.0.0.1:8000/storage/${giasu.avatar}`}
-                alt={giasu.user?.ho_ten || "Gia sư"}
-                loading="lazy"
-                decoding="async"
-                className="w-full h-full object-cover"
-            />
-        );
-    }
-
-    const colorClass = AVATAR_COLORS[(giasu.id || 0) % AVATAR_COLORS.length];
-
     return (
-        <div
-            className={`w-full h-full flex items-center justify-center ${colorClass}`}
-        >
-            <span className="text-5xl font-bold text-white/90 select-none">
-                {getInitials(giasu.user?.ho_ten)}
-            </span>
-        </div>
+        <img
+            src={`http://127.0.0.1:8000/storage/${giasu.avatar}`}
+            alt={giasu.user?.ho_ten || "Gia sư"}
+            loading="lazy"
+            decoding="async"
+            className="w-full h-full object-cover"
+        />
     );
 });
 
@@ -46,31 +17,43 @@ GiaSuAvatar.displayName = "GiaSuAvatar";
 
 const GiaSuCard = memo(({ giasu }) => (
     <div className="bg-[#0d1854] border border-white/10 rounded-2xl overflow-hidden shadow-lg hover:border-blue-400/40 hover:-translate-y-1 transition-[transform,border-color] duration-200">
-        <div className="relative h-52 overflow-hidden bg-[#111d5e]">
-            <GiaSuAvatar giasu={giasu} />
+        {giasu.avatar && (
+            <div className="relative h-52 overflow-hidden bg-[#111d5e]">
+                <GiaSuAvatar giasu={giasu} />
 
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0d1854]/90 to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0d1854]/90 to-transparent pointer-events-none" />
 
-            <div className="absolute top-3 right-3 bg-yellow-400 text-black text-sm font-bold px-2.5 py-1 rounded-full">
-                ⭐{" "}
-                {giasu.danh_gias_avg_so_sao
-                    ? Number(giasu.danh_gias_avg_so_sao).toFixed(1)
-                    : "0.0"}
-                <span className="ml-1 text-xs">({giasu.danh_gias_count || 0})</span>
+                <div className="absolute top-3 right-3 bg-yellow-400 text-black text-sm font-bold px-2.5 py-1 rounded-full">
+                    sao{" "}
+                    {giasu.danh_gias_avg_so_sao
+                        ? Number(giasu.danh_gias_avg_so_sao).toFixed(1)
+                        : "0.0"}
+                    <span className="ml-1 text-xs">({giasu.danh_gias_count || 0})</span>
+                </div>
             </div>
-        </div>
+        )}
 
         <div className="p-5">
+            {!giasu.avatar && (
+                <div className="mb-4 inline-flex bg-yellow-400 text-black text-sm font-bold px-2.5 py-1 rounded-full">
+                    sao{" "}
+                    {giasu.danh_gias_avg_so_sao
+                        ? Number(giasu.danh_gias_avg_so_sao).toFixed(1)
+                        : "0.0"}
+                    <span className="ml-1 text-xs">({giasu.danh_gias_count || 0})</span>
+                </div>
+            )}
+
             <h2 className="text-xl font-bold text-white mb-3 truncate">
                 {giasu.user?.ho_ten || "Đang cập nhật"}
             </h2>
 
             <div className="space-y-2 text-sm text-gray-300">
                 <p className="line-clamp-2">
-                    🎓 {giasu.hoc_van || "Chưa cập nhật học vấn"}
+                     {giasu.hoc_van || "Chưa cập nhật học vấn"}
                 </p>
                 <p className="font-bold text-blue-400">
-                    💰{" "}
+                    {" "}
                     {giasu.gia_tu
                         ? giasu.gia_den && Number(giasu.gia_den) > Number(giasu.gia_tu)
                             ? `${Number(giasu.gia_tu).toLocaleString("vi-VN")} - ${Number(giasu.gia_den).toLocaleString("vi-VN")} đ/h`
@@ -78,9 +61,9 @@ const GiaSuCard = memo(({ giasu }) => (
                         : "Thỏa thuận"}
                 </p>
                 <p className="line-clamp-2">
-                    📍 {giasu.dia_chi || "Chưa cập nhật địa chỉ"}
+                     {giasu.dia_chi || "Chưa cập nhật địa chỉ"}
                 </p>
-                <p>📞 {giasu.user?.sdt || "Chưa có số điện thoại"}</p>
+                <p> {giasu.user?.sdt || "Chưa có số điện thoại"}</p>
             </div>
 
             <button className="mt-4 w-full py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-semibold transition-colors duration-150">

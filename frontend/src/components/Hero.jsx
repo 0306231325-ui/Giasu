@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 
 function Hero() {
@@ -56,17 +57,22 @@ function Hero() {
               // min-w-full đảm bảo mỗi slide chiếm đủ chiều rộng container
               <div key={item.id} className="min-w-full flex-shrink-0 relative group">
                 {/* Hình ảnh - Đã tăng chiều cao lên 500px */}
-                {item.anh ? (
-                  <img
-                    src={item.anh}
-                    alt={item.tieu_de || 'Banner'}
-                    className="w-full h-[700px] object-cover" // Tăng chiều cao ở đây
-                  />
-                ) : (
-                  // Placeholder nếu không có ảnh
-                  <div className="w-full h-[500px] bg-gray-700 flex items-center justify-center text-gray-400">
-                    No Image
-                  </div>
+                {item.anh && (
+                  item.link ? (
+                    <Link to={item.link} className="block">
+                      <img
+                        src={item.anh}
+                        alt={item.tieu_de || 'Banner'}
+                        className="w-full h-[700px] object-cover"
+                      />
+                    </Link>
+                  ) : (
+                    <img
+                      src={item.anh}
+                      alt={item.tieu_de || 'Banner'}
+                      className="w-full h-[700px] object-cover"
+                    />
+                  )
                 )}
                 
                 {/* Lớp mờ đen bên dưới cùng text nếu bạn muốn hiển thị tiêu đề đè lên ảnh */}

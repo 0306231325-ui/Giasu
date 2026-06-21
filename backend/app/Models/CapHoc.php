@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CapHoc extends Model
@@ -20,8 +21,13 @@ class CapHoc extends Model
         return $this->hasMany(MonHoc::class, 'cap_hoc_id');
     }
 
-    public function giasus(): HasMany
+    public function giasus(): BelongsToMany
     {
-        return $this->hasMany(Giasu::class, 'cap_hoc_id');
+        return $this->belongsToMany(
+            Giasu::class,
+            'giasu_cap_hoc',
+            'cap_hoc_id',
+            'giasu_id',
+        )->withTimestamps();
     }
 }

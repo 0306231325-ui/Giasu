@@ -14,11 +14,9 @@ class Giasu extends Model
     protected $fillable = [
         'user_id',
         'mo_ta',
-        'kinh_nghiem',
         'muc_kinh_nghiem_id',
+        'he_so_gia',
         'hoc_van',
-        'truong_hoc',
-        'cap_hoc_id',
         'trinh_do_giasu_id',
         'dia_chi',
         'avatar',
@@ -26,6 +24,10 @@ class Giasu extends Model
         'duyet_boi',
         'duyet_luc',
         'ly_do_tu_choi',
+    ];
+
+    protected $casts = [
+        'he_so_gia' => 'decimal:2',
     ];
 
     public function user()
@@ -40,14 +42,12 @@ class Giasu extends Model
 
     public function lichHocs()
     {
-        return $this->hasManyThrough(
-            LichHoc::class,
-            GoiHoc::class,
-            'giasu_id',
-            'goihoc_id',
-            'id',
-            'id'
-        );
+        return $this->hasMany(LichHoc::class, 'giasu_id');
+    }
+
+    public function yeuCauHocBus()
+    {
+        return $this->hasMany(YeuCauHocBu::class, 'giasu_id');
     }
 
     public function giasuGias()
@@ -58,7 +58,13 @@ class Giasu extends Model
     public function monHocs()
     {
         return $this->belongsToMany(MonHoc::class, 'giasu_gia', 'giasu_id', 'monhoc_id')
-            ->withPivot('trinh_do_giasu_id', 'gia_mon', 'gia_cong_trinh_do', 'gia_cong_kinh_nghiem', 'tong_gia')
+            ->withPivot(
+                'gia_mon',
+                'gia_cong_trinh_do',
+                'gia_cong_kinh_nghiem',
+                'gia_cong_them',
+                'tong_gia'
+            )
             ->withTimestamps();
     }
 
@@ -72,9 +78,14 @@ class Giasu extends Model
         return $this->belongsTo(MucKinhNghiem::class, 'muc_kinh_nghiem_id');
     }
 
-    public function capHoc()
+    public function capHocs()
     {
-        return $this->belongsTo(CapHoc::class, 'cap_hoc_id');
+        return $this->belongsToMany(
+            CapHoc::class,
+            'giasu_cap_hoc',
+            'giasu_id',
+            'cap_hoc_id',
+        )->withTimestamps();
     }
 
     public function bangCaps()
@@ -86,5 +97,4 @@ class Giasu extends Model
     {
         return $this->hasMany(PhanHoi::class, 'gia_su_id');
     }
-
 }

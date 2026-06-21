@@ -3,6 +3,7 @@ import { TRANG_THAI_BAI_VIET } from "./trangThaiBaiViet";
 function FormTaoBaiViet({
   form,
   anhXemTruoc,
+  loiAnh,
   dangLuu,
   loi,
   thongBao,
@@ -90,6 +91,12 @@ function FormTaoBaiViet({
             onChange={chonAnhBia}
             className="mt-2 w-full text-sm text-white/80 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-600 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-blue-700"
           />
+
+          {loiAnh ? (
+            <div className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">
+              {loiAnh}
+            </div>
+          ) : null}
 
           {anhXemTruoc ? (
             <img

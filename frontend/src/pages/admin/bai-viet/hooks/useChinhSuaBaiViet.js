@@ -18,7 +18,7 @@ function useChinhSuaBaiViet({ moTabChinhSua, sauKhiCapNhatThanhCong }) {
   const [formChinhSua, setFormChinhSua] = useState(GIA_TRI_BAI_VIET_MAC_DINH);
   const [dangCapNhat, setDangCapNhat] = useState(false);
   const [loiChinhSua, setLoiChinhSua] = useState("");
-  const { fileAnh, anhXemTruoc, chonAnh, xoaAnh } = useAnhXemTruoc();
+  const { fileAnh, anhXemTruoc, loiAnh, chonAnh, xoaAnh } = useAnhXemTruoc();
   const {
     thongBao: thongBaoChinhSua,
     anThongBao,
@@ -99,6 +99,7 @@ function useChinhSuaBaiViet({ moTabChinhSua, sauKhiCapNhatThanhCong }) {
     baiVietDangChon,
     formChinhSua,
     anhChinhSuaXemTruoc: anhXemTruoc,
+    loiAnhChinhSua: loiAnh,
     dangCapNhat,
     loiChinhSua,
     thongBaoChinhSua,
