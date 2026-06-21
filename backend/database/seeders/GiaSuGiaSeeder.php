@@ -16,6 +16,10 @@ class GiaSuGiaSeeder extends Seeder
         $assignments = [
             ['giasu_id' => 1, 'ten_mon' => 'Toán Học', 'cap' => 'thpt', 'lops' => [10, 11, 12]],
             ['giasu_id' => 1, 'ten_mon' => 'Vật Lý', 'cap' => 'thpt', 'lops' => [10, 11, 12]],
+            ['giasu_id' => 1, 'ten_mon' => 'Ngữ Văn', 'cap' => 'thpt', 'lops' => [10, 11, 12]],
+            ['giasu_id' => 1, 'ten_mon' => 'Hóa Học', 'cap' => 'thpt', 'lops' => [10, 11, 12]],
+            ['giasu_id' => 1, 'ten_mon' => 'Sinh Học', 'cap' => 'thpt', 'lops' => [10, 11, 12]],
+            ['giasu_id' => 1, 'ten_mon' => 'Tiếng Anh', 'cap' => 'thpt', 'lops' => [10, 11, 12]],
             ['giasu_id' => 2, 'ten_mon' => 'Toán Học', 'cap' => 'thpt', 'lops' => [10, 11, 12]],
             ['giasu_id' => 2, 'ten_mon' => 'Vật Lý', 'cap' => 'thpt', 'lops' => [10, 11, 12]],
             ['giasu_id' => 3, 'ten_mon' => 'Tiếng Anh', 'cap' => 'thpt', 'lops' => [10, 11, 12]],
