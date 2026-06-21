@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\DanhGia;
 use App\Models\Giasu;
 use App\Models\GiasuBangCap;
+use App\Models\GiasuGia;
+use App\Models\MonHoc;
 use App\Models\MucKinhNghiem;
 use App\Models\TrinhDoGiasu;
 use App\Services\GiaTinhService;
@@ -226,6 +228,141 @@ class GiasuController extends Controller
             'message' => 'Cập nhật trình độ và kinh nghiệm thành công.',
             'data' => $this->dinhDangChuyenMon($giaSu->fresh()),
         ]);
+    }
+
+    public function danhSachMonDay(Request $request): JsonResponse
+    {
+        $giaSu = $this->layHoSoGiaSu($request);
+
+        if (! $giaSu) {
+            return $this->phanHoiKhongCoHoSo($request);
+        }
+
+        $monDaDangKy = $giaSu->giasuGias()
+            ->with('monHoc.capHoc:id,ten')
+            ->where('trang_thai', '!=', GiasuGia::TRANG_THAI_NGUNG_DAY)
+            ->latest()
+            ->get()
+            ->filter(fn (GiasuGia $mucGia) => $mucGia->monHoc)
+            ->map(function (GiasuGia $mucGia) {
+                return [
+                    'id' => $mucGia->id,
+                    'tenMon' => $mucGia->monHoc->ten_mon,
+                    'capHoc' => $mucGia->monHoc->capHoc?->ten,
+                    'lop' => $mucGia->monHoc->lop,
+                    'gia' => (float) $mucGia->tong_gia,
+                    'trangThai' => $mucGia->trang_thai,
+                    'lyDo' => $mucGia->ly_do_tu_choi,
+                ];
+            })
+            ->values();
+
+        $monDaCo = $giaSu->giasuGias()->pluck('monhoc_id');
+        $monCoTheThem = MonHoc::query()
+            ->with('capHoc:id,ten')
+            ->whereNotIn('id', $monDaCo)
+            ->orderBy('cap_hoc_id')
+            ->orderBy('ten_mon')
+            ->orderBy('lop')
+            ->get(['id', 'ten_mon', 'cap_hoc_id', 'lop'])
+            ->map(fn (MonHoc $monHoc) => [
+                'id' => $monHoc->id,
+                'ten_mon' => $monHoc->ten_mon,
+                'cap_hoc' => $monHoc->capHoc?->ten,
+                'lop' => $monHoc->lop,
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'mon_da_dang_ky' => $monDaDangKy,
+                'mon_co_the_them' => $monCoTheThem,
+            ],
+        ]);
+    }
+
+    public function themMonDay(Request $request): JsonResponse
+    {
+        $giaSu = $this->layHoSoGiaSu($request);
+
+        if (! $giaSu) {
+            return $this->phanHoiKhongCoHoSo($request);
+        }
+
+        $duLieu = $request->validate([
+            'mon_hoc_ids' => ['required', 'array', 'min:1'],
+            'mon_hoc_ids.*' => ['integer', 'distinct', 'exists:monhoc,id'],
+        ], [
+            'mon_hoc_ids.required' => 'Vui lòng chọn ít nhất một môn học.',
+            'mon_hoc_ids.min' => 'Vui lòng chọn ít nhất một môn học.',
+        ]);
+
+        $monHopLe = MonHoc::query()
+            ->whereIn('id', $duLieu['mon_hoc_ids'])
+            ->get(['id', 'cap_hoc_id']);
+
+        if ($monHopLe->count() !== count($duLieu['mon_hoc_ids'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Có môn học không hợp lệ.',
+            ], 422);
+        }
+
+        if ($giaSu->giasuGias()->whereIn('monhoc_id', $monHopLe->pluck('id'))->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Có môn học đã tồn tại trong hồ sơ.',
+            ], 422);
+        }
+
+        DB::transaction(function () use ($giaSu, $monHopLe) {
+            $giaSu->capHocs()->syncWithoutDetaching(
+                $monHopLe->pluck('cap_hoc_id')->unique()->all(),
+            );
+
+            foreach ($monHopLe as $monHoc) {
+                $gia = GiaTinhService::tinhGiaGiasu($monHoc->id, $giaSu->id);
+                if ($gia) {
+                    $giaSu->giasuGias()->create(array_merge($gia, [
+                        'trang_thai' => GiasuGia::TRANG_THAI_CHO_DUYET,
+                    ]));
+                }
+            }
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã thêm môn dạy và gửi xét duyệt.',
+        ], 201);
+    }
+
+    public function xoaMonDay(Request $request, int $mucGiaId): JsonResponse
+    {
+        $giaSu = $this->layHoSoGiaSu($request);
+
+        if (! $giaSu) {
+            return $this->phanHoiKhongCoHoSo($request);
+        }
+
+        $mucGia = $giaSu->giasuGias()->find($mucGiaId);
+        if (! $mucGia) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy môn dạy.',
+            ], 404);
+        }
+
+        if ($mucGia->trang_thai === GiasuGia::TRANG_THAI_DA_DUYET) {
+            $mucGia->update([
+                'trang_thai' => GiasuGia::TRANG_THAI_NGUNG_DAY,
+            ]);
+            $message = 'Đã ngừng dạy môn học.';
+        } else {
+            $mucGia->delete();
+            $message = 'Đã xóa môn học khỏi hồ sơ.';
+        }
+
+        return response()->json(['success' => true, 'message' => $message]);
     }
 
     public function danhSachBangCap(Request $request): JsonResponse

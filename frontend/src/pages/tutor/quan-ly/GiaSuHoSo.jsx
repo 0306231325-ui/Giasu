@@ -14,31 +14,6 @@ const thongTinCaNhanMacDinh = {
 const lopNhapLieu =
     "mt-2 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-500";
 
-const monDangDay = [
-    {
-        id: 1,
-        tenMon: "Toán học",
-        capHoc: "THPT",
-        gia: "350.000đ",
-        trangThai: "da_duyet",
-    },
-    {
-        id: 2,
-        tenMon: "Vật lý",
-        capHoc: "THPT",
-        gia: "370.000đ",
-        trangThai: "cho_duyet",
-    },
-    {
-        id: 3,
-        tenMon: "Toán học",
-        capHoc: "THCS",
-        gia: "270.000đ",
-        trangThai: "tu_choi",
-        lyDo: "Chưa có bằng cấp hoặc minh chứng chuyên môn phù hợp.",
-    },
-];
-
 const bangCapMacDinh = {
     ten_bang: "",
     loai_bang: "bang_cap",
@@ -81,7 +56,36 @@ function GiaSuHoSo() {
     const [dangSuaChuyenMon, setDangSuaChuyenMon] = useState(false);
     const [dangLuuChuyenMon, setDangLuuChuyenMon] = useState(false);
     const [loiChuyenMon, setLoiChuyenMon] = useState({});
+    const [monDangDay, setMonDangDay] = useState([]);
+    const [monCoTheThem, setMonCoTheThem] = useState([]);
+    const [dangTaiMonDay, setDangTaiMonDay] = useState(true);
+    const [hienFormMonDay, setHienFormMonDay] = useState(false);
+    const [monHocIdsDaChon, setMonHocIdsDaChon] = useState([]);
+    const [dangThemMonDay, setDangThemMonDay] = useState(false);
+    const [monDangXoa, setMonDangXoa] = useState(null);
+    const [tuKhoaMonDay, setTuKhoaMonDay] = useState("");
+    const [locCapHoc, setLocCapHoc] = useState("");
+    const [locTrangThai, setLocTrangThai] = useState("");
     const tenGiaSu = thongTinCaNhan.ho_ten || user?.ho_ten || "Gia sư";
+    const cacCapHocMonDay = [
+        ...new Set(monDangDay.map((mon) => mon.capHoc).filter(Boolean)),
+    ];
+    const monDangDayDaLoc = monDangDay.filter((mon) => {
+        const tuKhoa = tuKhoaMonDay.trim().toLocaleLowerCase("vi");
+        const khopTuKhoa =
+            !tuKhoa ||
+            [mon.tenMon, mon.capHoc, mon.lop]
+                .filter(Boolean)
+                .some((giaTri) =>
+                    giaTri.toLocaleLowerCase("vi").includes(tuKhoa),
+                );
+
+        return (
+            khopTuKhoa &&
+            (!locCapHoc || mon.capHoc === locCapHoc) &&
+            (!locTrangThai || mon.trangThai === locTrangThai)
+        );
+    });
 
     useEffect(() => {
         let conHieuLuc = true;
@@ -104,6 +108,49 @@ function GiaSuHoSo() {
             })
             .finally(() => {
                 if (conHieuLuc) setDangTai(false);
+            });
+
+        return () => {
+            conHieuLuc = false;
+        };
+    }, []);
+
+    const taiDanhSachMonDay = async () => {
+        const phanHoi = await api.get("/gia-su/ho-so/mon-day");
+        setMonDangDay(
+            (phanHoi.data.data.mon_da_dang_ky || []).map((mon) => ({
+                ...mon,
+                gia: `${Number(mon.gia).toLocaleString("vi-VN")}đ`,
+            })),
+        );
+        setMonCoTheThem(phanHoi.data.data.mon_co_the_them || []);
+    };
+
+    useEffect(() => {
+        let conHieuLuc = true;
+
+        api.get("/gia-su/ho-so/mon-day")
+            .then((phanHoi) => {
+                if (!conHieuLuc) return;
+                setMonDangDay(
+                    (phanHoi.data.data.mon_da_dang_ky || []).map((mon) => ({
+                        ...mon,
+                        gia: `${Number(mon.gia).toLocaleString("vi-VN")}đ`,
+                    })),
+                );
+                setMonCoTheThem(phanHoi.data.data.mon_co_the_them || []);
+            })
+            .catch((error) => {
+                if (!conHieuLuc) return;
+                setThongBao({
+                    loai: "loi",
+                    noiDung:
+                        error.response?.data?.message ||
+                        "Không thể tải danh sách môn dạy.",
+                });
+            })
+            .finally(() => {
+                if (conHieuLuc) setDangTaiMonDay(false);
             });
 
         return () => {
@@ -391,6 +438,59 @@ function GiaSuHoSo() {
             }
         } finally {
             setDangLuuChuyenMon(false);
+        }
+    };
+
+    const themMonDay = async (suKien) => {
+        suKien.preventDefault();
+        setDangThemMonDay(true);
+        setThongBao(null);
+
+        try {
+            const phanHoi = await api.post("/gia-su/ho-so/mon-day", {
+                mon_hoc_ids: monHocIdsDaChon.map(Number),
+            });
+            await taiDanhSachMonDay();
+            setMonHocIdsDaChon([]);
+            setHienFormMonDay(false);
+            setThongBao({
+                loai: "thanh_cong",
+                noiDung: phanHoi.data.message,
+            });
+        } catch (error) {
+            setThongBao({
+                loai: "loi",
+                noiDung:
+                    error.response?.data?.message ||
+                    "Không thể thêm môn dạy.",
+            });
+        } finally {
+            setDangThemMonDay(false);
+        }
+    };
+
+    const xoaMonDay = async (mon) => {
+        if (!window.confirm(`Xóa môn "${mon.tenMon}" khỏi hồ sơ?`)) return;
+        setMonDangXoa(mon.id);
+
+        try {
+            const phanHoi = await api.delete(
+                `/gia-su/ho-so/mon-day/${mon.id}`,
+            );
+            await taiDanhSachMonDay();
+            setThongBao({
+                loai: "thanh_cong",
+                noiDung: phanHoi.data.message,
+            });
+        } catch (error) {
+            setThongBao({
+                loai: "loi",
+                noiDung:
+                    error.response?.data?.message ||
+                    "Không thể xóa môn dạy.",
+            });
+        } finally {
+            setMonDangXoa(null);
         }
     };
 
@@ -700,6 +800,10 @@ function GiaSuHoSo() {
                         tieuDe="Danh mục môn dạy"
                         moTa="Các môn bạn đăng ký sẽ được quản trị viên xét duyệt."
                         hanhDong="Thêm môn dạy"
+                        onHanhDong={() => setHienFormMonDay(true)}
+                        voHieuHoaHanhDong={
+                            dangTaiMonDay || monCoTheThem.length === 0
+                        }
                         noiBat
                     >
                         <div className="mb-3 flex items-center justify-between gap-3 text-xs">
@@ -710,11 +814,67 @@ function GiaSuHoSo() {
                                 Cuộn để xem thêm
                             </span>
                         </div>
-                        <div className="max-h-[430px] space-y-3 overflow-y-auto overscroll-contain pr-2 [scrollbar-color:#94a3b8_#f1f5f9] [scrollbar-width:thin]">
-                            {monDangDay.map((mon) => (
-                                <MonDay key={mon.id} mon={mon} />
-                            ))}
+                        <div className="mb-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_170px_170px]">
+                            <input
+                                type="search"
+                                value={tuKhoaMonDay}
+                                onChange={(suKien) =>
+                                    setTuKhoaMonDay(suKien.target.value)
+                                }
+                                placeholder="Tìm tên môn hoặc lớp..."
+                                className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                            />
+                            <select
+                                value={locCapHoc}
+                                onChange={(suKien) =>
+                                    setLocCapHoc(suKien.target.value)
+                                }
+                                className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                            >
+                                <option value="">Tất cả cấp học</option>
+                                {cacCapHocMonDay.map((capHoc) => (
+                                    <option key={capHoc} value={capHoc}>
+                                        {capHoc}
+                                    </option>
+                                ))}
+                            </select>
+                            <select
+                                value={locTrangThai}
+                                onChange={(suKien) =>
+                                    setLocTrangThai(suKien.target.value)
+                                }
+                                className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                            >
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="da_duyet">Đã duyệt</option>
+                                <option value="cho_duyet">Chờ duyệt</option>
+                                <option value="tu_choi">Từ chối</option>
+                            </select>
                         </div>
+                        {dangTaiMonDay ? (
+                            <p className="text-sm font-semibold text-slate-500">
+                                Đang tải danh sách môn dạy...
+                            </p>
+                        ) : monDangDay.length === 0 ? (
+                            <p className="rounded-xl bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
+                                Chưa có môn dạy nào.
+                            </p>
+                        ) : monDangDayDaLoc.length === 0 ? (
+                            <p className="rounded-xl bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
+                                Không tìm thấy môn phù hợp bộ lọc.
+                            </p>
+                        ) : (
+                            <div className="max-h-[430px] space-y-3 overflow-y-auto overscroll-contain pr-2 [scrollbar-color:#94a3b8_#f1f5f9] [scrollbar-width:thin]">
+                                {monDangDayDaLoc.map((mon) => (
+                                    <MonDay
+                                        key={mon.id}
+                                        mon={mon}
+                                        onXoa={xoaMonDay}
+                                        dangXoa={monDangXoa === mon.id}
+                                    />
+                                ))}
+                            </div>
+                        )}
                         <div className="mt-5 rounded-xl border border-dashed border-blue-200 bg-blue-50 px-4 py-3 text-xs leading-5 text-blue-700">
                             Khi thêm môn mới, môn học sẽ ở trạng thái chờ duyệt và
                             chưa hiển thị cho học viên cho đến khi được xác nhận.
@@ -859,6 +1019,30 @@ function GiaSuHoSo() {
                     onChange={thayDoiBangCap}
                     onSubmit={themBangCap}
                     onDong={dongFormBangCap}
+                />
+            )}
+
+            {hienFormMonDay && (
+                <FormMonDay
+                    danhSach={monCoTheThem}
+                    daChon={monHocIdsDaChon}
+                    dangGui={dangThemMonDay}
+                    onChon={(id) =>
+                        setMonHocIdsDaChon((hienTai) =>
+                            hienTai.includes(String(id))
+                                ? hienTai.filter(
+                                      (monId) => monId !== String(id),
+                                  )
+                                : [...hienTai, String(id)],
+                        )
+                    }
+                    onSubmit={themMonDay}
+                    onDong={() => {
+                        if (!dangThemMonDay) {
+                            setHienFormMonDay(false);
+                            setMonHocIdsDaChon([]);
+                        }
+                    }}
                 />
             )}
         </div>
@@ -1076,6 +1260,106 @@ function FormBangCap({ duLieu, loi, dangGui, onChange, onSubmit, onDong }) {
     );
 }
 
+function FormMonDay({
+    danhSach,
+    daChon,
+    dangGui,
+    onChon,
+    onSubmit,
+    onDong,
+}) {
+    const theoCap = danhSach.reduce((ketQua, mon) => {
+        const capHoc = mon.cap_hoc || "Chưa xác định";
+        return {
+            ...ketQua,
+            [capHoc]: [...(ketQua[capHoc] || []), mon],
+        };
+    }, {});
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm">
+            <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white text-slate-900 shadow-2xl">
+                <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
+                    <div>
+                        <h2 className="text-xl font-extrabold">Thêm môn dạy</h2>
+                        <p className="mt-1 text-sm text-slate-500">
+                            Môn mới sẽ được gửi quản trị viên xét duyệt.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onDong}
+                        disabled={dangGui}
+                        className="rounded-xl p-2 text-slate-400 hover:bg-slate-100"
+                    >
+                        <BieuTuong ten="x" />
+                    </button>
+                </div>
+                <form onSubmit={onSubmit} className="p-6">
+                    <div className="max-h-[480px] space-y-5 overflow-y-auto pr-2">
+                        {Object.entries(theoCap).map(([capHoc, cacMon]) => (
+                            <fieldset key={capHoc}>
+                                <legend className="font-extrabold text-slate-800">
+                                    {capHoc}
+                                </legend>
+                                <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                    {cacMon.map((mon) => (
+                                        <label
+                                            key={mon.id}
+                                            className={[
+                                                "flex cursor-pointer gap-3 rounded-xl border p-3 text-sm transition",
+                                                daChon.includes(String(mon.id))
+                                                    ? "border-blue-400 bg-blue-50 text-blue-700"
+                                                    : "border-slate-200 hover:border-blue-200",
+                                            ].join(" ")}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={daChon.includes(
+                                                    String(mon.id),
+                                                )}
+                                                onChange={() => onChon(mon.id)}
+                                                className="mt-0.5 h-4 w-4 accent-blue-600"
+                                            />
+                                            <span>
+                                                <span className="block font-bold">
+                                                    {mon.ten_mon}
+                                                </span>
+                                                <span className="mt-1 block text-xs text-slate-500">
+                                                    {mon.lop}
+                                                </span>
+                                            </span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </fieldset>
+                        ))}
+                    </div>
+                    <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-5">
+                        <button
+                            type="button"
+                            onClick={onDong}
+                            disabled={dangGui}
+                            className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600"
+                        >
+                            Hủy
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={dangGui || daChon.length === 0}
+                            className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                        >
+                            {dangGui
+                                ? "Đang thêm..."
+                                : `Thêm ${daChon.length || ""} môn`}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
 function TruongBangCap({
     nhan,
     name,
@@ -1256,7 +1540,7 @@ function TruongThongTin({ nhan, giaTri, nhieuDong = false }) {
     );
 }
 
-function MonDay({ mon }) {
+function MonDay({ mon, onXoa, dangXoa }) {
     const cauHinhTrangThai = {
         da_duyet: {
             nhan: "Đã duyệt",
@@ -1286,6 +1570,9 @@ function MonDay({ mon }) {
                             <span className="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-600">
                                 {mon.capHoc}
                             </span>
+                            <span className="rounded-md bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700">
+                                {mon.lop}
+                            </span>
                         </div>
                         <p className="mt-1 text-xs text-slate-500">
                             Giá dự kiến:{" "}
@@ -1303,10 +1590,12 @@ function MonDay({ mon }) {
                     </span>
                     <button
                         type="button"
-                        aria-label={`Tùy chọn môn ${mon.tenMon}`}
-                        className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                        onClick={() => onXoa(mon)}
+                        disabled={dangXoa}
+                        aria-label={`Xóa môn ${mon.tenMon}`}
+                        className="rounded-lg p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
                     >
-                        <BieuTuong ten="more" />
+                        <BieuTuong ten="trash" />
                     </button>
                 </div>
             </div>
