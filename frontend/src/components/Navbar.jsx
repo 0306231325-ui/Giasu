@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -8,7 +8,9 @@ function Navbar() {
     const { user, logout, isAuthenticated } = useAuth();
     const [monHocs, setMonHocs] = useState([]);
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [userDropdownOpen, setUserDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
+    const userDropdownRef = useRef(null);
 
     useEffect(() => {
         const fetchMonHoc = async () => {
@@ -18,7 +20,7 @@ function Navbar() {
                     setMonHocs(response.data.data);
                 }
             } catch (error) {
-                console.error("Lỗi khi tải môn học cho menu:", error);
+                console.error("Lá»—i khi táº£i mÃ´n há»c cho menu:", error);
             }
         };
 
@@ -29,6 +31,13 @@ function Navbar() {
         const handleClickOutside = (e) => {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
                 setDropdownOpen(false);
+            }
+
+            if (
+                userDropdownRef.current &&
+                !userDropdownRef.current.contains(e.target)
+            ) {
+                setUserDropdownOpen(false);
             }
         };
 
@@ -85,7 +94,7 @@ function Navbar() {
                                 dropdownOpen ? "rotate-180" : ""
                             }`}
                         >
-                            ▾
+                            â–¾
                         </span>
                     </button>
 
@@ -130,36 +139,94 @@ function Navbar() {
 
             <div className="flex gap-4 items-center">
                 {isAuthenticated ? (
-                    <>
-                        <span className="text-sm text-gray-300">
-                            Xin chào,{" "}
-                            <span className="text-white font-semibold">
-                                {user?.ho_ten}
-                            </span>
-                            <span className="ml-2 text-xs uppercase text-blue-400">
-                                ({user?.vai_tro})
-                            </span>
-                        </span>
-                        {user?.vai_tro === "hocvien" && (
-                            <Link
-                                to="/hoc-vien/ho-so"
-                                className="px-5 py-2 border border-blue-500 text-blue-200 rounded-xl hover:bg-blue-500/10 transition"
-                            >
-                                Hồ Sơ
-                            </Link>
-                        )}
+                    <div className="relative" ref={userDropdownRef}>
                         <button
                             type="button"
-                            onClick={async () => {
-                                await logout();
-                                navigate("/login");
-                            }}
-                            className="px-5 py-2 border border-gray-600 rounded-xl hover:bg-gray-800 transition"
+                            onClick={() => setUserDropdownOpen((prev) => !prev)}
+                            className="flex items-center gap-3 rounded-xl border border-gray-700 bg-gray-800/70 px-4 py-2 text-left transition hover:border-blue-500 hover:bg-gray-800"
+                            aria-expanded={userDropdownOpen}
+                            aria-haspopup="menu"
                         >
-                            Đăng Xuất
+                            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500 text-sm font-bold text-white">
+                                {(user?.ho_ten || "HV").trim().charAt(0).toUpperCase()}
+                            </span>
+                            <span className="min-w-0">
+                                <span className="block max-w-36 truncate text-sm font-semibold text-white">
+                                    {user?.ho_ten}
+                                </span>
+                                <span className="block text-xs uppercase text-blue-300">
+                                    {user?.vai_tro}
+                                </span>
+                            </span>
+                            <span
+                                className={`text-xs text-gray-300 transition-transform ${
+                                    userDropdownOpen ? "rotate-180" : ""
+                                }`}
+                            >
+                                ▾
+                            </span>
                         </button>
-                    </>
-                ) : (
+
+                        {userDropdownOpen && (
+                            <div
+                                role="menu"
+                                className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-xl border border-gray-700 bg-gray-800 shadow-2xl"
+                            >
+                                <div className="border-b border-gray-700 px-4 py-3">
+                                    <p className="truncate text-sm font-semibold text-white">
+                                        {user?.ho_ten}
+                                    </p>
+                                    <p className="mt-1 truncate text-xs text-gray-400">
+                                        {user?.email}
+                                    </p>
+                                </div>
+
+                                <div className="py-2">
+                                    {user?.vai_tro === "hocvien" && (
+                                        <Link
+                                            to="/hoc-vien/ho-so"
+                                            onClick={() => setUserDropdownOpen(false)}
+                                            className="block px-4 py-2.5 text-sm font-medium text-gray-200 transition hover:bg-gray-700 hover:text-white"
+                                        >
+                                            Hồ sơ học viên
+                                        </Link>
+                                    )}
+
+                                    {user?.vai_tro === "giasu" && (
+                                        <Link
+                                            to="/gia-su/quan-ly/ho-so"
+                                            onClick={() => setUserDropdownOpen(false)}
+                                            className="block px-4 py-2.5 text-sm font-medium text-gray-200 transition hover:bg-gray-700 hover:text-white"
+                                        >
+                                            Hồ sơ gia sư
+                                        </Link>
+                                    )}
+
+                                    {user?.vai_tro === "admin" && (
+                                        <Link
+                                            to="/admin"
+                                            onClick={() => setUserDropdownOpen(false)}
+                                            className="block px-4 py-2.5 text-sm font-medium text-gray-200 transition hover:bg-gray-700 hover:text-white"
+                                        >
+                                            Trang quản trị
+                                        </Link>
+                                    )}
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        setUserDropdownOpen(false);
+                                        await logout();
+                                        navigate("/login");
+                                    }}
+                                    className="block w-full border-t border-gray-700 px-4 py-2.5 text-left text-sm font-semibold text-red-300 transition hover:bg-red-500/10 hover:text-red-200"
+                                >
+                                    Đăng xuất
+                                </button>
+                            </div>
+                        )}
+                    </div>                ) : (
                     <>
                         <Link
                             to="/login"
@@ -182,3 +249,4 @@ function Navbar() {
 }
 
 export default Navbar;
+
