@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -133,6 +134,7 @@ class AuthController extends Controller
             'ten_phu_huynh' => ['nullable', 'string', 'max:100'],
             'sdt_phu_huynh' => ['nullable', 'regex:/^(0|\+84)[0-9]{9}$/'],
             'muc_tieu_hoc_tap' => ['nullable', 'string', 'max:2000'],
+            'anh_dai_dien' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ], [
             'ho_ten.required' => 'Vui lòng nhập họ và tên.',
             'ho_ten.min' => 'Họ và tên phải có ít nhất 2 ký tự.',
@@ -146,13 +148,30 @@ class AuthController extends Controller
         ]);
 
         $hocVien = null;
+        $anhDaiDienUrl = $user->anh_dai_dien;
 
-        DB::transaction(function () use ($validated, $user, &$hocVien) {
+        if ($request->hasFile('anh_dai_dien')) {
+            $thuMucAnh = public_path('images/avatar-hoc-vien');
+
+            if (! File::isDirectory($thuMucAnh)) {
+                File::makeDirectory($thuMucAnh, 0755, true);
+            }
+
+            $this->xoaAnhDaiDienCu($user->anh_dai_dien);
+
+            $file = $request->file('anh_dai_dien');
+            $tenFile = 'hoc-vien-' . $user->id . '-' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move($thuMucAnh, $tenFile);
+            $anhDaiDienUrl = url('images/avatar-hoc-vien/' . $tenFile);
+        }
+
+        DB::transaction(function () use ($validated, $user, &$hocVien, $anhDaiDienUrl) {
             $user->update([
                 'ho_ten' => trim($validated['ho_ten']),
                 'ngay_sinh' => $validated['ngay_sinh'] ?? null,
                 'email' => strtolower(trim($validated['email'])),
                 'sdt' => filled($validated['sdt'] ?? null) ? trim($validated['sdt']) : null,
+                'anh_dai_dien' => $anhDaiDienUrl,
             ]);
 
             $hocVien = $user->hocvien()->updateOrCreate(
@@ -204,6 +223,29 @@ class AuthController extends Controller
             'trang_thai' => $user->trang_thai,
             'anh_dai_dien' => $user->anh_dai_dien,
         ];
+    }
+
+    private function xoaAnhDaiDienCu(?string $anhDaiDien): void
+    {
+        if (! $anhDaiDien) {
+            return;
+        }
+
+        $duongDan = parse_url($anhDaiDien, PHP_URL_PATH) ?: $anhDaiDien;
+        $duongDan = ltrim($duongDan, '/');
+
+        if (
+            ! str_starts_with($duongDan, 'images/avatar-hoc-vien/') &&
+            ! str_starts_with($duongDan, 'images/avatars/')
+        ) {
+            return;
+        }
+
+        $file = public_path($duongDan);
+
+        if (File::exists($file)) {
+            File::delete($file);
+        }
     }
 
     private function formatHocVienProfile(User $user, $hocVien): array

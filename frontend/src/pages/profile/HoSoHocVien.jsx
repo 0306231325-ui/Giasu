@@ -14,6 +14,7 @@ const giaTriMacDinh = {
     ten_phu_huynh: "",
     sdt_phu_huynh: "",
     muc_tieu_hoc_tap: "",
+    anh_dai_dien: "",
 };
 
 function layThongDiepLoi(loi) {
@@ -33,6 +34,7 @@ function truongTuHoSo(duLieu) {
         ten_phu_huynh: duLieu?.hocvien?.ten_phu_huynh || "",
         sdt_phu_huynh: duLieu?.hocvien?.sdt_phu_huynh || "",
         muc_tieu_hoc_tap: duLieu?.hocvien?.muc_tieu_hoc_tap || "",
+        anh_dai_dien: duLieu?.anh_dai_dien || "",
     };
 }
 
@@ -94,8 +96,11 @@ function HoSoHocVien() {
     const [dangLuu, setDangLuu] = useState(false);
     const [loi, setLoi] = useState({});
     const [thongBao, setThongBao] = useState(null);
+    const [fileAnhDaiDien, setFileAnhDaiDien] = useState(null);
+    const [anhXemTruoc, setAnhXemTruoc] = useState("");
 
     const laHocVien = user?.vai_tro === "hocvien";
+    const anhDaiDienHienThi = anhXemTruoc || form.anh_dai_dien;
 
     const mucHoanThien = useMemo(() => {
         const batBuoc = ["ho_ten", "email", "sdt", "lop", "truong_hoc", "dia_chi"];
@@ -141,11 +146,44 @@ function HoSoHocVien() {
             .finally(() => setDangTai(false));
     }, [dangKiemTraDangNhap, isAuthenticated, laHocVien, navigate]);
 
+    useEffect(() => {
+        return () => {
+            if (anhXemTruoc) {
+                URL.revokeObjectURL(anhXemTruoc);
+            }
+        };
+    }, [anhXemTruoc]);
+
+    useEffect(() => {
+        if (!thongBao) return;
+
+        const timer = setTimeout(() => {
+            setThongBao(null);
+        }, 3000);
+
+        return () => clearTimeout(timer);
+    }, [thongBao]);
+
     const thayDoiTruong = (suKien) => {
         const { name, value } = suKien.target;
         setForm((hienTai) => ({ ...hienTai, [name]: value }));
         setLoi((hienTai) => ({ ...hienTai, [name]: undefined }));
         setThongBao(null);
+    };
+
+    const thayDoiAnhDaiDien = (suKien) => {
+        const file = suKien.target.files?.[0];
+        setLoi((hienTai) => ({ ...hienTai, anh_dai_dien: undefined }));
+        setThongBao(null);
+
+        if (!file) {
+            setFileAnhDaiDien(null);
+            setAnhXemTruoc("");
+            return;
+        }
+
+        setFileAnhDaiDien(file);
+        setAnhXemTruoc(URL.createObjectURL(file));
     };
 
     const luuHoSo = async (suKien) => {
@@ -155,15 +193,34 @@ function HoSoHocVien() {
         setThongBao(null);
 
         try {
-            const phanHoi = await api.patch("/hoc-vien/ho-so", form);
+            const duLieuGui = new FormData();
+
+            Object.entries(form).forEach(([tenTruong, giaTri]) => {
+                if (tenTruong !== "anh_dai_dien") {
+                    duLieuGui.append(tenTruong, giaTri ?? "");
+                }
+            });
+
+            if (fileAnhDaiDien) {
+                duLieuGui.append("anh_dai_dien", fileAnhDaiDien);
+            }
+
+            const phanHoi = await api.post("/hoc-vien/ho-so/cap-nhat", duLieuGui, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
             const duLieuMoi = truongTuHoSo(phanHoi.data.data);
 
             setForm(duLieuMoi);
+            setFileAnhDaiDien(null);
+            setAnhXemTruoc("");
             updateUser({
                 ho_ten: duLieuMoi.ho_ten,
                 ngay_sinh: duLieuMoi.ngay_sinh,
                 email: duLieuMoi.email,
                 sdt: duLieuMoi.sdt,
+                anh_dai_dien: duLieuMoi.anh_dai_dien,
             });
             setThongBao({
                 loai: "thanh_cong",
@@ -215,10 +272,35 @@ function HoSoHocVien() {
             <div className="mx-auto max-w-6xl">
                 <header className="overflow-hidden rounded-lg bg-slate-950 shadow-xl">
                     <div className="grid gap-6 p-6 md:grid-cols-[1fr_300px] md:p-8">
-                        <div className="flex items-center gap-5">
-                            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-sky-500 text-2xl font-black text-white shadow-lg shadow-sky-950/30">
-                                {tenVietTat || "HV"}
-                            </div>
+                        <div className="flex items-center gap-6">
+                            <label className="group relative shrink-0 cursor-pointer">
+                                <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-sky-400 to-blue-700 text-3xl font-black text-white shadow-xl shadow-sky-950/30 ring-4 ring-white/10 transition duration-200 group-hover:ring-sky-300/60">
+                                    {anhDaiDienHienThi ? (
+                                        <img
+                                            src={anhDaiDienHienThi}
+                                            alt="Ảnh đại diện học viên"
+                                            className="h-full w-full object-cover"
+                                        />
+                                    ) : (
+                                        tenVietTat || "HV"
+                                    )}
+                                </div>
+                                <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-slate-950/0 opacity-0 transition duration-200 group-hover:bg-slate-950/45 group-hover:opacity-100">
+                                    <span className="rounded-full bg-white/95 px-3 py-2 text-xs font-bold text-slate-900 shadow-lg">
+                                        Chọn ảnh
+                                    </span>
+                                </div>
+                                <span className="absolute -right-2 -top-2 flex h-9 w-9 items-center justify-center rounded-full border-4 border-slate-950 bg-white text-sm font-black text-slate-950 shadow-lg">
+                                    📷
+                                </span>
+                                <input
+                                    type="file"
+                                    name="anh_dai_dien"
+                                    accept="image/png,image/jpeg,image/webp"
+                                    onChange={thayDoiAnhDaiDien}
+                                    className="sr-only"
+                                />
+                            </label>
                             <div>
                                 <p className="text-sm font-semibold uppercase tracking-wide text-sky-300">
                                     Hồ sơ học viên
@@ -227,6 +309,16 @@ function HoSoHocVien() {
                                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
                                     Cập nhật thông tin cá nhân, lớp học và liên hệ phụ huynh để việc kết nối gia sư chính xác hơn.
                                 </p>
+                                <div className="mt-4 flex flex-wrap items-center gap-3">
+                                    <span className="text-xs font-medium text-slate-400">
+                                        Bấm vào ảnh để đổi. JPG, PNG hoặc WebP, tối đa 5MB.
+                                    </span>
+                                </div>
+                                {loi.anh_dai_dien && (
+                                    <p className="mt-2 text-xs font-semibold text-red-200">
+                                        {layThongDiepLoi(loi.anh_dai_dien)}
+                                    </p>
+                                )}
                             </div>
                         </div>
 

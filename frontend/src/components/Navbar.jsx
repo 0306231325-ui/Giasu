@@ -147,8 +147,16 @@ function Navbar() {
                             aria-expanded={userDropdownOpen}
                             aria-haspopup="menu"
                         >
-                            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500 text-sm font-bold text-white">
-                                {(user?.ho_ten || "HV").trim().charAt(0).toUpperCase()}
+                            <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-blue-500 text-sm font-bold text-white">
+                                {user?.anh_dai_dien ? (
+                                    <img
+                                        src={user.anh_dai_dien}
+                                        alt="Ảnh đại diện"
+                                        className="h-full w-full object-cover"
+                                    />
+                                ) : (
+                                    (user?.ho_ten || "HV").trim().charAt(0).toUpperCase()
+                                )}
                             </span>
                             <span className="min-w-0">
                                 <span className="block max-w-36 truncate text-sm font-semibold text-white">
