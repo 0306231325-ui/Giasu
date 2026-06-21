@@ -140,6 +140,14 @@ function Navbar() {
                                 ({user?.vai_tro})
                             </span>
                         </span>
+                        {user?.vai_tro === "hocvien" && (
+                            <Link
+                                to="/hoc-vien/ho-so"
+                                className="px-5 py-2 border border-blue-500 text-blue-200 rounded-xl hover:bg-blue-500/10 transition"
+                            >
+                                Hồ Sơ
+                            </Link>
+                        )}
                         <button
                             type="button"
                             onClick={async () => {

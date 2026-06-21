@@ -1,6 +1,4 @@
 import Home from "./pages/Home"
-import { useEffect } from 'react'
-import api from './services/api'
 import { Routes, Route } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
 import BaiVietDetail from "./pages/BaiVietDetail";
@@ -8,6 +6,7 @@ import DanhSachGiaSu from './pages/tutor/DanhSachGiaSu';
 import DanhSachMonHoc from './pages/subject/DanhSachMonHoc';
 import Login from "./pages/login/Login";
 import Register from "./pages/register/Register";
+import HoSoHocVien from "./pages/profile/HoSoHocVien";
 import AdminLayout from "./layouts/AdminLayout";
 import AdminHome from "./pages/admin/AdminHome";
 import AdminHocVien from "./pages/admin/AdminHocVien";
@@ -21,18 +20,6 @@ import GiaSuLichDay from "./pages/tutor/quan-ly/GiaSuLichDay";
 import GiaSuThuNhap from "./pages/tutor/quan-ly/GiaSuThuNhap";
 
 function App() {
-
-  useEffect(() => {
-
-    api.get('/test')
-      .then((response) => {
-
-        console.log(response.data)
-
-      })
-
-  }, [])
-
   return (
     <Routes>
       <Route element={<MainLayout />}>
@@ -49,6 +36,8 @@ function App() {
         <Route path="/login" element={<Login />} />
 
         <Route path="/register" element={<Register />} />
+
+        <Route path="/hoc-vien/ho-so" element={<HoSoHocVien />} />
 
         <Route
           path="/baiviet/:slug"

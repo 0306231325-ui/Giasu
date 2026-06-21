@@ -9,7 +9,6 @@ function Register() {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "student",
   });
 
   const [errors, setErrors] = useState({});
@@ -36,15 +35,17 @@ function Register() {
   };
 
   const checkPasswordStrength = (password) => {
-    let strength = "";
     if (password.length < 6) {
-      strength = "weak";
-    } else if (password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
-      strength = "medium";
-    } else {
-      strength = "strong";
+      setPasswordStrength("weak");
+      return;
     }
-    setPasswordStrength(strength);
+
+    if (password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+      setPasswordStrength("medium");
+      return;
+    }
+
+    setPasswordStrength("strong");
   };
 
   const validateForm = () => {
@@ -94,7 +95,7 @@ function Register() {
         email: formData.email,
         password: formData.password,
         password_confirmation: formData.confirmPassword,
-        vai_tro: formData.role === "student" ? "hoc_vien" : "gia_su",
+        vai_tro: "hoc_vien",
       });
 
       if (response.data.success) {
@@ -283,34 +284,6 @@ function Register() {
       fontWeight: "600",
     },
 
-    roleSelector: {
-      display: "flex",
-      gap: "12px",
-      marginTop: "8px",
-    },
-
-    roleOption: {
-      flex: 1,
-      padding: "14px 16px",
-      border: "2px solid #e5e7eb",
-      borderRadius: "12px",
-      textAlign: "center",
-      cursor: "pointer",
-      transition: "all 0.3s ease",
-      fontSize: "14px",
-      fontWeight: "600",
-      color: "#9ca3af",
-      background: "#f9fafb",
-      userSelect: "none",
-    },
-
-    roleOptionSelected: {
-      borderColor: "#3b82f6",
-      background: "#dbeafe",
-      color: "#3b82f6",
-      boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.1)",
-    },
-
     button: {
       padding: "14px 16px",
       border: "none",
@@ -479,32 +452,6 @@ function Register() {
                   <span style={styles.errorText}>⚠️ {errors.confirmPassword}</span>
                 )}
               </div>
-
-              {/* Chọn vai trò */}
-              <div style={styles.formGroup}>
-                <label style={styles.label}>👥 Bạn Là</label>
-                <div style={styles.roleSelector}>
-                  <div
-                    style={{
-                      ...styles.roleOption,
-                      ...(formData.role === "student" ? styles.roleOptionSelected : {}),
-                    }}
-                    onClick={() => setFormData({ ...formData, role: "student" })}
-                  >
-                    👨‍🎓 Học Viên
-                  </div>
-                  <div
-                    style={{
-                      ...styles.roleOption,
-                      ...(formData.role === "tutor" ? styles.roleOptionSelected : {}),
-                    }}
-                    onClick={() => setFormData({ ...formData, role: "tutor" })}
-                  >
-                    👨‍🏫 Gia Sư
-                  </div>
-                </div>
-              </div>
-
               {/* Nút đăng ký */}
               <button 
                 type="submit" 
