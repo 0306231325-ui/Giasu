@@ -561,6 +561,13 @@ class GiasuController extends Controller
 
     private function dinhDangThongTinCaNhan($user, Giasu $giaSu): array
     {
+        $thongKeDanhGia = DanhGia::query()
+            ->join('lichhoc', 'lichhoc.id', '=', 'danhgia.lichhoc_id')
+            ->where('lichhoc.giasu_id', $giaSu->id)
+            ->selectRaw('COUNT(danhgia.id) as so_luong')
+            ->selectRaw('COALESCE(AVG(danhgia.so_sao), 0) as trung_binh')
+            ->first();
+
         return [
             'ho_ten' => $user->ho_ten,
             'ngay_sinh' => $user->ngay_sinh?->format('Y-m-d'),
@@ -568,6 +575,8 @@ class GiasuController extends Controller
             'email' => $user->email,
             'dia_chi' => $giaSu->dia_chi,
             'mo_ta' => $giaSu->mo_ta,
+            'diem_danh_gia' => round((float) $thongKeDanhGia->trung_binh, 1),
+            'so_luong_danh_gia' => (int) $thongKeDanhGia->so_luong,
         ];
     }
 }
