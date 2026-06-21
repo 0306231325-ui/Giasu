@@ -12,7 +12,7 @@ import AdminHome from "./pages/admin/AdminHome";
 import AdminHocVien from "./pages/admin/AdminHocVien";
 import AdminGiaSu from "./pages/admin/AdminGiaSu";
 import AdminBaiViet from "./pages/admin/AdminBaiViet";
-import DangKyLamGiaSu from "./pages/tutor/DangKyLamGiaSu";
+import DangKyLamGiaSu from "./pages/tutor/dang-ky-gia-su/DangKyLamGiaSu";
 import GiaSuLayout from "./layouts/GiaSuLayout";
 import GiaSuTongQuan from "./pages/tutor/quan-ly/GiaSuTongQuan";
 import GiaSuHoSo from "./pages/tutor/quan-ly/GiaSuHoSo";
