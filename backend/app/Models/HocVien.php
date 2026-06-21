@@ -16,6 +16,7 @@ class HocVien extends Model
         'lop',
         'truong_hoc',
         'dia_chi',
+        'avatar',
         'ten_phu_huynh',
         'sdt_phu_huynh',
         'muc_tieu_hoc_tap',
