@@ -1,15 +1,33 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import api from "../../../services/api";
 import IconAdminGiaSu from "./IconAdminGiaSu";
 
 function DanhSachGiaSuAdmin() {
     const [danhSach, setDanhSach] = useState([]);
+    const [danhMucTrinhDo, setDanhMucTrinhDo] = useState([]);
+    const [meta, setMeta] = useState(null);
+    const [trangHienTai, setTrangHienTai] = useState(1);
+    const [lanTaiLai, setLanTaiLai] = useState(0);
     const [dangTai, setDangTai] = useState(true);
     const [loi, setLoi] = useState("");
+    const [loiThaoTac, setLoiThaoTac] = useState("");
+    const [thongBao, setThongBao] = useState("");
+    const [dangCapNhatId, setDangCapNhatId] = useState(null);
     const [tuKhoa, setTuKhoa] = useState("");
     const [trangThai, setTrangThai] = useState("");
     const [trinhDo, setTrinhDo] = useState("");
     const [giaSuDangXem, setGiaSuDangXem] = useState(null);
+    const boDemAnThongBao = useRef(null);
+
+    const thamSoTruyVan = useMemo(
+        () => ({
+            page: trangHienTai,
+            ...(tuKhoa.trim() ? { q: tuKhoa.trim() } : {}),
+            ...(trangThai ? { trang_thai: trangThai } : {}),
+            ...(trinhDo ? { trinh_do_id: trinhDo } : {}),
+        }),
+        [trangHienTai, trangThai, trinhDo, tuKhoa],
+    );
 
     useEffect(() => {
         let conHieuLuc = true;
@@ -18,13 +36,27 @@ function DanhSachGiaSuAdmin() {
             try {
                 setDangTai(true);
                 setLoi("");
-                const response = await api.get("/admin/gia-su");
+                const response = await api.get("/admin/gia-su", {
+                    params: thamSoTruyVan,
+                });
 
                 if (conHieuLuc) {
-                    setDanhSach(response.data?.data ?? []);
+                    const duLieuGiaSu = response.data?.data?.giaSu;
+                    const trangCuoi = duLieuGiaSu?.last_page ?? 1;
+
+                    if (trangHienTai > trangCuoi) {
+                        setTrangHienTai(trangCuoi);
+                        return;
+                    }
+
+                    setDanhSach(duLieuGiaSu?.data ?? []);
+                    setMeta(duLieuGiaSu ?? null);
+                    setDanhMucTrinhDo(response.data?.data?.trinhDo ?? []);
                 }
             } catch (error) {
                 if (conHieuLuc) {
+                    setDanhSach([]);
+                    setMeta(null);
                     setLoi(
                         error.response?.data?.message
                         ?? "Không thể tải danh sách gia sư.",
@@ -42,28 +74,82 @@ function DanhSachGiaSuAdmin() {
         return () => {
             conHieuLuc = false;
         };
-    }, []);
+    }, [lanTaiLai, thamSoTruyVan, trangHienTai]);
 
-    const danhSachDaLoc = useMemo(() => {
-        const tuKhoaChuan = tuKhoa.trim().toLocaleLowerCase("vi");
-        return danhSach.filter((giaSu) => {
-            const khopTuKhoa =
-                !tuKhoaChuan ||
-                [giaSu.hoTen, giaSu.email, giaSu.sdt]
-                    .some((giaTri) =>
-                        giaTri.toLocaleLowerCase("vi").includes(tuKhoaChuan),
-                    );
-            return (
-                khopTuKhoa &&
-                (!trangThai || giaSu.trangThai === trangThai) &&
-                (!trinhDo || giaSu.trinhDo === trinhDo)
+    useEffect(
+        () => () => {
+            if (boDemAnThongBao.current) {
+                clearTimeout(boDemAnThongBao.current);
+            }
+        },
+        [],
+    );
+
+    const hienThongBaoTamThoi = (noiDung) => {
+        if (boDemAnThongBao.current) {
+            clearTimeout(boDemAnThongBao.current);
+        }
+
+        setThongBao(noiDung);
+        boDemAnThongBao.current = setTimeout(() => {
+            setThongBao("");
+            boDemAnThongBao.current = null;
+        }, 3000);
+    };
+
+    const xuLyChuyenTrangThai = async (giaSu) => {
+        const trangThaiMoi =
+            giaSu.trangThai === "hoatdong" ? "khoa" : "hoatdong";
+        const xacNhan = window.confirm(
+            trangThaiMoi === "khoa"
+                ? `Khóa tài khoản gia sư ${giaSu.hoTen}?`
+                : `Mở khóa tài khoản gia sư ${giaSu.hoTen}?`,
+        );
+
+        if (!xacNhan) return;
+
+        setDangCapNhatId(giaSu.id);
+        setLoiThaoTac("");
+        setThongBao("");
+
+        try {
+            const response = await api.patch(
+                `/admin/gia-su/${giaSu.id}/trang-thai`,
+                { trang_thai: trangThaiMoi },
             );
-        });
-    }, [danhSach, trangThai, trinhDo, tuKhoa]);
+            const giaSuDaCapNhat = response.data?.data;
 
-    const cacTrinhDo = [
-        ...new Set(danhSach.map((giaSu) => giaSu.trinhDo).filter(Boolean)),
-    ];
+            if (response.data?.success && giaSuDaCapNhat) {
+                setDanhSach((hienTai) =>
+                    hienTai.map((muc) =>
+                        muc.id === giaSuDaCapNhat.id
+                            ? {
+                                ...muc,
+                                trangThai: giaSuDaCapNhat.trangThai,
+                            }
+                            : muc,
+                    ),
+                );
+                setGiaSuDangXem((hienTai) =>
+                    hienTai?.id === giaSuDaCapNhat.id
+                        ? {
+                            ...hienTai,
+                            trangThai: giaSuDaCapNhat.trangThai,
+                        }
+                        : hienTai,
+                );
+                hienThongBaoTamThoi(response.data.message);
+                setLanTaiLai((hienTai) => hienTai + 1);
+            }
+        } catch (error) {
+            setLoiThaoTac(
+                error.response?.data?.message
+                ?? "Không thể cập nhật trạng thái tài khoản gia sư.",
+            );
+        } finally {
+            setDangCapNhatId(null);
+        }
+    };
 
     return (
         <>
@@ -78,9 +164,9 @@ function DanhSachGiaSuAdmin() {
                         </p>
                     </div>
                     <p className="text-sm text-white/55">
-                        Hiển thị{" "}
+                        Tổng{" "}
                         <span className="font-bold text-white">
-                            {danhSachDaLoc.length}
+                            {meta?.total ?? 0}
                         </span>{" "}
                         gia sư
                     </p>
@@ -98,7 +184,10 @@ function DanhSachGiaSuAdmin() {
                             <input
                                 type="search"
                                 value={tuKhoa}
-                                onChange={(event) => setTuKhoa(event.target.value)}
+                                onChange={(event) => {
+                                    setTuKhoa(event.target.value);
+                                    setTrangHienTai(1);
+                                }}
                                 placeholder="Tên, email hoặc số điện thoại"
                                 className="w-full rounded-xl border border-white/10 bg-[#0a0f24] py-2.5 pl-10 pr-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-blue-400"
                             />
@@ -107,7 +196,10 @@ function DanhSachGiaSuAdmin() {
                     <BoLoc
                         nhan="Trạng thái"
                         value={trangThai}
-                        onChange={(event) => setTrangThai(event.target.value)}
+                        onChange={(event) => {
+                            setTrangThai(event.target.value);
+                            setTrangHienTai(1);
+                        }}
                     >
                         <option value="">Tất cả trạng thái</option>
                         <option value="hoatdong">Đang hoạt động</option>
@@ -116,27 +208,39 @@ function DanhSachGiaSuAdmin() {
                     <BoLoc
                         nhan="Trình độ"
                         value={trinhDo}
-                        onChange={(event) => setTrinhDo(event.target.value)}
+                        onChange={(event) => {
+                            setTrinhDo(event.target.value);
+                            setTrangHienTai(1);
+                        }}
                     >
                         <option value="">Tất cả trình độ</option>
-                        {cacTrinhDo.map((muc) => (
-                            <option key={muc} value={muc}>
-                                {muc}
+                        {danhMucTrinhDo.map((muc) => (
+                            <option key={muc.id} value={muc.id}>
+                                {muc.ten}
                             </option>
                         ))}
                     </BoLoc>
                 </div>
 
+                {thongBao && (
+                    <div className="mt-4 rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm font-semibold text-emerald-200">
+                        {thongBao}
+                    </div>
+                )}
+                {loiThaoTac && (
+                    <div className="mt-4 rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm font-semibold text-red-200">
+                        {loiThaoTac}
+                    </div>
+                )}
+
                 <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-[#0a0f24]">
                     <div className="overflow-x-auto">
-                        <table className="min-w-[1050px] w-full text-left text-sm">
+                        <table className="min-w-[760px] w-full text-left text-sm">
                             <thead className="border-b border-white/10 bg-white/5 text-xs uppercase tracking-wide text-white/45">
                                 <tr>
                                     <Th>Gia sư</Th>
                                     <Th>Trình độ</Th>
-                                    <Th>Môn dạy</Th>
                                     <Th>Đánh giá</Th>
-                                    <Th>Ngày duyệt</Th>
                                     <Th>Trạng thái</Th>
                                     <Th>Thao tác</Th>
                                 </tr>
@@ -144,28 +248,32 @@ function DanhSachGiaSuAdmin() {
                             <tbody className="divide-y divide-white/10">
                                 {dangTai ? (
                                     <tr>
-                                        <td colSpan="7" className="px-4 py-10 text-center text-white/45">
+                                        <td colSpan="5" className="px-4 py-10 text-center text-white/45">
                                             Đang tải danh sách gia sư...
                                         </td>
                                     </tr>
                                 ) : loi ? (
                                     <tr>
-                                        <td colSpan="7" className="px-4 py-10 text-center text-red-300">
+                                        <td colSpan="5" className="px-4 py-10 text-center text-red-300">
                                             {loi}
                                         </td>
                                     </tr>
-                                ) : danhSachDaLoc.length === 0 ? (
+                                ) : danhSach.length === 0 ? (
                                     <tr>
-                                        <td colSpan="7" className="px-4 py-10 text-center text-white/45">
+                                        <td colSpan="5" className="px-4 py-10 text-center text-white/45">
                                             Không tìm thấy gia sư phù hợp.
                                         </td>
                                     </tr>
                                 ) : (
-                                    danhSachDaLoc.map((giaSu) => (
+                                    danhSach.map((giaSu) => (
                                         <HangGiaSu
                                             key={giaSu.id}
                                             giaSu={giaSu}
                                             onXem={() => setGiaSuDangXem(giaSu)}
+                                            dangCapNhat={dangCapNhatId === giaSu.id}
+                                            onDoiTrangThai={() =>
+                                                xuLyChuyenTrangThai(giaSu)
+                                            }
                                         />
                                     ))
                                 )}
@@ -173,19 +281,30 @@ function DanhSachGiaSuAdmin() {
                         </table>
                     </div>
                 </div>
+
+                <PhanTrang
+                    meta={meta}
+                    trangHienTai={trangHienTai}
+                    dangTai={dangTai}
+                    onChuyenTrang={setTrangHienTai}
+                />
             </div>
 
             {giaSuDangXem && (
                 <ChiTietNhanh
                     giaSu={giaSuDangXem}
                     onDong={() => setGiaSuDangXem(null)}
+                    dangCapNhat={dangCapNhatId === giaSuDangXem.id}
+                    onDoiTrangThai={() =>
+                        xuLyChuyenTrangThai(giaSuDangXem)
+                    }
                 />
             )}
         </>
     );
 }
 
-function HangGiaSu({ giaSu, onXem }) {
+function HangGiaSu({ giaSu, onXem, onDoiTrangThai, dangCapNhat }) {
     return (
         <tr className="align-middle transition hover:bg-white/[0.03]">
             <td className="px-4 py-4">
@@ -205,22 +324,11 @@ function HangGiaSu({ giaSu, onXem }) {
                 <p className="mt-1 text-xs text-white/45">{giaSu.kinhNghiem}</p>
             </td>
             <td className="px-4 py-4">
-                <div className="flex flex-wrap gap-1.5">
-                    {giaSu.monDay.map((mon) => (
-                        <span key={mon} className="rounded-md bg-blue-500/10 px-2 py-1 text-xs font-semibold text-blue-200">
-                            {mon}
-                        </span>
-                    ))}
-                </div>
-                <p className="mt-1.5 text-xs text-white/40">{giaSu.soMon} môn/lớp đã duyệt</p>
-            </td>
-            <td className="px-4 py-4">
                 <p className="font-bold text-amber-300">
                     ★ {giaSu.danhGia.toFixed(1)}
                 </p>
                 <p className="mt-1 text-xs text-white/40">{giaSu.soDanhGia} đánh giá</p>
             </td>
-            <td className="px-4 py-4 text-white/65">{giaSu.ngayDuyet}</td>
             <td className="px-4 py-4">
                 <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${giaSu.trangThai === "hoatdong" ? "bg-emerald-400/10 text-emerald-300" : "bg-red-400/10 text-red-300"}`}>
                     {giaSu.trangThai === "hoatdong" ? "Hoạt động" : "Đã khóa"}
@@ -231,13 +339,25 @@ function HangGiaSu({ giaSu, onXem }) {
                     <button type="button" onClick={onXem} className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-blue-200 hover:bg-blue-500/10">
                         Xem
                     </button>
+                    <button
+                        type="button"
+                        onClick={onDoiTrangThai}
+                        disabled={dangCapNhat}
+                        className={`rounded-lg px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50 ${giaSu.trangThai === "hoatdong" ? "bg-red-500/10 text-red-200 hover:bg-red-500/20" : "bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20"}`}
+                    >
+                        {dangCapNhat
+                            ? "Đang xử lý..."
+                            : giaSu.trangThai === "hoatdong"
+                                ? "Khóa"
+                                : "Mở khóa"}
+                    </button>
                 </div>
             </td>
         </tr>
     );
 }
 
-function ChiTietNhanh({ giaSu, onDong }) {
+function ChiTietNhanh({ giaSu, onDong, onDoiTrangThai, dangCapNhat }) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm">
             <div className="w-full max-w-lg rounded-2xl bg-white p-6 text-slate-900 shadow-2xl">
@@ -253,11 +373,31 @@ function ChiTietNhanh({ giaSu, onDong }) {
                     <ThongTin nhan="Số điện thoại" giaTri={giaSu.sdt} />
                     <ThongTin nhan="Trình độ" giaTri={giaSu.trinhDo} />
                     <ThongTin nhan="Kinh nghiệm" giaTri={giaSu.kinhNghiem} />
-                    <ThongTin nhan="Môn đang dạy" giaTri={giaSu.monDay.join(", ")} className="sm:col-span-2" />
+                    <ThongTin
+                        nhan="Môn đang dạy"
+                        giaTri={giaSu.monDay.length > 0 ? giaSu.monDay.join(", ") : "Chưa có môn đã duyệt"}
+                        className="sm:col-span-2"
+                    />
                     <ThongTin nhan="Đánh giá" giaTri={`${giaSu.danhGia.toFixed(1)} / 5 (${giaSu.soDanhGia} lượt)`} />
                     <ThongTin nhan="Ngày duyệt" giaTri={giaSu.ngayDuyet} />
+                    <ThongTin
+                        nhan="Trạng thái tài khoản"
+                        giaTri={giaSu.trangThai === "hoatdong" ? "Đang hoạt động" : "Đã khóa"}
+                    />
                 </div>
-                <div className="mt-6 flex justify-end">
+                <div className="mt-6 flex justify-end gap-3">
+                    <button
+                        type="button"
+                        onClick={onDoiTrangThai}
+                        disabled={dangCapNhat}
+                        className={`rounded-xl px-5 py-2.5 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50 ${giaSu.trangThai === "hoatdong" ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-700"}`}
+                    >
+                        {dangCapNhat
+                            ? "Đang xử lý..."
+                            : giaSu.trangThai === "hoatdong"
+                                ? "Khóa tài khoản"
+                                : "Mở khóa tài khoản"}
+                    </button>
                     <button type="button" onClick={onDong} className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white">Đóng</button>
                 </div>
             </div>
@@ -280,6 +420,45 @@ function Th({ children }) {
 }
 function ThongTin({ nhan, giaTri, className = "" }) {
     return <div className={className}><p className="text-xs font-bold uppercase tracking-wide text-slate-400">{nhan}</p><p className="mt-1.5 text-sm font-semibold text-slate-800">{giaTri}</p></div>;
+}
+function PhanTrang({ meta, trangHienTai, dangTai, onChuyenTrang }) {
+    const trangCuoi = meta?.last_page ?? 1;
+
+    if (!meta || meta.total <= meta.per_page) {
+        return null;
+    }
+
+    return (
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-white/55">
+                Trang {meta.current_page ?? trangHienTai} / {trangCuoi}
+            </p>
+            <div className="flex gap-2">
+                <button
+                    type="button"
+                    disabled={dangTai || trangHienTai <= 1}
+                    onClick={() =>
+                        onChuyenTrang((trang) => Math.max(trang - 1, 1))
+                    }
+                    className="rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                    Trước
+                </button>
+                <button
+                    type="button"
+                    disabled={dangTai || trangHienTai >= trangCuoi}
+                    onClick={() =>
+                        onChuyenTrang((trang) =>
+                            Math.min(trang + 1, trangCuoi),
+                        )
+                    }
+                    className="rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                    Sau
+                </button>
+            </div>
+        </div>
+    );
 }
 function layChuCaiDau(hoTen) {
     return hoTen.trim().split(/\s+/).slice(-2).map((tu) => tu.charAt(0).toUpperCase()).join("");

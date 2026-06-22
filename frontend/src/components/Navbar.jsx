@@ -20,7 +20,7 @@ function Navbar() {
                     setMonHocs(response.data.data);
                 }
             } catch (error) {
-                console.error("Lá»—i khi táº£i mÃ´n há»c cho menu:", error);
+                console.error("Lỗi khi tải môn học cho menu:", error);
             }
         };
 
@@ -94,7 +94,7 @@ function Navbar() {
                                 dropdownOpen ? "rotate-180" : ""
                             }`}
                         >
-                            â–¾
+                            ▾
                         </span>
                     </button>
 
@@ -257,4 +257,3 @@ function Navbar() {
 }
 
 export default Navbar;
-

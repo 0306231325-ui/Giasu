@@ -32,6 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('gia-su.bang-cap.xem');
     Route::delete('/gia-su/ho-so/bang-cap/{bangCapId}', [GiasuController::class, 'xoaBangCap']);
     Route::get('/admin/gia-su', [AdminGiaSuController::class, 'danhSachGiaSu']);
+    Route::patch('/admin/gia-su/{giaSuId}/trang-thai', [AdminGiaSuController::class, 'capNhatTrangThaiGiaSu']);
     Route::get('/admin/hoc-vien', [AdminHocVienController::class, 'danhSachHocVien']);
     Route::patch('/admin/hoc-vien/{hocVienId}/trang-thai', [AdminHocVienController::class, 'capNhatTrangThaiHocVien']);
     Route::get('/admin/baiviet', [BaiVietController::class, 'danhSachBaiVietAdmin']);
