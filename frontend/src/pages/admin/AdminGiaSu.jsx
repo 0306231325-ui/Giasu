@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import ChiTietXetDuyet from "./gia-su/ChiTietXetDuyet";
 import DanhSachChoDuyet from "./gia-su/DanhSachChoDuyet";
+import DanhSachGiaSuAdmin from "./gia-su/DanhSachGiaSuAdmin";
 import ModalTuChoi from "./gia-su/ModalTuChoi";
 import { hoSoChoDuyet } from "./gia-su/duLieuXetDuyet";
 
@@ -70,9 +71,7 @@ function AdminGiaSu() {
                     />
                 </div>
             ) : (
-                <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-sm text-white/50">
-                    Tab danh sách gia sư sẽ được hoàn thiện sau.
-                </div>
+                <DanhSachGiaSuAdmin />
             )}
 
             <ModalTuChoi

@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\BaiVietController;
 use App\Http\Controllers\Api\GiasuController;
 use App\Http\Controllers\Api\MonHocController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AdminGiaSuController;
 use App\Http\Controllers\Api\AdminHocVienController;
 use App\Http\Controllers\Api\DangKyGiaSuController;
 
@@ -30,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/gia-su/ho-so/bang-cap/{bangCapId}/xem', [GiasuController::class, 'xemBangCap'])
         ->name('gia-su.bang-cap.xem');
     Route::delete('/gia-su/ho-so/bang-cap/{bangCapId}', [GiasuController::class, 'xoaBangCap']);
+    Route::get('/admin/gia-su', [AdminGiaSuController::class, 'danhSachGiaSu']);
     Route::get('/admin/hoc-vien', [AdminHocVienController::class, 'danhSachHocVien']);
     Route::patch('/admin/hoc-vien/{hocVienId}/trang-thai', [AdminHocVienController::class, 'capNhatTrangThaiHocVien']);
     Route::get('/admin/baiviet', [BaiVietController::class, 'danhSachBaiVietAdmin']);
