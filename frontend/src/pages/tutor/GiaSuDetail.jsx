@@ -19,6 +19,17 @@ const layAnh = (giaSu) => {
     return null;
 };
 
+function StatBox({ label, value, tone = "default" }) {
+    const toneClass = tone === "warm" ? "text-amber-200" : tone === "blue" ? "text-blue-200" : "text-white";
+
+    return (
+        <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-4">
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">{label}</div>
+            <div className={`mt-2 text-base font-bold ${toneClass}`}>{value}</div>
+        </div>
+    );
+}
+
 function GiaSuDetail() {
     const { id } = useParams();
     const [giaSus, setGiaSus] = useState([]);
@@ -53,6 +64,7 @@ function GiaSuDetail() {
     );
 
     const anh = layAnh(giaSu);
+    const tenGiaSu = giaSu?.user?.ho_ten || "Gia sư";
     const rating = Number(giaSu?.danh_gias_avg_so_sao || 0).toFixed(1);
     const soDanhGia = giaSu?.danh_gias_count || 0;
 
@@ -69,8 +81,8 @@ function GiaSuDetail() {
     if (!giaSu) {
         return (
             <div className="min-h-[65vh] bg-[#07122f] px-6 py-12 text-white">
-                <div className="mx-auto max-w-3xl rounded-2xl border border-white/10 bg-[#0d1854] p-8 text-center">
-                    <h1 className="text-2xl font-extrabold">Không tìm thấy gia sư</h1>
+                <div className="mx-auto max-w-3xl rounded-2xl border border-white/10 bg-[#0d1854] p-8 text-center shadow-xl">
+                    <h1 className="text-2xl font-bold">Không tìm thấy gia sư</h1>
                     <p className="mt-2 text-sm text-slate-300">Hồ sơ này có thể đã được ẩn hoặc chưa có dữ liệu.</p>
                     <Link to="/gia-su" className="mt-6 inline-flex rounded-xl bg-blue-500 px-5 py-3 text-sm font-bold text-white hover:bg-blue-600">
                         Quay lại danh sách
@@ -82,17 +94,29 @@ function GiaSuDetail() {
 
     return (
         <div className="min-h-screen bg-[#07122f] text-white">
-            <section className="border-b border-white/10 bg-[#09173a]">
-                <div className="mx-auto grid max-w-7xl gap-8 px-6 py-8 lg:grid-cols-[360px_minmax(0,1fr)] lg:items-end">
-                    <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0d1854] shadow-xl">
-                        <div className="h-72 bg-[#10205f]">
-                            {anh ? (
-                                <img src={anh} alt={giaSu.user?.ho_ten || "Gia sư"} className="h-full w-full object-cover" />
-                            ) : (
-                                <div className="flex h-full items-center justify-center text-7xl font-extrabold text-blue-200">
-                                    {(giaSu.user?.ho_ten || "G").charAt(0).toUpperCase()}
+            <section className="border-b border-white/10 bg-[#08112d]">
+                <div className="mx-auto grid max-w-7xl gap-8 px-6 py-8 lg:grid-cols-[420px_minmax(0,1fr)] lg:items-center">
+                    <div className="relative">
+                        <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#0d1854] shadow-2xl">
+                            <div className="relative h-[420px] bg-[#10205f]">
+                                {anh ? (
+                                    <img src={anh} alt={tenGiaSu} className="h-full w-full object-cover" />
+                                ) : (
+                                <div className="flex h-full items-center justify-center text-7xl font-bold text-blue-200">
+                                        {tenGiaSu.charAt(0).toUpperCase()}
+                                    </div>
+                                )}
+                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#08112d] to-transparent p-5">
+                                <div className="flex flex-wrap gap-2">
+                                        <span className="rounded-full bg-amber-300 px-3 py-1 text-xs font-semibold text-slate-950">
+                                            {rating} sao
+                                        </span>
+                                        <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white">
+                                            {soDanhGia} đánh giá
+                                        </span>
+                                    </div>
                                 </div>
-                            )}
+                            </div>
                         </div>
                     </div>
 
@@ -100,31 +124,37 @@ function GiaSuDetail() {
                         <Link to="/gia-su" className="text-sm font-semibold text-blue-300 hover:text-blue-200">
                             Quay lại danh sách
                         </Link>
-                        <h1 className="mt-4 text-4xl font-extrabold">{giaSu.user?.ho_ten || "Gia sư"}</h1>
-                        <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
-                            {giaSu.mo_ta || giaSu.hoc_van || "Gia sư đang cập nhật thêm thông tin hồ sơ."}
-                        </p>
 
-                        <div className="mt-5 flex flex-wrap gap-3 text-sm">
-                            <span className="rounded-full bg-amber-300 px-4 py-2 font-bold text-slate-950">
-                                {rating} sao ({soDanhGia})
+                        <div className="mt-5 flex flex-wrap gap-2">
+                            <span className="rounded-full border border-blue-300/30 bg-blue-500/15 px-3 py-1 text-xs font-semibold text-blue-200">
+                                Hồ sơ gia sư
                             </span>
-                            <span className="rounded-full bg-blue-500/20 px-4 py-2 font-semibold text-blue-200">
-                                {dinhDangGia(giaSu)}
-                            </span>
-                            <span className="rounded-full bg-white/10 px-4 py-2 text-slate-200">
-                                {giaSu.user?.sdt || "Chưa có số điện thoại"}
+                            <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                                Sẵn sàng nhận lịch
                             </span>
                         </div>
 
-                        <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                            <button
-                                type="button"
-                                disabled
-                                className="cursor-not-allowed rounded-xl bg-blue-500/60 px-6 py-3 text-center text-sm font-bold text-white"
+                        <h1 className="mt-4 max-w-3xl text-3xl font-bold leading-tight md:text-4xl">
+                            {tenGiaSu}
+                        </h1>
+
+                        <p className="mt-4 max-w-3xl text-base leading-7 text-slate-300">
+                            {giaSu.mo_ta || giaSu.hoc_van || "Gia sư đang cập nhật thêm thông tin hồ sơ."}
+                        </p>
+
+                        <div className="mt-7 grid gap-4 sm:grid-cols-3">
+                            <StatBox label="Đánh giá" value={`${rating}/5`} tone="warm" />
+                            <StatBox label="Học phí" value={dinhDangGia(giaSu)} tone="blue" />
+                            <StatBox label="Liên hệ" value={giaSu.user?.sdt || "Chưa cập nhật"} />
+                        </div>
+
+                        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                            <Link
+                                to={`/gia-su/${giaSu.id}/goi-hoc`}
+                                className="rounded-xl bg-blue-500 px-6 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-600"
                             >
                                 Đặt lịch học
-                            </button>
+                            </Link>
                             <Link
                                 to="/tim-gia-su-theo-yeu-cau"
                                 className="rounded-xl border border-white/15 px-6 py-3 text-center text-sm font-semibold text-slate-200 transition hover:border-blue-300 hover:text-white"
@@ -136,56 +166,75 @@ function GiaSuDetail() {
                 </div>
             </section>
 
-            <main className="mx-auto grid max-w-7xl gap-6 px-6 py-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <main className="mx-auto grid max-w-7xl gap-6 px-6 py-8 lg:grid-cols-[minmax(0,1fr)_360px]">
                 <section className="space-y-6">
-                    <div className="rounded-2xl border border-white/10 bg-[#0d1854] p-6 shadow-xl">
-                        <h2 className="text-xl font-extrabold">Thông tin chuyên môn</h2>
-                        <div className="mt-5 grid gap-4 md:grid-cols-3">
-                            <div className="rounded-2xl bg-white/5 p-4">
-                                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Học vấn</div>
-                                <div className="mt-2 text-sm font-semibold">{giaSu.hoc_van || "Chưa cập nhật"}</div>
+                    <div className="rounded-3xl border border-white/10 bg-[#0d1854] p-6 shadow-xl">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                            <div>
+                                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-300">
+                                    Chuyên môn
+                                </p>
+                                <h2 className="mt-2 text-xl font-bold">Thông tin giảng dạy</h2>
                             </div>
-                            <div className="rounded-2xl bg-white/5 p-4">
-                                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Khu vực</div>
-                                <div className="mt-2 text-sm font-semibold">{giaSu.dia_chi || "Linh hoạt"}</div>
-                            </div>
-                            <div className="rounded-2xl bg-white/5 p-4">
-                                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Học phí</div>
-                                <div className="mt-2 text-sm font-semibold text-blue-300">{dinhDangGia(giaSu)}</div>
-                            </div>
+                        </div>
+
+                        <div className="mt-6 grid gap-4 md:grid-cols-3">
+                            <StatBox label="Học vấn" value={giaSu.hoc_van || "Chưa cập nhật"} />
+                            <StatBox label="Khu vực" value={giaSu.dia_chi || "Linh hoạt"} />
+                            <StatBox label="Mức giá" value={dinhDangGia(giaSu)} tone="blue" />
                         </div>
                     </div>
 
-                    <div className="rounded-2xl border border-white/10 bg-[#0d1854] p-6 shadow-xl">
-                        <h2 className="text-xl font-extrabold">Lộ trình gợi ý</h2>
-                        <div className="mt-5 grid gap-4 md:grid-cols-3">
-                            {["Học thử và đánh giá đầu vào", "Chốt mục tiêu và lịch học", "Theo dõi tiến độ từng buổi"].map((title, index) => (
-                                <div key={title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                                    <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500 text-sm font-extrabold">
+                    <div className="rounded-3xl border border-white/10 bg-[#0d1854] p-6 shadow-xl">
+                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-300">
+                            Lộ trình
+                        </p>
+                        <h2 className="mt-2 text-xl font-bold">Quy trình bắt đầu học</h2>
+
+                        <div className="mt-6 grid gap-4 md:grid-cols-3">
+                            {[
+                                ["Trao đổi mục tiêu", "Học viên nêu nhu cầu, lịch rảnh và mức độ hiện tại."],
+                                ["Chọn gói học", "Chọn định kỳ hoặc không định kỳ theo kế hoạch học."],
+                                ["Xác nhận lịch", "Gia sư và học viên thống nhất lịch trước buổi đầu."],
+                            ].map(([title, description], index) => (
+                                <div key={title} className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+                                    <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500 text-sm font-bold">
                                         {index + 1}
                                     </div>
                                     <h3 className="font-bold">{title}</h3>
-                                    <p className="mt-2 text-sm leading-6 text-slate-300">
-                                        Gia sư và học viên thống nhất nội dung trước khi bắt đầu gói học.
-                                    </p>
+                                    <p className="mt-2 text-sm leading-6 text-slate-300">{description}</p>
                                 </div>
                             ))}
                         </div>
                     </div>
                 </section>
 
-                <aside className="h-fit rounded-2xl border border-white/10 bg-[#0d1854] p-5 shadow-xl">
-                    <h3 className="text-lg font-extrabold">Sẵn sàng đặt lịch?</h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-300">
-                        Bước tiếp theo là chọn loại gói: định kỳ cho lịch học đều, hoặc không định kỳ cho các buổi linh hoạt.
-                    </p>
-                    <button
-                        type="button"
-                        disabled
-                        className="mt-5 block w-full cursor-not-allowed rounded-xl bg-blue-500/60 px-5 py-3 text-center text-sm font-bold text-white"
+                <aside className="h-fit rounded-3xl border border-white/10 bg-[#0d1854] p-5 shadow-xl">
+                    <h3 className="text-lg font-bold">Tóm tắt hồ sơ</h3>
+                    <div className="mt-5 space-y-4 text-sm">
+                        <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                            <span className="text-slate-400">Gia sư</span>
+                            <span className="text-right font-semibold">{tenGiaSu}</span>
+                        </div>
+                        <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                            <span className="text-slate-400">Đánh giá</span>
+                            <span className="text-right font-semibold text-amber-200">{rating}/5</span>
+                        </div>
+                        <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                            <span className="text-slate-400">Học phí</span>
+                            <span className="text-right font-semibold text-blue-200">{dinhDangGia(giaSu)}</span>
+                        </div>
+                        <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                            <span className="text-slate-400">Khu vực</span>
+                            <span className="text-right font-semibold">{giaSu.dia_chi || "Linh hoạt"}</span>
+                        </div>
+                    </div>
+                    <Link
+                        to={`/gia-su/${giaSu.id}/goi-hoc`}
+                        className="mt-6 block rounded-xl bg-blue-500 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-600"
                     >
-                        Chọn gói học
-                    </button>
+                        Đặt lịch học
+                    </Link>
                 </aside>
             </main>
         </div>
