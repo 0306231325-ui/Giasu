@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\DanhGia;
+use App\Models\CapHoc;
 use App\Models\Giasu;
 use App\Models\GiasuBangCap;
 use App\Models\GiasuGia;
@@ -14,6 +15,7 @@ use App\Services\GiaTinhService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
@@ -155,6 +157,61 @@ class GiasuController extends Controller
         ]);
     }
 
+    public function capNhatAvatar(Request $request): JsonResponse
+    {
+        $giaSu = $this->layHoSoGiaSu($request);
+
+        if (! $giaSu) {
+            return $this->phanHoiKhongCoHoSo($request);
+        }
+
+        $request->validate([
+            'avatar' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+        ], [
+            'avatar.required' => 'Vui lòng chọn ảnh đại diện.',
+            'avatar.image' => 'File tải lên phải là hình ảnh.',
+            'avatar.mimes' => 'Ảnh đại diện chỉ hỗ trợ JPG, JPEG, PNG hoặc WEBP.',
+            'avatar.max' => 'Ảnh đại diện không được vượt quá 5MB.',
+        ]);
+
+        $thuMucAnh = public_path('images/avatar-gia-su');
+
+        if (! File::isDirectory($thuMucAnh)) {
+            File::makeDirectory($thuMucAnh, 0755, true);
+        }
+
+        $file = $request->file('avatar');
+        $tenFile = 'gia-su-' . $giaSu->id . '-' . time() . '-' . bin2hex(random_bytes(4))
+            . '.' . $file->getClientOriginalExtension();
+        $duongDanMoi = 'images/avatar-gia-su/' . $tenFile;
+        $duongDanCu = $giaSu->avatar;
+
+        $file->move($thuMucAnh, $tenFile);
+
+        try {
+            DB::transaction(function () use ($giaSu, $duongDanMoi) {
+                $giaSu->update(['avatar' => $duongDanMoi]);
+                $giaSu->user()->update([
+                    'anh_dai_dien' => url($duongDanMoi),
+                ]);
+            });
+        } catch (\Throwable $loi) {
+            File::delete(public_path($duongDanMoi));
+            throw $loi;
+        }
+
+        $this->xoaAvatarGiaSuCu($duongDanCu);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cập nhật ảnh đại diện thành công.',
+            'data' => [
+                'avatar' => $duongDanMoi,
+                'avatar_url' => url($duongDanMoi),
+            ],
+        ]);
+    }
+
     public function chuyenMon(Request $request): JsonResponse
     {
         $giaSu = $this->layHoSoGiaSu($request);
@@ -244,12 +301,22 @@ class GiasuController extends Controller
             ->latest()
             ->get()
             ->filter(fn (GiasuGia $mucGia) => $mucGia->monHoc)
-            ->map(function (GiasuGia $mucGia) {
+            ->groupBy(fn (GiasuGia $mucGia) => implode('|', [
+                $mucGia->monHoc->cap_hoc_id,
+                $mucGia->monHoc->ten_mon,
+            ]))
+            ->map(function ($cacMucGia) {
+                $mucGia = $cacMucGia->sortBy(fn (GiasuGia $muc) => match ($muc->trang_thai) {
+                    GiasuGia::TRANG_THAI_CHO_DUYET => 1,
+                    GiasuGia::TRANG_THAI_TU_CHOI => 2,
+                    default => 3,
+                })->first();
+
                 return [
                     'id' => $mucGia->id,
                     'tenMon' => $mucGia->monHoc->ten_mon,
+                    'capHocId' => $mucGia->monHoc->cap_hoc_id,
                     'capHoc' => $mucGia->monHoc->capHoc?->ten,
-                    'lop' => $mucGia->monHoc->lop,
                     'gia' => (float) $mucGia->tong_gia,
                     'trangThai' => $mucGia->trang_thai,
                     'lyDo' => $mucGia->ly_do_tu_choi,
@@ -257,26 +324,39 @@ class GiasuController extends Controller
             })
             ->values();
 
-        $monDaCo = $giaSu->giasuGias()->pluck('monhoc_id');
+        $monDaCoTheoCapVaTen = $giaSu->giasuGias()
+            ->join('monhoc', 'monhoc.id', '=', 'giasu_gia.monhoc_id')
+            ->get(['monhoc.cap_hoc_id', 'monhoc.ten_mon'])
+            ->mapWithKeys(fn ($monHoc) => [
+                "{$monHoc->cap_hoc_id}|{$monHoc->ten_mon}" => true,
+            ]);
+
         $monCoTheThem = MonHoc::query()
             ->with('capHoc:id,ten')
-            ->whereNotIn('id', $monDaCo)
             ->orderBy('cap_hoc_id')
             ->orderBy('ten_mon')
-            ->orderBy('lop')
             ->get(['id', 'ten_mon', 'cap_hoc_id', 'lop'])
+            ->unique(fn (MonHoc $monHoc) => "{$monHoc->cap_hoc_id}|{$monHoc->ten_mon}")
+            ->reject(fn (MonHoc $monHoc) => $monDaCoTheoCapVaTen->has(
+                "{$monHoc->cap_hoc_id}|{$monHoc->ten_mon}",
+            ))
             ->map(fn (MonHoc $monHoc) => [
                 'id' => $monHoc->id,
                 'ten_mon' => $monHoc->ten_mon,
+                'cap_hoc_id' => $monHoc->cap_hoc_id,
                 'cap_hoc' => $monHoc->capHoc?->ten,
-                'lop' => $monHoc->lop,
-            ]);
+            ])
+            ->values();
 
         return response()->json([
             'success' => true,
             'data' => [
                 'mon_da_dang_ky' => $monDaDangKy,
                 'mon_co_the_them' => $monCoTheThem,
+                'cap_hoc' => CapHoc::query()
+                    ->orderBy('thu_tu')
+                    ->orderBy('id')
+                    ->get(['id', 'ten']),
             ],
         ]);
     }
@@ -352,15 +432,42 @@ class GiasuController extends Controller
             ], 404);
         }
 
-        if ($mucGia->trang_thai === GiasuGia::TRANG_THAI_DA_DUYET) {
-            $mucGia->update([
-                'trang_thai' => GiasuGia::TRANG_THAI_NGUNG_DAY,
-            ]);
-            $message = 'Đã ngừng dạy môn học.';
-        } else {
-            $mucGia->delete();
-            $message = 'Đã xóa môn học khỏi hồ sơ.';
+        $mucGia->loadMissing('monHoc:id,ten_mon,cap_hoc_id');
+
+        if (! $mucGia->monHoc) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy thông tin môn học.',
+            ], 404);
         }
+
+        $cacMucCungMon = $giaSu->giasuGias()
+            ->whereHas('monHoc', function ($query) use ($mucGia) {
+                $query
+                    ->where('cap_hoc_id', $mucGia->monHoc->cap_hoc_id)
+                    ->where('ten_mon', $mucGia->monHoc->ten_mon);
+            })
+            ->get();
+
+        $coMonDaDuyet = $cacMucCungMon->contains(
+            fn (GiasuGia $muc) => $muc->trang_thai === GiasuGia::TRANG_THAI_DA_DUYET,
+        );
+
+        DB::transaction(function () use ($cacMucCungMon) {
+            foreach ($cacMucCungMon as $muc) {
+                if ($muc->trang_thai === GiasuGia::TRANG_THAI_DA_DUYET) {
+                    $muc->update([
+                        'trang_thai' => GiasuGia::TRANG_THAI_NGUNG_DAY,
+                    ]);
+                } else {
+                    $muc->delete();
+                }
+            }
+        });
+
+        $message = $coMonDaDuyet
+            ? 'Đã ngừng dạy môn học.'
+            : 'Đã xóa môn học khỏi hồ sơ.';
 
         return response()->json(['success' => true, 'message' => $message]);
     }
@@ -575,8 +682,29 @@ class GiasuController extends Controller
             'email' => $user->email,
             'dia_chi' => $giaSu->dia_chi,
             'mo_ta' => $giaSu->mo_ta,
+            'avatar' => $giaSu->avatar,
+            'avatar_url' => $giaSu->avatar ? url($giaSu->avatar) : null,
             'diem_danh_gia' => round((float) $thongKeDanhGia->trung_binh, 1),
             'so_luong_danh_gia' => (int) $thongKeDanhGia->so_luong,
         ];
+    }
+
+    private function xoaAvatarGiaSuCu(?string $avatar): void
+    {
+        if (! $avatar) {
+            return;
+        }
+
+        $duongDan = ltrim(parse_url($avatar, PHP_URL_PATH) ?: $avatar, '/');
+
+        if (! str_starts_with($duongDan, 'images/avatar-gia-su/')) {
+            return;
+        }
+
+        $file = public_path($duongDan);
+
+        if (File::exists($file)) {
+            File::delete($file);
+        }
     }
 }

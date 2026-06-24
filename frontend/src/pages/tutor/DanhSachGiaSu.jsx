@@ -22,9 +22,13 @@ const GiaSuAvatar = memo(({ giasu }) => {
         );
     }
 
+    const avatarUrl = giasu.avatar?.startsWith("http")
+        ? giasu.avatar
+        : `http://127.0.0.1:8000/${String(giasu.avatar || "").replace(/^\/+/, "")}`;
+
     return (
         <img
-            src={`http://127.0.0.1:8000/storage/${giasu.avatar}`}
+            src={avatarUrl}
             alt={giasu.user?.ho_ten || "Gia sư"}
             loading="lazy"
             decoding="async"

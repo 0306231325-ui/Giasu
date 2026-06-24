@@ -40,6 +40,7 @@ function GiaSuLayout() {
                     <MucDieuHuong to="/gia-su/quan-ly/ho-so" label="Hồ sơ gia sư" />
                     <MucDieuHuong to="/gia-su/quan-ly/lich-day" label="Lịch dạy" />
                     <MucDieuHuong to="/gia-su/quan-ly/thu-nhap" label="Thu nhập" />
+                    <MucDieuHuong to="/gia-su/quan-ly/theo-doi-hoat-dong" label="Theo dõi hoạt động" />
                 </nav>
 
                 <div className="border-t border-white/10 p-4">

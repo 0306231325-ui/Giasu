@@ -8,6 +8,8 @@ export const THONG_TIN_CA_NHAN_MAC_DINH = {
     email: "",
     dia_chi: "",
     mo_ta: "",
+    avatar: "",
+    avatar_url: "",
     diem_danh_gia: 0,
     so_luong_danh_gia: 0,
 };

@@ -423,20 +423,30 @@ function ThongTin({ nhan, giaTri, className = "" }) {
 }
 function PhanTrang({ meta, trangHienTai, dangTai, onChuyenTrang }) {
     const trangCuoi = meta?.last_page ?? 1;
+    const trangDangDung = meta?.current_page ?? trangHienTai;
+    const danhSachTrang = taoDanhSachTrang(trangDangDung, trangCuoi);
 
-    if (!meta || meta.total <= meta.per_page) {
+    if (!meta) {
         return null;
     }
 
     return (
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-white/55">
-                Trang {meta.current_page ?? trangHienTai} / {trangCuoi}
-            </p>
-            <div className="flex gap-2">
+        <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="text-sm text-white/55">
+                <p>
+                    Trang{" "}
+                    <span className="font-bold text-white">{trangDangDung}</span>
+                    {" "}/{" "}
+                    <span className="font-bold text-white">{trangCuoi}</span>
+                </p>
+                <p className="mt-1 text-xs text-white/35">
+                    Hiển thị {meta.from ?? 0} - {meta.to ?? 0} trong tổng {meta.total ?? 0} gia sư
+                </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
                 <button
                     type="button"
-                    disabled={dangTai || trangHienTai <= 1}
+                    disabled={dangTai || trangDangDung <= 1}
                     onClick={() =>
                         onChuyenTrang((trang) => Math.max(trang - 1, 1))
                     }
@@ -444,9 +454,36 @@ function PhanTrang({ meta, trangHienTai, dangTai, onChuyenTrang }) {
                 >
                     Trước
                 </button>
+                <div className="flex flex-wrap gap-1.5">
+                    {danhSachTrang.map((trang, index) =>
+                        trang === "..." ? (
+                            <span
+                                key={`ellipsis-${index}`}
+                                className="flex h-9 min-w-9 items-center justify-center rounded-lg px-2 text-sm font-bold text-white/35"
+                            >
+                                ...
+                            </span>
+                        ) : (
+                            <button
+                                key={trang}
+                                type="button"
+                                disabled={dangTai || trang === trangDangDung}
+                                onClick={() => onChuyenTrang(trang)}
+                                className={[
+                                    "h-9 min-w-9 rounded-lg px-3 text-sm font-bold transition disabled:cursor-not-allowed",
+                                    trang === trangDangDung
+                                        ? "bg-blue-600 text-white shadow-lg shadow-blue-950/30"
+                                        : "border border-white/10 text-white/70 hover:bg-white/5 hover:text-white",
+                                ].join(" ")}
+                            >
+                                {trang}
+                            </button>
+                        ),
+                    )}
+                </div>
                 <button
                     type="button"
-                    disabled={dangTai || trangHienTai >= trangCuoi}
+                    disabled={dangTai || trangDangDung >= trangCuoi}
                     onClick={() =>
                         onChuyenTrang((trang) =>
                             Math.min(trang + 1, trangCuoi),
@@ -459,6 +496,32 @@ function PhanTrang({ meta, trangHienTai, dangTai, onChuyenTrang }) {
             </div>
         </div>
     );
+}
+function taoDanhSachTrang(trangHienTai, trangCuoi) {
+    if (trangCuoi <= 7) {
+        return Array.from({ length: trangCuoi }, (_, index) => index + 1);
+    }
+
+    const danhSach = new Set([
+        1,
+        trangCuoi,
+        trangHienTai - 1,
+        trangHienTai,
+        trangHienTai + 1,
+    ]);
+
+    const cacTrang = [...danhSach]
+        .filter((trang) => trang >= 1 && trang <= trangCuoi)
+        .sort((a, b) => a - b);
+
+    return cacTrang.flatMap((trang, index) => {
+        const trangTruoc = cacTrang[index - 1];
+        if (index > 0 && trang - trangTruoc > 1) {
+            return ["...", trang];
+        }
+
+        return [trang];
+    });
 }
 function layChuCaiDau(hoTen) {
     return hoTen.trim().split(/\s+/).slice(-2).map((tu) => tu.charAt(0).toUpperCase()).join("");

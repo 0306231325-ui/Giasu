@@ -21,6 +21,7 @@ import GiaSuTongQuan from "./pages/tutor/quan-ly/GiaSuTongQuan";
 import GiaSuHoSo from "./pages/tutor/quan-ly/GiaSuHoSo";
 import GiaSuLichDay from "./pages/tutor/quan-ly/GiaSuLichDay";
 import GiaSuThuNhap from "./pages/tutor/quan-ly/GiaSuThuNhap";
+import GiaSuTheoDoiHoatDong from "./pages/tutor/quan-ly/GiaSuTheoDoiHoatDong";
 
 function App() {
   return (
@@ -67,6 +68,7 @@ function App() {
         <Route path="ho-so" element={<GiaSuHoSo />} />
         <Route path="lich-day" element={<GiaSuLichDay />} />
         <Route path="thu-nhap" element={<GiaSuThuNhap />} />
+        <Route path="theo-doi-hoat-dong" element={<GiaSuTheoDoiHoatDong />} />
       </Route>
 
     </Routes>

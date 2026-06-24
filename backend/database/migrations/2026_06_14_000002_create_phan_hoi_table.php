@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('gia_su_id')->constrained('giasu')->cascadeOnDelete();
             $table->foreignId('goi_hoc_id')->constrained('goihoc')->cascadeOnDelete();
-            $table->text('phan_hoi');
+            $table->enum('phan_hoi', ['dong_y', 'tu_choi']);
             $table->text('ly_do')->nullable();
             $table->timestamps();
         });

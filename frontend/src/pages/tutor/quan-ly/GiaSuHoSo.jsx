@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import BangCapChungChi from "./ho-so/components/BangCapChungChi";
 import DanhMucMonDay from "./ho-so/components/DanhMucMonDay";
@@ -6,6 +6,7 @@ import ThongTinCaNhan from "./ho-so/components/ThongTinCaNhan";
 import ThongTinDauTrang from "./ho-so/components/ThongTinDauTrang";
 import TrinhDoKinhNghiem from "./ho-so/components/TrinhDoKinhNghiem";
 import useBangCap from "./ho-so/hooks/useBangCap";
+import useAvatarGiaSu from "./ho-so/hooks/useAvatarGiaSu";
 import useChuyenMon from "./ho-so/hooks/useChuyenMon";
 import useMonDay from "./ho-so/hooks/useMonDay";
 import useThongTinCaNhan from "./ho-so/hooks/useThongTinCaNhan";
@@ -13,15 +14,43 @@ import useThongTinCaNhan from "./ho-so/hooks/useThongTinCaNhan";
 function GiaSuHoSo() {
     const { user, updateUser } = useAuth();
     const [thongBao, setThongBao] = useState(null);
+    const boDemAnThongBao = useRef(null);
 
     const baoLoi = useCallback((noiDung) => {
+        if (boDemAnThongBao.current) {
+            clearTimeout(boDemAnThongBao.current);
+            boDemAnThongBao.current = null;
+        }
         setThongBao({ loai: "loi", noiDung });
     }, []);
     const baoThanhCong = useCallback((noiDung) => {
+        if (boDemAnThongBao.current) {
+            clearTimeout(boDemAnThongBao.current);
+        }
+
         setThongBao({ loai: "thanh_cong", noiDung });
+        boDemAnThongBao.current = setTimeout(() => {
+            setThongBao(null);
+            boDemAnThongBao.current = null;
+        }, 3000);
     }, []);
 
+    useEffect(
+        () => () => {
+            if (boDemAnThongBao.current) {
+                clearTimeout(boDemAnThongBao.current);
+            }
+        },
+        [],
+    );
+
     const thongTinCaNhan = useThongTinCaNhan({
+        updateUser,
+        baoLoi,
+        baoThanhCong,
+    });
+    const avatar = useAvatarGiaSu({
+        avatarBanDau: thongTinCaNhan.thongTin.avatar_url,
         updateUser,
         baoLoi,
         baoThanhCong,
@@ -66,6 +95,7 @@ function GiaSuHoSo() {
             <ThongTinDauTrang
                 tenGiaSu={tenGiaSu}
                 thongTin={thongTinCaNhan.thongTin}
+                avatar={avatar}
             />
 
             <div className="mt-5 space-y-5">

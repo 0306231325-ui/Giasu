@@ -21,6 +21,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/hoc-vien/ho-so/cap-nhat', [AuthController::class, 'capNhatHoSoHocVien']);
     Route::get('/gia-su/ho-so/ca-nhan', [GiasuController::class, 'hoSoCaNhan']);
     Route::patch('/gia-su/ho-so/ca-nhan', [GiasuController::class, 'capNhatHoSoCaNhan']);
+    Route::post('/gia-su/ho-so/avatar', [GiasuController::class, 'capNhatAvatar']);
     Route::get('/gia-su/ho-so/chuyen-mon', [GiasuController::class, 'chuyenMon']);
     Route::patch('/gia-su/ho-so/chuyen-mon', [GiasuController::class, 'capNhatChuyenMon']);
     Route::get('/gia-su/ho-so/mon-day', [GiasuController::class, 'danhSachMonDay']);
