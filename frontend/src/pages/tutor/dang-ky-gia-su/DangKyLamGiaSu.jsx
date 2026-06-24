@@ -16,7 +16,7 @@ import useLuaChonGiangDay from "./hooks/useLuaChonGiangDay";
 function DangKyLamGiaSu() {
     const dieuHuong = useNavigate();
     const viTri = useLocation();
-    const { isAuthenticated, loading: dangTaiXacThuc } = useAuth();
+    const { user, updateUser, isAuthenticated, loading: dangTaiXacThuc } = useAuth();
     const { danhMuc, dangTai: dangTaiDanhMuc, loi: loiDanhMuc } =
         useDanhMucDangKyGiaSu();
     const luaChon = useLuaChonGiangDay(danhMuc);
@@ -107,6 +107,9 @@ function DangKyLamGiaSu() {
                     loai: "thanh_cong",
                     noiDung: response.data.message,
                 });
+                if (response.data.data?.user) {
+                    updateUser(response.data.data.user);
+                }
                 formRef.current.reset();
                 hoSo.reset();
                 luaChon.reset();
@@ -186,7 +189,7 @@ function DangKyLamGiaSu() {
                             {thongBao.noiDung}
                         </div>
                     )}
-                    <ThongTinCaNhanDangKy />
+                    <ThongTinCaNhanDangKy user={user} />
                     <TrinhDoHoSo
                         danhMuc={danhMuc}
                         hoSo={hoSo}

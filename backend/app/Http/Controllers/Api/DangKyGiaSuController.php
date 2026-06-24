@@ -237,6 +237,16 @@ class DangKyGiaSuController extends Controller
             'data' => [
                 'giasu_id' => $giaSu->id,
                 'trang_thai_ho_so' => 'cho_duyet',
+                'user' => [
+                    'id' => $user->id,
+                    'ho_ten' => $user->ho_ten,
+                    'ngay_sinh' => $user->ngay_sinh?->format('Y-m-d'),
+                    'email' => $user->email,
+                    'sdt' => $user->sdt,
+                    'vai_tro' => $user->vai_tro,
+                    'trang_thai' => $user->trang_thai,
+                    'anh_dai_dien' => $user->anh_dai_dien,
+                ],
             ],
         ], 201);
     }

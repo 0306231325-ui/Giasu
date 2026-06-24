@@ -1,15 +1,15 @@
 import { LOP_INPUT, LOP_NHAN } from "../constants";
 import { DauBatBuoc, TieuDePhan } from "./ThanhPhanChung";
 
-function ThongTinCaNhanDangKy() {
+function ThongTinCaNhanDangKy({ user }) {
     return (
         <div className="border-b border-slate-100 p-6 sm:p-8 lg:p-10">
             <TieuDePhan soThuTu="1" tieuDe="Thông tin cá nhân" moTa="Thông tin dùng để liên hệ và xác minh hồ sơ của bạn." />
             <div className="grid gap-5 md:grid-cols-2">
-                <Truong nhan="Họ và tên" name="ho_ten" placeholder="Nguyễn Văn An" />
-                <Truong nhan="Ngày sinh" name="ngay_sinh" type="date" />
-                <Truong nhan="Số điện thoại" name="so_dien_thoai" type="tel" placeholder="09xx xxx xxx" />
-                <Truong nhan="Email" name="email" type="email" placeholder="email@example.com" />
+                <Truong nhan="Họ và tên" name="ho_ten" placeholder="Nguyễn Văn An" defaultValue={user?.ho_ten || ""} />
+                <Truong nhan="Ngày sinh" name="ngay_sinh" type="date" defaultValue={user?.ngay_sinh || ""} />
+                <Truong nhan="Số điện thoại" name="so_dien_thoai" type="tel" placeholder="09xx xxx xxx" defaultValue={user?.sdt || ""} />
+                <Truong nhan="Email" name="email" type="email" placeholder="email@example.com" defaultValue={user?.email || ""} />
                 <Truong nhan="Địa chỉ hiện tại" name="dia_chi" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố" className="md:col-span-2" />
                 <label className={`${LOP_NHAN} md:col-span-2`}>
                     Ảnh chân dung<DauBatBuoc />
@@ -21,11 +21,11 @@ function ThongTinCaNhanDangKy() {
     );
 }
 
-function Truong({ nhan, name, type = "text", placeholder, className = "" }) {
+function Truong({ nhan, name, type = "text", placeholder, defaultValue = "", className = "" }) {
     return (
         <label className={`${LOP_NHAN} ${className}`}>
             {nhan}<DauBatBuoc />
-            <input className={LOP_INPUT} type={type} name={name} placeholder={placeholder} />
+            <input className={LOP_INPUT} type={type} name={name} placeholder={placeholder} defaultValue={defaultValue} />
         </label>
     );
 }
