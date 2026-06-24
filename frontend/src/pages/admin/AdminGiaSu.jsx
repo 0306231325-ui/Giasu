@@ -1,26 +1,123 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import api from "../../services/api";
 import ChiTietXetDuyet from "./gia-su/ChiTietXetDuyet";
 import DanhSachChoDuyet from "./gia-su/DanhSachChoDuyet";
 import DanhSachGiaSuAdmin from "./gia-su/DanhSachGiaSuAdmin";
 import ModalTuChoi from "./gia-su/ModalTuChoi";
-import { hoSoChoDuyet } from "./gia-su/duLieuXetDuyet";
 
 function AdminGiaSu() {
     const [tab, setTab] = useState("xet_duyet");
     const [tuKhoa, setTuKhoa] = useState("");
-    const [hoSoDangChon, setHoSoDangChon] = useState(hoSoChoDuyet[0]);
+    const [danhSachChoDuyet, setDanhSachChoDuyet] = useState([]);
+    const [hoSoDangChon, setHoSoDangChon] = useState(null);
     const [hoSoTuChoi, setHoSoTuChoi] = useState(null);
     const [lyDoTuChoi, setLyDoTuChoi] = useState("");
+    const [thongKe, setThongKe] = useState({
+        choDuyet: 0,
+        daDuyet: 0,
+        tuChoi: 0,
+    });
+    const [dangTai, setDangTai] = useState(false);
+    const [dangXuLy, setDangXuLy] = useState(false);
+    const [thongBao, setThongBao] = useState("");
+    const boDemThongBao = useRef(null);
 
-    const danhSachDaLoc = useMemo(() => {
-        const tuKhoaChuan = tuKhoa.trim().toLocaleLowerCase("vi");
-        if (!tuKhoaChuan) return hoSoChoDuyet;
-        return hoSoChoDuyet.filter((hoSo) =>
-            [hoSo.hoTen, hoSo.email, hoSo.sdt].some((giaTri) =>
-                giaTri.toLocaleLowerCase("vi").includes(tuKhoaChuan),
-            ),
-        );
-    }, [tuKhoa]);
+    const hienThongBao = useCallback((noiDung) => {
+        if (boDemThongBao.current) {
+            clearTimeout(boDemThongBao.current);
+        }
+
+        setThongBao(noiDung);
+        boDemThongBao.current = setTimeout(() => {
+            setThongBao("");
+            boDemThongBao.current = null;
+        }, 3000);
+    }, []);
+
+    const taiHoSoChoDuyet = useCallback(async (tuKhoaTimKiem = "") => {
+        setDangTai(true);
+        try {
+            const response = await api.get("/admin/gia-su/xet-duyet", {
+                params: { q: tuKhoaTimKiem || undefined },
+            });
+
+            if (response.data?.success) {
+                const danhSach = response.data.data?.hoSo ?? [];
+                setDanhSachChoDuyet(danhSach);
+                setThongKe(response.data.data?.thongKe ?? {
+                    choDuyet: danhSach.length,
+                    daDuyet: 0,
+                    tuChoi: 0,
+                });
+                setHoSoDangChon((hienTai) => {
+                    if (danhSach.length === 0) return null;
+                    return danhSach.find((hoSo) => hoSo.id === hienTai?.id) ?? danhSach[0];
+                });
+            }
+        } catch (error) {
+            hienThongBao(error.response?.data?.message || "Không thể tải hồ sơ chờ duyệt.");
+            setDanhSachChoDuyet([]);
+            setHoSoDangChon(null);
+        } finally {
+            setDangTai(false);
+        }
+    }, [hienThongBao]);
+
+    useEffect(() => {
+        return () => {
+            if (boDemThongBao.current) {
+                clearTimeout(boDemThongBao.current);
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        if (tab !== "xet_duyet") return undefined;
+
+        const boDem = setTimeout(() => {
+            taiHoSoChoDuyet(tuKhoa);
+        }, 350);
+
+        return () => clearTimeout(boDem);
+    }, [taiHoSoChoDuyet, tuKhoa, tab]);
+
+    const xuLyHoSo = async (hoSo, hanhDong, lyDo = "") => {
+        if (!hoSo || dangXuLy) return;
+
+        setDangXuLy(true);
+        try {
+            const response = await api.patch(`/admin/gia-su/xet-duyet/${hoSo.id}`, {
+                hanh_dong: hanhDong,
+                ly_do: lyDo || undefined,
+            });
+
+            if (response.data?.success) {
+                hienThongBao(response.data.message);
+                setHoSoTuChoi(null);
+                setLyDoTuChoi("");
+                await taiHoSoChoDuyet(tuKhoa);
+            }
+        } catch (error) {
+            hienThongBao(error.response?.data?.message || "Không thể xử lý hồ sơ.");
+        } finally {
+            setDangXuLy(false);
+        }
+    };
+
+    const xemTaiLieu = async (taiLieu) => {
+        if (!taiLieu?.urlXem) return;
+
+        try {
+            const response = await api.get(taiLieu.urlXem, {
+                responseType: "blob",
+            });
+            const duongDanTam = URL.createObjectURL(response.data);
+            window.open(duongDanTam, "_blank", "noopener,noreferrer");
+            setTimeout(() => URL.revokeObjectURL(duongDanTam), 60_000);
+        } catch (error) {
+            hienThongBao(error.response?.data?.message || "Không thể mở file tài liệu.");
+        }
+    };
 
     return (
         <div className="mx-auto max-w-[1500px]">
@@ -32,18 +129,24 @@ function AdminGiaSu() {
                     </p>
                 </div>
                 <div className="grid grid-cols-3 gap-2 sm:flex">
-                    <ThongKe nhan="Chờ duyệt" giaTri="3" mau="amber" />
-                    <ThongKe nhan="Đã duyệt" giaTri="24" mau="emerald" />
-                    <ThongKe nhan="Từ chối" giaTri="2" mau="red" />
+                    <ThongKe nhan="Chờ duyệt" giaTri={thongKe.choDuyet} mau="amber" />
+                    <ThongKe nhan="Đã duyệt" giaTri={thongKe.daDuyet} mau="emerald" />
+                    <ThongKe nhan="Từ chối" giaTri={thongKe.tuChoi} mau="red" />
                 </div>
             </div>
+
+            {thongBao && (
+                <div className="mt-5 rounded-2xl border border-blue-400/30 bg-blue-500/10 px-4 py-3 text-sm font-semibold text-blue-100">
+                    {thongBao}
+                </div>
+            )}
 
             <div className="mt-6 flex gap-1 overflow-x-auto rounded-xl border border-white/10 bg-white/5 p-1">
                 <Tab
                     active={tab === "xet_duyet"}
                     onClick={() => setTab("xet_duyet")}
                     label="Xét duyệt hồ sơ"
-                    badge={hoSoChoDuyet.length}
+                    badge={thongKe.choDuyet}
                 />
                 <Tab
                     active={tab === "danh_sach"}
@@ -55,19 +158,22 @@ function AdminGiaSu() {
             {tab === "xet_duyet" ? (
                 <div className="mt-5 grid gap-5 xl:grid-cols-[330px_minmax(0,1fr)]">
                     <DanhSachChoDuyet
-                        danhSach={danhSachDaLoc}
+                        danhSach={danhSachChoDuyet}
                         hoSoDangChon={hoSoDangChon}
                         tuKhoa={tuKhoa}
+                        dangTai={dangTai}
                         onDoiTuKhoa={(event) => setTuKhoa(event.target.value)}
                         onChon={setHoSoDangChon}
                     />
                     <ChiTietXetDuyet
                         hoSo={hoSoDangChon}
-                        onDuyet={() => {}}
+                        dangXuLy={dangXuLy}
+                        onDuyet={() => xuLyHoSo(hoSoDangChon, "duyet")}
                         onTuChoi={() => {
                             setLyDoTuChoi("");
                             setHoSoTuChoi(hoSoDangChon);
                         }}
+                        onXemTaiLieu={xemTaiLieu}
                     />
                 </div>
             ) : (
@@ -79,6 +185,8 @@ function AdminGiaSu() {
                 lyDo={lyDoTuChoi}
                 onDoiLyDo={(event) => setLyDoTuChoi(event.target.value)}
                 onDong={() => setHoSoTuChoi(null)}
+                dangXuLy={dangXuLy}
+                onXacNhan={() => xuLyHoSo(hoSoTuChoi, "tu_choi", lyDoTuChoi)}
             />
         </div>
     );

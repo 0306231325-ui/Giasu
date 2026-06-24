@@ -4,6 +4,7 @@ function DanhSachChoDuyet({
     danhSach,
     hoSoDangChon,
     tuKhoa,
+    dangTai,
     onDoiTuKhoa,
     onChon,
 }) {
@@ -36,6 +37,21 @@ function DanhSachChoDuyet({
             </div>
 
             <div className="max-h-[760px] overflow-y-auto p-2 [scrollbar-width:thin]">
+                {dangTai && (
+                    <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm font-semibold text-white/60">
+                        Đang tải hồ sơ...
+                    </div>
+                )}
+
+                {!dangTai && danhSach.length === 0 && (
+                    <div className="rounded-xl border border-dashed border-white/15 bg-white/5 px-4 py-8 text-center">
+                        <p className="text-sm font-bold text-white">Không có hồ sơ chờ duyệt</p>
+                        <p className="mt-1 text-xs text-white/45">
+                            Hồ sơ đăng ký mới sẽ hiển thị tại đây.
+                        </p>
+                    </div>
+                )}
+
                 {danhSach.map((hoSo) => {
                     const dangChon = hoSo.id === hoSoDangChon?.id;
                     return (

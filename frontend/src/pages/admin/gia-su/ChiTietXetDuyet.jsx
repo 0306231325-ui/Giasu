@@ -1,6 +1,12 @@
 import IconAdminGiaSu from "./IconAdminGiaSu";
 
-function ChiTietXetDuyet({ hoSo, onDuyet, onTuChoi }) {
+function ChiTietXetDuyet({
+    hoSo,
+    dangXuLy = false,
+    onDuyet,
+    onTuChoi,
+    onXemTaiLieu,
+}) {
     if (!hoSo) {
         return (
             <div className="flex min-h-[500px] items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-sm text-white/50">
@@ -32,7 +38,8 @@ function ChiTietXetDuyet({ hoSo, onDuyet, onTuChoi }) {
                     <button
                         type="button"
                         onClick={onTuChoi}
-                        className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-50"
+                        disabled={dangXuLy}
+                        className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         <IconAdminGiaSu ten="x" className="h-4 w-4" />
                         Từ chối
@@ -40,10 +47,11 @@ function ChiTietXetDuyet({ hoSo, onDuyet, onTuChoi }) {
                     <button
                         type="button"
                         onClick={onDuyet}
-                        className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700"
+                        disabled={dangXuLy}
+                        className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         <IconAdminGiaSu ten="check" className="h-4 w-4" />
-                        Duyệt hồ sơ
+                        {dangXuLy ? "Đang xử lý..." : "Duyệt hồ sơ"}
                     </button>
                 </div>
             </div>
@@ -87,6 +95,9 @@ function ChiTietXetDuyet({ hoSo, onDuyet, onTuChoi }) {
                     tieuDe={`Bằng cấp và chứng chỉ (${hoSo.bangCap.length})`}
                     moTa="Admin có thể mở file để đối chiếu thông tin."
                 >
+                    {hoSo.bangCap.length === 0 ? (
+                        <TrangThaiRong noiDung="Hồ sơ này chưa có bằng cấp hoặc chứng chỉ." />
+                    ) : (
                     <div className="grid gap-3 lg:grid-cols-2">
                         {hoSo.bangCap.map((taiLieu) => (
                             <div key={taiLieu.id} className="rounded-xl border border-slate-200 p-4">
@@ -97,7 +108,10 @@ function ChiTietXetDuyet({ hoSo, onDuyet, onTuChoi }) {
                                     <div className="min-w-0 flex-1">
                                         <p className="font-bold">{taiLieu.ten}</p>
                                         <p className="mt-1 text-xs leading-5 text-slate-500">
-                                            {taiLieu.loai} · {taiLieu.chuyenNganh}
+                                            {taiLieu.loai} · {taiLieu.trinhDo}
+                                        </p>
+                                        <p className="text-xs leading-5 text-slate-500">
+                                            {taiLieu.chuyenNganh}
                                         </p>
                                         <p className="text-xs leading-5 text-slate-500">
                                             {taiLieu.donVi}
@@ -105,6 +119,7 @@ function ChiTietXetDuyet({ hoSo, onDuyet, onTuChoi }) {
                                     </div>
                                     <button
                                         type="button"
+                                        onClick={() => onXemTaiLieu?.(taiLieu)}
                                         className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50"
                                     >
                                         <IconAdminGiaSu ten="eye" className="h-4 w-4" />
@@ -114,6 +129,7 @@ function ChiTietXetDuyet({ hoSo, onDuyet, onTuChoi }) {
                             </div>
                         ))}
                     </div>
+                    )}
                 </KhoiChiTiet>
 
                 <KhoiChiTiet
@@ -121,6 +137,9 @@ function ChiTietXetDuyet({ hoSo, onDuyet, onTuChoi }) {
                     tieuDe={`Môn đăng ký dạy (${hoSo.monDay.length})`}
                     moTa="Môn dạy sẽ được duyệt cùng hồ sơ ban đầu."
                 >
+                    {hoSo.monDay.length === 0 ? (
+                        <TrangThaiRong noiDung="Hồ sơ này chưa đăng ký môn dạy." />
+                    ) : (
                     <div className="overflow-hidden rounded-xl border border-slate-200">
                         <div className="hidden grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr] bg-slate-50 px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-400 sm:grid">
                             <span>Môn học</span>
@@ -137,6 +156,7 @@ function ChiTietXetDuyet({ hoSo, onDuyet, onTuChoi }) {
                             </div>
                         ))}
                     </div>
+                    )}
                 </KhoiChiTiet>
             </div>
         </section>
@@ -170,6 +190,14 @@ function Truong({ nhan, giaTri, icon, className = "" }) {
                 {icon && <IconAdminGiaSu ten={icon} className="h-4 w-4 text-slate-400" />}
                 {giaTri}
             </p>
+        </div>
+    );
+}
+
+function TrangThaiRong({ noiDung }) {
+    return (
+        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm font-semibold text-slate-500">
+            {noiDung}
         </div>
     );
 }

@@ -5,13 +5,205 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\DanhGia;
 use App\Models\Giasu;
+use App\Models\GiasuBangCap;
 use App\Models\GiasuGia;
 use App\Models\TrinhDoGiasu;
+use App\Services\GiaTinhService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class AdminGiaSuController extends Controller
 {
     private const SO_GIA_SU_MOI_TRANG = 10;
+
+    public function danhSachHoSoChoDuyet(Request $request): JsonResponse
+    {
+        if ($request->user()?->vai_tro !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn không có quyền truy cập.',
+            ], 403);
+        }
+
+        $tuKhoa = trim((string) $request->query('q', ''));
+
+        $danhSach = Giasu::query()
+            ->where('trang_thai_ho_so', 'cho_duyet')
+            ->when($tuKhoa !== '', function ($query) use ($tuKhoa) {
+                $query->whereHas('user', function ($userQuery) use ($tuKhoa) {
+                    $userQuery->where(function ($subQuery) use ($tuKhoa) {
+                        $subQuery
+                            ->where('ho_ten', 'like', "%{$tuKhoa}%")
+                            ->orWhere('email', 'like', "%{$tuKhoa}%")
+                            ->orWhere('sdt', 'like', "%{$tuKhoa}%");
+                    });
+                });
+            })
+            ->with([
+                'user:id,ho_ten,email,sdt,ngay_sinh,trang_thai,vai_tro',
+                'trinhDo:id,ten,thu_tu',
+                'mucKinhNghiem:id,tu_khoang,den_khoang',
+                'bangCaps' => fn ($query) => $query
+                    ->with('trinhDo:id,ten,thu_tu')
+                    ->latest(),
+                'giasuGias' => fn ($query) => $query
+                    ->with('monHoc.capHoc:id,ten')
+                    ->latest(),
+            ])
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn (Giasu $giaSu) => $this->dinhDangHoSoChoDuyet($giaSu))
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Lấy danh sách hồ sơ chờ duyệt thành công.',
+            'data' => [
+                'hoSo' => $danhSach,
+                'thongKe' => [
+                    'choDuyet' => $danhSach->count(),
+                    'daDuyet' => Giasu::query()->where('trang_thai_ho_so', 'duyet')->count(),
+                    'tuChoi' => Giasu::query()->where('trang_thai_ho_so', 'tu_choi')->count(),
+                ],
+            ],
+        ]);
+    }
+
+    public function xuLyHoSoDangKy(Request $request, int $giaSuId): JsonResponse
+    {
+        if ($request->user()?->vai_tro !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn không có quyền truy cập.',
+            ], 403);
+        }
+
+        $duLieu = $request->validate([
+            'hanh_dong' => ['required', 'in:duyet,tu_choi'],
+            'ly_do' => ['required_if:hanh_dong,tu_choi', 'nullable', 'string', 'min:5', 'max:1000'],
+        ], [
+            'hanh_dong.required' => 'Vui lòng chọn thao tác xử lý hồ sơ.',
+            'hanh_dong.in' => 'Thao tác xử lý hồ sơ không hợp lệ.',
+            'ly_do.required_if' => 'Vui lòng nhập lý do từ chối.',
+            'ly_do.min' => 'Lý do từ chối phải có ít nhất 5 ký tự.',
+        ]);
+
+        $giaSu = Giasu::query()
+            ->where('trang_thai_ho_so', 'cho_duyet')
+            ->with(['user', 'bangCaps.trinhDo', 'giasuGias.monHoc'])
+            ->find($giaSuId);
+
+        if (! $giaSu || ! $giaSu->user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy hồ sơ chờ duyệt.',
+            ], 404);
+        }
+
+        DB::transaction(function () use ($request, $duLieu, $giaSu) {
+            if ($duLieu['hanh_dong'] === 'duyet') {
+                $trinhDoCaoNhatId = $this->layTrinhDoCaoNhatTuBangCap($giaSu);
+
+                $giaSu->update([
+                    'trinh_do_giasu_id' => $trinhDoCaoNhatId ?: $giaSu->trinh_do_giasu_id,
+                    'trang_thai_ho_so' => 'duyet',
+                    'duyet_boi' => $request->user()->id,
+                    'duyet_luc' => now(),
+                    'ly_do_tu_choi' => null,
+                ]);
+
+                $giaSu->user->update([
+                    'vai_tro' => 'giasu',
+                    'trang_thai' => 'hoatdong',
+                ]);
+
+                $giaSu->bangCaps()
+                    ->where('trang_thai', 'cho_duyet')
+                    ->update([
+                        'trang_thai' => 'duyet',
+                        'duyet_boi' => $request->user()->id,
+                        'duyet_luc' => now(),
+                        'ly_do' => null,
+                    ]);
+
+                foreach ($giaSu->giasuGias()->get() as $mucGia) {
+                    $giaMoi = GiaTinhService::tinhGiaGiasu($mucGia->monhoc_id, $giaSu->id) ?? [];
+                    $mucGia->update(array_merge($giaMoi, [
+                        'trang_thai' => GiasuGia::TRANG_THAI_DA_DUYET,
+                        'ly_do_tu_choi' => null,
+                    ]));
+                }
+
+                return;
+            }
+
+            $lyDo = trim((string) $duLieu['ly_do']);
+
+            $giaSu->update([
+                'trang_thai_ho_so' => 'tu_choi',
+                'duyet_boi' => $request->user()->id,
+                'duyet_luc' => now(),
+                'ly_do_tu_choi' => $lyDo,
+            ]);
+
+            $giaSu->bangCaps()
+                ->where('trang_thai', 'cho_duyet')
+                ->update([
+                    'trang_thai' => 'tu_choi',
+                    'duyet_boi' => $request->user()->id,
+                    'duyet_luc' => now(),
+                    'ly_do' => $lyDo,
+                ]);
+
+            $giaSu->giasuGias()
+                ->where('trang_thai', GiasuGia::TRANG_THAI_CHO_DUYET)
+                ->update([
+                    'trang_thai' => GiasuGia::TRANG_THAI_TU_CHOI,
+                    'ly_do_tu_choi' => $lyDo,
+                ]);
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => $duLieu['hanh_dong'] === 'duyet'
+                ? 'Đã duyệt hồ sơ gia sư.'
+                : 'Đã từ chối hồ sơ gia sư.',
+        ]);
+    }
+
+    public function xemBangCapAdmin(Request $request, int $bangCapId)
+    {
+        if ($request->user()?->vai_tro !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn không có quyền truy cập.',
+            ], 403);
+        }
+
+        $bangCap = GiasuBangCap::query()->find($bangCapId);
+
+        if (! $bangCap) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy tài liệu.',
+            ], 404);
+        }
+
+        if (! Storage::disk('local')->exists($bangCap->file_url)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'File tài liệu không còn tồn tại.',
+            ], 404);
+        }
+
+        return response()->file(
+            Storage::disk('local')->path($bangCap->file_url),
+            ['Content-Disposition' => 'inline'],
+        );
+    }
 
     public function danhSachGiaSu(Request $request)
     {
@@ -170,6 +362,86 @@ class AdminGiaSuController extends Controller
                 : 'Chưa cập nhật',
             'trangThai' => $giaSu->user?->trang_thai ?? 'khoa',
         ];
+    }
+
+    private function dinhDangHoSoChoDuyet(Giasu $giaSu): array
+    {
+        $user = $giaSu->user;
+        $bangCap = $giaSu->bangCaps
+            ->map(fn (GiasuBangCap $taiLieu) => [
+                'id' => $taiLieu->id,
+                'ten' => $taiLieu->ten_bang,
+                'loai' => $this->dinhDangLoaiBang($taiLieu->loai_bang),
+                'trinhDo' => $taiLieu->trinhDo?->ten ?? 'Chưa chọn trình độ',
+                'chuyenNganh' => $taiLieu->chuyen_nganh ?: 'Chưa cập nhật',
+                'donVi' => $taiLieu->truong_don_vi ?: 'Chưa cập nhật',
+                'trangThai' => $taiLieu->trang_thai,
+                'urlXem' => "/admin/gia-su/bang-cap/{$taiLieu->id}/xem",
+            ])
+            ->values();
+
+        $monDay = $giaSu->giasuGias
+            ->filter(fn (GiasuGia $mucGia) => $mucGia->monHoc)
+            ->map(fn (GiasuGia $mucGia) => [
+                'id' => $mucGia->id,
+                'ten' => $mucGia->monHoc->ten_mon,
+                'cap' => $mucGia->monHoc->capHoc?->ten ?? 'Chưa cập nhật',
+                'lop' => $mucGia->monHoc->lop ?: 'Theo cấp học',
+                'gia' => number_format((float) $mucGia->tong_gia, 0, ',', '.') . 'đ',
+                'trangThai' => $mucGia->trang_thai,
+            ])
+            ->values();
+
+        return [
+            'id' => $giaSu->id,
+            'hoTen' => $user?->ho_ten ?? 'Chưa cập nhật',
+            'email' => $user?->email ?? 'Chưa cập nhật',
+            'sdt' => $user?->sdt ?? 'Chưa cập nhật',
+            'ngaySinh' => $user?->ngay_sinh
+                ? $user->ngay_sinh->format('d/m/Y')
+                : 'Chưa cập nhật',
+            'diaChi' => $giaSu->dia_chi ?: 'Chưa cập nhật',
+            'ngayGui' => $giaSu->created_at
+                ? $giaSu->created_at->format('d/m/Y · H:i')
+                : 'Chưa cập nhật',
+            'trinhDo' => $giaSu->trinhDo?->ten ?? $this->layTenTrinhDoCaoNhatTuBangCap($giaSu),
+            'kinhNghiem' => $this->dinhDangKinhNghiem(
+                $giaSu->mucKinhNghiem?->tu_khoang,
+                $giaSu->mucKinhNghiem?->den_khoang,
+            ),
+            'gioiThieu' => $giaSu->mo_ta ?: 'Chưa cập nhật giới thiệu.',
+            'bangCap' => $bangCap,
+            'monDay' => $monDay,
+        ];
+    }
+
+    private function layTrinhDoCaoNhatTuBangCap(Giasu $giaSu): ?int
+    {
+        return $giaSu->bangCaps()
+            ->join('trinh_do_giasu', 'trinh_do_giasu.id', '=', 'giasu_bang_cap.trinh_do_giasu_id')
+            ->orderByDesc('trinh_do_giasu.thu_tu')
+            ->orderByDesc('trinh_do_giasu.id')
+            ->value('giasu_bang_cap.trinh_do_giasu_id');
+    }
+
+    private function layTenTrinhDoCaoNhatTuBangCap(Giasu $giaSu): string
+    {
+        $bangCap = $giaSu->bangCaps
+            ->filter(fn (GiasuBangCap $taiLieu) => $taiLieu->trinhDo)
+            ->sortByDesc(fn (GiasuBangCap $taiLieu) => $taiLieu->trinhDo->thu_tu ?? 0)
+            ->first();
+
+        return $bangCap?->trinhDo?->ten ?? 'Chưa cập nhật';
+    }
+
+    private function dinhDangLoaiBang(?string $loaiBang): string
+    {
+        return match ($loaiBang) {
+            'bang_cap' => 'Bằng cấp',
+            'chung_chi' => 'Chứng chỉ',
+            'khac' => 'Khác',
+            default => 'Chưa phân loại',
+        };
     }
 
     private function dinhDangKinhNghiem(?int $tuKhoang, ?int $denKhoang): string
