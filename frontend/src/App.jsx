@@ -3,7 +3,10 @@ import { Routes, Route } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
 import BaiVietDetail from "./pages/BaiVietDetail";
 import DanhSachGiaSu from './pages/tutor/DanhSachGiaSu';
+import GiaSuDetail from "./pages/tutor/GiaSuDetail";
+import TimGiaSuTheoYeuCau from "./pages/tutor/TimGiaSuTheoYeuCau";
 import DanhSachMonHoc from './pages/subject/DanhSachMonHoc';
+import ChonGoiHoc from "./pages/booking/ChonGoiHoc";
 import Login from "./pages/login/Login";
 import Register from "./pages/register/Register";
 import HoSoHocVien from "./pages/profile/HoSoHocVien";
@@ -28,6 +31,12 @@ function App() {
         <Route path="/home" element={<Home />} />
 
         <Route path="/gia-su" element={<DanhSachGiaSu />} />
+
+        <Route path="/gia-su/:id" element={<GiaSuDetail />} />
+
+        <Route path="/gia-su/:id/goi-hoc" element={<ChonGoiHoc />} />
+
+        <Route path="/tim-gia-su-theo-yeu-cau" element={<TimGiaSuTheoYeuCau />} />
 
         <Route path="/dang-ky-lam-gia-su" element={<DangKyLamGiaSu />} />
 
