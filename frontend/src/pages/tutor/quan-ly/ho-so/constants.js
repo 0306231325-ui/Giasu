@@ -24,6 +24,7 @@ export const CHUYEN_MON_MAC_DINH = {
 export const BANG_CAP_MAC_DINH = {
     ten_bang: "",
     loai_bang: "bang_cap",
+    trinh_do_giasu_id: "",
     chuyen_nganh: "",
     truong_don_vi: "",
     tai_lieu: null,

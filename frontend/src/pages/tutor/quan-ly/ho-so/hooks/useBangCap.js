@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import api from "../../../../../services/api";
 import { BANG_CAP_MAC_DINH } from "../constants";
 
-export default function useBangCap({ baoLoi, baoThanhCong }) {
+export default function useBangCap({
+    baoLoi,
+    baoThanhCong,
+    danhMucTrinhDo = [],
+}) {
     const [danhSach, setDanhSach] = useState([]);
     const [dangTai, setDangTai] = useState(true);
     const [hienForm, setHienForm] = useState(false);
@@ -86,5 +90,5 @@ export default function useBangCap({ baoLoi, baoThanhCong }) {
         }
     };
 
-    return { danhSach, dangTai, hienForm, form, loi, dangThem, idDangXoa, setHienForm, thayDoi, dongForm, them, xem, xoa };
+    return { danhSach, danhMucTrinhDo, dangTai, hienForm, form, loi, dangThem, idDangXoa, setHienForm, thayDoi, dongForm, them, xem, xoa };
 }

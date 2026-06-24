@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import CapHocMonDay from "./components/CapHocMonDay";
@@ -19,7 +19,29 @@ function DangKyLamGiaSu() {
     const { danhMuc, dangTai: dangTaiDanhMuc, loi: loiDanhMuc } =
         useDanhMucDangKyGiaSu();
     const luaChon = useLuaChonGiangDay(danhMuc);
+    const { setTrinhDoIdDaChon } = luaChon;
     const hoSo = useHoSoChuyenMon();
+
+    const trinhDoCaoNhatId = useMemo(() => {
+        const thuTuTheoId = new Map(
+            danhMuc.trinh_do.map((muc) => [
+                String(muc.id),
+                Number(muc.thu_tu ?? 0),
+            ]),
+        );
+
+        return hoSo.danhSach
+            .filter((muc) => muc.trinh_do_giasu_id)
+            .sort(
+                (a, b) =>
+                    (thuTuTheoId.get(String(b.trinh_do_giasu_id)) ?? 0) -
+                    (thuTuTheoId.get(String(a.trinh_do_giasu_id)) ?? 0),
+            )[0]?.trinh_do_giasu_id || "";
+    }, [danhMuc.trinh_do, hoSo.danhSach]);
+
+    useEffect(() => {
+        setTrinhDoIdDaChon(trinhDoCaoNhatId);
+    }, [setTrinhDoIdDaChon, trinhDoCaoNhatId]);
 
     useEffect(() => {
         if (!dangTaiXacThuc && !isAuthenticated) {
@@ -67,8 +89,6 @@ function DangKyLamGiaSu() {
                     <ThongTinCaNhanDangKy />
                     <TrinhDoHoSo
                         danhMuc={danhMuc}
-                        dangTaiDanhMuc={dangTaiDanhMuc}
-                        luaChon={luaChon}
                         hoSo={hoSo}
                     />
                     <CapHocMonDay
@@ -85,7 +105,11 @@ function DangKyLamGiaSu() {
                     <XacNhanDangKy />
                 </form>
             </div>
-            <FormThemHoSo hoSo={hoSo} />
+            <FormThemHoSo
+                hoSo={hoSo}
+                danhMuc={danhMuc}
+                dangTaiDanhMuc={dangTaiDanhMuc}
+            />
         </section>
     );
 }

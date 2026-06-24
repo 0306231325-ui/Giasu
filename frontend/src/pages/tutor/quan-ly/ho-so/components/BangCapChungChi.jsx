@@ -4,6 +4,10 @@ import IconHoSo from "./IconHoSo";
 import KhoiNoiDung from "./KhoiNoiDung";
 
 function BangCapChungChi({ duLieu }) {
+    const layTenTrinhDo = (id) =>
+        duLieu.danhMucTrinhDo.find((muc) => String(muc.id) === String(id))?.ten ||
+        null;
+
     return (
         <>
             <KhoiNoiDung bieuTuong="certificate" tieuDe="Bằng cấp và chứng chỉ" moTa="Tài liệu dùng để xác minh chuyên môn." hanhDong="Thêm tài liệu" onHanhDong={() => duLieu.setHienForm(true)}>
@@ -23,6 +27,11 @@ function BangCapChungChi({ duLieu }) {
                                     <div className="min-w-0 flex-1">
                                         <p className="truncate text-sm font-bold text-slate-900">{taiLieu.ten_bang}</p>
                                         <p className="mt-1 text-xs leading-5 text-slate-500">{[taiLieu.chuyen_nganh, taiLieu.truong_don_vi].filter(Boolean).join(" · ") || "Chưa cập nhật chi tiết"}</p>
+                                        {taiLieu.trinh_do_giasu_id && (
+                                            <p className="mt-2 inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700">
+                                                {layTenTrinhDo(taiLieu.trinh_do_giasu_id) || taiLieu.ten_trinh_do || "Trình độ xác minh"}
+                                            </p>
+                                        )}
                                         <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ${lopTrangThaiBangCap(taiLieu.trang_thai)}`}>{nhanTrangThaiBangCap(taiLieu.trang_thai)}</span>
                                         {taiLieu.ly_do && <p className="mt-2 text-xs leading-5 text-red-600"><span className="font-bold">Lý do:</span> {taiLieu.ly_do}</p>}
                                     </div>
@@ -57,6 +66,24 @@ function FormThemBangCap({ duLieu }) {
                         <select name="loai_bang" value={duLieu.form.loai_bang} onChange={duLieu.thayDoi} className={LOP_NHAP_LIEU} required>
                             <option value="bang_cap">Bằng cấp</option><option value="chung_chi">Chứng chỉ</option><option value="khac">Tài liệu khác</option>
                         </select>
+                    </label>
+                    <label className="block">
+                        <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Trình độ xác minh <span className="text-red-500">*</span></span>
+                        <select
+                            name="trinh_do_giasu_id"
+                            value={duLieu.form.trinh_do_giasu_id}
+                            onChange={duLieu.thayDoi}
+                            className={`${LOP_NHAP_LIEU} ${loiDauTien("trinh_do_giasu_id") ? "border-red-400" : ""}`}
+                            required
+                        >
+                            <option value="" disabled>Chọn trình độ</option>
+                            {duLieu.danhMucTrinhDo.map((muc) => (
+                                <option key={muc.id} value={muc.id}>
+                                    {muc.ten}
+                                </option>
+                            ))}
+                        </select>
+                        {loiDauTien("trinh_do_giasu_id") && <p className="mt-1.5 text-xs font-semibold text-red-600">{loiDauTien("trinh_do_giasu_id")}</p>}
                     </label>
                     <Truong nhan="Chuyên ngành" name="chuyen_nganh" value={duLieu.form.chuyen_nganh} onChange={duLieu.thayDoi} loi={loiDauTien("chuyen_nganh")} placeholder="Ví dụ: Sư phạm Toán" />
                     <Truong nhan="Trường/đơn vị cấp" name="truong_don_vi" value={duLieu.form.truong_don_vi} onChange={duLieu.thayDoi} loi={loiDauTien("truong_don_vi")} placeholder="Tên trường hoặc đơn vị cấp" className="md:col-span-2" batBuoc />

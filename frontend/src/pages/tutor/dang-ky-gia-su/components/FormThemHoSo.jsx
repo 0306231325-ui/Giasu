@@ -1,9 +1,13 @@
 import { LOP_INPUT, LOP_NHAN } from "../constants";
 import { DauBatBuoc } from "./ThanhPhanChung";
 
-function FormThemHoSo({ hoSo }) {
+function FormThemHoSo({ hoSo, danhMuc, dangTaiDanhMuc }) {
     if (!hoSo.hienForm) return null;
-    const duDieuKien = hoSo.form.ten_bang.trim() && hoSo.form.truong_don_vi.trim() && hoSo.form.tai_lieu;
+    const duDieuKien =
+        hoSo.form.ten_bang.trim() &&
+        hoSo.form.trinh_do_giasu_id &&
+        hoSo.form.truong_don_vi.trim() &&
+        hoSo.form.tai_lieu;
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
             <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white text-slate-900 shadow-2xl">
@@ -14,6 +18,25 @@ function FormThemHoSo({ hoSo }) {
                 <div className="grid gap-5 p-6 md:grid-cols-2">
                     <Truong nhan="Tên bằng cấp/chứng chỉ" name="ten_bang" value={hoSo.form.ten_bang} onChange={hoSo.thayDoi} placeholder="Ví dụ: Bằng tốt nghiệp Đại học" className="md:col-span-2" batBuoc />
                     <label className={LOP_NHAN}>Loại tài liệu<DauBatBuoc /><select className={LOP_INPUT} name="loai_bang" value={hoSo.form.loai_bang} onChange={hoSo.thayDoi}><option value="bang_cap">Bằng cấp</option><option value="chung_chi">Chứng chỉ</option><option value="khac">Tài liệu khác</option></select></label>
+                    <label className={LOP_NHAN}>
+                        Trình độ xác minh<DauBatBuoc />
+                        <select
+                            className={LOP_INPUT}
+                            name="trinh_do_giasu_id"
+                            value={hoSo.form.trinh_do_giasu_id}
+                            onChange={hoSo.thayDoi}
+                            disabled={dangTaiDanhMuc}
+                        >
+                            <option value="" disabled>
+                                {dangTaiDanhMuc ? "Đang tải trình độ..." : "Chọn trình độ"}
+                            </option>
+                            {danhMuc.trinh_do.map((muc) => (
+                                <option key={muc.id} value={muc.id}>
+                                    {muc.ten}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
                     <Truong nhan="Chuyên ngành" name="chuyen_nganh" value={hoSo.form.chuyen_nganh} onChange={hoSo.thayDoi} placeholder="Ví dụ: Sư phạm Toán" />
                     <Truong nhan="Trường/đơn vị cấp" name="truong_don_vi" value={hoSo.form.truong_don_vi} onChange={hoSo.thayDoi} placeholder="Tên trường hoặc đơn vị cấp" className="md:col-span-2" batBuoc />
                     <label className={`${LOP_NHAN} md:col-span-2`}>File minh chứng<DauBatBuoc /><input className={`${LOP_INPUT} file:mr-4 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-blue-700`} type="file" name="tai_lieu" accept=".pdf,.jpg,.jpeg,.png" onChange={hoSo.thayDoi} /><span className="mt-2 block text-xs font-normal text-slate-500">Hỗ trợ PDF, JPG, JPEG, PNG; tối đa 5MB.</span></label>

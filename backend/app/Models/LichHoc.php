@@ -24,6 +24,9 @@ class LichHoc extends Model
         'phi_hoahong',
         'tien_giasu_nhan',
         'trang_thai',
+        'lydo_huy',
+        'nguoi_huy_id',
+        'thoigian_huy',
         'ghi_chu',
     ];
 
@@ -40,11 +43,6 @@ class LichHoc extends Model
     public function danhGia()
     {
         return $this->hasOne(DanhGia::class, 'lichhoc_id');
-    }
-
-    public function lichSus()
-    {
-        return $this->hasMany(LichHocLichSu::class, 'lichhoc_id');
     }
 
     public function yeuCauHocBus()

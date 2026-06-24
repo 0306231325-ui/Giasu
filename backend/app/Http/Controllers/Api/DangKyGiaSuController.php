@@ -23,7 +23,7 @@ class DangKyGiaSuController extends Controller
             'success' => true,
             'data' => [
                 'trinh_do' => TrinhDoGiasu::query()
-                    ->select('id', 'ten')
+                    ->select('id', 'ten', 'thu_tu')
                     ->orderBy('thu_tu')
                     ->get(),
                 'cap_hoc' => CapHoc::query()

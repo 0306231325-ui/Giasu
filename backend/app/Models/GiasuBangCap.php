@@ -13,6 +13,7 @@ class GiasuBangCap extends Model
         'giasu_id',
         'ten_bang',
         'loai_bang',
+        'trinh_do_giasu_id',
         'chuyen_nganh',
         'truong_don_vi',
         'file_url',
@@ -32,5 +33,10 @@ class GiasuBangCap extends Model
     public function giasu(): BelongsTo
     {
         return $this->belongsTo(Giasu::class, 'giasu_id');
+    }
+
+    public function trinhDo(): BelongsTo
+    {
+        return $this->belongsTo(TrinhDoGiasu::class, 'trinh_do_giasu_id');
     }
 }

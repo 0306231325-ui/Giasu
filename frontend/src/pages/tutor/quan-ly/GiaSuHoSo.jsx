@@ -57,7 +57,11 @@ function GiaSuHoSo() {
     });
     const chuyenMon = useChuyenMon({ baoLoi, baoThanhCong });
     const monDay = useMonDay({ baoLoi, baoThanhCong });
-    const bangCap = useBangCap({ baoLoi, baoThanhCong });
+    const bangCap = useBangCap({
+        baoLoi,
+        baoThanhCong,
+        danhMucTrinhDo: chuyenMon.danhMuc.trinh_do,
+    });
 
     const tenGiaSu =
         thongTinCaNhan.thongTin.ho_ten || user?.ho_ten || "Gia sư";

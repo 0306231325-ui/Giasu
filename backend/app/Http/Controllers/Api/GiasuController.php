@@ -225,7 +225,7 @@ class GiasuController extends Controller
             'data' => [
                 'thong_tin' => $this->dinhDangChuyenMon($giaSu),
                 'trinh_do' => TrinhDoGiasu::query()
-                    ->select('id', 'ten')
+                    ->select('id', 'ten', 'thu_tu')
                     ->orderBy('thu_tu')
                     ->get(),
                 'muc_kinh_nghiem' => MucKinhNghiem::query()
@@ -483,6 +483,7 @@ class GiasuController extends Controller
         return response()->json([
             'success' => true,
             'data' => $giaSu->bangCaps()
+                ->with('trinhDo:id,ten,thu_tu')
                 ->latest()
                 ->get()
                 ->map(fn (GiasuBangCap $bangCap) => $this->dinhDangBangCap($bangCap)),
@@ -500,6 +501,7 @@ class GiasuController extends Controller
         $duLieu = $request->validate([
             'ten_bang' => ['required', 'string', 'min:2', 'max:255'],
             'loai_bang' => ['required', Rule::in(['bang_cap', 'chung_chi', 'khac'])],
+            'trinh_do_giasu_id' => ['required', 'integer', 'exists:trinh_do_giasu,id'],
             'chuyen_nganh' => ['nullable', 'string', 'max:255'],
             'truong_don_vi' => ['required', 'string', 'min:2', 'max:255'],
             'tai_lieu' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
@@ -508,6 +510,8 @@ class GiasuController extends Controller
             'ten_bang.min' => 'Tên tài liệu phải có ít nhất 2 ký tự.',
             'loai_bang.required' => 'Vui lòng chọn loại tài liệu.',
             'loai_bang.in' => 'Loại tài liệu không hợp lệ.',
+            'trinh_do_giasu_id.required' => 'Vui lòng chọn trình độ xác minh.',
+            'trinh_do_giasu_id.exists' => 'Trình độ xác minh không hợp lệ.',
             'truong_don_vi.required' => 'Vui lòng nhập trường hoặc đơn vị cấp.',
             'truong_don_vi.min' => 'Tên trường hoặc đơn vị phải có ít nhất 2 ký tự.',
             'tai_lieu.required' => 'Vui lòng chọn file minh chứng.',
@@ -533,6 +537,7 @@ class GiasuController extends Controller
             $bangCap = $giaSu->bangCaps()->create([
                 'ten_bang' => trim($duLieu['ten_bang']),
                 'loai_bang' => $duLieu['loai_bang'],
+                'trinh_do_giasu_id' => $duLieu['trinh_do_giasu_id'],
                 'chuyen_nganh' => filled($duLieu['chuyen_nganh'] ?? null)
                     ? trim($duLieu['chuyen_nganh'])
                     : null,
@@ -635,10 +640,15 @@ class GiasuController extends Controller
 
     private function dinhDangBangCap(GiasuBangCap $bangCap): array
     {
+        $bangCap->loadMissing('trinhDo:id,ten,thu_tu');
+
         return [
             'id' => $bangCap->id,
             'ten_bang' => $bangCap->ten_bang,
             'loai_bang' => $bangCap->loai_bang,
+            'trinh_do_giasu_id' => $bangCap->trinh_do_giasu_id,
+            'ten_trinh_do' => $bangCap->trinhDo?->ten,
+            'thu_tu_trinh_do' => $bangCap->trinhDo?->thu_tu,
             'chuyen_nganh' => $bangCap->chuyen_nganh,
             'truong_don_vi' => $bangCap->truong_don_vi,
             'trang_thai' => $bangCap->trang_thai,

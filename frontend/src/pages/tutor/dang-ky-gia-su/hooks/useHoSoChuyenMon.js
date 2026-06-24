@@ -19,7 +19,12 @@ export default function useHoSoChuyenMon() {
     };
 
     const them = () => {
-        if (!form.ten_bang.trim() || !form.truong_don_vi.trim() || !form.tai_lieu) {
+        if (
+            !form.ten_bang.trim() ||
+            !form.trinh_do_giasu_id ||
+            !form.truong_don_vi.trim() ||
+            !form.tai_lieu
+        ) {
             return;
         }
         setDanhSach((hienTai) => [

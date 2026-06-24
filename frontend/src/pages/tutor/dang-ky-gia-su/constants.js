@@ -6,6 +6,7 @@ export const LOP_NHAN = "block text-sm font-semibold text-slate-700";
 export const HO_SO_CHUYEN_MON_MAC_DINH = {
     ten_bang: "",
     loai_bang: "bang_cap",
+    trinh_do_giasu_id: "",
     chuyen_nganh: "",
     truong_don_vi: "",
     tai_lieu: null,
