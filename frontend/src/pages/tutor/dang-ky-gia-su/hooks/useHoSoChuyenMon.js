@@ -38,5 +38,11 @@ export default function useHoSoChuyenMon() {
         setDanhSach((hienTai) => hienTai.filter((muc) => muc.id !== id));
     };
 
-    return { danhSach, hienForm, form, setHienForm, thayDoi, dongForm, them, xoa };
+    const reset = () => {
+        setDanhSach([]);
+        setHienForm(false);
+        setForm(HO_SO_CHUYEN_MON_MAC_DINH);
+    };
+
+    return { danhSach, hienForm, form, setHienForm, thayDoi, dongForm, them, xoa, reset };
 }

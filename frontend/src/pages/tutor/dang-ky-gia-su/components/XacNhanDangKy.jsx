@@ -1,6 +1,6 @@
 import { DauBatBuoc } from "./ThanhPhanChung";
 
-function XacNhanDangKy() {
+function XacNhanDangKy({ dangGui = false }) {
     return (
         <div className="p-6 sm:p-8 lg:p-10">
             <label className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">
@@ -9,7 +9,13 @@ function XacNhanDangKy() {
             </label>
             <div className="mt-8 flex flex-col-reverse items-center justify-between gap-4 border-t border-slate-100 pt-7 sm:flex-row">
                 <p className="text-sm text-slate-500">Các trường có dấu <span className="text-red-500">*</span> là bắt buộc.</p>
-                <button type="button" className="w-full rounded-xl bg-blue-600 px-7 py-3.5 font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 sm:w-auto">Gửi đơn đăng ký</button>
+                <button
+                    type="submit"
+                    disabled={dangGui}
+                    className="w-full rounded-xl bg-blue-600 px-7 py-3.5 font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                >
+                    {dangGui ? "Đang gửi đơn..." : "Gửi đơn đăng ký"}
+                </button>
             </div>
         </div>
     );

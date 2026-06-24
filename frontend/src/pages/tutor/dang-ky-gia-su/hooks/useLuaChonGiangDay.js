@@ -50,6 +50,13 @@ export default function useLuaChonGiangDay(danhMuc) {
         );
     };
 
+    const reset = () => {
+        setCapHocIdsDaChon([]);
+        setTrinhDoIdDaChon("");
+        setMucKinhNghiemIdDaChon("");
+        setMonHocIdsDaChon([]);
+    };
+
     return {
         capHocIdsDaChon,
         trinhDoIdDaChon,
@@ -60,6 +67,7 @@ export default function useLuaChonGiangDay(danhMuc) {
         setMucKinhNghiemIdDaChon,
         chonMonHoc,
         chonCapHoc,
+        reset,
         gia,
     };
 }

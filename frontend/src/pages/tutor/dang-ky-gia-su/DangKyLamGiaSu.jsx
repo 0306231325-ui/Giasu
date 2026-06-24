@@ -1,6 +1,7 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
+import api from "../../../services/api";
 import CapHocMonDay from "./components/CapHocMonDay";
 import FormThemHoSo from "./components/FormThemHoSo";
 import GiaDuKien from "./components/GiaDuKien";
@@ -21,6 +22,9 @@ function DangKyLamGiaSu() {
     const luaChon = useLuaChonGiangDay(danhMuc);
     const { setTrinhDoIdDaChon } = luaChon;
     const hoSo = useHoSoChuyenMon();
+    const formRef = useRef(null);
+    const [dangGuiDon, setDangGuiDon] = useState(false);
+    const [thongBao, setThongBao] = useState(null);
 
     const trinhDoCaoNhatId = useMemo(() => {
         const thuTuTheoId = new Map(
@@ -42,6 +46,86 @@ function DangKyLamGiaSu() {
     useEffect(() => {
         setTrinhDoIdDaChon(trinhDoCaoNhatId);
     }, [setTrinhDoIdDaChon, trinhDoCaoNhatId]);
+
+    const guiDonDangKy = async (event) => {
+        event.preventDefault();
+
+        if (dangGuiDon || !formRef.current) return;
+
+        setThongBao(null);
+
+        if (hoSo.danhSach.length === 0) {
+            setThongBao({
+                loai: "loi",
+                noiDung: "Vui lòng thêm ít nhất một bằng cấp hoặc chứng chỉ.",
+            });
+            return;
+        }
+
+        if (luaChon.monHocIdsDaChon.length === 0) {
+            setThongBao({
+                loai: "loi",
+                noiDung: "Vui lòng chọn ít nhất một môn học đăng ký dạy.",
+            });
+            return;
+        }
+
+        if (!trinhDoCaoNhatId) {
+            setThongBao({
+                loai: "loi",
+                noiDung: "Vui lòng chọn trình độ xác minh cho hồ sơ chuyên môn.",
+            });
+            return;
+        }
+
+        const duLieuGui = new FormData(formRef.current);
+        duLieuGui.delete("mon_hoc_ids[]");
+        duLieuGui.delete("cap_hoc_ids[]");
+        duLieuGui.delete("bang_cap");
+
+        luaChon.monHocIdsDaChon.forEach((id) => {
+            duLieuGui.append("mon_hoc_ids[]", id);
+        });
+
+        hoSo.danhSach.forEach((taiLieu, index) => {
+            duLieuGui.append(`bang_cap[${index}][ten_bang]`, taiLieu.ten_bang);
+            duLieuGui.append(`bang_cap[${index}][loai_bang]`, taiLieu.loai_bang);
+            duLieuGui.append(`bang_cap[${index}][trinh_do_giasu_id]`, taiLieu.trinh_do_giasu_id);
+            duLieuGui.append(`bang_cap[${index}][chuyen_nganh]`, taiLieu.chuyen_nganh || "");
+            duLieuGui.append(`bang_cap[${index}][truong_don_vi]`, taiLieu.truong_don_vi);
+            duLieuGui.append(`bang_cap[${index}][tai_lieu]`, taiLieu.tai_lieu);
+        });
+
+        setDangGuiDon(true);
+        try {
+            const response = await api.post("/dang-ky-gia-su", duLieuGui, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+
+            if (response.data?.success) {
+                setThongBao({
+                    loai: "thanh_cong",
+                    noiDung: response.data.message,
+                });
+                formRef.current.reset();
+                hoSo.reset();
+                luaChon.reset();
+            }
+        } catch (error) {
+            const loiValidate = error.response?.data?.errors;
+            const noiDung =
+                loiValidate
+                    ? Object.values(loiValidate).flat()[0]
+                    : error.response?.data?.message;
+
+            setThongBao({
+                loai: "loi",
+                noiDung: noiDung || "Không thể gửi đơn đăng ký. Vui lòng kiểm tra lại thông tin.",
+            });
+        } finally {
+            setDangGuiDon(false);
+        }
+    };
 
     useEffect(() => {
         if (!dangTaiXacThuc && !isAuthenticated) {
@@ -80,10 +164,26 @@ function DangKyLamGiaSu() {
                     </p>
                 </div>
 
-                <form className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-blue-950/10">
+                <form
+                    ref={formRef}
+                    onSubmit={guiDonDangKy}
+                    className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-blue-950/10"
+                >
                     {loiDanhMuc && (
                         <div className="border-b border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700 sm:px-8 lg:px-10">
                             {loiDanhMuc}
+                        </div>
+                    )}
+                    {thongBao && (
+                        <div
+                            className={[
+                                "border-b px-6 py-4 text-sm font-semibold sm:px-8 lg:px-10",
+                                thongBao.loai === "thanh_cong"
+                                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                    : "border-red-200 bg-red-50 text-red-700",
+                            ].join(" ")}
+                        >
+                            {thongBao.noiDung}
                         </div>
                     )}
                     <ThongTinCaNhanDangKy />
@@ -102,7 +202,7 @@ function DangKyLamGiaSu() {
                         luaChon={luaChon}
                     />
                     <GiaDuKien gia={luaChon.gia} />
-                    <XacNhanDangKy />
+                    <XacNhanDangKy dangGui={dangGuiDon} />
                 </form>
             </div>
             <FormThemHoSo

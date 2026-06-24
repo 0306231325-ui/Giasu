@@ -4,12 +4,19 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\CapHoc;
+use App\Models\Giasu;
+use App\Models\GiasuBangCap;
+use App\Models\GiasuGia;
 use App\Models\MonHoc;
 use App\Models\MucKinhNghiem;
 use App\Models\TrinhDoGiasu;
 use App\Services\GiaTinhService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class DangKyGiaSuController extends Controller
 {
@@ -60,5 +67,214 @@ class DangKyGiaSuController extends Controller
                 $duLieu['muc_kinh_nghiem_id'],
             ),
         ]);
+    }
+
+    public function guiDon(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vui lòng đăng nhập trước khi gửi đơn đăng ký.',
+            ], 401);
+        }
+
+        $duLieu = $request->validate([
+            'ho_ten' => ['required', 'string', 'min:2', 'max:100'],
+            'ngay_sinh' => ['required', 'date', 'before:today'],
+            'so_dien_thoai' => ['required', 'regex:/^(0|\+84)[0-9]{9}$/'],
+            'email' => [
+                'required',
+                'email',
+                'max:100',
+                Rule::unique('users', 'email')->ignore($user->id),
+            ],
+            'dia_chi' => ['required', 'string', 'min:5', 'max:255'],
+            'anh_chan_dung' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'muc_kinh_nghiem_id' => ['required', 'integer', 'exists:muc_kinh_nghiem,id'],
+            'gioi_thieu' => ['required', 'string', 'min:10', 'max:2000'],
+            'mon_hoc_ids' => ['required', 'array', 'min:1'],
+            'mon_hoc_ids.*' => ['integer', 'distinct', 'exists:monhoc,id'],
+            'bang_cap' => ['required', 'array', 'min:1'],
+            'bang_cap.*.ten_bang' => ['required', 'string', 'min:2', 'max:255'],
+            'bang_cap.*.loai_bang' => ['required', Rule::in(['bang_cap', 'chung_chi', 'khac'])],
+            'bang_cap.*.trinh_do_giasu_id' => ['required', 'integer', 'exists:trinh_do_giasu,id'],
+            'bang_cap.*.chuyen_nganh' => ['nullable', 'string', 'max:255'],
+            'bang_cap.*.truong_don_vi' => ['required', 'string', 'min:2', 'max:255'],
+            'bang_cap.*.tai_lieu' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'dong_y' => ['accepted'],
+        ], [
+            'ho_ten.required' => 'Vui lòng nhập họ và tên.',
+            'ngay_sinh.required' => 'Vui lòng chọn ngày sinh.',
+            'ngay_sinh.before' => 'Ngày sinh không hợp lệ.',
+            'so_dien_thoai.required' => 'Vui lòng nhập số điện thoại.',
+            'so_dien_thoai.regex' => 'Số điện thoại không hợp lệ.',
+            'email.required' => 'Vui lòng nhập email.',
+            'email.email' => 'Email không hợp lệ.',
+            'email.unique' => 'Email này đã được sử dụng.',
+            'dia_chi.required' => 'Vui lòng nhập địa chỉ hiện tại.',
+            'gioi_thieu.required' => 'Vui lòng nhập giới thiệu bản thân.',
+            'gioi_thieu.min' => 'Giới thiệu bản thân phải có ít nhất 10 ký tự.',
+            'muc_kinh_nghiem_id.required' => 'Vui lòng chọn mức kinh nghiệm.',
+            'mon_hoc_ids.required' => 'Vui lòng chọn ít nhất một môn học.',
+            'mon_hoc_ids.min' => 'Vui lòng chọn ít nhất một môn học.',
+            'bang_cap.required' => 'Vui lòng thêm ít nhất một bằng cấp hoặc chứng chỉ.',
+            'bang_cap.min' => 'Vui lòng thêm ít nhất một bằng cấp hoặc chứng chỉ.',
+            'bang_cap.*.trinh_do_giasu_id.required' => 'Vui lòng chọn trình độ xác minh cho từng tài liệu.',
+            'bang_cap.*.tai_lieu.required' => 'Vui lòng chọn file minh chứng cho từng tài liệu.',
+            'bang_cap.*.tai_lieu.mimes' => 'File minh chứng chỉ hỗ trợ PDF, JPG, JPEG hoặc PNG.',
+            'dong_y.accepted' => 'Vui lòng xác nhận cam kết thông tin.',
+        ]);
+
+        if ($user->giasu?->trang_thai_ho_so === 'duyet') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tài khoản này đã được duyệt làm gia sư.',
+            ], 422);
+        }
+
+        $trinhDoCaoNhatId = $this->layTrinhDoCaoNhatId(
+            collect($duLieu['bang_cap'])->pluck('trinh_do_giasu_id')->all(),
+        );
+
+        if (! $trinhDoCaoNhatId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không xác định được trình độ cao nhất từ hồ sơ chuyên môn.',
+            ], 422);
+        }
+
+        $avatarMoi = null;
+        if ($request->hasFile('anh_chan_dung')) {
+            $avatarMoi = $this->luuAnhChanDung($request);
+        }
+
+        $fileDaLuu = [];
+
+        try {
+            $giaSu = DB::transaction(function () use ($request, $user, $duLieu, $trinhDoCaoNhatId, $avatarMoi, &$fileDaLuu) {
+                $giaSu = $user->giasu()->firstOrCreate([]);
+
+                $this->xoaTaiLieuDangKyCu($giaSu);
+
+                $user->update([
+                    'ho_ten' => trim($duLieu['ho_ten']),
+                    'ngay_sinh' => $duLieu['ngay_sinh'],
+                    'email' => trim($duLieu['email']),
+                    'sdt' => trim($duLieu['so_dien_thoai']),
+                    'anh_dai_dien' => $avatarMoi ?: $user->anh_dai_dien,
+                ]);
+
+                $giaSu->update([
+                    'mo_ta' => trim($duLieu['gioi_thieu']),
+                    'muc_kinh_nghiem_id' => $duLieu['muc_kinh_nghiem_id'],
+                    'he_so_gia' => $giaSu->he_so_gia ?? 0,
+                    'trinh_do_giasu_id' => $trinhDoCaoNhatId,
+                    'dia_chi' => trim($duLieu['dia_chi']),
+                    'avatar' => $avatarMoi ?: $giaSu->avatar,
+                    'trang_thai_ho_so' => 'cho_duyet',
+                    'duyet_boi' => null,
+                    'duyet_luc' => null,
+                    'ly_do_tu_choi' => null,
+                ]);
+
+                foreach ($duLieu['bang_cap'] as $index => $taiLieu) {
+                    $duongDan = $request->file("bang_cap.{$index}.tai_lieu")
+                        ->store("giasu/{$giaSu->id}/bang-cap", 'local');
+
+                    $fileDaLuu[] = $duongDan;
+
+                    $giaSu->bangCaps()->create([
+                        'ten_bang' => trim($taiLieu['ten_bang']),
+                        'loai_bang' => $taiLieu['loai_bang'],
+                        'trinh_do_giasu_id' => $taiLieu['trinh_do_giasu_id'],
+                        'chuyen_nganh' => filled($taiLieu['chuyen_nganh'] ?? null)
+                            ? trim($taiLieu['chuyen_nganh'])
+                            : null,
+                        'truong_don_vi' => trim($taiLieu['truong_don_vi']),
+                        'file_url' => $duongDan,
+                        'trang_thai' => 'cho_duyet',
+                        'duyet_boi' => null,
+                        'duyet_luc' => null,
+                        'ly_do' => null,
+                    ]);
+                }
+
+                $monHoc = MonHoc::query()
+                    ->whereIn('id', $duLieu['mon_hoc_ids'])
+                    ->get(['id', 'cap_hoc_id']);
+
+                $giaSu->capHocs()->sync($monHoc->pluck('cap_hoc_id')->unique()->all());
+
+                foreach ($monHoc as $mon) {
+                    $gia = GiaTinhService::tinhGiaGiasu($mon->id, $giaSu->id);
+                    if ($gia) {
+                        $giaSu->giasuGias()->create(array_merge($gia, [
+                            'trang_thai' => GiasuGia::TRANG_THAI_CHO_DUYET,
+                            'ly_do_tu_choi' => null,
+                        ]));
+                    }
+                }
+
+                return $giaSu;
+            });
+        } catch (\Throwable $exception) {
+            if ($avatarMoi) {
+                File::delete(public_path($avatarMoi));
+            }
+
+            foreach ($fileDaLuu as $duongDan) {
+                Storage::disk('local')->delete($duongDan);
+            }
+
+            throw $exception;
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã gửi đơn đăng ký gia sư. Vui lòng chờ quản trị viên xét duyệt.',
+            'data' => [
+                'giasu_id' => $giaSu->id,
+                'trang_thai_ho_so' => 'cho_duyet',
+            ],
+        ], 201);
+    }
+
+    private function layTrinhDoCaoNhatId(array $trinhDoIds): ?int
+    {
+        return TrinhDoGiasu::query()
+            ->whereIn('id', $trinhDoIds)
+            ->orderByDesc('thu_tu')
+            ->orderByDesc('id')
+            ->value('id');
+    }
+
+    private function luuAnhChanDung(Request $request): string
+    {
+        $thuMucAnh = public_path('images/avatar-gia-su');
+
+        if (! File::exists($thuMucAnh)) {
+            File::makeDirectory($thuMucAnh, 0755, true);
+        }
+
+        $file = $request->file('anh_chan_dung');
+        $tenFile = 'dang-ky-gia-su-' . $request->user()->id . '-' . time() . '-' . bin2hex(random_bytes(4))
+            . '.' . $file->getClientOriginalExtension();
+
+        $file->move($thuMucAnh, $tenFile);
+
+        return 'images/avatar-gia-su/' . $tenFile;
+    }
+
+    private function xoaTaiLieuDangKyCu(Giasu $giaSu): void
+    {
+        foreach ($giaSu->bangCaps as $bangCap) {
+            Storage::disk('local')->delete($bangCap->file_url);
+        }
+
+        $giaSu->bangCaps()->delete();
+        $giaSu->giasuGias()->delete();
+        $giaSu->capHocs()->detach();
     }
 }
