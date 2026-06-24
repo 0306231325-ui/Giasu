@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import ThongBaoDropdown from "../components/ThongBaoDropdown";
 
 function GiaSuLayout() {
     const navigate = useNavigate();
@@ -71,6 +72,12 @@ function GiaSuLayout() {
                             ? "Quản lý hoạt động dạy học"
                             : "Chỉ tài khoản gia sư mới được dùng khu vực này"}
                     </div>
+                    {laGiaSu && (
+                        <ThongBaoDropdown
+                            tieuDe="Thông báo gia sư"
+                            moTaRong="Các cập nhật về yêu cầu đặt gia sư, lịch dạy, hồ sơ xét duyệt và thu nhập sẽ hiển thị tại đây."
+                        />
+                    )}
                 </header>
 
                 <main className="p-6">

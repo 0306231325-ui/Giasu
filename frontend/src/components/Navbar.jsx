@@ -2,6 +2,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import ThongBaoDropdown from "./ThongBaoDropdown";
 
 function Navbar() {
     const navigate = useNavigate();
@@ -139,102 +140,113 @@ function Navbar() {
 
             <div className="flex gap-4 items-center">
                 {isAuthenticated ? (
-                    <div className="relative" ref={userDropdownRef}>
-                        <button
-                            type="button"
-                            onClick={() => setUserDropdownOpen((prev) => !prev)}
-                            className="flex items-center gap-3 rounded-xl border border-gray-700 bg-gray-800/70 px-4 py-2 text-left transition hover:border-blue-500 hover:bg-gray-800"
-                            aria-expanded={userDropdownOpen}
-                            aria-haspopup="menu"
-                        >
-                            <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-blue-500 text-sm font-bold text-white">
-                                {user?.anh_dai_dien ? (
-                                    <img
-                                        src={user.anh_dai_dien}
-                                        alt="Ảnh đại diện"
-                                        className="h-full w-full object-cover"
-                                    />
-                                ) : (
-                                    (user?.ho_ten || "HV").trim().charAt(0).toUpperCase()
-                                )}
-                            </span>
-                            <span className="min-w-0">
-                                <span className="block max-w-36 truncate text-sm font-semibold text-white">
-                                    {user?.ho_ten}
-                                </span>
-                                <span className="block text-xs uppercase text-blue-300">
-                                    {user?.vai_tro}
-                                </span>
-                            </span>
-                            <span
-                                className={`text-xs text-gray-300 transition-transform ${
-                                    userDropdownOpen ? "rotate-180" : ""
-                                }`}
-                            >
-                                ▾
-                            </span>
-                        </button>
+                    <>
+                        <ThongBaoDropdown
+                            moTaRong={
+                                user?.vai_tro === "giasu"
+                                    ? "Các cập nhật về hồ sơ, lịch dạy và yêu cầu đặt gia sư sẽ hiển thị tại đây."
+                                    : "Các cập nhật về đặt lịch, thanh toán và buổi học sẽ hiển thị tại đây."
+                            }
+                        />
 
-                        {userDropdownOpen && (
-                            <div
-                                role="menu"
-                                className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-xl border border-gray-700 bg-gray-800 shadow-2xl"
+                        <div className="relative" ref={userDropdownRef}>
+                            <button
+                                type="button"
+                                onClick={() => setUserDropdownOpen((prev) => !prev)}
+                                className="flex items-center gap-3 rounded-xl border border-gray-700 bg-gray-800/70 px-4 py-2 text-left transition hover:border-blue-500 hover:bg-gray-800"
+                                aria-expanded={userDropdownOpen}
+                                aria-haspopup="menu"
                             >
-                                <div className="border-b border-gray-700 px-4 py-3">
-                                    <p className="truncate text-sm font-semibold text-white">
+                                <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-blue-500 text-sm font-bold text-white">
+                                    {user?.anh_dai_dien ? (
+                                        <img
+                                            src={user.anh_dai_dien}
+                                            alt="Ảnh đại diện"
+                                            className="h-full w-full object-cover"
+                                        />
+                                    ) : (
+                                        (user?.ho_ten || "HV").trim().charAt(0).toUpperCase()
+                                    )}
+                                </span>
+                                <span className="min-w-0">
+                                    <span className="block max-w-36 truncate text-sm font-semibold text-white">
                                         {user?.ho_ten}
-                                    </p>
-                                    <p className="mt-1 truncate text-xs text-gray-400">
-                                        {user?.email}
-                                    </p>
-                                </div>
-
-                                <div className="py-2">
-                                    {user?.vai_tro === "hocvien" && (
-                                        <Link
-                                            to="/hoc-vien/ho-so"
-                                            onClick={() => setUserDropdownOpen(false)}
-                                            className="block px-4 py-2.5 text-sm font-medium text-gray-200 transition hover:bg-gray-700 hover:text-white"
-                                        >
-                                            Hồ sơ học viên
-                                        </Link>
-                                    )}
-
-                                    {user?.vai_tro === "giasu" && (
-                                        <Link
-                                            to="/gia-su/quan-ly/ho-so"
-                                            onClick={() => setUserDropdownOpen(false)}
-                                            className="block px-4 py-2.5 text-sm font-medium text-gray-200 transition hover:bg-gray-700 hover:text-white"
-                                        >
-                                            Hồ sơ gia sư
-                                        </Link>
-                                    )}
-
-                                    {user?.vai_tro === "admin" && (
-                                        <Link
-                                            to="/admin"
-                                            onClick={() => setUserDropdownOpen(false)}
-                                            className="block px-4 py-2.5 text-sm font-medium text-gray-200 transition hover:bg-gray-700 hover:text-white"
-                                        >
-                                            Trang quản trị
-                                        </Link>
-                                    )}
-                                </div>
-
-                                <button
-                                    type="button"
-                                    onClick={async () => {
-                                        setUserDropdownOpen(false);
-                                        await logout();
-                                        navigate("/login");
-                                    }}
-                                    className="block w-full border-t border-gray-700 px-4 py-2.5 text-left text-sm font-semibold text-red-300 transition hover:bg-red-500/10 hover:text-red-200"
+                                    </span>
+                                    <span className="block text-xs uppercase text-blue-300">
+                                        {user?.vai_tro}
+                                    </span>
+                                </span>
+                                <span
+                                    className={`text-xs text-gray-300 transition-transform ${
+                                        userDropdownOpen ? "rotate-180" : ""
+                                    }`}
                                 >
-                                    Đăng xuất
-                                </button>
-                            </div>
-                        )}
-                    </div>                ) : (
+                                    ▾
+                                </span>
+                            </button>
+
+                            {userDropdownOpen && (
+                                <div
+                                    role="menu"
+                                    className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-xl border border-gray-700 bg-gray-800 shadow-2xl"
+                                >
+                                    <div className="border-b border-gray-700 px-4 py-3">
+                                        <p className="truncate text-sm font-semibold text-white">
+                                            {user?.ho_ten}
+                                        </p>
+                                        <p className="mt-1 truncate text-xs text-gray-400">
+                                            {user?.email}
+                                        </p>
+                                    </div>
+
+                                    <div className="py-2">
+                                        {user?.vai_tro === "hocvien" && (
+                                            <Link
+                                                to="/hoc-vien/ho-so"
+                                                onClick={() => setUserDropdownOpen(false)}
+                                                className="block px-4 py-2.5 text-sm font-medium text-gray-200 transition hover:bg-gray-700 hover:text-white"
+                                            >
+                                                Hồ sơ học viên
+                                            </Link>
+                                        )}
+
+                                        {user?.vai_tro === "giasu" && (
+                                            <Link
+                                                to="/gia-su/quan-ly/ho-so"
+                                                onClick={() => setUserDropdownOpen(false)}
+                                                className="block px-4 py-2.5 text-sm font-medium text-gray-200 transition hover:bg-gray-700 hover:text-white"
+                                            >
+                                                Hồ sơ gia sư
+                                            </Link>
+                                        )}
+
+                                        {user?.vai_tro === "admin" && (
+                                            <Link
+                                                to="/admin"
+                                                onClick={() => setUserDropdownOpen(false)}
+                                                className="block px-4 py-2.5 text-sm font-medium text-gray-200 transition hover:bg-gray-700 hover:text-white"
+                                            >
+                                                Trang quản trị
+                                            </Link>
+                                        )}
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            setUserDropdownOpen(false);
+                                            await logout();
+                                            navigate("/login");
+                                        }}
+                                        className="block w-full border-t border-gray-700 px-4 py-2.5 text-left text-sm font-semibold text-red-300 transition hover:bg-red-500/10 hover:text-red-200"
+                                    >
+                                        Đăng xuất
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </>
+                ) : (
                     <>
                         <Link
                             to="/login"
