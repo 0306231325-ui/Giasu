@@ -19,6 +19,31 @@ const layAnh = (giaSu) => {
     return null;
 };
 
+const layDanhSachRieng = (items) => [...new Set(items.filter(Boolean))];
+
+const dinhDangKinhNghiem = (mucKinhNghiem) => {
+    if (!mucKinhNghiem) return "";
+
+    const tu = Number(mucKinhNghiem.tu_khoang);
+    const den = Number(mucKinhNghiem.den_khoang);
+
+    if (!Number.isNaN(tu) && !Number.isNaN(den)) return `${tu} - ${den} năm kinh nghiệm`;
+    if (!Number.isNaN(tu)) return `Từ ${tu} năm kinh nghiệm`;
+
+    return "";
+};
+
+const dinhDangCapLop = (capHoc, lop) => {
+    if (!capHoc && !lop) return "";
+    if (!lop) return capHoc;
+
+    const lopText = String(lop).trim();
+    const lopDaCoNhan = lopText.toLowerCase().startsWith("lớp");
+
+    if (!capHoc) return lopDaCoNhan ? lopText : `Lớp ${lopText}`;
+    return `${capHoc} - ${lopDaCoNhan ? lopText : `lớp ${lopText}`}`;
+};
+
 function StatBox({ label, value, tone = "default" }) {
     const toneClass = tone === "warm" ? "text-amber-200" : tone === "blue" ? "text-blue-200" : "text-white";
 
@@ -26,6 +51,32 @@ function StatBox({ label, value, tone = "default" }) {
         <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-4">
             <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">{label}</div>
             <div className={`mt-2 text-base font-bold ${toneClass}`}>{value}</div>
+        </div>
+    );
+}
+
+function TagList({ label, items, emptyText = "Đang cập nhật", tone = "blue" }) {
+    const toneClass = tone === "emerald"
+        ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-100"
+        : "border-blue-300/30 bg-blue-300/10 text-blue-100";
+
+    return (
+        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">{label}</p>
+            {items.length > 0 ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                    {items.map((item) => (
+                        <span
+                            key={item}
+                            className={`rounded-full border px-3 py-1.5 text-sm font-semibold ${toneClass}`}
+                        >
+                            {item}
+                        </span>
+                    ))}
+                </div>
+            ) : (
+                <div className="mt-3 text-base font-bold text-white">{emptyText}</div>
+            )}
         </div>
     );
 }
@@ -67,6 +118,27 @@ function GiaSuDetail() {
     const tenGiaSu = giaSu?.user?.ho_ten || "Gia sư";
     const rating = Number(giaSu?.danh_gias_avg_so_sao || 0).toFixed(1);
     const soDanhGia = giaSu?.danh_gias_count || 0;
+    const dienThoai = giaSu?.user?.sdt || "";
+    const monDay = useMemo(
+        () => (giaSu?.giasu_gias || []).filter((mucGia) => mucGia.mon_hoc),
+        [giaSu],
+    );
+    const tenMonDay = layDanhSachRieng(monDay.map((mucGia) => mucGia.mon_hoc?.ten_mon));
+    const capLopDay = layDanhSachRieng(
+        monDay.map((mucGia) => {
+            const monHoc = mucGia.mon_hoc;
+            const capHoc = monHoc?.cap_hoc?.ten;
+            const lop = monHoc?.lop;
+
+            return dinhDangCapLop(capHoc, lop);
+        }),
+    );
+    const kinhNghiem = dinhDangKinhNghiem(giaSu?.muc_kinh_nghiem);
+    const theManh = layDanhSachRieng([
+        giaSu?.trinh_do?.ten,
+        kinhNghiem,
+        giaSu?.hoc_van,
+    ]).join(" · ");
 
     if (loading) {
         return (
@@ -121,9 +193,11 @@ function GiaSuDetail() {
                     </div>
 
                     <div>
-                        <Link to="/gia-su" className="text-sm font-semibold text-blue-300 hover:text-blue-200">
-                            Quay lại danh sách
-                        </Link>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <Link to="/gia-su" className="text-sm font-semibold text-blue-300 hover:text-blue-200">
+                                Quay lại danh sách
+                            </Link>
+                        </div>
 
                         <div className="mt-5 flex flex-wrap gap-2">
                             <span className="rounded-full border border-blue-300/30 bg-blue-500/15 px-3 py-1 text-xs font-semibold text-blue-200">
@@ -145,7 +219,7 @@ function GiaSuDetail() {
                         <div className="mt-7 grid gap-4 sm:grid-cols-3">
                             <StatBox label="Đánh giá" value={`${rating}/5`} tone="warm" />
                             <StatBox label="Học phí" value={dinhDangGia(giaSu)} tone="blue" />
-                            <StatBox label="Liên hệ" value={giaSu.user?.sdt || "Chưa cập nhật"} />
+                            <StatBox label="Khu vực" value={giaSu.dia_chi || "Linh hoạt"} />
                         </div>
 
                         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -155,6 +229,15 @@ function GiaSuDetail() {
                             >
                                 Đặt lịch học
                             </Link>
+                            <button
+                                type="button"
+                                className="inline-flex items-center justify-center gap-3 rounded-xl border border-emerald-300/40 bg-emerald-400/10 px-6 py-3 text-sm font-semibold text-emerald-100 transition hover:border-emerald-200 hover:bg-emerald-400/15"
+                            >
+                                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-400 text-sm text-slate-950">
+                                    ☎
+                                </span>
+                                <span>{dienThoai ? `Liên hệ ${dienThoai}` : "Liên hệ gia sư"}</span>
+                            </button>
                             <Link
                                 to="/tim-gia-su-theo-yeu-cau"
                                 className="rounded-xl border border-white/15 px-6 py-3 text-center text-sm font-semibold text-slate-200 transition hover:border-blue-300 hover:text-white"
@@ -162,6 +245,14 @@ function GiaSuDetail() {
                                 Tìm gia sư khác
                             </Link>
                         </div>
+                        <p className="mt-3 flex max-w-2xl items-start gap-2 text-sm leading-6 text-slate-400">
+                            <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 animate-pulse items-center justify-center rounded-full bg-emerald-400 text-xs font-bold text-slate-950 shadow-lg shadow-emerald-400/30">
+                                !
+                            </span>
+                            <span>
+                                Bạn có thể liên hệ trước để trao đổi mục tiêu học, lịch rảnh và hình thức học phù hợp trước khi chọn gói.
+                            </span>
+                        </p>
                     </div>
                 </div>
             </section>
@@ -178,10 +269,18 @@ function GiaSuDetail() {
                             </div>
                         </div>
 
-                        <div className="mt-6 grid gap-4 md:grid-cols-3">
-                            <StatBox label="Học vấn" value={giaSu.hoc_van || "Chưa cập nhật"} />
-                            <StatBox label="Khu vực" value={giaSu.dia_chi || "Linh hoạt"} />
-                            <StatBox label="Mức giá" value={dinhDangGia(giaSu)} tone="blue" />
+                        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+                            <TagList label="Môn dạy" items={tenMonDay} />
+                            <TagList label="Cấp/lớp phù hợp" items={capLopDay} tone="emerald" />
+                        </div>
+
+                        <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                                Thế mạnh hồ sơ
+                            </p>
+                            <p className="mt-3 text-base font-bold leading-7 text-blue-100">
+                                {theManh || "Đang cập nhật"}
+                            </p>
                         </div>
                     </div>
 
@@ -229,12 +328,6 @@ function GiaSuDetail() {
                             <span className="text-right font-semibold">{giaSu.dia_chi || "Linh hoạt"}</span>
                         </div>
                     </div>
-                    <Link
-                        to={`/gia-su/${giaSu.id}/goi-hoc`}
-                        className="mt-6 block rounded-xl bg-blue-500 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-600"
-                    >
-                        Đặt lịch học
-                    </Link>
                 </aside>
             </main>
         </div>
