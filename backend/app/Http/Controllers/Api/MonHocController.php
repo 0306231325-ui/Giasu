@@ -12,16 +12,15 @@ class MonHocController extends Controller
     {
         try {
             $danhSachMonHoc = MonHoc::query()
-                ->select('ten_mon')
-                ->selectRaw('MIN(id) as id')
-                ->selectRaw('MAX(mo_ta) as mo_ta')
-                ->groupBy('ten_mon')
+                ->with('capHoc:id,ten,thu_tu')
+                ->select('id', 'ten_mon', 'mo_ta', 'cap_hoc_id', 'lop')
+                ->orderBy('cap_hoc_id')
+                ->orderBy('lop')
                 ->orderBy('ten_mon')
                 ->get()
                 ->map(function ($mon) {
                     $mon->giasus_count = DB::table('giasu_gia')
-                        ->join('monhoc', 'monhoc.id', '=', 'giasu_gia.monhoc_id')
-                        ->where('monhoc.ten_mon', $mon->ten_mon)
+                        ->where('monhoc_id', $mon->id)
                         ->distinct('giasu_gia.giasu_id')
                         ->count('giasu_gia.giasu_id');
 
