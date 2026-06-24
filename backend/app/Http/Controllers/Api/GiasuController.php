@@ -26,6 +26,19 @@ class GiasuController extends Controller
         return Giasu::query()
             ->with([
                 'user:id,ho_ten,anh_dai_dien,sdt',
+                'trinhDo:id,ten',
+                'mucKinhNghiem:id,tu_khoang,den_khoang',
+                'giasuGias' => function ($query) {
+                    $query
+                        ->select('id', 'giasu_id', 'monhoc_id', 'tong_gia', 'trang_thai')
+                        ->whereNotIn('trang_thai', [
+                            GiasuGia::TRANG_THAI_TU_CHOI,
+                            GiasuGia::TRANG_THAI_NGUNG_DAY,
+                        ])
+                        ->orderBy('tong_gia');
+                },
+                'giasuGias.monHoc:id,ten_mon,cap_hoc_id,lop',
+                'giasuGias.monHoc.capHoc:id,ten',
             ])
             ->withCount([
                 'lichHocs as danh_gias_count' => function ($query) {
