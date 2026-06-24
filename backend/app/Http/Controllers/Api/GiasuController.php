@@ -245,26 +245,18 @@ class GiasuController extends Controller
         }
 
         $duLieu = $request->validate([
-            'trinh_do_giasu_id' => [
-                'required',
-                'integer',
-                'exists:trinh_do_giasu,id',
-            ],
             'muc_kinh_nghiem_id' => [
                 'required',
                 'integer',
                 'exists:muc_kinh_nghiem,id',
             ],
         ], [
-            'trinh_do_giasu_id.required' => 'Vui lòng chọn trình độ.',
-            'trinh_do_giasu_id.exists' => 'Trình độ không hợp lệ.',
             'muc_kinh_nghiem_id.required' => 'Vui lòng chọn mức kinh nghiệm.',
             'muc_kinh_nghiem_id.exists' => 'Mức kinh nghiệm không hợp lệ.',
         ]);
 
         DB::transaction(function () use ($duLieu, $giaSu) {
             $giaSu->update([
-                'trinh_do_giasu_id' => $duLieu['trinh_do_giasu_id'],
                 'muc_kinh_nghiem_id' => $duLieu['muc_kinh_nghiem_id'],
             ]);
 
@@ -282,7 +274,7 @@ class GiasuController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Cập nhật trình độ và kinh nghiệm thành công.',
+            'message' => 'Cập nhật kinh nghiệm giảng dạy thành công.',
             'data' => $this->dinhDangChuyenMon($giaSu->fresh()),
         ]);
     }

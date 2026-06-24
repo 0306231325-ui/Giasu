@@ -54,7 +54,6 @@ export default function useChuyenMon({ baoLoi, baoThanhCong }) {
         setLoi({});
         try {
             const phanHoi = await api.patch("/gia-su/ho-so/chuyen-mon", {
-                trinh_do_giasu_id: Number(banNhap.trinh_do_giasu_id),
                 muc_kinh_nghiem_id: Number(banNhap.muc_kinh_nghiem_id),
             });
             const duLieu = { ...CHUYEN_MON_MAC_DINH, ...phanHoi.data.data };

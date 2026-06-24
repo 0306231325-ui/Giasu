@@ -6,8 +6,8 @@ function TrinhDoKinhNghiem({ duLieu }) {
     return (
         <KhoiNoiDung
             bieuTuong="book"
-            tieuDe="Trình độ và kinh nghiệm"
-            moTa="Trình độ hiện tại và kinh nghiệm giảng dạy."
+            tieuDe="Kinh nghiệm giảng dạy"
+            moTa="Mức kinh nghiệm dùng để hỗ trợ tính giá giảng dạy."
             hanhDong={duLieu.dangSua ? "Hủy" : "Chỉnh sửa"}
             onHanhDong={duLieu.dangSua ? duLieu.huySua : duLieu.batDauSua}
             voHieuHoaHanhDong={duLieu.dangTai || duLieu.dangLuu}
@@ -15,17 +15,7 @@ function TrinhDoKinhNghiem({ duLieu }) {
             {duLieu.dangTai ? (
                 <p className="text-sm font-semibold text-slate-500">Đang tải thông tin chuyên môn...</p>
             ) : (
-                <form onSubmit={duLieu.luu} className="grid gap-5 md:grid-cols-2">
-                    <Truong
-                        nhan="Trình độ"
-                        name="trinh_do_giasu_id"
-                        value={duLieu.banNhap.trinh_do_giasu_id || ""}
-                        hienThi={duLieu.chuyenMon.ten_trinh_do || "Chưa cập nhật"}
-                        dangSua={duLieu.dangSua}
-                        onChange={duLieu.thayDoi}
-                        loi={duLieu.loi.trinh_do_giasu_id}
-                        luaChon={duLieu.danhMuc.trinh_do.map((muc) => ({ value: muc.id, label: muc.ten }))}
-                    />
+                <form onSubmit={duLieu.luu} className="grid gap-5">
                     <Truong
                         nhan="Mức kinh nghiệm"
                         name="muc_kinh_nghiem_id"
@@ -37,7 +27,7 @@ function TrinhDoKinhNghiem({ duLieu }) {
                         luaChon={duLieu.danhMuc.muc_kinh_nghiem.map((muc) => ({ value: muc.id, label: dinhDangMucKinhNghiem(muc) }))}
                     />
                     {duLieu.dangSua && (
-                        <div className="flex justify-end gap-3 md:col-span-2">
+                        <div className="flex justify-end gap-3">
                             <button type="button" onClick={duLieu.huySua} disabled={duLieu.dangLuu} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50">Hủy</button>
                             <button type="submit" disabled={duLieu.dangLuu} className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-500 disabled:opacity-50">
                                 {duLieu.dangLuu ? "Đang lưu..." : "Lưu thông tin"}
