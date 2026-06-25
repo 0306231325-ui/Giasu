@@ -44,6 +44,11 @@ const dinhDangCapLop = (capHoc, lop) => {
     return `${capHoc} - ${lopDaCoNhan ? lopText : `lớp ${lopText}`}`;
 };
 
+const laySoLop = (lop) => {
+    const ketQua = String(lop || "").match(/\d+/);
+    return ketQua ? Number(ketQua[0]) : 999;
+};
+
 function StatBox({ label, value, tone = "default" }) {
     const toneClass = tone === "warm" ? "text-amber-200" : tone === "blue" ? "text-blue-200" : "text-white";
 
@@ -55,27 +60,47 @@ function StatBox({ label, value, tone = "default" }) {
     );
 }
 
-function TagList({ label, items, emptyText = "Đang cập nhật", tone = "blue" }) {
+function TagList({ label, items, emptyText = "Đang cập nhật", tone = "blue", icon = "•" }) {
     const toneClass = tone === "emerald"
-        ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-100"
-        : "border-blue-300/30 bg-blue-300/10 text-blue-100";
+        ? "border-emerald-300/25 bg-emerald-300/10 text-emerald-100"
+        : "border-blue-300/25 bg-blue-300/10 text-blue-100";
+    const iconClass = tone === "emerald"
+        ? "bg-emerald-300 text-emerald-950"
+        : "bg-blue-300 text-blue-950";
 
     return (
         <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">{label}</p>
+            <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                    <span className={`flex h-9 w-9 items-center justify-center rounded-xl text-base shadow-lg shadow-black/10 ${iconClass}`}>
+                        {icon}
+                    </span>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">{label}</p>
+                </div>
+                {items.length > 0 && (
+                    <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-bold text-slate-300">
+                        {items.length}
+                    </span>
+                )}
+            </div>
             {items.length > 0 ? (
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="chip-scrollbar mt-4 max-h-32 min-h-20 space-y-2 overflow-y-auto pr-2 [scrollbar-color:#60a5fa_rgba(255,255,255,0.08)] [scrollbar-width:thin]">
                     {items.map((item) => (
-                        <span
+                        <div
                             key={item}
-                            className={`rounded-full border px-3 py-1.5 text-sm font-semibold ${toneClass}`}
+                            className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold ${toneClass}`}
                         >
-                            {item}
-                        </span>
+                            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs ${iconClass}`}>
+                                {icon}
+                            </span>
+                            <span className="min-w-0 flex-1 truncate">{item}</span>
+                        </div>
                     ))}
                 </div>
             ) : (
-                <div className="mt-3 text-base font-bold text-white">{emptyText}</div>
+                <div className="mt-4 flex min-h-20 items-center rounded-xl border border-dashed border-white/10 px-3 py-2 text-sm font-semibold text-slate-400">
+                    {emptyText}
+                </div>
             )}
         </div>
     );
@@ -123,15 +148,27 @@ function GiaSuDetail() {
         () => (giaSu?.giasu_gias || []).filter((mucGia) => mucGia.mon_hoc),
         [giaSu],
     );
-    const tenMonDay = layDanhSachRieng(monDay.map((mucGia) => mucGia.mon_hoc?.ten_mon));
+    const tenMonDay = layDanhSachRieng(monDay.map((mucGia) => mucGia.mon_hoc?.ten_mon)).sort((a, b) => (
+        a.localeCompare(b, "vi")
+    ));
     const capLopDay = layDanhSachRieng(
-        monDay.map((mucGia) => {
-            const monHoc = mucGia.mon_hoc;
-            const capHoc = monHoc?.cap_hoc?.ten;
-            const lop = monHoc?.lop;
+        monDay
+            .map((mucGia) => {
+                const monHoc = mucGia.mon_hoc;
 
-            return dinhDangCapLop(capHoc, lop);
-        }),
+                return {
+                    label: dinhDangCapLop(monHoc?.cap_hoc?.ten, monHoc?.lop),
+                    capThuTu: Number(monHoc?.cap_hoc?.thu_tu ?? monHoc?.cap_hoc_id ?? 999),
+                    lopThuTu: laySoLop(monHoc?.lop),
+                };
+            })
+            .filter((item) => item.label)
+            .sort((a, b) => (
+                a.capThuTu - b.capThuTu
+                || a.lopThuTu - b.lopThuTu
+                || a.label.localeCompare(b.label, "vi")
+            ))
+            .map((item) => item.label),
     );
     const kinhNghiem = dinhDangKinhNghiem(giaSu?.muc_kinh_nghiem);
     const theManh = layDanhSachRieng([
@@ -270,8 +307,8 @@ function GiaSuDetail() {
                         </div>
 
                         <div className="mt-6 grid gap-4 lg:grid-cols-2">
-                            <TagList label="Môn dạy" items={tenMonDay} />
-                            <TagList label="Cấp/lớp phù hợp" items={capLopDay} tone="emerald" />
+                            <TagList label="Môn dạy" items={tenMonDay} icon="✦" />
+                            <TagList label="Cấp/lớp phù hợp" items={capLopDay} tone="emerald" icon="✓" />
                         </div>
 
                         <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-5">

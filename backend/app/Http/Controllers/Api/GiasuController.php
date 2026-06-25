@@ -38,7 +38,7 @@ class GiasuController extends Controller
                         ->orderBy('tong_gia');
                 },
                 'giasuGias.monHoc:id,ten_mon,cap_hoc_id,lop',
-                'giasuGias.monHoc.capHoc:id,ten',
+                'giasuGias.monHoc.capHoc:id,ten,thu_tu',
             ])
             ->withCount([
                 'lichHocs as danh_gias_count' => function ($query) {

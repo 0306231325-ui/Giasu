@@ -191,13 +191,22 @@ function Navbar() {
 
                                 <div className="py-2">
                                     {user?.vai_tro === "hocvien" && (
-                                        <Link
-                                            to="/hoc-vien/ho-so"
-                                            onClick={() => setUserDropdownOpen(false)}
-                                            className="block px-4 py-2.5 text-sm font-medium text-gray-200 transition hover:bg-gray-700 hover:text-white"
-                                        >
-                                            Hồ sơ học viên
-                                        </Link>
+                                        <>
+                                            <Link
+                                                to="/hoc-vien/lich-hoc"
+                                                onClick={() => setUserDropdownOpen(false)}
+                                                className="block px-4 py-2.5 text-sm font-medium text-gray-200 transition hover:bg-gray-700 hover:text-white"
+                                            >
+                                                Lịch học của tôi
+                                            </Link>
+                                            <Link
+                                                to="/hoc-vien/ho-so"
+                                                onClick={() => setUserDropdownOpen(false)}
+                                                className="block px-4 py-2.5 text-sm font-medium text-gray-200 transition hover:bg-gray-700 hover:text-white"
+                                            >
+                                                Hồ sơ học viên
+                                            </Link>
+                                        </>
                                     )}
 
                                     {user?.vai_tro === "giasu" && (
