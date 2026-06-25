@@ -54,6 +54,8 @@ function DanhSachChoDuyet({
 
                 {danhSach.map((hoSo) => {
                     const dangChon = hoSo.id === hoSoDangChon?.id;
+                    const avatarUrl = layAvatarUrl(hoSo);
+
                     return (
                         <button
                             key={hoSo.id}
@@ -67,9 +69,17 @@ function DanhSachChoDuyet({
                             ].join(" ")}
                         >
                             <div className="flex items-start gap-3">
-                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-extrabold">
-                                    {layChuCaiDau(hoSo.hoTen)}
-                                </span>
+                                {avatarUrl ? (
+                                    <img
+                                        src={avatarUrl}
+                                        alt={`Ảnh chân dung của ${hoSo.hoTen}`}
+                                        className="h-10 w-10 shrink-0 rounded-xl object-cover"
+                                    />
+                                ) : (
+                                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-extrabold">
+                                        {layChuCaiDau(hoSo.hoTen)}
+                                    </span>
+                                )}
                                 <div className="min-w-0 flex-1">
                                     <p className="truncate text-sm font-bold text-white">
                                         {hoSo.hoTen}
@@ -89,6 +99,18 @@ function DanhSachChoDuyet({
             </div>
         </aside>
     );
+}
+
+function layAvatarUrl(hoSo) {
+    const duongDan = hoSo?.avatarUrl || hoSo?.avatar;
+
+    if (!duongDan) return "";
+    if (/^https?:\/\//i.test(duongDan)) return duongDan;
+
+    const apiBaseUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+    const publicBaseUrl = apiBaseUrl.replace(/\/api\/?$/, "");
+
+    return `${publicBaseUrl}/${String(duongDan).replace(/^\/+/, "")}`;
 }
 
 function layChuCaiDau(hoTen) {

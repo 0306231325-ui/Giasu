@@ -8,6 +8,15 @@ function FormThemHoSo({ hoSo, danhMuc, dangTaiDanhMuc }) {
         hoSo.form.trinh_do_giasu_id &&
         hoSo.form.truong_don_vi.trim() &&
         hoSo.form.tai_lieu;
+
+    const xemFileDangChon = () => {
+        if (!hoSo.form.tai_lieu) return;
+
+        const url = URL.createObjectURL(hoSo.form.tai_lieu);
+        window.open(url, "_blank", "noopener,noreferrer");
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    };
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
             <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white text-slate-900 shadow-2xl">
@@ -40,6 +49,21 @@ function FormThemHoSo({ hoSo, danhMuc, dangTaiDanhMuc }) {
                     <Truong nhan="Chuyên ngành" name="chuyen_nganh" value={hoSo.form.chuyen_nganh} onChange={hoSo.thayDoi} placeholder="Ví dụ: Sư phạm Toán" />
                     <Truong nhan="Trường/đơn vị cấp" name="truong_don_vi" value={hoSo.form.truong_don_vi} onChange={hoSo.thayDoi} placeholder="Tên trường hoặc đơn vị cấp" className="md:col-span-2" batBuoc />
                     <label className={`${LOP_NHAN} md:col-span-2`}>File minh chứng<DauBatBuoc /><input className={`${LOP_INPUT} file:mr-4 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-blue-700`} type="file" name="tai_lieu" accept=".pdf,.jpg,.jpeg,.png" onChange={hoSo.thayDoi} /><span className="mt-2 block text-xs font-normal text-slate-500">Hỗ trợ PDF, JPG, JPEG, PNG; tối đa 5MB.</span></label>
+                    {hoSo.form.tai_lieu && (
+                        <div className="flex flex-col gap-3 rounded-xl border border-blue-100 bg-blue-50/70 p-4 md:col-span-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="min-w-0">
+                                <p className="text-xs font-bold uppercase tracking-wide text-blue-500">File đã chọn</p>
+                                <p className="mt-1 truncate text-sm font-bold text-slate-800">{hoSo.form.tai_lieu.name}</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={xemFileDangChon}
+                                className="rounded-lg bg-white px-3 py-2 text-xs font-bold text-blue-700 shadow-sm hover:bg-blue-50"
+                            >
+                                Xem file
+                            </button>
+                        </div>
+                    )}
                     <div className="flex justify-end gap-3 border-t border-slate-100 pt-5 md:col-span-2">
                         <button type="button" onClick={hoSo.dongForm} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600">Hủy</button>
                         <button type="button" onClick={hoSo.them} disabled={!duDieuKien} className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50">Thêm tài liệu</button>

@@ -15,13 +15,13 @@ function ChiTietXetDuyet({
         );
     }
 
+    const avatarUrl = layAvatarUrl(hoSo);
+
     return (
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 text-slate-900 shadow-xl shadow-black/15">
             <div className="flex flex-col gap-4 border-b border-slate-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-4">
-                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-lg font-extrabold text-white">
-                        {layChuCaiDau(hoSo.hoTen)}
-                    </span>
+                    <AnhHoSo hoSo={hoSo} avatarUrl={avatarUrl} kichThuoc="h-14 w-14" />
                     <div>
                         <div className="flex flex-wrap items-center gap-2">
                             <h2 className="text-xl font-extrabold">{hoSo.hoTen}</h2>
@@ -62,12 +62,25 @@ function ChiTietXetDuyet({
                     tieuDe="Thông tin cá nhân"
                     moTa="Thông tin định danh và liên hệ của người đăng ký."
                 >
-                    <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2 xl:grid-cols-3">
-                        <Truong nhan="Họ và tên" giaTri={hoSo.hoTen} />
-                        <Truong nhan="Ngày sinh" giaTri={hoSo.ngaySinh} />
-                        <Truong nhan="Số điện thoại" giaTri={hoSo.sdt} icon="phone" />
-                        <Truong nhan="Email" giaTri={hoSo.email} icon="mail" />
-                        <Truong nhan="Địa chỉ" giaTri={hoSo.diaChi} icon="location" className="sm:col-span-2" />
+                    <div className="grid gap-5 lg:grid-cols-[180px_minmax(0,1fr)]">
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                            <AnhHoSo hoSo={hoSo} avatarUrl={avatarUrl} kichThuoc="h-36 w-full" boGoc="rounded-xl" />
+                            <button
+                                type="button"
+                                disabled={!avatarUrl}
+                                onClick={() => window.open(avatarUrl, "_blank", "noopener,noreferrer")}
+                                className="mt-3 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:text-slate-400"
+                            >
+                                Xem ảnh chân dung
+                            </button>
+                        </div>
+                        <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2 xl:grid-cols-3">
+                            <Truong nhan="Họ và tên" giaTri={hoSo.hoTen} />
+                            <Truong nhan="Ngày sinh" giaTri={hoSo.ngaySinh} />
+                            <Truong nhan="Số điện thoại" giaTri={hoSo.sdt} icon="phone" />
+                            <Truong nhan="Email" giaTri={hoSo.email} icon="mail" />
+                            <Truong nhan="Địa chỉ" giaTri={hoSo.diaChi} icon="location" className="sm:col-span-2 xl:col-span-3" />
+                        </div>
                     </div>
                     <div className="mt-5 rounded-xl bg-slate-50 p-4">
                         <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
@@ -107,15 +120,12 @@ function ChiTietXetDuyet({
                                     </span>
                                     <div className="min-w-0 flex-1">
                                         <p className="font-bold">{taiLieu.ten}</p>
-                                        <p className="mt-1 text-xs leading-5 text-slate-500">
-                                            {taiLieu.loai} · {taiLieu.trinhDo}
-                                        </p>
-                                        <p className="text-xs leading-5 text-slate-500">
-                                            {taiLieu.chuyenNganh}
-                                        </p>
-                                        <p className="text-xs leading-5 text-slate-500">
-                                            {taiLieu.donVi}
-                                        </p>
+                                        <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+                                            <DongTaiLieu nhan="Loại tài liệu" giaTri={taiLieu.loai} />
+                                            <DongTaiLieu nhan="Trình độ xác minh" giaTri={taiLieu.trinhDo} />
+                                            <DongTaiLieu nhan="Chuyên ngành" giaTri={taiLieu.chuyenNganh} />
+                                            <DongTaiLieu nhan="Trường/đơn vị cấp" giaTri={taiLieu.donVi} />
+                                        </div>
                                     </div>
                                     <button
                                         type="button"
@@ -160,6 +170,45 @@ function ChiTietXetDuyet({
                 </KhoiChiTiet>
             </div>
         </section>
+    );
+}
+
+function AnhHoSo({ hoSo, avatarUrl, kichThuoc, boGoc = "rounded-2xl" }) {
+    if (avatarUrl) {
+        return (
+            <img
+                src={avatarUrl}
+                alt={`Ảnh chân dung của ${hoSo.hoTen}`}
+                className={`${kichThuoc} ${boGoc} shrink-0 object-cover ring-1 ring-slate-200`}
+            />
+        );
+    }
+
+    return (
+        <span className={`flex ${kichThuoc} shrink-0 items-center justify-center ${boGoc} bg-gradient-to-br from-blue-500 to-indigo-600 text-lg font-extrabold text-white`}>
+            {layChuCaiDau(hoSo.hoTen)}
+        </span>
+    );
+}
+
+function layAvatarUrl(hoSo) {
+    const duongDan = hoSo?.avatarUrl || hoSo?.avatar;
+
+    if (!duongDan) return "";
+    if (/^https?:\/\//i.test(duongDan)) return duongDan;
+
+    const apiBaseUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+    const publicBaseUrl = apiBaseUrl.replace(/\/api\/?$/, "");
+
+    return `${publicBaseUrl}/${String(duongDan).replace(/^\/+/, "")}`;
+}
+
+function DongTaiLieu({ nhan, giaTri }) {
+    return (
+        <div>
+            <p className="font-bold uppercase tracking-wide text-slate-400">{nhan}</p>
+            <p className="mt-1 font-semibold text-slate-700">{giaTri}</p>
+        </div>
     );
 }
 

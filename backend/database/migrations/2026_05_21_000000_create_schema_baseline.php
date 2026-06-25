@@ -419,6 +419,7 @@ return new class extends Migration
   `user_id` bigint(20) unsigned NOT NULL,
   `tieu_de` varchar(255) NOT NULL,
   `noi_dung` text DEFAULT NULL,
+  `url` varchar(255) DEFAULT NULL,
   `da_doc` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,

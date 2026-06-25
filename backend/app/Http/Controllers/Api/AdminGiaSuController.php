@@ -7,6 +7,7 @@ use App\Models\DanhGia;
 use App\Models\Giasu;
 use App\Models\GiasuBangCap;
 use App\Models\GiasuGia;
+use App\Models\ThongBao;
 use App\Models\TrinhDoGiasu;
 use App\Services\GiaTinhService;
 use Illuminate\Http\JsonResponse;
@@ -42,7 +43,7 @@ class AdminGiaSuController extends Controller
                 });
             })
             ->with([
-                'user:id,ho_ten,email,sdt,ngay_sinh,trang_thai,vai_tro',
+                'user:id,ho_ten,email,sdt,ngay_sinh,trang_thai,vai_tro,anh_dai_dien',
                 'trinhDo:id,ten,thu_tu',
                 'mucKinhNghiem:id,tu_khoang,den_khoang',
                 'bangCaps' => fn ($query) => $query
@@ -137,6 +138,14 @@ class AdminGiaSuController extends Controller
                     ]));
                 }
 
+                ThongBao::create([
+                    'user_id' => $giaSu->user_id,
+                    'tieu_de' => 'Hồ sơ gia sư đã được duyệt',
+                    'noi_dung' => 'Chúc mừng! Hồ sơ gia sư của bạn đã được quản trị viên duyệt. Nhấn vào đây để chuyển tới trang quản lý gia sư.',
+                    'url' => '/gia-su/quan-ly/ho-so',
+                    'da_doc' => false,
+                ]);
+
                 return;
             }
 
@@ -164,6 +173,14 @@ class AdminGiaSuController extends Controller
                     'trang_thai' => GiasuGia::TRANG_THAI_TU_CHOI,
                     'ly_do_tu_choi' => $lyDo,
                 ]);
+
+            ThongBao::create([
+                'user_id' => $giaSu->user_id,
+                'tieu_de' => 'Hồ sơ gia sư chưa được duyệt',
+                'noi_dung' => "Hồ sơ gia sư của bạn chưa được duyệt. Lý do: {$lyDo}",
+                'url' => '/dang-ky-lam-gia-su',
+                'da_doc' => false,
+            ]);
         });
 
         return response()->json([
@@ -397,6 +414,8 @@ class AdminGiaSuController extends Controller
             'hoTen' => $user?->ho_ten ?? 'Chưa cập nhật',
             'email' => $user?->email ?? 'Chưa cập nhật',
             'sdt' => $user?->sdt ?? 'Chưa cập nhật',
+            'avatar' => $giaSu->avatar ?: $user?->anh_dai_dien,
+            'avatarUrl' => $this->taoUrlCongKhai($giaSu->avatar ?: $user?->anh_dai_dien),
             'ngaySinh' => $user?->ngay_sinh
                 ? $user->ngay_sinh->format('d/m/Y')
                 : 'Chưa cập nhật',
@@ -413,6 +432,19 @@ class AdminGiaSuController extends Controller
             'bangCap' => $bangCap,
             'monDay' => $monDay,
         ];
+    }
+
+    private function taoUrlCongKhai(?string $duongDan): ?string
+    {
+        if (! $duongDan) {
+            return null;
+        }
+
+        if (str_starts_with($duongDan, 'http://') || str_starts_with($duongDan, 'https://')) {
+            return $duongDan;
+        }
+
+        return url(ltrim($duongDan, '/'));
     }
 
     private function layTrinhDoCaoNhatTuBangCap(Giasu $giaSu): ?int

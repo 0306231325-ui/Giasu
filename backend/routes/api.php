@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminGiaSuController;
 use App\Http\Controllers\Api\AdminHocVienController;
 use App\Http\Controllers\Api\DangKyGiaSuController;
+use App\Http\Controllers\Api\ThongBaoController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
@@ -16,6 +17,8 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/thong-bao', [ThongBaoController::class, 'index']);
+    Route::patch('/thong-bao/{thongBaoId}/da-doc', [ThongBaoController::class, 'danhDauDaDoc']);
     Route::post('/dang-ky-gia-su', [DangKyGiaSuController::class, 'guiDon']);
     Route::get('/hoc-vien/ho-so', [AuthController::class, 'hoSoHocVien']);
     Route::patch('/hoc-vien/ho-so', [AuthController::class, 'capNhatHoSoHocVien']);

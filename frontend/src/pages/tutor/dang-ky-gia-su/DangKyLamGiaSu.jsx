@@ -189,7 +189,17 @@ function DangKyLamGiaSu() {
                             {thongBao.noiDung}
                         </div>
                     )}
-                    <ThongTinCaNhanDangKy user={user} />
+                    <ThongTinCaNhanDangKy
+                        key={[
+                            user?.id,
+                            user?.ho_ten,
+                            user?.ngay_sinh,
+                            user?.sdt,
+                            user?.email,
+                            user?.dia_chi || user?.hocvien?.dia_chi || user?.giasu?.dia_chi,
+                        ].join("-")}
+                        user={user}
+                    />
                     <TrinhDoHoSo
                         danhMuc={danhMuc}
                         hoSo={hoSo}
