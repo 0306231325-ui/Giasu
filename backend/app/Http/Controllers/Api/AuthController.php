@@ -213,12 +213,17 @@ class AuthController extends Controller
 
     private function formatUser(User $user): array
     {
+        $user->loadMissing(['hocvien', 'giasu']);
+
         return [
             'id' => $user->id,
             'ho_ten' => $user->ho_ten,
             'ngay_sinh' => $user->ngay_sinh?->format('Y-m-d'),
             'email' => $user->email,
             'sdt' => $user->sdt,
+            'dia_chi' => $user->vai_tro === 'giasu'
+                ? $user->giasu?->dia_chi
+                : $user->hocvien?->dia_chi,
             'vai_tro' => $user->vai_tro,
             'trang_thai' => $user->trang_thai,
             'anh_dai_dien' => $user->anh_dai_dien,

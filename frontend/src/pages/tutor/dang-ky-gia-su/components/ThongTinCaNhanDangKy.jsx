@@ -10,10 +10,10 @@ function ThongTinCaNhanDangKy({ user }) {
                 <Truong nhan="Ngày sinh" name="ngay_sinh" type="date" defaultValue={user?.ngay_sinh || ""} />
                 <Truong nhan="Số điện thoại" name="so_dien_thoai" type="tel" placeholder="09xx xxx xxx" defaultValue={user?.sdt || ""} />
                 <Truong nhan="Email" name="email" type="email" placeholder="email@example.com" defaultValue={user?.email || ""} />
-                <Truong nhan="Địa chỉ hiện tại" name="dia_chi" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố" className="md:col-span-2" />
+                <Truong nhan="Địa chỉ hiện tại" name="dia_chi" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố" defaultValue={user?.dia_chi || ""} className="md:col-span-2" />
                 <label className={`${LOP_NHAN} md:col-span-2`}>
                     Ảnh chân dung<DauBatBuoc />
-                    <input className={`${LOP_INPUT} file:mr-4 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-blue-700`} type="file" name="anh_chan_dung" accept="image/*" />
+                    <input className={`${LOP_INPUT} file:mr-4 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-blue-700`} type="file" name="anh_chan_dung" accept="image/*" required />
                     <span className="mt-2 block text-xs font-normal leading-5 text-slate-500">Sử dụng ảnh rõ khuôn mặt, đủ sáng và không bị che khuất.</span>
                 </label>
             </div>
