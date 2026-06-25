@@ -14,16 +14,8 @@ class DatabaseSeeder extends Seeder
             MucKinhNghiemSeeder::class,
             MonHocSeeder::class,
             UsersSeeder::class,
-            HocVienSeeder::class,
-            GiaSuSeeder::class,
-            GiaSuGiaSeeder::class,
             LoaiGoiSeeder::class,
             BaiVietSeeder::class,
-            GoiHocSeeder::class,
-            LichHocSeeder::class,
-            DanhGiaSeeder::class,
-            ThanhToanSeeder::class,
-            ThongBaoSeeder::class,
             BannerSeeder::class,
         ]);
     }
