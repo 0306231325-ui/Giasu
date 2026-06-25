@@ -62,7 +62,7 @@ function Navbar() {
                 </Link>
 
                 <Link to="/gia-su" className="hover:text-white transition">
-                    Gia Sư
+                    Danh Sách Gia Sư
                 </Link>
 
                 <Link
