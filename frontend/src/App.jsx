@@ -10,6 +10,7 @@ import ChonGoiHoc from "./pages/booking/ChonGoiHoc";
 import Login from "./pages/login/Login";
 import Register from "./pages/register/Register";
 import HoSoHocVien from "./pages/profile/HoSoHocVien";
+import LichHocCuaToi from "./pages/student/LichHocCuaToi";
 import AdminLayout from "./layouts/AdminLayout";
 import AdminHome from "./pages/admin/AdminHome";
 import AdminHocVien from "./pages/admin/AdminHocVien";
@@ -48,6 +49,8 @@ function App() {
         <Route path="/register" element={<Register />} />
 
         <Route path="/hoc-vien/ho-so" element={<HoSoHocVien />} />
+
+        <Route path="/hoc-vien/lich-hoc" element={<LichHocCuaToi />} />
 
         <Route
           path="/baiviet/:slug"

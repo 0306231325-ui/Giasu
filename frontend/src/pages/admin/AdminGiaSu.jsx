@@ -12,6 +12,7 @@ function AdminGiaSu() {
     const [hoSoDangChon, setHoSoDangChon] = useState(null);
     const [hoSoTuChoi, setHoSoTuChoi] = useState(null);
     const [lyDoTuChoi, setLyDoTuChoi] = useState("");
+    const [heSoGiaDuyet, setHeSoGiaDuyet] = useState("0");
     const [thongKe, setThongKe] = useState({
         choDuyet: 0,
         daDuyet: 0,
@@ -49,19 +50,22 @@ function AdminGiaSu() {
                     daDuyet: 0,
                     tuChoi: 0,
                 });
-                setHoSoDangChon((hienTai) => {
-                    if (danhSach.length === 0) return null;
-                    return danhSach.find((hoSo) => hoSo.id === hienTai?.id) ?? danhSach[0];
-                });
+                const hoSoDuocChon =
+                    danhSach.find((hoSo) => hoSo.id === hoSoDangChon?.id) ??
+                    danhSach[0] ??
+                    null;
+                setHoSoDangChon(hoSoDuocChon);
+                setHeSoGiaDuyet(String(hoSoDuocChon?.heSoGia ?? 0));
             }
         } catch (error) {
             hienThongBao(error.response?.data?.message || "Không thể tải hồ sơ chờ duyệt.");
             setDanhSachChoDuyet([]);
             setHoSoDangChon(null);
+            setHeSoGiaDuyet("0");
         } finally {
             setDangTai(false);
         }
-    }, [hienThongBao]);
+    }, [hienThongBao, hoSoDangChon?.id]);
 
     useEffect(() => {
         return () => {
@@ -81,13 +85,14 @@ function AdminGiaSu() {
         return () => clearTimeout(boDem);
     }, [taiHoSoChoDuyet, tuKhoa, tab]);
 
-    const xuLyHoSo = async (hoSo, hanhDong, lyDo = "") => {
+    const xuLyHoSo = async (hoSo, hanhDong, lyDo = "", heSoGia = 0) => {
         if (!hoSo || dangXuLy) return;
 
         setDangXuLy(true);
         try {
             const response = await api.patch(`/admin/gia-su/xet-duyet/${hoSo.id}`, {
                 hanh_dong: hanhDong,
+                he_so_gia: hanhDong === "duyet" ? Number(heSoGia || 0) : undefined,
                 ly_do: lyDo || undefined,
             });
 
@@ -177,12 +182,17 @@ function AdminGiaSu() {
                         tuKhoa={tuKhoa}
                         dangTai={dangTai}
                         onDoiTuKhoa={(event) => setTuKhoa(event.target.value)}
-                        onChon={setHoSoDangChon}
+                        onChon={(hoSo) => {
+                            setHoSoDangChon(hoSo);
+                            setHeSoGiaDuyet(String(hoSo?.heSoGia ?? 0));
+                        }}
                     />
                     <ChiTietXetDuyet
                         hoSo={hoSoDangChon}
+                        heSoGia={heSoGiaDuyet}
+                        onDoiHeSoGia={(event) => setHeSoGiaDuyet(event.target.value)}
                         dangXuLy={dangXuLy}
-                        onDuyet={() => xuLyHoSo(hoSoDangChon, "duyet")}
+                        onDuyet={() => xuLyHoSo(hoSoDangChon, "duyet", "", heSoGiaDuyet)}
                         onTuChoi={() => {
                             setLyDoTuChoi("");
                             setHoSoTuChoi(hoSoDangChon);

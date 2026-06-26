@@ -6,3 +6,22 @@ body{
   box-sizing:border-box;
   font-family:sans-serif;
 }
+
+.chip-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chip-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+
+.chip-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #93c5fd, #34d399);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+}
+
+.chip-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #bfdbfe, #6ee7b7);
+}

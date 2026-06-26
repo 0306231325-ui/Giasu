@@ -38,7 +38,7 @@ class GiasuController extends Controller
                         ->orderBy('tong_gia');
                 },
                 'giasuGias.monHoc:id,ten_mon,cap_hoc_id,lop',
-                'giasuGias.monHoc.capHoc:id,ten',
+                'giasuGias.monHoc.capHoc:id,ten,thu_tu',
             ])
             ->withCount([
                 'lichHocs as danh_gias_count' => function ($query) {
@@ -141,9 +141,11 @@ class GiasuController extends Controller
         if ($tuKhoa !== '') {
             $query->where(function ($subQuery) use ($tuKhoa) {
                 $subQuery
-                    ->where('hoc_van', 'like', "%{$tuKhoa}%")
-                    ->orWhere('mo_ta', 'like', "%{$tuKhoa}%")
+                    ->where('mo_ta', 'like', "%{$tuKhoa}%")
                     ->orWhere('dia_chi', 'like', "%{$tuKhoa}%")
+                    ->orWhereHas('trinhDo', function ($trinhDoQuery) use ($tuKhoa) {
+                        $trinhDoQuery->where('ten', 'like', "%{$tuKhoa}%");
+                    })
                     ->orWhereHas('user', function ($userQuery) use ($tuKhoa) {
                         $userQuery->where('ho_ten', 'like', "%{$tuKhoa}%");
                     });

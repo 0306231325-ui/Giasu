@@ -2,6 +2,8 @@ import IconAdminGiaSu from "./IconAdminGiaSu";
 
 function ChiTietXetDuyet({
     hoSo,
+    heSoGia = "0",
+    onDoiHeSoGia,
     dangXuLy = false,
     onDuyet,
     onTuChoi,
@@ -16,6 +18,7 @@ function ChiTietXetDuyet({
     }
 
     const avatarUrl = layAvatarUrl(hoSo);
+    const heSoGiaSo = Number.isFinite(Number(heSoGia || 0)) ? Number(heSoGia || 0) : 0;
 
     return (
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 text-slate-900 shadow-xl shadow-black/15">
@@ -144,6 +147,39 @@ function ChiTietXetDuyet({
 
                 <KhoiChiTiet
                     icon="book"
+                    tieuDe="Thiết lập hệ số giá"
+                    moTa="Nhập hệ số để xem trước giá cộng thêm và tổng giá dự kiến của từng môn trước khi duyệt."
+                >
+                    <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
+                        <label className="block">
+                            <span className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                                Hệ số giá cộng thêm (%)
+                            </span>
+                            <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                value={heSoGia}
+                                onChange={onDoiHeSoGia}
+                                className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold text-slate-900 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                                placeholder="Ví dụ: 10"
+                            />
+                            <p className="mt-2 text-xs font-semibold text-slate-500">
+                                Hệ số đang nhập: {heSoGiaSo}%
+                            </p>
+                        </label>
+                        <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-800">
+                            <p className="font-extrabold">Công thức tính giá chính thức</p>
+                            <p className="mt-2">Giá cơ bản = giá môn + giá cộng trình độ + giá cộng kinh nghiệm</p>
+                            <p>Giá cộng thêm = Giá cơ bản × hệ số giá / 100</p>
+                            <p>Tổng giá = Giá cơ bản + Giá cộng thêm</p>
+                        </div>
+                    </div>
+                </KhoiChiTiet>
+
+                <KhoiChiTiet
+                    icon="book"
                     tieuDe={`Môn đăng ký dạy (${hoSo.monDay.length})`}
                     moTa="Môn dạy sẽ được duyệt cùng hồ sơ ban đầu."
                 >
@@ -151,26 +187,86 @@ function ChiTietXetDuyet({
                         <TrangThaiRong noiDung="Hồ sơ này chưa đăng ký môn dạy." />
                     ) : (
                     <div className="overflow-hidden rounded-xl border border-slate-200">
-                        <div className="hidden grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr] bg-slate-50 px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-400 sm:grid">
+                        <div className="hidden grid-cols-[1.15fr_0.8fr_0.85fr_0.85fr_0.85fr_0.9fr] bg-slate-50 px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-400 lg:grid">
                             <span>Môn học</span>
-                            <span>Cấp học</span>
-                            <span>Lớp</span>
-                            <span className="text-right">Giá dự kiến</span>
+                            <span>Giá môn</span>
+                            <span>Trình độ</span>
+                            <span>Kinh nghiệm</span>
+                            <span>Điều chỉnh</span>
+                            <span className="text-right">Tổng dự kiến</span>
                         </div>
                         {hoSo.monDay.map((mon) => (
-                            <div key={mon.id} className="grid gap-2 border-t border-slate-100 px-4 py-3 first:border-t-0 sm:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr] sm:items-center">
-                                <span className="font-bold">{mon.ten}</span>
-                                <span className="text-sm text-slate-600">{mon.cap}</span>
-                                <span className="text-sm text-slate-600">{mon.lop}</span>
-                                <span className="font-bold text-blue-600 sm:text-right">{mon.gia}/giờ</span>
+                            <div key={mon.id} className="grid gap-3 border-t border-slate-100 px-4 py-4 first:border-t-0 lg:grid-cols-[1.15fr_0.8fr_0.85fr_0.85fr_0.85fr_0.9fr] lg:items-center">
+                                <div>
+                                    <span className="block font-extrabold">{mon.ten}</span>
+                                    <span className="mt-1 block text-sm font-bold text-blue-600">{mon.cap}</span>
+                                </div>
+                                <GiaMon nhan="Giá môn" giaTri={mon.giaMon} />
+                                <GiaMon nhan="Trình độ" giaTri={mon.giaCongTrinhDo} coDauCong />
+                                <GiaMon nhan="Kinh nghiệm" giaTri={mon.giaCongKinhNghiem} coDauCong />
+                                <GiaMon nhan="Điều chỉnh" giaTri={tinhDieuChinhTheoHeSo(mon, heSoGiaSo)} coDauCong />
+                                <div className="font-extrabold text-blue-600 lg:text-right">
+                                    <span className="mr-2 text-xs uppercase tracking-wide text-slate-400 lg:hidden">Tổng dự kiến</span>
+                                    {tinhTongGiaTheoHeSo(mon, heSoGiaSo)}/giờ
+                                </div>
                             </div>
                         ))}
                     </div>
                     )}
                 </KhoiChiTiet>
+
             </div>
         </section>
     );
+}
+
+function GiaMon({ nhan, giaTri, coDauCong = false }) {
+    return (
+        <div className="text-sm font-bold text-slate-700">
+            <span className="mr-2 text-xs uppercase tracking-wide text-slate-400 lg:hidden">
+                {nhan}
+            </span>
+            <span>{coDauCong ? dinhDangCong(giaTri) : giaTri}</span>
+        </div>
+    );
+}
+
+function dinhDangCong(giaTri) {
+    const gia = String(giaTri || "0đ");
+    if (gia.startsWith("-") || gia.startsWith("+")) return gia;
+    return `+${gia}`;
+}
+
+function tinhGiaCoBan(mon) {
+    return (
+        laySoTien(mon.giaMon) +
+        laySoTien(mon.giaCongTrinhDo) +
+        laySoTien(mon.giaCongKinhNghiem)
+    );
+}
+
+function tinhDieuChinhTheoHeSo(mon, heSoGia) {
+    const giaCoBan = tinhGiaCoBan(mon);
+    const heSo = Number.isFinite(heSoGia) ? heSoGia : 0;
+    const dieuChinh = (giaCoBan * heSo) / 100;
+
+    return dinhDangTien(dieuChinh);
+}
+
+function tinhTongGiaTheoHeSo(mon, heSoGia) {
+    const giaCoBan = tinhGiaCoBan(mon);
+    const heSo = Number.isFinite(heSoGia) ? heSoGia : 0;
+    const dieuChinh = (giaCoBan * heSo) / 100;
+
+    return dinhDangTien(giaCoBan + dieuChinh);
+}
+
+function laySoTien(giaTri) {
+    return Number(String(giaTri || "0").replace(/\D/g, "")) || 0;
+}
+
+function dinhDangTien(giaTri) {
+    return `${Math.round(giaTri).toLocaleString("vi-VN")}đ`;
 }
 
 function AnhHoSo({ hoSo, avatarUrl, kichThuoc, boGoc = "rounded-2xl" }) {

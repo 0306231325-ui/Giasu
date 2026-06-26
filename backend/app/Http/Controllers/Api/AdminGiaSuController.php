@@ -84,10 +84,14 @@ class AdminGiaSuController extends Controller
 
         $duLieu = $request->validate([
             'hanh_dong' => ['required', 'in:duyet,tu_choi'],
+            'he_so_gia' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'ly_do' => ['required_if:hanh_dong,tu_choi', 'nullable', 'string', 'min:5', 'max:1000'],
         ], [
             'hanh_dong.required' => 'Vui lòng chọn thao tác xử lý hồ sơ.',
             'hanh_dong.in' => 'Thao tác xử lý hồ sơ không hợp lệ.',
+            'he_so_gia.numeric' => 'Hệ số giá phải là số.',
+            'he_so_gia.min' => 'Hệ số giá không được nhỏ hơn 0%.',
+            'he_so_gia.max' => 'Hệ số giá không được lớn hơn 100%.',
             'ly_do.required_if' => 'Vui lòng nhập lý do từ chối.',
             'ly_do.min' => 'Lý do từ chối phải có ít nhất 5 ký tự.',
         ]);
@@ -110,6 +114,7 @@ class AdminGiaSuController extends Controller
 
                 $giaSu->update([
                     'trinh_do_giasu_id' => $trinhDoCaoNhatId ?: $giaSu->trinh_do_giasu_id,
+                    'he_so_gia' => (float) ($duLieu['he_so_gia'] ?? 0),
                     'trang_thai_ho_so' => 'duyet',
                     'duyet_boi' => $request->user()->id,
                     'duyet_luc' => now(),
@@ -403,8 +408,11 @@ class AdminGiaSuController extends Controller
                 'id' => $mucGia->id,
                 'ten' => $mucGia->monHoc->ten_mon,
                 'cap' => $mucGia->monHoc->capHoc?->ten ?? 'Chưa cập nhật',
-                'lop' => $mucGia->monHoc->lop ?: 'Theo cấp học',
-                'gia' => number_format((float) $mucGia->tong_gia, 0, ',', '.') . 'đ',
+                'giaMon' => number_format((float) $mucGia->gia_mon, 0, ',', '.') . 'đ',
+                'giaCongTrinhDo' => number_format((float) $mucGia->gia_cong_trinh_do, 0, ',', '.') . 'đ',
+                'giaCongKinhNghiem' => number_format((float) $mucGia->gia_cong_kinh_nghiem, 0, ',', '.') . 'đ',
+                'giaCongThem' => number_format((float) $mucGia->gia_cong_them, 0, ',', '.') . 'đ',
+                'tongGia' => number_format((float) $mucGia->tong_gia, 0, ',', '.') . 'đ',
                 'trangThai' => $mucGia->trang_thai,
             ])
             ->values();
@@ -428,6 +436,7 @@ class AdminGiaSuController extends Controller
                 $giaSu->mucKinhNghiem?->tu_khoang,
                 $giaSu->mucKinhNghiem?->den_khoang,
             ),
+            'heSoGia' => (float) ($giaSu->he_so_gia ?? 0),
             'gioiThieu' => $giaSu->mo_ta ?: 'Chưa cập nhật giới thiệu.',
             'bangCap' => $bangCap,
             'monDay' => $monDay,

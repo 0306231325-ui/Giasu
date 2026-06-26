@@ -16,7 +16,6 @@ class Giasu extends Model
         'mo_ta',
         'muc_kinh_nghiem_id',
         'he_so_gia',
-        'hoc_van',
         'trinh_do_giasu_id',
         'dia_chi',
         'avatar',

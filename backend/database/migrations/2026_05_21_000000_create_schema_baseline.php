@@ -161,7 +161,6 @@ return new class extends Migration
   `mo_ta` text DEFAULT NULL,
   `muc_kinh_nghiem_id` bigint(20) unsigned DEFAULT NULL,
   `he_so_gia` decimal(5,2) NOT NULL DEFAULT 0.00,
-  `hoc_van` varchar(255) DEFAULT NULL,
   `trinh_do_giasu_id` bigint(20) unsigned DEFAULT NULL,
   `trang_thai_ho_so` enum(\'cho_duyet\',\'duyet\',\'tu_choi\') NOT NULL DEFAULT \'cho_duyet\',
   `duyet_boi` bigint(20) unsigned DEFAULT NULL,

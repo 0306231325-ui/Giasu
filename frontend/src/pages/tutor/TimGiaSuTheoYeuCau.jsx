@@ -330,7 +330,7 @@ function TimGiaSuTheoYeuCau() {
                                             <div className="min-w-0">
                                                 <h3 className="truncate font-bold">{giaSu.user?.ho_ten || "Gia sư"}</h3>
                                                 <p className="mt-1 line-clamp-2 text-xs text-slate-300">
-                                                    {giaSu.hoc_van || "Chưa cập nhật học vấn"}
+                                                    {giaSu.trinh_do?.ten || giaSu.mo_ta || "Chưa cập nhật trình độ"}
                                                 </p>
                                             </div>
                                         </div>

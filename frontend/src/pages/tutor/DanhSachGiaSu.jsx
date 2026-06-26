@@ -56,7 +56,7 @@ const GiaSuCard = memo(({ giasu }) => (
             </h2>
 
             <div className="mt-3 space-y-2 text-sm text-slate-300">
-                <p className="line-clamp-2">{giasu.hoc_van || "Chưa cập nhật học vấn"}</p>
+                <p className="line-clamp-2">{giasu.trinh_do?.ten || giasu.mo_ta || "Chưa cập nhật trình độ"}</p>
                 <p className="font-bold text-blue-300">{dinhDangGia(giasu)}</p>
                 <p className="line-clamp-2">{giasu.dia_chi || "Linh hoạt khu vực học"}</p>
             </div>

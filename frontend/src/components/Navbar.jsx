@@ -1,7 +1,7 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import api from "../services/api";
 import ThongBaoDropdown from "./ThongBaoDropdown";
 
 function Navbar() {
@@ -30,14 +30,14 @@ function Navbar() {
     }, []);
 
     useEffect(() => {
-        const handleClickOutside = (e) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setDropdownOpen(false);
             }
 
             if (
                 userDropdownRef.current &&
-                !userDropdownRef.current.contains(e.target)
+                !userDropdownRef.current.contains(event.target)
             ) {
                 setUserDropdownOpen(false);
             }
@@ -45,31 +45,30 @@ function Navbar() {
 
         document.addEventListener("mousedown", handleClickOutside);
 
-        return () =>
-            document.removeEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     return (
-        <header className="flex justify-between items-center px-10 py-6 bg-gray-900 text-white">
+        <header className="flex items-center justify-between bg-gray-900 px-10 py-6 text-white">
             <Link
                 to="/"
-                className="text-3xl font-bold hover:text-blue-400 transition"
+                className="text-3xl font-bold transition hover:text-blue-400"
             >
                 DATN_GIASU
             </Link>
 
-            <nav className="flex gap-10 text-gray-300 items-center">
-                <Link to="/home" className="hover:text-white transition">
+            <nav className="flex items-center gap-10 text-gray-300">
+                <Link to="/home" className="transition hover:text-white">
                     Trang Chủ
                 </Link>
 
-                <Link to="/gia-su" className="hover:text-white transition">
-                    Gia Sư
+                <Link to="/gia-su" className="transition hover:text-white">
+                    Danh Sách Gia Sư
                 </Link>
 
                 <Link
                     to="/dang-ky-lam-gia-su"
-                    className="hover:text-white transition"
+                    className="transition hover:text-white"
                 >
                     Đăng Ký Làm Gia Sư
                 </Link>
@@ -78,17 +77,14 @@ function Navbar() {
                     className="relative flex items-center gap-1"
                     ref={dropdownRef}
                 >
-                    <Link
-                        to="/mon-hoc"
-                        className="hover:text-white transition"
-                    >
+                    <Link to="/mon-hoc" className="transition hover:text-white">
                         Môn Học
                     </Link>
 
                     <button
                         type="button"
                         onClick={() => setDropdownOpen((prev) => !prev)}
-                        className="text-xs hover:text-white transition px-1"
+                        className="px-1 text-xs transition hover:text-white"
                         aria-label="Mở danh sách môn học"
                     >
                         <span
@@ -101,7 +97,7 @@ function Navbar() {
                     </button>
 
                     {dropdownOpen && (
-                        <div className="absolute top-full left-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden">
+                        <div className="absolute left-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-gray-700 bg-gray-800 shadow-xl">
                             <div className="max-h-[200px] overflow-y-auto">
                                 {monHocs.length === 0 ? (
                                     <p className="px-4 py-3 text-sm text-gray-400">
@@ -112,10 +108,8 @@ function Navbar() {
                                         <Link
                                             key={mon.id}
                                             to={`/mon-hoc?mon=${mon.id}`}
-                                            onClick={() =>
-                                                setDropdownOpen(false)
-                                            }
-                                            className="block px-4 py-2.5 text-sm font-medium hover:bg-gray-700 hover:text-white transition border-b border-gray-700/50 last:border-0"
+                                            onClick={() => setDropdownOpen(false)}
+                                            className="block border-b border-gray-700/50 px-4 py-2.5 text-sm font-medium transition last:border-0 hover:bg-gray-700 hover:text-white"
                                         >
                                             {mon.ten_mon}
                                         </Link>
@@ -126,7 +120,7 @@ function Navbar() {
                             <Link
                                 to="/mon-hoc"
                                 onClick={() => setDropdownOpen(false)}
-                                className="block px-4 py-2.5 text-sm text-center text-blue-400 hover:bg-gray-700 font-semibold border-t border-gray-700"
+                                className="block border-t border-gray-700 px-4 py-2.5 text-center text-sm font-semibold text-blue-400 hover:bg-gray-700"
                             >
                                 Xem tất cả môn học
                             </Link>
@@ -134,12 +128,12 @@ function Navbar() {
                     )}
                 </div>
 
-                <Link to="/gioi-thieu" className="hover:text-white transition">
+                <Link to="/gioi-thieu" className="transition hover:text-white">
                     Giới Thiệu
                 </Link>
             </nav>
 
-            <div className="flex gap-4 items-center">
+            <div className="flex items-center gap-4">
                 {isAuthenticated ? (
                     <>
                         <ThongBaoDropdown
@@ -202,13 +196,22 @@ function Navbar() {
 
                                     <div className="py-2">
                                         {user?.vai_tro === "hocvien" && (
-                                            <Link
-                                                to="/hoc-vien/ho-so"
-                                                onClick={() => setUserDropdownOpen(false)}
-                                                className="block px-4 py-2.5 text-sm font-medium text-gray-200 transition hover:bg-gray-700 hover:text-white"
-                                            >
-                                                Hồ sơ học viên
-                                            </Link>
+                                            <>
+                                                <Link
+                                                    to="/hoc-vien/lich-hoc"
+                                                    onClick={() => setUserDropdownOpen(false)}
+                                                    className="block px-4 py-2.5 text-sm font-medium text-gray-200 transition hover:bg-gray-700 hover:text-white"
+                                                >
+                                                    Lịch học của tôi
+                                                </Link>
+                                                <Link
+                                                    to="/hoc-vien/ho-so"
+                                                    onClick={() => setUserDropdownOpen(false)}
+                                                    className="block px-4 py-2.5 text-sm font-medium text-gray-200 transition hover:bg-gray-700 hover:text-white"
+                                                >
+                                                    Hồ sơ học viên
+                                                </Link>
+                                            </>
                                         )}
 
                                         {user?.vai_tro === "giasu" && (
@@ -251,14 +254,14 @@ function Navbar() {
                     <>
                         <Link
                             to="/login"
-                            className="px-5 py-2 hover:text-blue-400 transition"
+                            className="px-5 py-2 transition hover:text-blue-400"
                         >
                             Đăng Nhập
                         </Link>
 
                         <Link
                             to="/register"
-                            className="bg-blue-500 hover:bg-blue-600 px-5 py-2 rounded-xl transition"
+                            className="rounded-xl bg-blue-500 px-5 py-2 transition hover:bg-blue-600"
                         >
                             Đăng Ký
                         </Link>
