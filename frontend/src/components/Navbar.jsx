@@ -7,6 +7,7 @@ import ThongBaoDropdown from "./ThongBaoDropdown";
 function Navbar() {
     const navigate = useNavigate();
     const { user, logout, isAuthenticated } = useAuth();
+    const avatarUrl = layUrlAnhDaiDien(user?.anh_dai_dien);
     const [monHocs, setMonHocs] = useState([]);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -158,9 +159,9 @@ function Navbar() {
                                 aria-haspopup="menu"
                             >
                                 <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-blue-500 text-sm font-bold text-white">
-                                    {user?.anh_dai_dien ? (
+                                    {avatarUrl ? (
                                         <img
-                                            src={user.anh_dai_dien}
+                                            src={avatarUrl}
                                             alt="Ảnh đại diện"
                                             className="h-full w-full object-cover"
                                         />
@@ -266,6 +267,16 @@ function Navbar() {
             </div>
         </header>
     );
+}
+
+function layUrlAnhDaiDien(duongDan) {
+    if (!duongDan) return "";
+    if (/^https?:\/\//i.test(duongDan)) return duongDan;
+
+    const apiBaseUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+    const publicBaseUrl = apiBaseUrl.replace(/\/api\/?$/, "");
+
+    return `${publicBaseUrl}/${String(duongDan).replace(/^\/+/, "")}`;
 }
 
 export default Navbar;
