@@ -134,9 +134,27 @@ function AdminGiaSu() {
                     </p>
                 </div>
                 <div className="grid grid-cols-3 gap-2 sm:flex">
-                    <ThongKe nhan="Chờ duyệt" giaTri={thongKe.choDuyet} mau="amber" />
-                    <ThongKe nhan="Đã duyệt" giaTri={thongKe.daDuyet} mau="emerald" />
-                    <ThongKe nhan="Từ chối" giaTri={thongKe.tuChoi} mau="red" />
+                    <ThongKe
+                        nhan="Chờ duyệt"
+                        giaTri={thongKe.choDuyet}
+                        mau="amber"
+                        active={tab === "xet_duyet"}
+                        onClick={() => setTab("xet_duyet")}
+                    />
+                    <ThongKe
+                        nhan="Đã duyệt"
+                        giaTri={thongKe.daDuyet}
+                        mau="emerald"
+                        active={tab === "danh_sach"}
+                        onClick={() => setTab("danh_sach")}
+                    />
+                    <ThongKe
+                        nhan="Từ chối"
+                        giaTri={thongKe.tuChoi}
+                        mau="red"
+                        active={tab === "tu_choi"}
+                        onClick={() => setTab("tu_choi")}
+                    />
                 </div>
             </div>
 
@@ -158,6 +176,12 @@ function AdminGiaSu() {
                         active={tab === "danh_sach"}
                         onClick={() => setTab("danh_sach")}
                         label="Danh sách gia sư"
+                    />
+                    <Tab
+                        active={tab === "tu_choi"}
+                        onClick={() => setTab("tu_choi")}
+                        label="Hồ sơ bị từ chối"
+                        badge={thongKe.tuChoi}
                     />
                 </div>
 
@@ -201,7 +225,10 @@ function AdminGiaSu() {
                     />
                 </div>
             ) : (
-                <DanhSachGiaSuAdmin />
+                <DanhSachGiaSuAdmin
+                    key={tab}
+                    trangThaiHoSo={tab === "tu_choi" ? "tu_choi" : "duyet"}
+                />
             )}
 
             <ModalTuChoi
@@ -238,17 +265,25 @@ function Tab({ active, onClick, label, badge }) {
     );
 }
 
-function ThongKe({ nhan, giaTri, mau }) {
+function ThongKe({ nhan, giaTri, mau, active, onClick }) {
     const lopMau = {
         amber: "border-amber-400/20 bg-amber-400/10 text-amber-300",
         emerald: "border-emerald-400/20 bg-emerald-400/10 text-emerald-300",
         red: "border-red-400/20 bg-red-400/10 text-red-300",
     }[mau];
     return (
-        <div className={`min-w-24 rounded-xl border px-3 py-2 text-center ${lopMau}`}>
+        <button
+            type="button"
+            onClick={onClick}
+            className={[
+                "min-w-24 rounded-xl border px-3 py-2 text-center transition hover:scale-[1.02]",
+                lopMau,
+                active ? "ring-2 ring-white/20" : "",
+            ].join(" ")}
+        >
             <p className="text-lg font-extrabold">{giaTri}</p>
             <p className="text-[11px] font-semibold opacity-75">{nhan}</p>
-        </div>
+        </button>
     );
 }
 

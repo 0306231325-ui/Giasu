@@ -183,7 +183,7 @@ class AdminGiaSuController extends Controller
                 'user_id' => $giaSu->user_id,
                 'tieu_de' => 'Hồ sơ gia sư chưa được duyệt',
                 'noi_dung' => "Hồ sơ gia sư của bạn chưa được duyệt. Lý do: {$lyDo}",
-                'url' => '/dang-ky-lam-gia-su',
+                'url' => null,
                 'da_doc' => false,
             ]);
         });
@@ -238,10 +238,14 @@ class AdminGiaSuController extends Controller
 
         $tuKhoa = trim((string) $request->query('q', ''));
         $trangThai = $request->query('trang_thai');
+        $trangThaiHoSo = $request->query('trang_thai_ho_so', 'duyet');
         $trinhDoId = $request->integer('trinh_do_id');
+        if (! in_array($trangThaiHoSo, ['duyet', 'tu_choi'], true)) {
+            $trangThaiHoSo = 'duyet';
+        }
 
         $danhSach = Giasu::query()
-            ->where('trang_thai_ho_so', 'duyet')
+            ->where('trang_thai_ho_so', $trangThaiHoSo)
             ->when($tuKhoa !== '', function ($query) use ($tuKhoa) {
                 $query->whereHas('user', function ($userQuery) use ($tuKhoa) {
                     $userQuery->where(function ($subQuery) use ($tuKhoa) {
@@ -262,7 +266,10 @@ class AdminGiaSuController extends Controller
                 'mucKinhNghiem:id,tu_khoang,den_khoang',
                 'giasuGias' => function ($query) {
                     $query
-                        ->where('trang_thai', GiasuGia::TRANG_THAI_DA_DUYET)
+                        ->whereIn('trang_thai', [
+                            GiasuGia::TRANG_THAI_DA_DUYET,
+                            GiasuGia::TRANG_THAI_TU_CHOI,
+                        ])
                         ->with('monHoc:id,ten_mon');
                 },
             ])
@@ -382,6 +389,11 @@ class AdminGiaSuController extends Controller
             'ngayDuyet' => $giaSu->duyet_luc
                 ? date('d/m/Y', strtotime($giaSu->duyet_luc))
                 : 'Chưa cập nhật',
+            'ngayXuLy' => $giaSu->duyet_luc
+                ? date('d/m/Y · H:i', strtotime($giaSu->duyet_luc))
+                : 'Chưa cập nhật',
+            'lyDoTuChoi' => $giaSu->ly_do_tu_choi ?: 'Chưa cập nhật lý do.',
+            'trangThaiHoSo' => $giaSu->trang_thai_ho_so,
             'trangThai' => $giaSu->user?->trang_thai ?? 'khoa',
         ];
     }

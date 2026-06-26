@@ -72,8 +72,8 @@ function ThongBaoDropdown({
             }
         }
 
-        setDangMo(false);
         if (thongBao.url) {
+            setDangMo(false);
             if (thongBao.url.startsWith("/gia-su/quan-ly")) {
                 try {
                     const response = await api.get("/me");
@@ -85,6 +85,23 @@ function ThongBaoDropdown({
                 }
             }
             navigate(thongBao.url);
+        }
+    };
+
+    const xoaThongBao = async (event, thongBao) => {
+        event.stopPropagation();
+
+        setDanhSach((hienTai) =>
+            hienTai.filter((item) => item.id !== thongBao.id),
+        );
+        if (!thongBao.daDoc) {
+            setSoLuongChuaDoc((hienTai) => Math.max(0, hienTai - 1));
+        }
+
+        try {
+            await api.delete(`/thong-bao/${thongBao.id}`);
+        } catch {
+            taiThongBao();
         }
     };
 
@@ -138,36 +155,67 @@ function ThongBaoDropdown({
                     ) : (
                         <div className="max-h-[420px] overflow-y-auto p-2 [scrollbar-width:thin]">
                             {danhSach.map((thongBao) => (
-                                <button
+                                <div
                                     key={thongBao.id}
-                                    type="button"
-                                    onClick={() => bamThongBao(thongBao)}
                                     className={[
-                                        "w-full rounded-xl border p-3 text-left transition",
+                                        "group rounded-xl border transition",
                                         thongBao.daDoc
                                             ? "border-transparent hover:bg-white/5"
                                             : "border-blue-400/25 bg-blue-500/10 hover:bg-blue-500/15",
                                     ].join(" ")}
                                 >
-                                    <div className="flex items-start gap-3">
-                                        <span className={[
-                                            "mt-1 h-2.5 w-2.5 shrink-0 rounded-full",
-                                            thongBao.daDoc ? "bg-white/20" : "bg-blue-400",
-                                        ].join(" ")} />
-                                        <div className="min-w-0">
-                                            <p className="text-sm font-extrabold text-white">
-                                                {thongBao.tieuDe}
-                                            </p>
-                                            <p className="mt-1 line-clamp-3 text-xs leading-5 text-white/65">
-                                                {thongBao.noiDung}
-                                            </p>
-                                            <div className="mt-2 flex items-center justify-between gap-3 text-[11px] font-semibold text-white/40">
-                                                <span>{thongBao.thoiGian}</span>
-                                                {thongBao.url && <span className="text-blue-300">Nhấn để xem</span>}
+                                    <button
+                                        type="button"
+                                        onClick={() => bamThongBao(thongBao)}
+                                        className="w-full p-3 text-left"
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <span
+                                                className={[
+                                                    "mt-1 h-2.5 w-2.5 shrink-0 rounded-full",
+                                                    thongBao.daDoc
+                                                        ? "bg-white/20"
+                                                        : "bg-blue-400",
+                                                ].join(" ")}
+                                            />
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <p className="text-sm font-extrabold text-white">
+                                                        {thongBao.tieuDe}
+                                                    </p>
+                                                    <span className="shrink-0 text-[11px] font-semibold text-white/35">
+                                                        {thongBao.thoiGian}
+                                                    </span>
+                                                </div>
+                                                <p className="mt-1 line-clamp-3 text-xs leading-5 text-white/65">
+                                                    {thongBao.noiDung}
+                                                </p>
                                             </div>
                                         </div>
+                                    </button>
+                                    <div className="flex items-center justify-between gap-3 px-8 pb-3 pl-9 text-[11px] font-semibold">
+                                        <button
+                                            type="button"
+                                            onClick={(event) =>
+                                                xoaThongBao(event, thongBao)
+                                            }
+                                            className="text-white/45 transition hover:text-red-300"
+                                        >
+                                            Xoá thông báo
+                                        </button>
+                                        {thongBao.url && (
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    bamThongBao(thongBao)
+                                                }
+                                                className="text-blue-300 transition hover:text-blue-200"
+                                            >
+                                                Nhấn để xem
+                                            </button>
+                                        )}
                                     </div>
-                                </button>
+                                </div>
                             ))}
                         </div>
                     )}

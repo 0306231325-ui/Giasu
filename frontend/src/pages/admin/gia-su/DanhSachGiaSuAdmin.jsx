@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import api from "../../../services/api";
 import IconAdminGiaSu from "./IconAdminGiaSu";
 
-function DanhSachGiaSuAdmin() {
+function DanhSachGiaSuAdmin({ trangThaiHoSo = "duyet" }) {
     const [danhSach, setDanhSach] = useState([]);
     const [danhMucTrinhDo, setDanhMucTrinhDo] = useState([]);
     const [meta, setMeta] = useState(null);
@@ -18,15 +18,17 @@ function DanhSachGiaSuAdmin() {
     const [trinhDo, setTrinhDo] = useState("");
     const [giaSuDangXem, setGiaSuDangXem] = useState(null);
     const boDemAnThongBao = useRef(null);
+    const laHoSoTuChoi = trangThaiHoSo === "tu_choi";
 
     const thamSoTruyVan = useMemo(
         () => ({
             page: trangHienTai,
+            trang_thai_ho_so: trangThaiHoSo,
             ...(tuKhoa.trim() ? { q: tuKhoa.trim() } : {}),
-            ...(trangThai ? { trang_thai: trangThai } : {}),
+            ...(!laHoSoTuChoi && trangThai ? { trang_thai: trangThai } : {}),
             ...(trinhDo ? { trinh_do_id: trinhDo } : {}),
         }),
-        [trangHienTai, trangThai, trinhDo, tuKhoa],
+        [laHoSoTuChoi, trangHienTai, trangThai, trangThaiHoSo, trinhDo, tuKhoa],
     );
 
     useEffect(() => {
@@ -157,10 +159,12 @@ function DanhSachGiaSuAdmin() {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <h2 className="text-lg font-extrabold">
-                            Danh sách gia sư
+                            {laHoSoTuChoi ? "Hồ sơ gia sư bị từ chối" : "Danh sách gia sư"}
                         </h2>
                         <p className="mt-1 text-sm text-white/50">
-                            Quản lý tài khoản và hoạt động của gia sư đã được xét duyệt.
+                            {laHoSoTuChoi
+                                ? "Xem lại các hồ sơ không được duyệt cùng lý do xử lý."
+                                : "Quản lý tài khoản và hoạt động của gia sư đã được xét duyệt."}
                         </p>
                     </div>
                     <p className="text-sm text-white/55">
@@ -168,11 +172,16 @@ function DanhSachGiaSuAdmin() {
                         <span className="font-bold text-white">
                             {meta?.total ?? 0}
                         </span>{" "}
-                        gia sư
+                        {laHoSoTuChoi ? "hồ sơ" : "gia sư"}
                     </p>
                 </div>
 
-                <div className="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 md:grid-cols-[minmax(0,1fr)_220px_240px]">
+                <div className={[
+                    "mt-4 grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4",
+                    laHoSoTuChoi
+                        ? "md:grid-cols-[minmax(0,1fr)_240px]"
+                        : "md:grid-cols-[minmax(0,1fr)_220px_240px]",
+                ].join(" ")}>
                     <label className="block">
                         <span className="text-xs font-bold uppercase tracking-wide text-white/45">
                             Tìm kiếm
@@ -193,18 +202,20 @@ function DanhSachGiaSuAdmin() {
                             />
                         </div>
                     </label>
-                    <BoLoc
-                        nhan="Trạng thái"
-                        value={trangThai}
-                        onChange={(event) => {
-                            setTrangThai(event.target.value);
-                            setTrangHienTai(1);
-                        }}
-                    >
-                        <option value="">Tất cả trạng thái</option>
-                        <option value="hoatdong">Đang hoạt động</option>
-                        <option value="khoa">Đã khóa</option>
-                    </BoLoc>
+                    {!laHoSoTuChoi && (
+                        <BoLoc
+                            nhan="Trạng thái"
+                            value={trangThai}
+                            onChange={(event) => {
+                                setTrangThai(event.target.value);
+                                setTrangHienTai(1);
+                            }}
+                        >
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="hoatdong">Đang hoạt động</option>
+                            <option value="khoa">Đã khóa</option>
+                        </BoLoc>
+                    )}
                     <BoLoc
                         nhan="Trình độ"
                         value={trinhDo}
@@ -240,8 +251,17 @@ function DanhSachGiaSuAdmin() {
                                 <tr>
                                     <Th>Gia sư</Th>
                                     <Th>Trình độ</Th>
-                                    <Th>Đánh giá</Th>
-                                    <Th>Trạng thái</Th>
+                                    {laHoSoTuChoi ? (
+                                        <>
+                                            <Th>Ngày xử lý</Th>
+                                            <Th>Lý do từ chối</Th>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Th>Đánh giá</Th>
+                                            <Th>Trạng thái</Th>
+                                        </>
+                                    )}
                                     <Th>Thao tác</Th>
                                 </tr>
                             </thead>
@@ -249,7 +269,9 @@ function DanhSachGiaSuAdmin() {
                                 {dangTai ? (
                                     <tr>
                                         <td colSpan="5" className="px-4 py-10 text-center text-white/45">
-                                            Đang tải danh sách gia sư...
+                                            {laHoSoTuChoi
+                                                ? "Đang tải hồ sơ bị từ chối..."
+                                                : "Đang tải danh sách gia sư..."}
                                         </td>
                                     </tr>
                                 ) : loi ? (
@@ -261,7 +283,9 @@ function DanhSachGiaSuAdmin() {
                                 ) : danhSach.length === 0 ? (
                                     <tr>
                                         <td colSpan="5" className="px-4 py-10 text-center text-white/45">
-                                            Không tìm thấy gia sư phù hợp.
+                                            {laHoSoTuChoi
+                                                ? "Chưa có hồ sơ bị từ chối phù hợp."
+                                                : "Không tìm thấy gia sư phù hợp."}
                                         </td>
                                     </tr>
                                 ) : (
@@ -270,6 +294,7 @@ function DanhSachGiaSuAdmin() {
                                             key={giaSu.id}
                                             giaSu={giaSu}
                                             onXem={() => setGiaSuDangXem(giaSu)}
+                                            laHoSoTuChoi={laHoSoTuChoi}
                                             dangCapNhat={dangCapNhatId === giaSu.id}
                                             onDoiTrangThai={() =>
                                                 xuLyChuyenTrangThai(giaSu)
@@ -298,13 +323,20 @@ function DanhSachGiaSuAdmin() {
                     onDoiTrangThai={() =>
                         xuLyChuyenTrangThai(giaSuDangXem)
                     }
+                    laHoSoTuChoi={laHoSoTuChoi}
                 />
             )}
         </>
     );
 }
 
-function HangGiaSu({ giaSu, onXem, onDoiTrangThai, dangCapNhat }) {
+function HangGiaSu({
+    giaSu,
+    onXem,
+    onDoiTrangThai,
+    dangCapNhat,
+    laHoSoTuChoi,
+}) {
     return (
         <tr className="align-middle transition hover:bg-white/[0.03]">
             <td className="px-4 py-4">
@@ -323,41 +355,69 @@ function HangGiaSu({ giaSu, onXem, onDoiTrangThai, dangCapNhat }) {
                 <p className="font-semibold text-white/80">{giaSu.trinhDo}</p>
                 <p className="mt-1 text-xs text-white/45">{giaSu.kinhNghiem}</p>
             </td>
-            <td className="px-4 py-4">
-                <p className="font-bold text-amber-300">
-                    ★ {giaSu.danhGia.toFixed(1)}
-                </p>
-                <p className="mt-1 text-xs text-white/40">{giaSu.soDanhGia} đánh giá</p>
-            </td>
-            <td className="px-4 py-4">
-                <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${giaSu.trangThai === "hoatdong" ? "bg-emerald-400/10 text-emerald-300" : "bg-red-400/10 text-red-300"}`}>
-                    {giaSu.trangThai === "hoatdong" ? "Hoạt động" : "Đã khóa"}
-                </span>
-            </td>
+            {laHoSoTuChoi ? (
+                <>
+                    <td className="px-4 py-4">
+                        <p className="font-semibold text-white/80">
+                            {giaSu.ngayXuLy}
+                        </p>
+                        <p className="mt-1 text-xs text-red-200/70">
+                            Đã từ chối
+                        </p>
+                    </td>
+                    <td className="max-w-xs px-4 py-4">
+                        <p className="line-clamp-2 text-sm font-semibold leading-6 text-red-100/85">
+                            {giaSu.lyDoTuChoi}
+                        </p>
+                    </td>
+                </>
+            ) : (
+                <>
+                    <td className="px-4 py-4">
+                        <p className="font-bold text-amber-300">
+                            ★ {giaSu.danhGia.toFixed(1)}
+                        </p>
+                        <p className="mt-1 text-xs text-white/40">{giaSu.soDanhGia} đánh giá</p>
+                    </td>
+                    <td className="px-4 py-4">
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${giaSu.trangThai === "hoatdong" ? "bg-emerald-400/10 text-emerald-300" : "bg-red-400/10 text-red-300"}`}>
+                            {giaSu.trangThai === "hoatdong" ? "Hoạt động" : "Đã khóa"}
+                        </span>
+                    </td>
+                </>
+            )}
             <td className="px-4 py-4">
                 <div className="flex gap-2">
                     <button type="button" onClick={onXem} className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-blue-200 hover:bg-blue-500/10">
                         Xem
                     </button>
-                    <button
-                        type="button"
-                        onClick={onDoiTrangThai}
-                        disabled={dangCapNhat}
-                        className={`rounded-lg px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50 ${giaSu.trangThai === "hoatdong" ? "bg-red-500/10 text-red-200 hover:bg-red-500/20" : "bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20"}`}
-                    >
-                        {dangCapNhat
-                            ? "Đang xử lý..."
-                            : giaSu.trangThai === "hoatdong"
-                                ? "Khóa"
-                                : "Mở khóa"}
-                    </button>
+                    {!laHoSoTuChoi && (
+                        <button
+                            type="button"
+                            onClick={onDoiTrangThai}
+                            disabled={dangCapNhat}
+                            className={`rounded-lg px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50 ${giaSu.trangThai === "hoatdong" ? "bg-red-500/10 text-red-200 hover:bg-red-500/20" : "bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20"}`}
+                        >
+                            {dangCapNhat
+                                ? "Đang xử lý..."
+                                : giaSu.trangThai === "hoatdong"
+                                    ? "Khóa"
+                                    : "Mở khóa"}
+                        </button>
+                    )}
                 </div>
             </td>
         </tr>
     );
 }
 
-function ChiTietNhanh({ giaSu, onDong, onDoiTrangThai, dangCapNhat }) {
+function ChiTietNhanh({
+    giaSu,
+    onDong,
+    onDoiTrangThai,
+    dangCapNhat,
+    laHoSoTuChoi,
+}) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm">
             <div className="w-full max-w-lg rounded-2xl bg-white p-6 text-slate-900 shadow-2xl">
@@ -379,25 +439,38 @@ function ChiTietNhanh({ giaSu, onDong, onDoiTrangThai, dangCapNhat }) {
                         className="sm:col-span-2"
                     />
                     <ThongTin nhan="Đánh giá" giaTri={`${giaSu.danhGia.toFixed(1)} / 5 (${giaSu.soDanhGia} lượt)`} />
-                    <ThongTin nhan="Ngày duyệt" giaTri={giaSu.ngayDuyet} />
                     <ThongTin
-                        nhan="Trạng thái tài khoản"
-                        giaTri={giaSu.trangThai === "hoatdong" ? "Đang hoạt động" : "Đã khóa"}
+                        nhan={laHoSoTuChoi ? "Ngày từ chối" : "Ngày duyệt"}
+                        giaTri={laHoSoTuChoi ? giaSu.ngayXuLy : giaSu.ngayDuyet}
                     />
+                    {laHoSoTuChoi ? (
+                        <ThongTin
+                            nhan="Lý do từ chối"
+                            giaTri={giaSu.lyDoTuChoi}
+                            className="sm:col-span-2"
+                        />
+                    ) : (
+                        <ThongTin
+                            nhan="Trạng thái tài khoản"
+                            giaTri={giaSu.trangThai === "hoatdong" ? "Đang hoạt động" : "Đã khóa"}
+                        />
+                    )}
                 </div>
                 <div className="mt-6 flex justify-end gap-3">
-                    <button
-                        type="button"
-                        onClick={onDoiTrangThai}
-                        disabled={dangCapNhat}
-                        className={`rounded-xl px-5 py-2.5 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50 ${giaSu.trangThai === "hoatdong" ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-700"}`}
-                    >
-                        {dangCapNhat
-                            ? "Đang xử lý..."
-                            : giaSu.trangThai === "hoatdong"
-                                ? "Khóa tài khoản"
-                                : "Mở khóa tài khoản"}
-                    </button>
+                    {!laHoSoTuChoi && (
+                        <button
+                            type="button"
+                            onClick={onDoiTrangThai}
+                            disabled={dangCapNhat}
+                            className={`rounded-xl px-5 py-2.5 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50 ${giaSu.trangThai === "hoatdong" ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-700"}`}
+                        >
+                            {dangCapNhat
+                                ? "Đang xử lý..."
+                                : giaSu.trangThai === "hoatdong"
+                                    ? "Khóa tài khoản"
+                                    : "Mở khóa tài khoản"}
+                        </button>
+                    )}
                     <button type="button" onClick={onDong} className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white">Đóng</button>
                 </div>
             </div>

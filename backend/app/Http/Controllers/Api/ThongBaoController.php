@@ -54,6 +54,27 @@ class ThongBaoController extends Controller
         ]);
     }
 
+    public function xoa(Request $request, int $thongBaoId): JsonResponse
+    {
+        $thongBao = ThongBao::query()
+            ->where('user_id', $request->user()->id)
+            ->find($thongBaoId);
+
+        if (! $thongBao) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy thông báo.',
+            ], 404);
+        }
+
+        $thongBao->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã xoá thông báo.',
+        ]);
+    }
+
     private function dinhDang(ThongBao $thongBao): array
     {
         return [

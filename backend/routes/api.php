@@ -19,6 +19,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/thong-bao', [ThongBaoController::class, 'index']);
     Route::patch('/thong-bao/{thongBaoId}/da-doc', [ThongBaoController::class, 'danhDauDaDoc']);
+    Route::delete('/thong-bao/{thongBaoId}', [ThongBaoController::class, 'xoa']);
     Route::post('/dang-ky-gia-su', [DangKyGiaSuController::class, 'guiDon']);
     Route::get('/hoc-vien/ho-so', [AuthController::class, 'hoSoHocVien']);
     Route::patch('/hoc-vien/ho-so', [AuthController::class, 'capNhatHoSoHocVien']);
