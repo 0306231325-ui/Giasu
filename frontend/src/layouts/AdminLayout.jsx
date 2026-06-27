@@ -39,6 +39,7 @@ function AdminLayout() {
           <NavItem to="/admin" end label="Trang chủ" />
           <NavItem to="/admin/hoc-vien" label="Tài khoản học viên" />
           <NavItem to="/admin/gia-su" label="Tài khoản gia sư" />
+          <NavItem to="/admin/yeu-cau-dat-gia-su" label="Yêu cầu đặt gia sư" />
           <NavItem to="/admin/bai-viet" label="Bài viết" />
         </nav>
 
