@@ -4,7 +4,6 @@ import BangCapChungChi from "./ho-so/components/BangCapChungChi";
 import DanhMucMonDay from "./ho-so/components/DanhMucMonDay";
 import ThongTinCaNhan from "./ho-so/components/ThongTinCaNhan";
 import ThongTinDauTrang from "./ho-so/components/ThongTinDauTrang";
-import TrinhDoKinhNghiem from "./ho-so/components/TrinhDoKinhNghiem";
 import useBangCap from "./ho-so/hooks/useBangCap";
 import useAvatarGiaSu from "./ho-so/hooks/useAvatarGiaSu";
 import useChuyenMon from "./ho-so/hooks/useChuyenMon";
@@ -115,10 +114,10 @@ function GiaSuHoSo() {
                                     Thông tin chuyên môn cần xét duyệt
                                 </h2>
                                 <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-                                    Bao gồm kinh nghiệm giảng dạy, bằng cấp/chứng
-                                    chỉ và danh mục môn dạy. Các thay đổi chuyên
-                                    môn sẽ được quản trị viên kiểm tra trước khi
-                                    dùng để hiển thị hoặc tính giá chính thức.
+                                    Bao gồm bằng cấp/chứng chỉ và danh mục môn
+                                    dạy. Các thay đổi chuyên môn sẽ được quản
+                                    trị viên kiểm tra trước khi dùng để hiển thị
+                                    hoặc tính giá chính thức.
                                 </p>
                             </div>
                             <span className="inline-flex w-fit rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700">
@@ -128,7 +127,6 @@ function GiaSuHoSo() {
                     </div>
 
                     <div className="space-y-5 bg-slate-50/70 p-4 sm:p-5">
-                        <TrinhDoKinhNghiem duLieu={chuyenMon} />
                         <BangCapChungChi duLieu={bangCap} />
                         <DanhMucMonDay duLieu={monDay} />
                     </div>

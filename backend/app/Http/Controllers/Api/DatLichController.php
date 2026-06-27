@@ -201,7 +201,7 @@ class DatLichController extends Controller
             'monhoc_id' => ['required', 'integer', 'exists:monhoc,id'],
             'loai_goi' => ['required', Rule::in(['dinh_ky', 'khong_dinh_ky'])],
             'loai_goi_id' => ['required_if:loai_goi,dinh_ky', 'nullable', 'integer', 'exists:loai_goi,id'],
-            'goi_id' => ['nullable', 'string', 'max:80'],
+            'goi_id' => ['nullable'],
             'ten_goi' => ['nullable', 'string', 'max:120'],
             'so_thang' => ['required', 'integer', 'min:1', 'max:12'],
             'so_buoi' => ['required', 'integer', 'min:1', 'max:120'],
@@ -441,7 +441,8 @@ class DatLichController extends Controller
 
     private function dinhDangGoiHocChoAdmin(GoiHoc $goiHoc): array
     {
-        $lichDau = $goiHoc->lichHocs->sortBy(['ngay_hoc', 'gio_batdau'])->first();
+        $lichHocs = $goiHoc->lichHocs->sortBy(['ngay_hoc', 'gio_batdau'])->values();
+        $lichDau = $lichHocs->first();
         $trangThai = match ($goiHoc->trang_thai) {
             'dahuy' => 'da_huy',
             'cho_thanhtoan' => 'cho_thanh_toan',
@@ -462,16 +463,102 @@ class DatLichController extends Controller
             'mon' => $goiHoc->monHoc?->ten_mon ?? 'Mon hoc',
             'capHoc' => $goiHoc->monHoc?->lop ?? 'Chua cap nhat',
             'loaiGoi' => $goiHoc->hoc_dinhky ? 'Dinh ky' : 'Khong dinh ky',
+            'hocDinhKy' => (bool) $goiHoc->hoc_dinhky,
             'soBuoi' => $goiHoc->so_buoi,
             'gioMoiBuoi' => $lichDau ? round(Carbon::parse($lichDau->gio_batdau)->diffInMinutes(Carbon::parse($lichDau->gio_ketthuc)) / 60, 1) : 0,
             'tongTien' => number_format((float) $goiHoc->tong_tien, 0, ',', '.') . 'd',
-            'lichMongMuon' => $this->dinhDangKhoangNgay($goiHoc->ngay_batdau, $goiHoc->ngay_ketthuc),
+            'lichMongMuon' => $this->dinhDangLichMongMuon($goiHoc, $lichHocs),
+            'ngayMongMuon' => $this->dinhDangNgayMongMuon($goiHoc, $lichHocs),
+            'gioMongMuon' => $this->dinhDangGioMongMuon($lichHocs),
             'hinhThuc' => $goiHoc->hinh_thuc_hoc === 'online' ? 'Online' : 'Tai nha',
             'diaDiem' => $goiHoc->dia_chi_hoc ?: ($goiHoc->hinh_thuc_hoc === 'online' ? 'Online' : 'Chua cap nhat'),
             'ngayTao' => $goiHoc->created_at?->format('d/m/Y H:i') ?? '',
             'daGuiGiaSuLuc' => null,
             'phanHoi' => null,
+            'lichHoc' => $lichHocs
+                ->map(fn (LichHoc $lichHoc) => $this->dinhDangLichHoc($lichHoc))
+                ->values(),
         ];
+    }
+
+    private function dinhDangLichMongMuon(GoiHoc $goiHoc, $lichHocs): string
+    {
+        if ($lichHocs->isEmpty()) {
+            return $this->dinhDangKhoangNgay($goiHoc->ngay_batdau, $goiHoc->ngay_ketthuc);
+        }
+
+        if ($goiHoc->hoc_dinhky) {
+            $danhSachThu = $lichHocs
+                ->map(fn (LichHoc $lichHoc) => $this->tenThu(Carbon::parse($lichHoc->ngay_hoc)->isoWeekday()))
+                ->unique()
+                ->values()
+                ->join(', ');
+
+            $danhSachGio = $lichHocs
+                ->map(fn (LichHoc $lichHoc) => substr((string) $lichHoc->gio_batdau, 0, 5) . ' - ' . substr((string) $lichHoc->gio_ketthuc, 0, 5))
+                ->unique()
+                ->values();
+
+            $khungGio = $danhSachGio->count() === 1
+                ? $danhSachGio->first()
+                : $danhSachGio->count() . ' khung gio';
+
+            return trim($danhSachThu . ' · ' . $khungGio . ' · ' . $this->dinhDangKhoangNgay($goiHoc->ngay_batdau, $goiHoc->ngay_ketthuc));
+        }
+
+        $cacBuoiDau = $lichHocs
+            ->take(3)
+            ->map(fn (LichHoc $lichHoc) => Carbon::parse($lichHoc->ngay_hoc)->format('d/m') . ' '
+                . substr((string) $lichHoc->gio_batdau, 0, 5)
+                . ' - '
+                . substr((string) $lichHoc->gio_ketthuc, 0, 5))
+            ->join('; ');
+
+        $soBuoiConLai = max($lichHocs->count() - 3, 0);
+
+        return $cacBuoiDau . ($soBuoiConLai > 0 ? " (+{$soBuoiConLai} buoi)" : '');
+    }
+
+    private function dinhDangNgayMongMuon(GoiHoc $goiHoc, $lichHocs): string
+    {
+        if ($lichHocs->isEmpty()) {
+            return $this->dinhDangKhoangNgay($goiHoc->ngay_batdau, $goiHoc->ngay_ketthuc);
+        }
+
+        if ($goiHoc->hoc_dinhky) {
+            $danhSachThu = $lichHocs
+                ->map(fn (LichHoc $lichHoc) => $this->tenThu(Carbon::parse($lichHoc->ngay_hoc)->isoWeekday()))
+                ->unique()
+                ->values()
+                ->join(', ');
+
+            return $danhSachThu . ' · ' . $this->dinhDangKhoangNgay($goiHoc->ngay_batdau, $goiHoc->ngay_ketthuc);
+        }
+
+        return $lichHocs
+            ->take(3)
+            ->map(fn (LichHoc $lichHoc) => Carbon::parse($lichHoc->ngay_hoc)->format('d/m/Y'))
+            ->join('; ')
+            . ($lichHocs->count() > 3 ? ' +' . ($lichHocs->count() - 3) . ' buoi' : '');
+    }
+
+    private function dinhDangGioMongMuon($lichHocs): string
+    {
+        if ($lichHocs->isEmpty()) {
+            return 'Chua cap nhat';
+        }
+
+        $danhSachGio = $lichHocs
+            ->map(fn (LichHoc $lichHoc) => substr((string) $lichHoc->gio_batdau, 0, 5) . ' - ' . substr((string) $lichHoc->gio_ketthuc, 0, 5))
+            ->unique()
+            ->values();
+
+        if ($danhSachGio->count() === 1) {
+            return $danhSachGio->first();
+        }
+
+        return $danhSachGio->take(3)->join('; ')
+            . ($danhSachGio->count() > 3 ? ' +' . ($danhSachGio->count() - 3) . ' khung gio' : '');
     }
 
     private function dinhDangKhoangNgay(?string $batDau, ?string $ketThuc): string

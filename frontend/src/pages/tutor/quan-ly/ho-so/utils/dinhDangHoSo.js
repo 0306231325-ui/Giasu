@@ -4,20 +4,6 @@ export function dinhDangNgay(ngay) {
     return `${ngayTrongThang}/${thang}/${nam}`;
 }
 
-export function dinhDangMucKinhNghiem(mucKinhNghiem) {
-    if (!mucKinhNghiem) return "Chưa cập nhật";
-    if (
-        Number(mucKinhNghiem.tu_khoang) === 0 &&
-        Number(mucKinhNghiem.den_khoang) === 0
-    ) {
-        return "Chưa có kinh nghiệm";
-    }
-    if (mucKinhNghiem.den_khoang === null) {
-        return `Từ ${mucKinhNghiem.tu_khoang} năm trở lên`;
-    }
-    return `Từ ${mucKinhNghiem.tu_khoang} đến ${mucKinhNghiem.den_khoang} năm`;
-}
-
 export function layChuCaiDau(hoTen) {
     return hoTen
         .trim()
