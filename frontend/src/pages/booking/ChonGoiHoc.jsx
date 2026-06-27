@@ -11,35 +11,15 @@ const ngayMai = () => {
 
 const cacThu = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"];
 
-const goiDinhKy = [
-    {
-        id: "dinh-ky-8",
-        ten: "Gói nền tảng",
-        soBuoiMoiThang: 8,
-        soThang: 1,
-        giamGia: 0,
-        moTa: "Học đều mỗi tuần, phù hợp để kiểm tra mức độ phù hợp và tạo nhịp học ổn định.",
-        phuHop: "Học thử nghiêm túc",
-    },
-    {
-        id: "dinh-ky-12",
-        ten: "Gói tiến bộ",
-        soBuoiMoiThang: 8,
-        soThang: 2,
-        giamGia: 5,
-        moTa: "Theo sát chương trình học, có đủ thời gian củng cố kiến thức và luyện bài.",
-        phuHop: "Cải thiện điểm số",
-    },
-    {
-        id: "dinh-ky-16",
-        ten: "Gói bứt phá",
-        soBuoiMoiThang: 8,
-        soThang: 3,
-        giamGia: 10,
-        moTa: "Dành cho ôn thi, lấy lại gốc hoặc tăng tốc trong học kỳ.",
-        phuHop: "Ôn thi, mất gốc",
-    },
-];
+const thuSangSo = {
+    "Thứ 2": 1,
+    "Thứ 3": 2,
+    "Thứ 4": 3,
+    "Thứ 5": 4,
+    "Thứ 6": 5,
+    "Thứ 7": 6,
+    "Chủ nhật": 7,
+};
 
 const goiKhongDinhKy = [
     {
@@ -82,7 +62,25 @@ const dinhDangGia = (giaSu) => {
     return `${giaTu.toLocaleString("vi-VN")} đ/giờ`;
 };
 
+const dinhDangTenMon = (mon) => {
+    if (!mon?.lop) return mon?.ten_mon || "";
+
+    const lop = String(mon.lop).trim();
+    const lopHienThi = lop.toLowerCase().startsWith("lớp") ? lop : `Lớp ${lop}`;
+
+    return `${mon.ten_mon} - ${lopHienThi}`;
+};
+
 const tinhTienGoi = (giaSu, goi) => {
+    if (!goi) {
+        return {
+            tongBuoi: 0,
+            tongTruocGiam: 0,
+            tienGiam: 0,
+            tongSauGiam: 0,
+        };
+    }
+
     const donGia = Number(giaSu?.gia_tu || 0);
     const tongBuoi = goi.soBuoiMoiThang * goi.soThang;
     const tongTruocGiam = donGia * tongBuoi * 1.5;
@@ -101,9 +99,11 @@ function ChonGoiHoc() {
     const { user, isAuthenticated } = useAuth();
     const [giaSus, setGiaSus] = useState([]);
     const [monHocs, setMonHocs] = useState([]);
+    const [goiDinhKy, setGoiDinhKy] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [dangGui, setDangGui] = useState(false);
     const [loaiGoi, setLoaiGoi] = useState("dinh_ky");
-    const [goiId, setGoiId] = useState("dinh-ky-8");
+    const [goiId, setGoiId] = useState("");
     const [thuHoc, setThuHoc] = useState(["Thứ 2", "Thứ 5"]);
     const [thongBao, setThongBao] = useState("");
     const [form, setForm] = useState({
@@ -124,14 +124,16 @@ function ChonGoiHoc() {
 
         const fetchData = async () => {
             try {
-                const [giaSuRes, monHocRes] = await Promise.all([
+                const [giaSuRes, monHocRes, loaiGoiRes] = await Promise.all([
                     api.get("/gia-su"),
                     api.get("/mon-hoc"),
+                    api.get("/loai-goi"),
                 ]);
 
                 if (cancelled) return;
                 if (giaSuRes.data.success) setGiaSus(giaSuRes.data.data.data || []);
                 if (monHocRes.data.success) setMonHocs(monHocRes.data.data || []);
+                if (loaiGoiRes.data.success) setGoiDinhKy(loaiGoiRes.data.data || []);
             } catch (error) {
                 console.error("Không thể tải dữ liệu đặt lịch:", error);
             } finally {
@@ -150,19 +152,35 @@ function ChonGoiHoc() {
         () => giaSus.find((item) => String(item.id) === String(id)),
         [giaSus, id],
     );
+    const monHocsCoTheDat = useMemo(() => {
+        const monTuGiaSu = (giaSu?.giasu_gias || [])
+            .map((mucGia) => mucGia.mon_hoc)
+            .filter(Boolean);
+
+        if (monTuGiaSu.length > 0) return monTuGiaSu;
+
+        return monHocs;
+    }, [giaSu, monHocs]);
 
     const danhSachGoi = loaiGoi === "dinh_ky" ? goiDinhKy : goiKhongDinhKy;
-    const goiDangChon = danhSachGoi.find((goi) => goi.id === goiId) || danhSachGoi[0];
-    const monHocDaChon = monHocs.find((mon) => String(mon.id) === String(form.monhoc_id));
+    const goiDangChon = danhSachGoi.find((goi) => String(goi.id) === String(goiId)) || danhSachGoi[0];
+    const monHocDaChon = monHocsCoTheDat.find((mon) => String(mon.id) === String(form.monhoc_id));
     const tienGoi = tinhTienGoi(giaSu, goiDangChon);
     const soBuoi = tienGoi.tongBuoi;
     const tamTinh = tienGoi.tongSauGiam;
 
     const doiLoaiGoi = (value) => {
         setLoaiGoi(value);
-        setGoiId(value === "dinh_ky" ? "dinh-ky-8" : "linh-hoat-1");
+        const danhSachMoi = value === "dinh_ky" ? goiDinhKy : goiKhongDinhKy;
+        setGoiId(danhSachMoi[0]?.id || "");
         setThongBao("");
     };
+
+    useEffect(() => {
+        if (!goiDangChon && danhSachGoi.length > 0) {
+            setGoiId(danhSachGoi[0].id);
+        }
+    }, [danhSachGoi, goiDangChon]);
 
     const capNhatForm = (field, value) => {
         setForm((prev) => ({ ...prev, [field]: value }));
@@ -197,8 +215,9 @@ function ChonGoiHoc() {
         setBuoiLinhHoat((prev) => prev.filter((_, currentIndex) => currentIndex !== index));
     };
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
+        setThongBao("");
 
         if (!isAuthenticated) {
             setThongBao("Bạn cần đăng nhập tài khoản học viên trước khi đặt lịch.");
@@ -212,6 +231,11 @@ function ChonGoiHoc() {
 
         if (!form.monhoc_id) {
             setThongBao("Vui lòng chọn môn học.");
+            return;
+        }
+
+        if (!goiDangChon) {
+            setThongBao("Chưa có loại gói học để đặt. Vui lòng chạy seeder loại gói.");
             return;
         }
 
@@ -235,7 +259,45 @@ function ChonGoiHoc() {
             return;
         }
 
-        setThongBao("Đã ghi nhận yêu cầu đặt lịch. Khi nối API, thông tin này sẽ tạo gói học và lịch học.");
+        setDangGui(true);
+
+        try {
+            const response = await api.post(`/gia-su/${giaSu.id}/goi-hoc`, {
+                monhoc_id: form.monhoc_id,
+                loai_goi: loaiGoi,
+                loai_goi_id: loaiGoi === "dinh_ky" ? goiDangChon.id : null,
+                goi_id: goiDangChon.id,
+                ten_goi: goiDangChon.ten,
+                so_thang: goiDangChon.soThang,
+                so_buoi: soBuoi,
+                giam_gia: goiDangChon.giamGia,
+                ngay_batdau: form.ngay_batdau,
+                gio_batdau: form.gio_batdau,
+                gio_ketthuc: form.gio_ketthuc,
+                thu_hoc: thuHoc.map((thu) => thuSangSo[thu]).filter(Boolean),
+                buoi_linh_hoat: buoiLinhHoat.map((buoi) => ({
+                    ngay: buoi.ngay,
+                    gio_batdau: buoi.gio_batdau,
+                    gio_ketthuc: buoi.gio_ketthuc,
+                })),
+                hinh_thuc_hoc: form.hinh_thuc_hoc,
+                dia_chi_hoc: form.dia_chi_hoc,
+                ghi_chu: form.ghi_chu,
+            });
+
+            if (response.data.success) {
+                const maGoi = response.data.data?.ma;
+                setThongBao(`${response.data.message}${maGoi ? ` Mã gói học: ${maGoi}.` : ""}`);
+            }
+        } catch (error) {
+            console.error("Không thể gửi yêu cầu đặt lịch:", error);
+            setThongBao(
+                error.response?.data?.message
+                    || "Không thể gửi yêu cầu đặt lịch. Vui lòng kiểm tra lại thông tin.",
+            );
+        } finally {
+            setDangGui(false);
+        }
     };
 
     if (loading) {
@@ -297,9 +359,9 @@ function ChonGoiHoc() {
                                     className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
                                 >
                                     <option value="">Chọn môn học</option>
-                                    {monHocs.map((mon) => (
+                                    {monHocsCoTheDat.map((mon) => (
                                         <option key={mon.id} value={mon.id}>
-                                            {mon.ten_mon}{mon.lop ? ` - Lớp ${mon.lop}` : ""}
+                                            {dinhDangTenMon(mon)}
                                         </option>
                                     ))}
                                 </select>
@@ -349,7 +411,7 @@ function ChonGoiHoc() {
                                     onClick={() => setGoiId(goi.id)}
                                     className={[
                                         "flex min-h-56 flex-col rounded-2xl border p-5 text-left transition",
-                                        goiId === goi.id
+                                        String(goiId) === String(goi.id)
                                             ? "border-blue-400 bg-blue-500/15"
                                             : "border-white/10 bg-white/[0.03] hover:border-white/25",
                                     ].join(" ")}
@@ -372,7 +434,7 @@ function ChonGoiHoc() {
                                     )}
                                     <p className="mt-4 flex-1 text-sm leading-6 text-slate-300">{goi.moTa}</p>
                                     <span className="mt-5 text-sm font-bold text-white">
-                                        {goiId === goi.id ? "Đang chọn" : "Chọn gói này"}
+                                        {String(goiId) === String(goi.id) ? "Đang chọn" : "Chọn gói này"}
                                     </span>
                                 </button>
                             ))}
@@ -510,9 +572,10 @@ function ChonGoiHoc() {
 
                         <button
                             type="submit"
-                            className="mt-5 rounded-xl bg-blue-500 px-6 py-3 text-sm font-bold text-white transition hover:bg-blue-600"
+                            disabled={dangGui}
+                            className="mt-5 rounded-xl bg-blue-500 px-6 py-3 text-sm font-bold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            Gửi yêu cầu đặt lịch
+                            {dangGui ? "Đang gửi yêu cầu..." : "Gửi yêu cầu đặt lịch"}
                         </button>
                     </section>
                 </form>
@@ -534,11 +597,11 @@ function ChonGoiHoc() {
                         </div>
                         <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
                             <span className="text-slate-400">Gói</span>
-                            <span className="text-right font-semibold">{goiDangChon.ten}</span>
+                            <span className="text-right font-semibold">{goiDangChon?.ten || "Chưa chọn"}</span>
                         </div>
                         <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
                             <span className="text-slate-400">Thời lượng</span>
-                            <span className="text-right font-semibold">{goiDangChon.soThang} tháng</span>
+                            <span className="text-right font-semibold">{goiDangChon?.soThang || 0} tháng</span>
                         </div>
                         <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
                             <span className="text-slate-400">Số buổi</span>
@@ -546,7 +609,7 @@ function ChonGoiHoc() {
                         </div>
                         <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
                             <span className="text-slate-400">Giảm giá</span>
-                            <span className="text-right font-semibold">{goiDangChon.giamGia}%</span>
+                            <span className="text-right font-semibold">{goiDangChon?.giamGia || 0}%</span>
                         </div>
                         <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
                             <span className="text-slate-400">Trước giảm</span>

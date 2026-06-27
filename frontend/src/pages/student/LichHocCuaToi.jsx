@@ -1,57 +1,20 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import api from "../../services/api";
 
-const lichHocMau = [
-    {
-        id: 1,
-        ma: "LH000001",
-        mon: "Toán học",
-        giaSu: "Nguyễn Minh Anh",
-        ngayHoc: "2026-06-27",
-        thu: "Thứ 7",
-        gioBatDau: "18:00",
-        gioKetThuc: "19:30",
-        hinhThuc: "Online",
-        diaDiem: "Google Meet",
-        trangThai: "cho_xacnhan",
-    },
-    {
-        id: 2,
-        ma: "LH000002",
-        mon: "Vật lý",
-        giaSu: "Trần Quốc Huy",
-        ngayHoc: "2026-06-30",
-        thu: "Thứ 3",
-        gioBatDau: "19:00",
-        gioKetThuc: "20:30",
-        hinhThuc: "Tại nhà",
-        diaDiem: "Quận 5, TP.HCM",
-        trangThai: "da_nhan",
-    },
-    {
-        id: 3,
-        ma: "LH000003",
-        mon: "Tiếng Anh",
-        giaSu: "Lê Hoàng Yến",
-        ngayHoc: "2026-06-20",
-        thu: "Thứ 7",
-        gioBatDau: "15:00",
-        gioKetThuc: "16:30",
-        hinhThuc: "Online",
-        diaDiem: "Zoom",
-        trangThai: "hoan_thanh",
-    },
-];
-
-const trangThaiLich = {
+const trangThaiGoi = {
     tat_ca: { ten: "Tất cả" },
     cho_xacnhan: {
         ten: "Chờ xác nhận",
         lop: "border-amber-200 bg-amber-50 text-amber-700",
     },
-    da_nhan: {
-        ten: "Đã nhận",
+    cho_thanhtoan: {
+        ten: "Chờ thanh toán",
+        lop: "border-orange-200 bg-orange-50 text-orange-700",
+    },
+    dang_hoc: {
+        ten: "Đang học",
         lop: "border-sky-200 bg-sky-50 text-sky-700",
     },
     hoan_thanh: {
@@ -64,7 +27,19 @@ const trangThaiLich = {
     },
 };
 
+const trangThaiBuoi = {
+    cho_xacnhan: trangThaiGoi.cho_xacnhan,
+    da_nhan: {
+        ten: "Đã nhận",
+        lop: "border-sky-200 bg-sky-50 text-sky-700",
+    },
+    hoan_thanh: trangThaiGoi.hoan_thanh,
+    da_huy: trangThaiGoi.da_huy,
+};
+
 function dinhDangNgay(ngay) {
+    if (!ngay) return "";
+
     return new Intl.DateTimeFormat("vi-VN", {
         day: "2-digit",
         month: "2-digit",
@@ -72,8 +47,17 @@ function dinhDangNgay(ngay) {
     }).format(new Date(ngay));
 }
 
-function NhanTrangThai({ trangThai }) {
-    const cauHinh = trangThaiLich[trangThai] || trangThaiLich.cho_xacnhan;
+function dinhDangTien(soTien) {
+    const giaTri = Number(soTien || 0);
+    if (!giaTri) return "Chờ báo giá";
+
+    return `${giaTri.toLocaleString("vi-VN")} đ`;
+}
+
+function NhanTrangThai({ trangThai, loai = "goi" }) {
+    const cauHinh = loai === "buoi"
+        ? trangThaiBuoi[trangThai] || trangThaiBuoi.cho_xacnhan
+        : trangThaiGoi[trangThai] || trangThaiGoi.cho_xacnhan;
 
     return (
         <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${cauHinh.lop}`}>
@@ -84,49 +68,75 @@ function NhanTrangThai({ trangThai }) {
 
 function LichHocCuaToi() {
     const navigate = useNavigate();
-    const { user, loading, isAuthenticated } = useAuth();
+    const { user, loading: authLoading, isAuthenticated } = useAuth();
     const [tab, setTab] = useState("tat_ca");
-    const [danhSachLich, setDanhSachLich] = useState(lichHocMau);
+    const [danhSachGoi, setDanhSachGoi] = useState([]);
+    const [goiDangMo, setGoiDangMo] = useState(null);
+    const [dangTai, setDangTai] = useState(false);
     const [thongBao, setThongBao] = useState("");
 
     const laHocVien = user?.vai_tro === "hocvien";
 
     const danhSachDaLoc = useMemo(() => {
-        if (tab === "tat_ca") return danhSachLich;
-        return danhSachLich.filter((lichHoc) => lichHoc.trangThai === tab);
-    }, [danhSachLich, tab]);
+        if (tab === "tat_ca") return danhSachGoi;
+        return danhSachGoi.filter((goiHoc) => goiHoc.trangThai === tab);
+    }, [danhSachGoi, tab]);
 
     const thongKe = useMemo(
         () => ({
-            tat_ca: danhSachLich.length,
-            cho_xacnhan: danhSachLich.filter((lichHoc) => lichHoc.trangThai === "cho_xacnhan").length,
-            da_nhan: danhSachLich.filter((lichHoc) => lichHoc.trangThai === "da_nhan").length,
-            hoan_thanh: danhSachLich.filter((lichHoc) => lichHoc.trangThai === "hoan_thanh").length,
+            tat_ca: danhSachGoi.length,
+            cho_xacnhan: danhSachGoi.filter((goiHoc) => goiHoc.trangThai === "cho_xacnhan").length,
+            dang_hoc: danhSachGoi.filter((goiHoc) => goiHoc.trangThai === "dang_hoc").length,
+            hoan_thanh: danhSachGoi.filter((goiHoc) => goiHoc.trangThai === "hoan_thanh").length,
+            da_huy: danhSachGoi.filter((goiHoc) => goiHoc.trangThai === "da_huy").length,
         }),
-        [danhSachLich],
+        [danhSachGoi],
     );
 
-    const huyLich = (lichHoc) => {
-        const dongY = window.confirm(`Bạn muốn hủy lịch ${lichHoc.ma}?`);
+    useEffect(() => {
+        if (authLoading || !isAuthenticated || !laHocVien) return;
+
+        let cancelled = false;
+        setDangTai(true);
+
+        api.get("/hoc-vien/lich-hoc")
+            .then((response) => {
+                if (!cancelled && response.data.success) {
+                    setDanhSachGoi(response.data.data || []);
+                }
+            })
+            .catch((error) => {
+                console.error("Không thể tải gói học của học viên:", error);
+                if (!cancelled) {
+                    setThongBao(error.response?.data?.message || "Không thể tải gói học.");
+                }
+            })
+            .finally(() => {
+                if (!cancelled) setDangTai(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [authLoading, isAuthenticated, laHocVien]);
+
+    const huyGoi = (goiHoc) => {
+        const dongY = window.confirm(`Bạn muốn hủy gói ${goiHoc.ma}?`);
         if (!dongY) return;
 
-        setDanhSachLich((hienTai) =>
+        setDanhSachGoi((hienTai) =>
             hienTai.map((item) =>
-                item.id === lichHoc.id ? { ...item, trangThai: "da_huy" } : item,
+                item.id === goiHoc.id ? { ...item, trangThai: "da_huy", coTheHuy: false } : item,
             ),
         );
-        setThongBao("Đã ghi nhận yêu cầu hủy lịch học.");
+        setThongBao("Đã ghi nhận yêu cầu hủy gói học.");
     };
 
-    const doiLich = (lichHoc) => {
-        setThongBao(`Đã chọn lịch ${lichHoc.ma}. Khi nối API, màn hình này sẽ mở form đổi ngày và giờ học.`);
-    };
-
-    if (loading) {
+    if (authLoading || dangTai) {
         return (
             <div className="flex min-h-[65vh] items-center justify-center bg-slate-950 px-6">
                 <div className="rounded-lg border border-white/10 bg-white/5 px-5 py-3 text-sm text-white/80">
-                    Đang tải lịch học...
+                    Đang tải gói học...
                 </div>
             </div>
         );
@@ -136,7 +146,7 @@ function LichHocCuaToi() {
         return (
             <div className="bg-slate-100 px-6 py-16">
                 <div className="mx-auto max-w-2xl rounded-lg border border-amber-200 bg-amber-50 p-6">
-                    <h1 className="text-xl font-bold text-amber-950">Không thể truy cập lịch học</h1>
+                    <h1 className="text-xl font-bold text-amber-950">Không thể truy cập gói học</h1>
                     <p className="mt-2 text-sm text-amber-800">Khu vực này chỉ dành cho tài khoản học viên.</p>
                     <button
                         type="button"
@@ -156,9 +166,9 @@ function LichHocCuaToi() {
                 <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                     <div>
                         <p className="text-sm font-bold uppercase text-sky-600">Học viên</p>
-                        <h1 className="mt-2 text-3xl font-bold">Lịch học của tôi</h1>
+                        <h1 className="mt-2 text-3xl font-bold">Gói học của tôi</h1>
                         <p className="mt-2 max-w-2xl text-sm text-slate-600">
-                            Theo dõi các buổi học đã đặt, trạng thái xác nhận và thao tác đổi hoặc hủy lịch khi cần.
+                            Theo dõi từng gói học đã đặt, trạng thái xác nhận và các buổi học nằm trong gói.
                         </p>
                     </div>
 
@@ -166,7 +176,7 @@ function LichHocCuaToi() {
                         to="/gia-su"
                         className="inline-flex h-11 items-center justify-center rounded-lg bg-sky-600 px-4 text-sm font-bold text-white transition hover:bg-sky-700"
                     >
-                        Đặt lịch mới
+                        Đặt gói mới
                     </Link>
                 </div>
 
@@ -176,7 +186,7 @@ function LichHocCuaToi() {
                     </div>
                 )}
 
-                <div className="mt-8 grid gap-4 md:grid-cols-4">
+                <div className="mt-8 grid gap-4 md:grid-cols-5">
                     {Object.entries(thongKe).map(([key, value]) => (
                         <button
                             key={key}
@@ -187,67 +197,99 @@ function LichHocCuaToi() {
                             }`}
                         >
                             <div className="text-2xl font-bold">{value}</div>
-                            <div className="mt-1 text-sm font-semibold text-slate-500">{trangThaiLich[key].ten}</div>
+                            <div className="mt-1 text-sm font-semibold text-slate-500">{trangThaiGoi[key].ten}</div>
                         </button>
                     ))}
                 </div>
 
                 <section className="mt-8 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
                     <div className="border-b border-slate-100 px-5 py-4">
-                        <h2 className="text-lg font-bold">Danh sách lịch học</h2>
+                        <h2 className="text-lg font-bold">Danh sách gói học</h2>
                     </div>
 
                     {danhSachDaLoc.length === 0 ? (
                         <div className="px-5 py-12 text-center">
-                            <p className="text-base font-bold text-slate-900">Chưa có lịch học phù hợp</p>
-                            <p className="mt-2 text-sm text-slate-500">Bạn có thể đặt lịch mới hoặc chọn trạng thái khác.</p>
+                            <p className="text-base font-bold text-slate-900">Chưa có gói học phù hợp</p>
+                            <p className="mt-2 text-sm text-slate-500">Bạn có thể đặt gói mới hoặc chọn trạng thái khác.</p>
                         </div>
                     ) : (
                         <div className="divide-y divide-slate-100">
-                            {danhSachDaLoc.map((lichHoc) => (
-                                <article key={lichHoc.id} className="grid gap-4 px-5 py-5 lg:grid-cols-[1.2fr_1fr_auto] lg:items-center">
-                                    <div>
-                                        <div className="flex flex-wrap items-center gap-3">
-                                            <h3 className="text-base font-bold text-slate-950">{lichHoc.mon}</h3>
-                                            <NhanTrangThai trangThai={lichHoc.trangThai} />
-                                        </div>
-                                        <p className="mt-2 text-sm text-slate-500">
-                                            {lichHoc.ma} · Gia sư {lichHoc.giaSu}
-                                        </p>
-                                    </div>
+                            {danhSachDaLoc.map((goiHoc) => {
+                                const dangMo = goiDangMo === goiHoc.id;
 
-                                    <div className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-1">
-                                        <div>
-                                            <span className="font-bold text-slate-900">{lichHoc.thu}, {dinhDangNgay(lichHoc.ngayHoc)}</span>
-                                        </div>
-                                        <div>
-                                            {lichHoc.gioBatDau} - {lichHoc.gioKetThuc} · {lichHoc.hinhThuc}
-                                        </div>
-                                        <div className="sm:col-span-2 lg:col-span-1">{lichHoc.diaDiem}</div>
-                                    </div>
+                                return (
+                                    <article key={goiHoc.id} className="px-5 py-5">
+                                        <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr_auto] lg:items-center">
+                                            <div>
+                                                <div className="flex flex-wrap items-center gap-3">
+                                                    <h3 className="text-base font-bold text-slate-950">{goiHoc.mon}</h3>
+                                                    <NhanTrangThai trangThai={goiHoc.trangThai} />
+                                                </div>
+                                                <p className="mt-2 text-sm text-slate-500">
+                                                    {goiHoc.ma} · Gia sư {goiHoc.giaSu}
+                                                </p>
+                                            </div>
 
-                                    <div className="flex flex-wrap gap-2 lg:justify-end">
-                                        {lichHoc.trangThai !== "hoan_thanh" && lichHoc.trangThai !== "da_huy" && (
-                                            <>
+                                            <div className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-1">
+                                                <div>
+                                                    <span className="font-bold text-slate-900">
+                                                        {dinhDangNgay(goiHoc.ngayBatDau)} - {dinhDangNgay(goiHoc.ngayKetThuc)}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    {goiHoc.soBuoiDaLenLich || goiHoc.soBuoi} / {goiHoc.soBuoi} buổi · {goiHoc.hinhThuc}
+                                                </div>
+                                                <div className="sm:col-span-2 lg:col-span-1">
+                                                    Tổng tiền: {dinhDangTien(goiHoc.tongTien)}
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-wrap gap-2 lg:justify-end">
                                                 <button
                                                     type="button"
-                                                    onClick={() => doiLich(lichHoc)}
+                                                    onClick={() => setGoiDangMo(dangMo ? null : goiHoc.id)}
                                                     className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-sky-300 hover:text-sky-700"
                                                 >
-                                                    Đổi lịch
+                                                    {dangMo ? "Ẩn buổi học" : "Xem buổi học"}
                                                 </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => huyLich(lichHoc)}
-                                                    className="rounded-lg border border-red-200 px-4 py-2 text-sm font-bold text-red-600 transition hover:bg-red-50"
-                                                >
-                                                    Hủy lịch
-                                                </button>
-                                            </>
+                                                {goiHoc.coTheHuy && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => huyGoi(goiHoc)}
+                                                        className="rounded-lg border border-red-200 px-4 py-2 text-sm font-bold text-red-600 transition hover:bg-red-50"
+                                                    >
+                                                        Hủy gói
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {dangMo && (
+                                            <div className="mt-5 overflow-hidden rounded-lg border border-slate-200">
+                                                <div className="grid grid-cols-[90px_minmax(0,1fr)_120px] gap-3 bg-slate-50 px-4 py-3 text-xs font-bold uppercase text-slate-500">
+                                                    <span>Mã buổi</span>
+                                                    <span>Thời gian</span>
+                                                    <span>Trạng thái</span>
+                                                </div>
+                                                <div className="divide-y divide-slate-100">
+                                                    {(goiHoc.lichHoc || []).map((lichHoc) => (
+                                                        <div
+                                                            key={lichHoc.id}
+                                                            className="grid grid-cols-[90px_minmax(0,1fr)_120px] gap-3 px-4 py-3 text-sm"
+                                                        >
+                                                            <span className="font-semibold text-slate-700">{lichHoc.ma}</span>
+                                                            <span className="text-slate-600">
+                                                                {lichHoc.thu}, {dinhDangNgay(lichHoc.ngayHoc)} · {lichHoc.gioBatDau} - {lichHoc.gioKetThuc}
+                                                            </span>
+                                                            <NhanTrangThai trangThai={lichHoc.trangThai} loai="buoi" />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
                                         )}
-                                    </div>
-                                </article>
-                            ))}
+                                    </article>
+                                );
+                            })}
                         </div>
                     )}
                 </section>

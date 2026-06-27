@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminGiaSuController;
 use App\Http\Controllers\Api\AdminHocVienController;
 use App\Http\Controllers\Api\DangKyGiaSuController;
+use App\Http\Controllers\Api\DatLichController;
 use App\Http\Controllers\Api\ThongBaoController;
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -21,6 +22,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/thong-bao/{thongBaoId}/da-doc', [ThongBaoController::class, 'danhDauDaDoc']);
     Route::delete('/thong-bao/{thongBaoId}', [ThongBaoController::class, 'xoa']);
     Route::post('/dang-ky-gia-su', [DangKyGiaSuController::class, 'guiDon']);
+    Route::post('/gia-su/{giaSuId}/goi-hoc', [DatLichController::class, 'datLich']);
+    Route::get('/hoc-vien/lich-hoc', [DatLichController::class, 'lichHocCuaToi']);
     Route::get('/hoc-vien/ho-so', [AuthController::class, 'hoSoHocVien']);
     Route::patch('/hoc-vien/ho-so', [AuthController::class, 'capNhatHoSoHocVien']);
     Route::post('/hoc-vien/ho-so/cap-nhat', [AuthController::class, 'capNhatHoSoHocVien']);
@@ -38,6 +41,9 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('gia-su.bang-cap.xem');
     Route::delete('/gia-su/ho-so/bang-cap/{bangCapId}', [GiasuController::class, 'xoaBangCap']);
     Route::get('/admin/gia-su', [AdminGiaSuController::class, 'danhSachGiaSu']);
+    Route::get('/admin/dat-goi', [DatLichController::class, 'danhSachDatGoiAdmin']);
+    Route::patch('/admin/dat-goi/{goiHocId}/gui-gia-su', [DatLichController::class, 'guiGoiChoGiaSu']);
+    Route::patch('/admin/dat-goi/{goiHocId}/huy', [DatLichController::class, 'huyGoiAdmin']);
     Route::get('/admin/gia-su/xet-duyet', [AdminGiaSuController::class, 'danhSachHoSoChoDuyet']);
     Route::patch('/admin/gia-su/xet-duyet/{giaSuId}', [AdminGiaSuController::class, 'xuLyHoSoDangKy']);
     Route::get('/admin/gia-su/bang-cap/{bangCapId}/xem', [AdminGiaSuController::class, 'xemBangCapAdmin']);
@@ -71,3 +77,4 @@ Route::get('/dang-ky-gia-su/danh-muc', [DangKyGiaSuController::class, 'danhMuc']
 Route::post('/dang-ky-gia-su/tinh-gia', [DangKyGiaSuController::class, 'tinhGia']);
 
 Route::get('/mon-hoc', [MonHocController::class, 'index']);
+Route::get('/loai-goi', [DatLichController::class, 'danhSachLoaiGoi']);

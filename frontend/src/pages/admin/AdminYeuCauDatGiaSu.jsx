@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import api from "../../services/api";
 import IconAdminGiaSu from "./gia-su/IconAdminGiaSu";
 
 const BO_LOC_TRANG_THAI = [
@@ -51,6 +52,7 @@ function AdminYeuCauDatGiaSu() {
     const [tuKhoa, setTuKhoa] = useState("");
     const [yeuCauDangChonId, setYeuCauDangChonId] = useState(YEU_CAU_MAU[0]?.id);
     const [thongBao, setThongBao] = useState("");
+    const [dangTai, setDangTai] = useState(false);
     const boDemThongBao = useRef(null);
 
     const hienThongBao = (noiDung) => {
@@ -65,17 +67,41 @@ function AdminYeuCauDatGiaSu() {
         }, 3000);
     };
 
+    const taiDanhSach = useCallback(async ({ lamMoiBoLoc = false } = {}) => {
+        setDangTai(true);
+
+        try {
+            const response = await api.get("/admin/dat-goi");
+            const danhSach = response.data.data || [];
+
+            setDanhSachYeuCau(danhSach);
+            setYeuCauDangChonId((hienTai) => (
+                danhSach.some((yeuCau) => yeuCau.id === hienTai)
+                    ? hienTai
+                    : danhSach[0]?.id
+            ));
+
+            if (lamMoiBoLoc) {
+                setBoLocTrangThai(TRANG_THAI_MAC_DINH);
+                setBoLocPhanHoi("");
+                setTuKhoa("");
+            }
+        } catch (error) {
+            console.error("Không thể tải danh sách đặt gói:", error);
+            hienThongBao(error.response?.data?.message || "Không thể tải danh sách đặt gói.");
+        } finally {
+            setDangTai(false);
+        }
+    }, []);
+
     useEffect(() => {
         const lamMoi = () => {
-            setDanhSachYeuCau(YEU_CAU_MAU);
-            setBoLocTrangThai(TRANG_THAI_MAC_DINH);
-            setBoLocPhanHoi("");
-            setTuKhoa("");
-            setYeuCauDangChonId(YEU_CAU_MAU[0]?.id);
-            hienThongBao("Đã làm mới dữ liệu giao diện mẫu.");
+            taiDanhSach({ lamMoiBoLoc: true });
+            hienThongBao("Đã làm mới dữ liệu đặt gói.");
         };
 
         window.addEventListener("admin:refresh", lamMoi);
+        taiDanhSach();
 
         return () => {
             window.removeEventListener("admin:refresh", lamMoi);
@@ -83,7 +109,7 @@ function AdminYeuCauDatGiaSu() {
                 clearTimeout(boDemThongBao.current);
             }
         };
-    }, []);
+    }, [taiDanhSach]);
 
     const danhSachDaLoc = useMemo(() => {
         const tuKhoaChuanHoa = tuKhoa.trim().toLowerCase();
@@ -150,17 +176,20 @@ function AdminYeuCauDatGiaSu() {
         );
     };
 
-    const xuLyHanhDong = (yeuCau, hanhDong) => {
+    const xuLyHanhDong = async (yeuCau, hanhDong) => {
         if (!yeuCau || !hanhDong) return;
 
         if (hanhDong === "gui_gia_su") {
-            capNhatYeuCau(yeuCau.id, {
-                trangThai: "cho_giasu_phan_hoi",
-                daGuiGiaSuLuc: "Vừa gửi",
-            });
-            setBoLocTrangThai("cho_giasu_phan_hoi");
-            setYeuCauDangChonId(yeuCau.id);
-            hienThongBao(`Đã gửi yêu cầu ${yeuCau.ma} cho gia sư ${yeuCau.giaSu}.`);
+            try {
+                const response = await api.patch(`/admin/dat-goi/${yeuCau.id}/gui-gia-su`);
+                capNhatYeuCau(yeuCau.id, response.data.data);
+                setBoLocTrangThai("cho_giasu_phan_hoi");
+                setYeuCauDangChonId(yeuCau.id);
+                hienThongBao(response.data.message || `Đã gửi yêu cầu ${yeuCau.ma} cho gia sư ${yeuCau.giaSu}.`);
+            } catch (error) {
+                console.error("Không thể gửi yêu cầu cho gia sư:", error);
+                hienThongBao(error.response?.data?.message || "Không thể gửi yêu cầu cho gia sư.");
+            }
             return;
         }
 
@@ -190,7 +219,21 @@ function AdminYeuCauDatGiaSu() {
         }
 
         if (hanhDong === "huy_yeu_cau") {
-            hienThongBao("Chức năng huỷ yêu cầu đang để lại, chưa xử lý ở bước này.");
+            const dongY = window.confirm(`Bạn muốn hủy yêu cầu ${yeuCau.ma}?`);
+            if (!dongY) return;
+
+            try {
+                const response = await api.patch(`/admin/dat-goi/${yeuCau.id}/huy`, {
+                    ly_do: "Admin hủy yêu cầu đặt gói.",
+                });
+                capNhatYeuCau(yeuCau.id, response.data.data);
+                setBoLocTrangThai("da_huy");
+                setYeuCauDangChonId(yeuCau.id);
+                hienThongBao(response.data.message || `Đã hủy yêu cầu ${yeuCau.ma}.`);
+            } catch (error) {
+                console.error("Không thể hủy yêu cầu đặt gói:", error);
+                hienThongBao(error.response?.data?.message || "Không thể hủy yêu cầu đặt gói.");
+            }
         }
     };
 
@@ -292,7 +335,11 @@ function AdminYeuCauDatGiaSu() {
                     </div>
 
                     <div className="max-h-[720px] space-y-3 overflow-y-auto p-3 [scrollbar-width:thin]">
-                        {danhSachDaLoc.length === 0 ? (
+                        {dangTai ? (
+                            <div className="rounded-2xl border border-white/10 px-5 py-12 text-center text-white/55">
+                                Đang tải danh sách đặt gói...
+                            </div>
+                        ) : danhSachDaLoc.length === 0 ? (
                             <TrangThaiRong />
                         ) : (
                             danhSachDaLoc.map((yeuCau) => (

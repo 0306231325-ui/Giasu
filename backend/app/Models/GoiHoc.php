@@ -29,11 +29,20 @@ class GoiHoc extends Model
         'tong_tien',
         'don_gia_theogio',
         'trang_thai',
+        'gui_giasu_luc',
+        'admin_xu_ly_id',
+        'ly_do_huy',
     ];
 
     protected $casts = [
         'hoc_dinhky' => 'boolean',
+        'gui_giasu_luc' => 'datetime',
     ];
+
+    public function hocVien()
+    {
+        return $this->belongsTo(User::class, 'hocvien_id');
+    }
 
     public function monHoc()
     {

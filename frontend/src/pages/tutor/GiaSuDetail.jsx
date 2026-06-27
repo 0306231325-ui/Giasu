@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import api from "../../services/api";
+import { layUrlAnhGiaSu } from "./avatarGiaSu";
 
 const dinhDangGia = (giaSu) => {
     const giaTu = Number(giaSu?.gia_tu || 0);
@@ -11,12 +12,6 @@ const dinhDangGia = (giaSu) => {
         return `${giaTu.toLocaleString("vi-VN")} - ${giaDen.toLocaleString("vi-VN")} đ/giờ`;
     }
     return `${giaTu.toLocaleString("vi-VN")} đ/giờ`;
-};
-
-const layAnh = (giaSu) => {
-    if (giaSu?.avatar) return `http://127.0.0.1:8000/storage/${giaSu.avatar}`;
-    if (giaSu?.user?.anh_dai_dien) return giaSu.user.anh_dai_dien;
-    return null;
 };
 
 const layDanhSachRieng = (items) => [...new Set(items.filter(Boolean))];
@@ -139,7 +134,7 @@ function GiaSuDetail() {
         [giaSus, id],
     );
 
-    const anh = layAnh(giaSu);
+    const anh = layUrlAnhGiaSu(giaSu);
     const tenGiaSu = giaSu?.user?.ho_ten || "Gia sư";
     const rating = Number(giaSu?.danh_gias_avg_so_sao || 0).toFixed(1);
     const soDanhGia = giaSu?.danh_gias_count || 0;

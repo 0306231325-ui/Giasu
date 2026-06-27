@@ -1,6 +1,7 @@
 import { memo, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
+import { layUrlAnhGiaSu } from "./avatarGiaSu";
 
 const dinhDangGia = (giasu) => {
     const giaTu = Number(giasu?.gia_tu || 0);
@@ -14,17 +15,15 @@ const dinhDangGia = (giasu) => {
 };
 
 const GiaSuAvatar = memo(({ giasu }) => {
-    if (!giasu.avatar) {
+    const avatarUrl = layUrlAnhGiaSu(giasu);
+
+    if (!avatarUrl) {
         return (
             <div className="flex h-full w-full items-center justify-center bg-blue-500 text-5xl font-extrabold text-white">
                 {(giasu.user?.ho_ten || "G").charAt(0).toUpperCase()}
             </div>
         );
     }
-
-    const avatarUrl = giasu.avatar?.startsWith("http")
-        ? giasu.avatar
-        : `http://127.0.0.1:8000/${String(giasu.avatar || "").replace(/^\/+/, "")}`;
 
     return (
         <img

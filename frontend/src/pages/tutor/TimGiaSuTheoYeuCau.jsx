@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
+import { layUrlAnhGiaSu } from "./avatarGiaSu";
 
 const mucTieuHoc = [
     "Mất gốc cần học lại",
@@ -313,37 +314,41 @@ function TimGiaSuTheoYeuCau() {
                             </div>
                         ) : (
                             <div className="grid gap-4 md:grid-cols-2">
-                                {goiY.map((giaSu) => (
-                                    <Link
-                                        key={giaSu.id}
-                                        to={`/gia-su/${giaSu.id}`}
-                                        className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition hover:border-blue-300/60 hover:bg-white/[0.06]"
-                                    >
-                                        <div className="flex gap-3">
-                                            <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-blue-500 text-lg font-bold">
-                                                {giaSu.avatar ? (
-                                                    <img src={`http://127.0.0.1:8000/storage/${giaSu.avatar}`} alt={giaSu.user?.ho_ten || "Gia sư"} className="h-full w-full object-cover" />
-                                                ) : (
-                                                    (giaSu.user?.ho_ten || "G").charAt(0).toUpperCase()
-                                                )}
+                                {goiY.map((giaSu) => {
+                                    const avatarUrl = layUrlAnhGiaSu(giaSu);
+
+                                    return (
+                                        <Link
+                                            key={giaSu.id}
+                                            to={`/gia-su/${giaSu.id}`}
+                                            className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition hover:border-blue-300/60 hover:bg-white/[0.06]"
+                                        >
+                                            <div className="flex gap-3">
+                                                <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-blue-500 text-lg font-bold">
+                                                    {avatarUrl ? (
+                                                        <img src={avatarUrl} alt={giaSu.user?.ho_ten || "Gia sư"} className="h-full w-full object-cover" />
+                                                    ) : (
+                                                        (giaSu.user?.ho_ten || "G").charAt(0).toUpperCase()
+                                                    )}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <h3 className="truncate font-bold">{giaSu.user?.ho_ten || "Gia sư"}</h3>
+                                                    <p className="mt-1 line-clamp-2 text-xs text-slate-300">
+                                                        {giaSu.trinh_do?.ten || giaSu.mo_ta || "Chưa cập nhật trình độ"}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div className="min-w-0">
-                                                <h3 className="truncate font-bold">{giaSu.user?.ho_ten || "Gia sư"}</h3>
-                                                <p className="mt-1 line-clamp-2 text-xs text-slate-300">
-                                                    {giaSu.trinh_do?.ten || giaSu.mo_ta || "Chưa cập nhật trình độ"}
-                                                </p>
+                                            <div className="mt-4 flex items-center justify-between gap-3 text-sm">
+                                                <span className="font-semibold text-blue-300">
+                                                    {giaSu.gia_tu ? `${Number(giaSu.gia_tu).toLocaleString("vi-VN")} đ/giờ` : "Thỏa thuận"}
+                                                </span>
+                                                <span className="rounded-full bg-amber-300 px-2 py-0.5 text-xs font-bold text-slate-950">
+                                                    {Number(giaSu.danh_gias_avg_so_sao || 0).toFixed(1)} sao
+                                                </span>
                                             </div>
-                                        </div>
-                                        <div className="mt-4 flex items-center justify-between gap-3 text-sm">
-                                            <span className="font-semibold text-blue-300">
-                                                {giaSu.gia_tu ? `${Number(giaSu.gia_tu).toLocaleString("vi-VN")} đ/giờ` : "Thỏa thuận"}
-                                            </span>
-                                            <span className="rounded-full bg-amber-300 px-2 py-0.5 text-xs font-bold text-slate-950">
-                                                {Number(giaSu.danh_gias_avg_so_sao || 0).toFixed(1)} sao
-                                            </span>
-                                        </div>
-                                    </Link>
-                                ))}
+                                        </Link>
+                                    );
+                                })}
                             </div>
                         )}
                     </section>
