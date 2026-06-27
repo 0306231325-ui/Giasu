@@ -1,15 +1,15 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import IconAdminGiaSu from "./gia-su/IconAdminGiaSu";
 
 const BO_LOC_TRANG_THAI = [
-    { value: "", label: "Tất cả" },
     { value: "cho_xu_ly", label: "Chờ admin gửi" },
     { value: "cho_giasu_phan_hoi", label: "Chờ gia sư trả lời" },
     { value: "da_phan_hoi", label: "Đã phản hồi" },
     { value: "cho_thanh_toan", label: "Chờ thanh toán" },
-    { value: "da_tao_lich", label: "Đã tạo lịch" },
     { value: "da_huy", label: "Đã huỷ" },
 ];
+
+const TRANG_THAI_MAC_DINH = "cho_xu_ly";
 
 const TRANG_THAI_GOI = {
     cho_xu_ly: {
@@ -167,17 +167,31 @@ const YEU_CAU_MAU = [
 ];
 
 function AdminYeuCauDatGiaSu() {
-    const [boLocTrangThai, setBoLocTrangThai] = useState("");
+    const [boLocTrangThai, setBoLocTrangThai] = useState(TRANG_THAI_MAC_DINH);
     const [boLocPhanHoi, setBoLocPhanHoi] = useState("");
     const [tuKhoa, setTuKhoa] = useState("");
     const [yeuCauDangChonId, setYeuCauDangChonId] = useState(YEU_CAU_MAU[0]?.id);
+
+    useEffect(() => {
+        const lamMoi = () => {
+            setBoLocTrangThai(TRANG_THAI_MAC_DINH);
+            setBoLocPhanHoi("");
+            setTuKhoa("");
+            setYeuCauDangChonId(YEU_CAU_MAU[0]?.id);
+        };
+
+        window.addEventListener("admin:refresh", lamMoi);
+
+        return () => {
+            window.removeEventListener("admin:refresh", lamMoi);
+        };
+    }, []);
 
     const danhSachDaLoc = useMemo(() => {
         const tuKhoaChuanHoa = tuKhoa.trim().toLowerCase();
 
         return YEU_CAU_MAU.filter((yeuCau) => {
             const khopTrangThai =
-                !boLocTrangThai ||
                 yeuCau.trangThai === boLocTrangThai ||
                 (boLocTrangThai === "da_phan_hoi" &&
                     ["giasu_dong_y", "giasu_tu_choi"].includes(yeuCau.trangThai));
@@ -210,7 +224,6 @@ function AdminYeuCauDatGiaSu() {
         null;
 
     const demTheoTrangThai = (trangThai) => {
-        if (!trangThai) return YEU_CAU_MAU.length;
         if (trangThai === "da_phan_hoi") {
             return YEU_CAU_MAU.filter((yeuCau) =>
                 ["giasu_dong_y", "giasu_tu_choi"].includes(yeuCau.trangThai),
@@ -234,25 +247,18 @@ function AdminYeuCauDatGiaSu() {
                         Điều phối lớp học
                     </p>
                     <h1 className="mt-2 text-2xl font-extrabold">
-                        Quản lý yêu cầu đặt gia sư
+                        Quản lý đặt gói
                     </h1>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-white/60">
-                        Theo dõi yêu cầu đặt gói, gửi yêu cầu cho gia sư, xem phản hồi và chuyển bước thanh toán/tạo lịch.
+                        Theo dõi các gói học được đặt, gửi yêu cầu cho gia sư, xem phản hồi và chuyển bước thanh toán/tạo lịch.
                     </p>
                 </div>
-                <button
-                    type="button"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-bold text-white/80 transition hover:border-blue-400/50 hover:bg-blue-500/15"
-                >
-                    <span>↻</span>
-                    Làm mới
-                </button>
             </div>
 
             <div className="mt-6 flex flex-wrap gap-2">
                 {BO_LOC_TRANG_THAI.map((muc) => (
                     <button
-                        key={muc.value || "tat_ca"}
+                        key={muc.value}
                         type="button"
                         onClick={() => doiTrangThai(muc.value)}
                         className={[
