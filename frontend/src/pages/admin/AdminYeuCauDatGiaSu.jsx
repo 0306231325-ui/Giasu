@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import IconAdminGiaSu from "./gia-su/IconAdminGiaSu";
 
 const BO_LOC_TRANG_THAI = [
@@ -42,155 +42,53 @@ const TRANG_THAI_GOI = {
     },
 };
 
-const YEU_CAU_MAU = [
-    {
-        id: 1,
-        ma: "YC000214",
-        trangThai: "cho_xu_ly",
-        hocVien: "Nguyễn Minh Anh",
-        hocVienEmail: "minhanh@gmail.com",
-        hocVienSdt: "0901122334",
-        giaSu: "Trần Quốc Bảo",
-        giaSuEmail: "bao.tutor@gmail.com",
-        mon: "Toán",
-        capHoc: "THCS",
-        loaiGoi: "Gói 2 tháng",
-        soBuoi: 12,
-        gioMoiBuoi: 1.5,
-        lichMongMuon: "Thứ 2, Thứ 4 · 19:00 - 20:30",
-        hinhThuc: "Trực tuyến",
-        diaDiem: "Google Meet",
-        tongTien: "2.430.000đ",
-        ngayTao: "27/06/2026 · 09:20",
-        phanHoi: null,
-    },
-    {
-        id: 2,
-        ma: "YC000215",
-        trangThai: "cho_giasu_phan_hoi",
-        hocVien: "Lê Thanh Tâm",
-        hocVienEmail: "thanhtam@gmail.com",
-        hocVienSdt: "0911888777",
-        giaSu: "Phạm Minh Tâm",
-        giaSuEmail: "minhtam.tutor@gmail.com",
-        mon: "Tiếng Anh",
-        capHoc: "Tiểu học",
-        loaiGoi: "Gói 1 tháng",
-        soBuoi: 8,
-        gioMoiBuoi: 1.5,
-        lichMongMuon: "Thứ 3, Thứ 6 · 18:30 - 20:00",
-        hinhThuc: "Trực tiếp",
-        diaDiem: "Quận 5, TP.HCM",
-        tongTien: "1.680.000đ",
-        ngayTao: "27/06/2026 · 10:05",
-        daGuiGiaSuLuc: "27/06/2026 · 10:15",
-        phanHoi: null,
-    },
-    {
-        id: 3,
-        ma: "YC000216",
-        trangThai: "giasu_dong_y",
-        hocVien: "Võ Gia Hân",
-        hocVienEmail: "giahan@gmail.com",
-        hocVienSdt: "0933555666",
-        giaSu: "Lê Thị Hồng Nhung",
-        giaSuEmail: "hongnhung.tutor@gmail.com",
-        mon: "Ngữ Văn",
-        capHoc: "THPT",
-        loaiGoi: "Gói 3 tháng",
-        soBuoi: 24,
-        gioMoiBuoi: 2,
-        lichMongMuon: "Thứ 7 · 14:00 - 16:00",
-        hinhThuc: "Trực tiếp",
-        diaDiem: "Bình Thạnh, TP.HCM",
-        tongTien: "7.440.000đ",
-        ngayTao: "26/06/2026 · 16:40",
-        daGuiGiaSuLuc: "26/06/2026 · 17:00",
-        phanHoi: {
-            ketQua: "dong_y",
-            thoiGian: "26/06/2026 · 18:12",
-            lyDo: "",
-        },
-    },
-    {
-        id: 4,
-        ma: "YC000217",
-        trangThai: "giasu_tu_choi",
-        hocVien: "Đỗ Nhật Nam",
-        hocVienEmail: "nhatnam@gmail.com",
-        hocVienSdt: "0988999000",
-        giaSu: "Nguyễn Đức Anh",
-        giaSuEmail: "ducanh.tutor@gmail.com",
-        mon: "Vật lý",
-        capHoc: "THPT",
-        loaiGoi: "Gói 1 tháng",
-        soBuoi: 10,
-        gioMoiBuoi: 1.5,
-        lichMongMuon: "Thứ 5, Chủ nhật · 20:00 - 21:30",
-        hinhThuc: "Trực tuyến",
-        diaDiem: "Zoom",
-        tongTien: "3.900.000đ",
-        ngayTao: "26/06/2026 · 11:30",
-        daGuiGiaSuLuc: "26/06/2026 · 13:20",
-        phanHoi: {
-            ketQua: "tu_choi",
-            thoiGian: "26/06/2026 · 14:02",
-            lyDo: "Khung giờ học trùng với lớp đang dạy.",
-        },
-    },
-    {
-        id: 5,
-        ma: "YC000218",
-        trangThai: "cho_thanh_toan",
-        hocVien: "Huỳnh Bảo Trân",
-        hocVienEmail: "baotran@gmail.com",
-        hocVienSdt: "0977111222",
-        giaSu: "Trần Quốc Bảo",
-        giaSuEmail: "bao.tutor@gmail.com",
-        mon: "Hoá học",
-        capHoc: "THCS",
-        loaiGoi: "Gói 1 tháng",
-        soBuoi: 8,
-        gioMoiBuoi: 2,
-        lichMongMuon: "Thứ 2, Thứ 5 · 19:30 - 21:30",
-        hinhThuc: "Trực tiếp",
-        diaDiem: "Thủ Đức, TP.HCM",
-        tongTien: "4.320.000đ",
-        ngayTao: "25/06/2026 · 20:10",
-        daGuiGiaSuLuc: "25/06/2026 · 20:25",
-        phanHoi: {
-            ketQua: "dong_y",
-            thoiGian: "25/06/2026 · 21:00",
-            lyDo: "",
-        },
-    },
-];
+const YEU_CAU_MAU = [];
 
 function AdminYeuCauDatGiaSu() {
+    const [danhSachYeuCau, setDanhSachYeuCau] = useState(YEU_CAU_MAU);
     const [boLocTrangThai, setBoLocTrangThai] = useState(TRANG_THAI_MAC_DINH);
     const [boLocPhanHoi, setBoLocPhanHoi] = useState("");
     const [tuKhoa, setTuKhoa] = useState("");
     const [yeuCauDangChonId, setYeuCauDangChonId] = useState(YEU_CAU_MAU[0]?.id);
+    const [thongBao, setThongBao] = useState("");
+    const boDemThongBao = useRef(null);
+
+    const hienThongBao = (noiDung) => {
+        if (boDemThongBao.current) {
+            clearTimeout(boDemThongBao.current);
+        }
+
+        setThongBao(noiDung);
+        boDemThongBao.current = setTimeout(() => {
+            setThongBao("");
+            boDemThongBao.current = null;
+        }, 3000);
+    };
 
     useEffect(() => {
         const lamMoi = () => {
+            setDanhSachYeuCau(YEU_CAU_MAU);
             setBoLocTrangThai(TRANG_THAI_MAC_DINH);
             setBoLocPhanHoi("");
             setTuKhoa("");
             setYeuCauDangChonId(YEU_CAU_MAU[0]?.id);
+            hienThongBao("Đã làm mới dữ liệu giao diện mẫu.");
         };
 
         window.addEventListener("admin:refresh", lamMoi);
 
         return () => {
             window.removeEventListener("admin:refresh", lamMoi);
+            if (boDemThongBao.current) {
+                clearTimeout(boDemThongBao.current);
+            }
         };
     }, []);
 
     const danhSachDaLoc = useMemo(() => {
         const tuKhoaChuanHoa = tuKhoa.trim().toLowerCase();
 
-        return YEU_CAU_MAU.filter((yeuCau) => {
+        return danhSachYeuCau.filter((yeuCau) => {
             const khopTrangThai =
                 yeuCau.trangThai === boLocTrangThai ||
                 (boLocTrangThai === "da_phan_hoi" &&
@@ -216,7 +114,7 @@ function AdminYeuCauDatGiaSu() {
 
             return khopTrangThai && khopPhanHoi && khopTuKhoa;
         });
-    }, [boLocPhanHoi, boLocTrangThai, tuKhoa]);
+    }, [boLocPhanHoi, boLocTrangThai, danhSachYeuCau, tuKhoa]);
 
     const yeuCauDangChon =
         danhSachDaLoc.find((yeuCau) => yeuCau.id === yeuCauDangChonId) ??
@@ -225,18 +123,75 @@ function AdminYeuCauDatGiaSu() {
 
     const demTheoTrangThai = (trangThai) => {
         if (trangThai === "da_phan_hoi") {
-            return YEU_CAU_MAU.filter((yeuCau) =>
+            return danhSachYeuCau.filter((yeuCau) =>
                 ["giasu_dong_y", "giasu_tu_choi"].includes(yeuCau.trangThai),
             ).length;
         }
 
-        return YEU_CAU_MAU.filter((yeuCau) => yeuCau.trangThai === trangThai).length;
+        return danhSachYeuCau.filter((yeuCau) => yeuCau.trangThai === trangThai).length;
     };
 
     const doiTrangThai = (trangThai) => {
         setBoLocTrangThai(trangThai);
         setBoLocPhanHoi("");
         setYeuCauDangChonId(null);
+    };
+
+    const capNhatYeuCau = (id, duLieuMoi) => {
+        setDanhSachYeuCau((hienTai) =>
+            hienTai.map((yeuCau) =>
+                yeuCau.id === id
+                    ? {
+                        ...yeuCau,
+                        ...duLieuMoi,
+                    }
+                    : yeuCau,
+            ),
+        );
+    };
+
+    const xuLyHanhDong = (yeuCau, hanhDong) => {
+        if (!yeuCau || !hanhDong) return;
+
+        if (hanhDong === "gui_gia_su") {
+            capNhatYeuCau(yeuCau.id, {
+                trangThai: "cho_giasu_phan_hoi",
+                daGuiGiaSuLuc: "Vừa gửi",
+            });
+            setBoLocTrangThai("cho_giasu_phan_hoi");
+            setYeuCauDangChonId(yeuCau.id);
+            hienThongBao(`Đã gửi yêu cầu ${yeuCau.ma} cho gia sư ${yeuCau.giaSu}.`);
+            return;
+        }
+
+        if (hanhDong === "nhac_gia_su") {
+            hienThongBao(`Đã gửi nhắc nhở phản hồi cho gia sư ${yeuCau.giaSu}.`);
+            return;
+        }
+
+        if (hanhDong === "cho_thanh_toan") {
+            capNhatYeuCau(yeuCau.id, {
+                trangThai: "cho_thanh_toan",
+            });
+            setBoLocTrangThai("cho_thanh_toan");
+            setYeuCauDangChonId(yeuCau.id);
+            hienThongBao(`Đã chuyển ${yeuCau.ma} sang trạng thái chờ học viên thanh toán.`);
+            return;
+        }
+
+        if (hanhDong === "nhac_thanh_toan") {
+            hienThongBao(`Đã gửi nhắc thanh toán cho học viên ${yeuCau.hocVien}.`);
+            return;
+        }
+
+        if (hanhDong === "xem_thanh_toan") {
+            hienThongBao("Phần thông tin thanh toán sẽ nối sau khi có dữ liệu thanh toán.");
+            return;
+        }
+
+        if (hanhDong === "huy_yeu_cau") {
+            hienThongBao("Chức năng huỷ yêu cầu đang để lại, chưa xử lý ở bước này.");
+        }
     };
 
     return (
@@ -275,6 +230,12 @@ function AdminYeuCauDatGiaSu() {
                     </button>
                 ))}
             </div>
+
+            {thongBao && (
+                <div className="mt-4 rounded-2xl border border-blue-400/30 bg-blue-500/10 px-4 py-3 text-sm font-semibold text-blue-100">
+                    {thongBao}
+                </div>
+            )}
 
             <div className="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 lg:grid-cols-[minmax(0,1fr)_240px_140px]">
                 <label className="block">
@@ -348,7 +309,10 @@ function AdminYeuCauDatGiaSu() {
 
                 <section className="min-h-[720px] rounded-2xl border border-white/10 bg-white text-slate-900">
                     {yeuCauDangChon ? (
-                        <ChiTietYeuCau yeuCau={yeuCauDangChon} />
+                        <ChiTietYeuCau
+                            yeuCau={yeuCauDangChon}
+                            onThucHien={xuLyHanhDong}
+                        />
                     ) : (
                         <div className="flex min-h-[520px] items-center justify-center px-6 text-center text-slate-500">
                             Chọn một yêu cầu bên trái để xem chi tiết.
@@ -417,7 +381,7 @@ function TheYeuCau({ yeuCau, active, onClick }) {
     );
 }
 
-function ChiTietYeuCau({ yeuCau }) {
+function ChiTietYeuCau({ yeuCau, onThucHien }) {
     return (
         <div>
             <div className="border-b border-slate-200 px-6 py-5">
@@ -475,6 +439,7 @@ function ChiTietYeuCau({ yeuCau }) {
                             <button
                                 key={hanhDong.label}
                                 type="button"
+                                onClick={() => onThucHien(yeuCau, hanhDong.key)}
                                 className={hanhDong.className}
                             >
                                 {hanhDong.label}
@@ -582,31 +547,29 @@ function layHanhDong(yeuCau) {
 
     const map = {
         cho_xu_ly: [
-            { label: "Gửi cho gia sư", className: nutChinh },
-            { label: "Huỷ yêu cầu", className: nutDo },
+            { key: "gui_gia_su", label: "Gửi cho gia sư", className: nutChinh },
+            { key: "huy_yeu_cau", label: "Huỷ yêu cầu", className: nutDo },
         ],
         cho_giasu_phan_hoi: [
-            { label: "Nhắc gia sư", className: nutChinh },
-            { label: "Đổi gia sư", className: nutPhu },
-            { label: "Huỷ yêu cầu", className: nutDo },
+            { key: "nhac_gia_su", label: "Nhắc gia sư", className: nutChinh },
+            { key: "huy_yeu_cau", label: "Huỷ yêu cầu", className: nutDo },
         ],
         giasu_dong_y: [
-            { label: "Chuyển sang chờ thanh toán", className: nutChinh },
-            { label: "Xem thông tin thanh toán", className: nutPhu },
+            { key: "cho_thanh_toan", label: "Chuyển sang chờ thanh toán", className: nutChinh },
+            { key: "xem_thanh_toan", label: "Xem thông tin thanh toán", className: nutPhu },
         ],
         giasu_tu_choi: [
-            { label: "Chọn gia sư khác", className: nutChinh },
-            { label: "Huỷ yêu cầu", className: nutDo },
+            { key: "huy_yeu_cau", label: "Huỷ yêu cầu", className: nutDo },
         ],
         cho_thanh_toan: [
-            { label: "Nhắc học viên thanh toán", className: nutChinh },
-            { label: "Huỷ yêu cầu", className: nutDo },
+            { key: "nhac_thanh_toan", label: "Nhắc học viên thanh toán", className: nutChinh },
+            { key: "huy_yeu_cau", label: "Huỷ yêu cầu", className: nutDo },
         ],
         da_tao_lich: [
-            { label: "Xem lịch học", className: nutChinh },
+            { key: "xem_lich", label: "Xem lịch học", className: nutChinh },
         ],
         da_huy: [
-            { label: "Xem chi tiết huỷ", className: nutPhu },
+            { key: "xem_huy", label: "Xem chi tiết huỷ", className: nutPhu },
         ],
     };
 
