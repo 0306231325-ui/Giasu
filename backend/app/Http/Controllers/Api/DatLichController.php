@@ -91,11 +91,6 @@ class DatLichController extends Controller
             ], 404);
         }
 
-        $goiHoc->update([
-            'gui_giasu_luc' => now(),
-            'admin_xu_ly_id' => $request->user()->id,
-        ]);
-
         ThongBao::create([
             'user_id' => $goiHoc->giasu->user_id,
             'tieu_de' => 'Co yeu cau dat goi moi',
@@ -139,8 +134,6 @@ class DatLichController extends Controller
         DB::transaction(function () use ($request, $duLieu, $goiHoc) {
             $goiHoc->update([
                 'trang_thai' => 'dahuy',
-                'admin_xu_ly_id' => $request->user()->id,
-                'ly_do_huy' => filled($duLieu['ly_do'] ?? null) ? trim($duLieu['ly_do']) : null,
             ]);
 
             $goiHoc->lichHocs()->update([
@@ -454,7 +447,7 @@ class DatLichController extends Controller
             'cho_thanhtoan' => 'cho_thanh_toan',
             'danghoc' => 'da_tao_lich',
             'hoanthanh' => 'da_tao_lich',
-            default => $goiHoc->gui_giasu_luc ? 'cho_giasu_phan_hoi' : 'cho_xu_ly',
+            default => 'cho_xu_ly',
         };
 
         return [
@@ -476,7 +469,7 @@ class DatLichController extends Controller
             'hinhThuc' => $goiHoc->hinh_thuc_hoc === 'online' ? 'Online' : 'Tai nha',
             'diaDiem' => $goiHoc->dia_chi_hoc ?: ($goiHoc->hinh_thuc_hoc === 'online' ? 'Online' : 'Chua cap nhat'),
             'ngayTao' => $goiHoc->created_at?->format('d/m/Y H:i') ?? '',
-            'daGuiGiaSuLuc' => $goiHoc->gui_giasu_luc?->format('d/m/Y H:i'),
+            'daGuiGiaSuLuc' => null,
             'phanHoi' => null,
         ];
     }
