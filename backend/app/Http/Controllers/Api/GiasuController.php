@@ -24,6 +24,7 @@ class GiasuController extends Controller
     private function truyVanDanhSachGiaSu()
     {
         return Giasu::query()
+            ->where('trang_thai_ho_so', 'duyet')
             ->with([
                 'user:id,ho_ten,anh_dai_dien,sdt',
                 'trinhDo:id,ten',
