@@ -178,8 +178,14 @@ function ChonGoiHoc() {
 
     useEffect(() => {
         if (!goiDangChon && danhSachGoi.length > 0) {
-            setGoiId(danhSachGoi[0].id);
+            const boDem = setTimeout(() => {
+                setGoiId(danhSachGoi[0].id);
+            }, 0);
+
+            return () => clearTimeout(boDem);
         }
+
+        return undefined;
     }, [danhSachGoi, goiDangChon]);
 
     const capNhatForm = (field, value) => {

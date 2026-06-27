@@ -97,26 +97,29 @@ function LichHocCuaToi() {
         if (authLoading || !isAuthenticated || !laHocVien) return;
 
         let cancelled = false;
-        setDangTai(true);
+        const boDem = setTimeout(() => {
+            setDangTai(true);
 
-        api.get("/hoc-vien/lich-hoc")
-            .then((response) => {
-                if (!cancelled && response.data.success) {
-                    setDanhSachGoi(response.data.data || []);
-                }
-            })
-            .catch((error) => {
-                console.error("Không thể tải gói học của học viên:", error);
-                if (!cancelled) {
-                    setThongBao(error.response?.data?.message || "Không thể tải gói học.");
-                }
-            })
-            .finally(() => {
-                if (!cancelled) setDangTai(false);
-            });
+            api.get("/hoc-vien/lich-hoc")
+                .then((response) => {
+                    if (!cancelled && response.data.success) {
+                        setDanhSachGoi(response.data.data || []);
+                    }
+                })
+                .catch((error) => {
+                    console.error("Không thể tải gói học của học viên:", error);
+                    if (!cancelled) {
+                        setThongBao(error.response?.data?.message || "Không thể tải gói học.");
+                    }
+                })
+                .finally(() => {
+                    if (!cancelled) setDangTai(false);
+                });
+        }, 0);
 
         return () => {
             cancelled = true;
+            clearTimeout(boDem);
         };
     }, [authLoading, isAuthenticated, laHocVien]);
 

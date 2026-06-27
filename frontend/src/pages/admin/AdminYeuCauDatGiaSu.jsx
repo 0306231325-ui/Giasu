@@ -3,8 +3,7 @@ import api from "../../services/api";
 import IconAdminGiaSu from "./gia-su/IconAdminGiaSu";
 
 const BO_LOC_TRANG_THAI = [
-    { value: "cho_xu_ly", label: "Chờ admin gửi" },
-    { value: "cho_giasu_phan_hoi", label: "Chờ gia sư trả lời" },
+    { value: "cho_xu_ly", label: "Chờ xử lý" },
     { value: "da_phan_hoi", label: "Đã phản hồi" },
     { value: "cho_thanh_toan", label: "Chờ thanh toán" },
     { value: "da_huy", label: "Đã huỷ" },
@@ -14,12 +13,8 @@ const TRANG_THAI_MAC_DINH = "cho_xu_ly";
 
 const TRANG_THAI_GOI = {
     cho_xu_ly: {
-        label: "Chờ admin gửi",
+        label: "Chờ xử lý",
         className: "border-amber-400/25 bg-amber-400/10 text-amber-200",
-    },
-    cho_giasu_phan_hoi: {
-        label: "Chờ gia sư trả lời",
-        className: "border-blue-400/25 bg-blue-400/10 text-blue-200",
     },
     giasu_dong_y: {
         label: "Gia sư đồng ý",
@@ -101,10 +96,13 @@ function AdminYeuCauDatGiaSu() {
         };
 
         window.addEventListener("admin:refresh", lamMoi);
-        taiDanhSach();
+        const boDemTaiLanDau = setTimeout(() => {
+            taiDanhSach();
+        }, 0);
 
         return () => {
             window.removeEventListener("admin:refresh", lamMoi);
+            clearTimeout(boDemTaiLanDau);
             if (boDemThongBao.current) {
                 clearTimeout(boDemThongBao.current);
             }
@@ -183,18 +181,13 @@ function AdminYeuCauDatGiaSu() {
             try {
                 const response = await api.patch(`/admin/dat-goi/${yeuCau.id}/gui-gia-su`);
                 capNhatYeuCau(yeuCau.id, response.data.data);
-                setBoLocTrangThai("cho_giasu_phan_hoi");
+                setBoLocTrangThai("cho_xu_ly");
                 setYeuCauDangChonId(yeuCau.id);
-                hienThongBao(response.data.message || `Đã gửi yêu cầu ${yeuCau.ma} cho gia sư ${yeuCau.giaSu}.`);
+                hienThongBao(response.data.message || `Đã gửi/nhắc yêu cầu ${yeuCau.ma} cho gia sư ${yeuCau.giaSu}.`);
             } catch (error) {
                 console.error("Không thể gửi yêu cầu cho gia sư:", error);
                 hienThongBao(error.response?.data?.message || "Không thể gửi yêu cầu cho gia sư.");
             }
-            return;
-        }
-
-        if (hanhDong === "nhac_gia_su") {
-            hienThongBao(`Đã gửi nhắc nhở phản hồi cho gia sư ${yeuCau.giaSu}.`);
             return;
         }
 
@@ -334,7 +327,7 @@ function AdminYeuCauDatGiaSu() {
                         </p>
                     </div>
 
-                    <div className="max-h-[720px] space-y-3 overflow-y-auto p-3 [scrollbar-width:thin]">
+                    <div className="max-h-[720px] space-y-3 overflow-y-auto p-3">
                         {dangTai ? (
                             <div className="rounded-2xl border border-white/10 px-5 py-12 text-center text-white/55">
                                 Đang tải danh sách đặt gói...
@@ -402,7 +395,7 @@ function TheYeuCau({ yeuCau, active, onClick }) {
             <div className="mt-4 space-y-2 text-sm text-white/55">
                 <p>HV: <span className="font-semibold text-white/80">{yeuCau.hocVien}</span></p>
                 <p>GS: <span className="font-semibold text-white/80">{yeuCau.giaSu}</span></p>
-                <p>{yeuCau.lichMongMuon}</p>
+                <p className="line-clamp-2">{yeuCau.lichMongMuon}</p>
             </div>
 
             <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
@@ -459,10 +452,6 @@ function ChiTietYeuCau({ yeuCau, onThucHien }) {
                     <KhoiThongTin tieuDe="Gia sư được chọn" icon="user">
                         <ThongTin label="Họ tên" value={yeuCau.giaSu} />
                         <ThongTin label="Email" value={yeuCau.giaSuEmail} />
-                        <ThongTin
-                            label="Admin đã gửi"
-                            value={yeuCau.daGuiGiaSuLuc || "Chưa gửi yêu cầu cho gia sư"}
-                        />
                     </KhoiThongTin>
                 </div>
 
@@ -471,10 +460,18 @@ function ChiTietYeuCau({ yeuCau, onThucHien }) {
                         <ThongTin label="Loại gói" value={yeuCau.loaiGoi} />
                         <ThongTin label="Số buổi" value={`${yeuCau.soBuoi} buổi`} />
                         <ThongTin label="Tổng tiền" value={yeuCau.tongTien} noiBat />
-                        <ThongTin label="Lịch mong muốn" value={yeuCau.lichMongMuon} />
+                        <ThongTin
+                            label="Ngày học mong muốn"
+                            value={yeuCau.ngayMongMuon || yeuCau.lichMongMuon}
+                        />
+                        <ThongTin
+                            label="Giờ mong muốn"
+                            value={yeuCau.gioMongMuon || "Chưa cập nhật"}
+                        />
                         <ThongTin label="Hình thức" value={yeuCau.hinhThuc} />
                         <ThongTin label="Địa điểm" value={yeuCau.diaDiem} />
                     </div>
+                    <DanhSachBuoiHoc yeuCau={yeuCau} />
                 </KhoiThongTin>
 
                 <KhoiPhanHoi yeuCau={yeuCau} />
@@ -493,6 +490,56 @@ function ChiTietYeuCau({ yeuCau, onThucHien }) {
                             </button>
                         ))}
                     </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function DanhSachBuoiHoc({ yeuCau }) {
+    const danhSach = yeuCau.lichHoc || [];
+
+    if (danhSach.length === 0) {
+        return (
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500">
+                Chưa có dữ liệu giờ học chi tiết.
+            </div>
+        );
+    }
+
+    return (
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p className="text-sm font-extrabold text-slate-900">
+                        {yeuCau.hocDinhKy ? "Lịch học định kỳ" : "Các buổi học không định kỳ"}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-slate-500">
+                        {yeuCau.hocDinhKy
+                            ? "Hệ thống tóm tắt theo thứ và khung giờ học."
+                            : "Hiển thị từng buổi học viên đã chọn khi đặt gói."}
+                    </p>
+                </div>
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-500">
+                    {danhSach.length} buổi
+                </span>
+            </div>
+
+            <div className="mt-4 max-h-48 overflow-y-auto pr-1">
+                <div className="grid gap-2 md:grid-cols-2">
+                {danhSach.map((buoiHoc) => (
+                    <div
+                        key={buoiHoc.id}
+                        className="rounded-xl border border-slate-200 bg-white px-3 py-2"
+                    >
+                        <p className="text-sm font-bold text-slate-800">
+                            {buoiHoc.thu} · {dinhDangNgay(buoiHoc.ngayHoc)}
+                        </p>
+                        <p className="mt-1 text-xs font-semibold text-slate-500">
+                            {buoiHoc.gioBatDau} - {buoiHoc.gioKetThuc} · {buoiHoc.hinhThuc}
+                        </p>
+                    </div>
+                ))}
                 </div>
             </div>
         </div>
@@ -538,6 +585,13 @@ function KhoiPhanHoi({ yeuCau }) {
             </div>
         </KhoiThongTin>
     );
+}
+
+function dinhDangNgay(ngay) {
+    if (!ngay) return "Chưa cập nhật";
+    const [nam, thang, ngayTrongThang] = String(ngay).split("-");
+    if (!nam || !thang || !ngayTrongThang) return ngay;
+    return `${ngayTrongThang}/${thang}/${nam}`;
 }
 
 function KhoiThongTin({ tieuDe, icon, children }) {
@@ -594,11 +648,7 @@ function layHanhDong(yeuCau) {
 
     const map = {
         cho_xu_ly: [
-            { key: "gui_gia_su", label: "Gửi cho gia sư", className: nutChinh },
-            { key: "huy_yeu_cau", label: "Huỷ yêu cầu", className: nutDo },
-        ],
-        cho_giasu_phan_hoi: [
-            { key: "nhac_gia_su", label: "Nhắc gia sư", className: nutChinh },
+            { key: "gui_gia_su", label: "Gửi/Nhắc gia sư", className: nutChinh },
             { key: "huy_yeu_cau", label: "Huỷ yêu cầu", className: nutDo },
         ],
         giasu_dong_y: [
