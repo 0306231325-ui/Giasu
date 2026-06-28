@@ -36,7 +36,6 @@ function AdminYeuCauDatGiaSu() {
         boLocPhanHoi,
         boLocTrangThai,
         dangTai,
-        dangDungDuLieuMau,
         danhSachDaLoc,
         thongBao,
         tuKhoa,
@@ -90,12 +89,6 @@ function AdminYeuCauDatGiaSu() {
             {thongBao && (
                 <div className="mt-4 rounded-2xl border border-blue-400/30 bg-blue-500/10 px-4 py-3 text-sm font-semibold text-blue-100">
                     {thongBao}
-                </div>
-            )}
-
-            {dangDungDuLieuMau && (
-                <div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/10 px-4 py-3 text-sm font-semibold text-amber-100">
-                    Đang hiển thị dữ liệu mẫu để xem giao diện, không lưu vào database.
                 </div>
             )}
 

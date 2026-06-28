@@ -10,6 +10,10 @@ export function coThongTinChoXacNhanThanhToan(yeuCau) {
 
     if (!thanhToan) return false;
 
+    const trangThaiThanhToan = thanhToan.trangThai || thanhToan.trang_thai;
+
+    if (trangThaiThanhToan !== "cho_thanhtoan") return false;
+
     return Boolean(
         thanhToan.anhMinhChung ||
         thanhToan.anh_minh_chung ||
@@ -32,6 +36,15 @@ export function layNhanThanhToanPhu(yeuCau) {
         return null;
     }
 
+    const trangThaiThanhToan = yeuCau?.thanhToan?.trangThai || yeuCau?.thanhToan?.trang_thai;
+
+    if (trangThaiThanhToan === "that_bai") {
+        return {
+            nhan: "TT bị từ chối",
+            className: "bg-red-400/10 text-red-200",
+        };
+    }
+
     if (coThongTinChoXacNhanThanhToan(yeuCau)) {
         return {
             nhan: "Chờ xác nhận TT",
@@ -50,6 +63,16 @@ export function layHanhDong(yeuCau) {
     const nutPhu = "rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50";
     const nutDo = "rounded-xl bg-red-50 px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-100";
 
+    const hanhDongChoThanhToan = coThongTinChoXacNhanThanhToan(yeuCau)
+        ? [
+            { key: "duyet_thanh_toan", label: "Duyệt thanh toán", className: nutChinh },
+            { key: "tu_choi_thanh_toan", label: "Từ chối thanh toán", className: nutDo },
+        ]
+        : [
+            { key: "nhac_thanh_toan", label: "Nhắc học viên thanh toán", className: nutChinh },
+            { key: "huy_yeu_cau", label: "Huỷ yêu cầu", className: nutDo },
+        ];
+
     const map = {
         cho_xu_ly: [
             { key: "gui_gia_su", label: "Gửi/Nhắc gia sư", className: nutChinh },
@@ -62,10 +85,7 @@ export function layHanhDong(yeuCau) {
         giasu_tu_choi: [
             { key: "huy_yeu_cau", label: "Huỷ yêu cầu", className: nutDo },
         ],
-        cho_thanh_toan: [
-            { key: "nhac_thanh_toan", label: "Nhắc học viên thanh toán", className: nutChinh },
-            { key: "huy_yeu_cau", label: "Huỷ yêu cầu", className: nutDo },
-        ],
+        cho_thanh_toan: hanhDongChoThanhToan,
         da_tao_lich: [
             { key: "xem_lich", label: "Xem lịch học", className: nutChinh },
         ],

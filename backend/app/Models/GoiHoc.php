@@ -74,4 +74,14 @@ class GoiHoc extends Model
     {
         return $this->hasOne(PhanHoi::class, 'goi_hoc_id')->latestOfMany();
     }
+
+    public function thanhToans()
+    {
+        return $this->hasMany(ThanhToan::class, 'goihoc_id');
+    }
+
+    public function thanhToanMoiNhat()
+    {
+        return $this->hasOne(ThanhToan::class, 'goihoc_id')->latestOfMany();
+    }
 }
