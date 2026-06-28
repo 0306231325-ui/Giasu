@@ -6,7 +6,7 @@ import DanhSachGiaSu from './pages/tutor/DanhSachGiaSu';
 import GiaSuDetail from "./pages/tutor/GiaSuDetail";
 import TimGiaSuTheoYeuCau from "./pages/tutor/TimGiaSuTheoYeuCau";
 import DanhSachMonHoc from './pages/subject/DanhSachMonHoc';
-import ChonGoiHoc from "./pages/booking/ChonGoiHoc";
+import ChonGoiHoc from "./pages/student/ChonGoiHoc";
 import Login from "./pages/login/Login";
 import Register from "./pages/register/Register";
 import HoSoHocVien from "./pages/profile/HoSoHocVien";
