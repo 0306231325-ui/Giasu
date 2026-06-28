@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import api from "../../services/api";
-import BangHocVien from "./hoc-vien/BangHocVien";
-import BoLocHocVien from "./hoc-vien/BoLocHocVien";
-import PhanTrangHocVien from "./hoc-vien/PhanTrangHocVien";
+import api from "../../../services/api";
+import BangHocVien from "./BangHocVien";
+import BoLocHocVien from "./BoLocHocVien";
+import PhanTrangHocVien from "./PhanTrangHocVien";
 
 const SO_TAI_KHOAN_MOI_TRANG = 10;
 

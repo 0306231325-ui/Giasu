@@ -4,7 +4,12 @@ import ModalChiTietYeuCau from "./ModalChiTietYeuCau";
 import ModalTuChoiYeuCau from "./ModalTuChoiYeuCau";
 import { trangThaiYeuCau } from "./duLieuQuanLyLich";
 
-function TabYeuCauDatGiaSu({ danhSach }) {
+function TabYeuCauDatGiaSu({
+    danhSach,
+    dangXuLyId,
+    onDongY,
+    onTuChoi,
+}) {
     const [boLoc, setBoLoc] = useState("cho_phan_hoi");
     const [yeuCauDangXem, setYeuCauDangXem] = useState(null);
     const [yeuCauDangTuChoi, setYeuCauDangTuChoi] = useState(null);
@@ -77,7 +82,8 @@ function TabYeuCauDatGiaSu({ danhSach }) {
                                 key={yeuCau.id}
                                 yeuCau={yeuCau}
                                 onXem={() => setYeuCauDangXem(yeuCau)}
-                                onDongY={() => {}}
+                                dangXuLy={dangXuLyId === yeuCau.id}
+                                onDongY={() => onDongY(yeuCau)}
                                 onTuChoi={() =>
                                     setYeuCauDangTuChoi(yeuCau)
                                 }
@@ -96,7 +102,8 @@ function TabYeuCauDatGiaSu({ danhSach }) {
                         ) || yeuCauDangXem
                     }
                     onDong={() => setYeuCauDangXem(null)}
-                    onDongY={() => {}}
+                    dangXuLy={dangXuLyId === yeuCauDangXem.id}
+                    onDongY={() => onDongY(yeuCauDangXem)}
                     onTuChoi={() =>
                         setYeuCauDangTuChoi(yeuCauDangXem)
                     }
@@ -107,14 +114,18 @@ function TabYeuCauDatGiaSu({ danhSach }) {
                 <ModalTuChoiYeuCau
                     yeuCau={yeuCauDangTuChoi}
                     onDong={() => setYeuCauDangTuChoi(null)}
-                    onXacNhan={() => setYeuCauDangTuChoi(null)}
+                    dangXuLy={dangXuLyId === yeuCauDangTuChoi.id}
+                    onXacNhan={(yeuCau, lyDo) => {
+                        onTuChoi(yeuCau, lyDo);
+                        setYeuCauDangTuChoi(null);
+                    }}
                 />
             )}
         </>
     );
 }
 
-function TheYeuCau({ yeuCau, onXem, onDongY, onTuChoi }) {
+function TheYeuCau({ yeuCau, dangXuLy, onXem, onDongY, onTuChoi }) {
     const trangThai = trangThaiYeuCau[yeuCau.trangThai];
     const dangCho = yeuCau.trangThai === "cho_phan_hoi";
 
@@ -187,6 +198,7 @@ function TheYeuCau({ yeuCau, onXem, onDongY, onTuChoi }) {
                             <button
                                 type="button"
                                 onClick={onTuChoi}
+                                disabled={dangXuLy}
                                 className="rounded-xl bg-red-500/10 px-4 py-2.5 text-xs font-bold text-red-200 hover:bg-red-500/20"
                             >
                                 Từ chối
@@ -194,9 +206,10 @@ function TheYeuCau({ yeuCau, onXem, onDongY, onTuChoi }) {
                             <button
                                 type="button"
                                 onClick={onDongY}
-                                className="rounded-xl bg-emerald-500 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-600"
+                                disabled={dangXuLy}
+                                className="rounded-xl bg-emerald-500 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                Đồng ý nhận lớp
+                                {dangXuLy ? "Đang xử lý..." : "Đồng ý nhận lớp"}
                             </button>
                         </>
                     )}

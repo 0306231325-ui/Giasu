@@ -8,6 +8,7 @@ import { trangThaiYeuCau } from "./duLieuQuanLyLich";
 function ModalChiTietYeuCau({
     yeuCau,
     onDong,
+    dangXuLy,
     onDongY,
     onTuChoi,
 }) {
@@ -93,6 +94,7 @@ function ModalChiTietYeuCau({
                             <button
                                 type="button"
                                 onClick={onTuChoi}
+                                disabled={dangXuLy}
                                 className="rounded-xl border border-red-200 px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50"
                             >
                                 Từ chối
@@ -100,9 +102,10 @@ function ModalChiTietYeuCau({
                             <button
                                 type="button"
                                 onClick={onDongY}
-                                className="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-700"
+                                disabled={dangXuLy}
+                                className="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                Đồng ý nhận lớp
+                                {dangXuLy ? "Đang xử lý..." : "Đồng ý nhận lớp"}
                             </button>
                         </>
                     )}

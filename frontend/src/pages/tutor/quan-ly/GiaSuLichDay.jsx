@@ -1,18 +1,98 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import api from "../../../services/api";
 import TabDanhSachLichHoc from "./lich-day/TabDanhSachLichHoc";
+import TabLichTuan from "./lich-day/TabLichTuan";
 import TabYeuCauDatGiaSu from "./lich-day/TabYeuCauDatGiaSu";
-import {
-    danhSachLichHocMau,
-    danhSachYeuCauMau,
-} from "./lich-day/duLieuQuanLyLich";
 
 function GiaSuLichDay() {
     const [tab, setTab] = useState("lich_hoc");
-    const danhSachYeuCau = danhSachYeuCauMau;
+    const [danhSachLichHoc, setDanhSachLichHoc] = useState([]);
+    const [danhSachYeuCau, setDanhSachYeuCau] = useState([]);
+    const [dangTai, setDangTai] = useState(false);
+    const [dangXuLyId, setDangXuLyId] = useState(null);
+    const [thongBao, setThongBao] = useState("");
+    const boDemThongBao = useRef(null);
+
+    const hienThongBao = (noiDung) => {
+        if (boDemThongBao.current) {
+            clearTimeout(boDemThongBao.current);
+        }
+
+        setThongBao(noiDung);
+        boDemThongBao.current = setTimeout(() => {
+            setThongBao("");
+            boDemThongBao.current = null;
+        }, 3000);
+    };
+
+    const taiDuLieu = useCallback(async () => {
+        setDangTai(true);
+
+        try {
+            const [lichHocResponse, yeuCauResponse] = await Promise.all([
+                api.get("/gia-su/lich-day"),
+                api.get("/gia-su/yeu-cau-dat-goi"),
+            ]);
+
+            setDanhSachLichHoc(lichHocResponse.data.data || []);
+            setDanhSachYeuCau(yeuCauResponse.data.data || []);
+        } catch (error) {
+            console.error("Không thể tải lịch dạy gia sư:", error);
+            hienThongBao(error.response?.data?.message || "Không thể tải dữ liệu lịch dạy.");
+        } finally {
+            setDangTai(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        const boDemTaiLanDau = setTimeout(() => {
+            taiDuLieu();
+        }, 0);
+
+        return () => {
+            clearTimeout(boDemTaiLanDau);
+            if (boDemThongBao.current) {
+                clearTimeout(boDemThongBao.current);
+            }
+        };
+    }, [taiDuLieu]);
 
     const soYeuCauChoPhanHoi = danhSachYeuCau.filter(
         (yeuCau) => yeuCau.trangThai === "cho_phan_hoi",
     ).length;
+
+    const capNhatYeuCau = (yeuCauMoi) => {
+        setDanhSachYeuCau((hienTai) =>
+            hienTai.map((yeuCau) =>
+                yeuCau.id === yeuCauMoi.id ? yeuCauMoi : yeuCau,
+            ),
+        );
+    };
+
+    const phanHoiYeuCau = async (yeuCau, ketQua, lyDo = "") => {
+        if (!yeuCau || dangXuLyId) return;
+
+        setDangXuLyId(yeuCau.id);
+
+        try {
+            const response = await api.patch(`/gia-su/yeu-cau-dat-goi/${yeuCau.id}/phan-hoi`, {
+                phan_hoi: ketQua,
+                ly_do: lyDo,
+            });
+
+            capNhatYeuCau(response.data.data);
+            hienThongBao(response.data.message || "Đã ghi nhận phản hồi của bạn.");
+
+            if (ketQua === "dong_y") {
+                taiDuLieu();
+            }
+        } catch (error) {
+            console.error("Không thể phản hồi yêu cầu đặt gói:", error);
+            hienThongBao(error.response?.data?.message || "Không thể phản hồi yêu cầu đặt gói.");
+        } finally {
+            setDangXuLyId(null);
+        }
+    };
 
     return (
         <div className="mx-auto max-w-7xl pb-10">
@@ -30,13 +110,26 @@ function GiaSuLichDay() {
                 </p>
             </div>
 
-            <div className="mt-6 grid gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 sm:grid-cols-2">
+            {thongBao && (
+                <div className="mt-4 rounded-2xl border border-blue-400/30 bg-blue-500/10 px-4 py-3 text-sm font-semibold text-blue-100">
+                    {thongBao}
+                </div>
+            )}
+
+            <div className="mt-6 grid gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 lg:grid-cols-3">
                 <NutTab
                     dangChon={tab === "lich_hoc"}
                     onClick={() => setTab("lich_hoc")}
                     tieuDe="Danh sách lịch học"
                     moTa="Các buổi học đã được xác nhận"
-                    soLuong={danhSachLichHocMau.length}
+                    soLuong={danhSachLichHoc.length}
+                />
+                <NutTab
+                    dangChon={tab === "lich_tuan"}
+                    onClick={() => setTab("lich_tuan")}
+                    tieuDe="Lịch tuần"
+                    moTa="Xem lịch theo thứ và khung giờ"
+                    soLuong={danhSachLichHoc.length}
                 />
                 <NutTab
                     dangChon={tab === "yeu_cau"}
@@ -48,11 +141,20 @@ function GiaSuLichDay() {
                 />
             </div>
 
-            {tab === "lich_hoc" ? (
-                <TabDanhSachLichHoc danhSach={danhSachLichHocMau} />
+            {dangTai ? (
+                <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 px-5 py-12 text-center text-sm font-semibold text-white/55">
+                    Đang tải dữ liệu lịch dạy...
+                </div>
+            ) : tab === "lich_hoc" ? (
+                <TabDanhSachLichHoc danhSach={danhSachLichHoc} />
+            ) : tab === "lich_tuan" ? (
+                <TabLichTuan danhSach={danhSachLichHoc} />
             ) : (
                 <TabYeuCauDatGiaSu
                     danhSach={danhSachYeuCau}
+                    dangXuLyId={dangXuLyId}
+                    onDongY={(yeuCau) => phanHoiYeuCau(yeuCau, "dong_y")}
+                    onTuChoi={(yeuCau, lyDo) => phanHoiYeuCau(yeuCau, "tu_choi", lyDo)}
                 />
             )}
         </div>
