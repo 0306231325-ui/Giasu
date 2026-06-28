@@ -9,6 +9,7 @@ use App\Models\GoiHoc;
 use App\Models\LichHoc;
 use App\Models\LoaiGoi;
 use App\Models\PhanHoi;
+use App\Models\ThanhToan;
 use App\Models\ThongBao;
 use App\Models\User;
 use Carbon\Carbon;
@@ -366,6 +367,7 @@ class DatLichController extends Controller
                 'monHoc:id,ten_mon,lop',
                 'giasu.user:id,ho_ten',
                 'lichHocs' => fn ($query) => $query->orderBy('ngay_hoc')->orderBy('gio_batdau'),
+                'thanhToanMoiNhat',
             ])
             ->where('hocvien_id', $user->id)
             ->latest()
@@ -376,6 +378,88 @@ class DatLichController extends Controller
         return response()->json([
             'success' => true,
             'data' => $danhSach,
+        ]);
+    }
+
+    public function thanhToanGoiHoc(Request $request, int $goiHocId): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->vai_tro !== 'hocvien') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chuc nang thanh toan chi danh cho tai khoan hoc vien.',
+            ], 403);
+        }
+
+        $duLieu = $request->validate([
+            'phuong_thuc' => ['required', Rule::in(['tienmat', 'momo', 'zalopay', 'banking'])],
+            'ma_giaodich' => ['nullable', 'string', 'max:255'],
+            'noi_dung_thanhtoan' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $goiHoc = GoiHoc::query()
+            ->with(['hocVien:id,ho_ten', 'giasu.user:id,ho_ten', 'monHoc:id,ten_mon,lop', 'lichHocs', 'thanhToanMoiNhat'])
+            ->where('hocvien_id', $user->id)
+            ->where('trang_thai', 'cho_thanhtoan')
+            ->find($goiHocId);
+
+        if (! $goiHoc) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Khong tim thay goi hoc dang cho thanh toan.',
+            ], 404);
+        }
+
+        $goiHocMoi = DB::transaction(function () use ($goiHoc, $duLieu, $user) {
+            ThanhToan::create([
+                'goihoc_id' => $goiHoc->id,
+                'so_tien' => $goiHoc->tong_tien,
+                'phuong_thuc' => $duLieu['phuong_thuc'],
+                'ma_giaodich' => filled($duLieu['ma_giaodich'] ?? null) ? trim($duLieu['ma_giaodich']) : null,
+                'noi_dung_thanhtoan' => filled($duLieu['noi_dung_thanhtoan'] ?? null)
+                    ? trim($duLieu['noi_dung_thanhtoan'])
+                    : 'Hoc vien xac nhan thanh toan goi hoc.',
+                'ngay_thanhtoan' => now(),
+                'trang_thai' => 'da_thanhtoan',
+            ]);
+
+            $goiHoc->update([
+                'trang_thai' => 'danghoc',
+            ]);
+
+            $goiHoc->lichHocs()->update([
+                'trang_thai' => 'da_nhan',
+            ]);
+
+            User::query()
+                ->where('vai_tro', 'admin')
+                ->get(['id'])
+                ->each(fn (User $admin) => ThongBao::create([
+                    'user_id' => $admin->id,
+                    'tieu_de' => 'Hoc vien da thanh toan',
+                    'noi_dung' => "{$user->ho_ten} da thanh toan goi hoc GH" . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . '.',
+                    'url' => '/admin/quan-ly-dat-goi',
+                    'da_doc' => false,
+                ]));
+
+            if ($goiHoc->giasu?->user_id) {
+                ThongBao::create([
+                    'user_id' => $goiHoc->giasu->user_id,
+                    'tieu_de' => 'Goi hoc da duoc thanh toan',
+                    'noi_dung' => 'Hoc vien da thanh toan. Lich hoc cua ban da duoc kich hoat.',
+                    'url' => '/gia-su/quan-ly/lich-day',
+                    'da_doc' => false,
+                ]);
+            }
+
+            return $goiHoc->fresh(['monHoc:id,ten_mon,lop', 'giasu.user:id,ho_ten', 'lichHocs', 'thanhToanMoiNhat']);
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Thanh toan thanh cong. Goi hoc da duoc kich hoat.',
+            'data' => $this->dinhDangGoiHocChoHocVien($goiHocMoi),
         ]);
     }
 
@@ -639,6 +723,13 @@ class DatLichController extends Controller
             'tongTien' => (float) $goiHoc->tong_tien,
             'trangThai' => $trangThai,
             'coTheHuy' => $goiHoc->trang_thai === 'cho_xacnhan',
+            'coTheThanhToan' => $goiHoc->trang_thai === 'cho_thanhtoan',
+            'thanhToan' => $goiHoc->thanhToanMoiNhat ? [
+                'phuongThuc' => $goiHoc->thanhToanMoiNhat->phuong_thuc,
+                'maGiaoDich' => $goiHoc->thanhToanMoiNhat->ma_giaodich,
+                'ngayThanhToan' => $goiHoc->thanhToanMoiNhat->ngay_thanhtoan?->format('d/m/Y H:i'),
+                'trangThai' => $goiHoc->thanhToanMoiNhat->trang_thai,
+            ] : null,
             'lichHoc' => $goiHoc->lichHocs
                 ->map(fn (LichHoc $lichHoc) => $this->dinhDangLichHoc($lichHoc))
                 ->values(),

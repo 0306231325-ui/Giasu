@@ -73,6 +73,13 @@ function LichHocCuaToi() {
     const [danhSachGoi, setDanhSachGoi] = useState([]);
     const [goiDangMo, setGoiDangMo] = useState(null);
     const [dangTai, setDangTai] = useState(false);
+    const [dangThanhToan, setDangThanhToan] = useState(false);
+    const [goiThanhToan, setGoiThanhToan] = useState(null);
+    const [formThanhToan, setFormThanhToan] = useState({
+        phuong_thuc: "banking",
+        ma_giaodich: "",
+        noi_dung_thanhtoan: "",
+    });
     const [thongBao, setThongBao] = useState("");
 
     const laHocVien = user?.vai_tro === "hocvien";
@@ -86,6 +93,7 @@ function LichHocCuaToi() {
         () => ({
             tat_ca: danhSachGoi.length,
             cho_xacnhan: danhSachGoi.filter((goiHoc) => goiHoc.trangThai === "cho_xacnhan").length,
+            cho_thanhtoan: danhSachGoi.filter((goiHoc) => goiHoc.trangThai === "cho_thanhtoan").length,
             dang_hoc: danhSachGoi.filter((goiHoc) => goiHoc.trangThai === "dang_hoc").length,
             hoan_thanh: danhSachGoi.filter((goiHoc) => goiHoc.trangThai === "hoan_thanh").length,
             da_huy: danhSachGoi.filter((goiHoc) => goiHoc.trangThai === "da_huy").length,
@@ -133,6 +141,48 @@ function LichHocCuaToi() {
             ),
         );
         setThongBao("Đã ghi nhận yêu cầu hủy gói học.");
+    };
+
+    const moThanhToan = (goiHoc) => {
+        setGoiThanhToan(goiHoc);
+        setFormThanhToan({
+            phuong_thuc: "banking",
+            ma_giaodich: "",
+            noi_dung_thanhtoan: `Thanh toan ${goiHoc.ma}`,
+        });
+        setThongBao("");
+    };
+
+    const dongThanhToan = () => {
+        if (dangThanhToan) return;
+        setGoiThanhToan(null);
+    };
+
+    const xacNhanThanhToan = async (event) => {
+        event.preventDefault();
+        if (!goiThanhToan) return;
+
+        setDangThanhToan(true);
+        setThongBao("");
+
+        try {
+            const response = await api.post(`/hoc-vien/goi-hoc/${goiThanhToan.id}/thanh-toan`, formThanhToan);
+
+            if (response.data.success) {
+                const goiMoi = response.data.data;
+                setDanhSachGoi((hienTai) =>
+                    hienTai.map((item) => (item.id === goiMoi.id ? goiMoi : item)),
+                );
+                setGoiThanhToan(null);
+                setTab("dang_hoc");
+                setThongBao(response.data.message || "Thanh toán thành công.");
+            }
+        } catch (error) {
+            console.error("Không thể thanh toán gói học:", error);
+            setThongBao(error.response?.data?.message || "Không thể thanh toán gói học.");
+        } finally {
+            setDangThanhToan(false);
+        }
     };
 
     if (authLoading || dangTai) {
@@ -189,7 +239,7 @@ function LichHocCuaToi() {
                     </div>
                 )}
 
-                <div className="mt-8 grid gap-4 md:grid-cols-5">
+                <div className="mt-8 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
                     {Object.entries(thongKe).map(([key, value]) => (
                         <button
                             key={key}
@@ -264,6 +314,15 @@ function LichHocCuaToi() {
                                                         Hủy gói
                                                     </button>
                                                 )}
+                                                {goiHoc.coTheThanhToan && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => moThanhToan(goiHoc)}
+                                                        className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-orange-600"
+                                                    >
+                                                        Thanh toán
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
 
@@ -297,6 +356,86 @@ function LichHocCuaToi() {
                     )}
                 </section>
             </div>
+
+            {goiThanhToan && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4">
+                    <form
+                        onSubmit={xacNhanThanhToan}
+                        className="w-full max-w-lg rounded-lg border border-slate-200 bg-white p-6 shadow-2xl"
+                    >
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <p className="text-sm font-bold uppercase text-orange-600">Thanh toán gói học</p>
+                                <h2 className="mt-2 text-xl font-bold text-slate-950">{goiThanhToan.ma}</h2>
+                                <p className="mt-1 text-sm text-slate-500">
+                                    Số tiền cần thanh toán: <span className="font-bold text-slate-900">{dinhDangTien(goiThanhToan.tongTien)}</span>
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={dongThanhToan}
+                                className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-bold text-slate-500 transition hover:bg-slate-50"
+                            >
+                                Đóng
+                            </button>
+                        </div>
+
+                        <div className="mt-5 space-y-4">
+                            <label className="block">
+                                <span className="mb-2 block text-sm font-semibold text-slate-700">Phương thức</span>
+                                <select
+                                    value={formThanhToan.phuong_thuc}
+                                    onChange={(event) => setFormThanhToan((hienTai) => ({ ...hienTai, phuong_thuc: event.target.value }))}
+                                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-orange-400 focus:bg-white"
+                                >
+                                    <option value="banking">Chuyển khoản ngân hàng</option>
+                                    <option value="momo">MoMo</option>
+                                    <option value="zalopay">ZaloPay</option>
+                                    <option value="tienmat">Tiền mặt</option>
+                                </select>
+                            </label>
+
+                            <label className="block">
+                                <span className="mb-2 block text-sm font-semibold text-slate-700">Mã giao dịch</span>
+                                <input
+                                    value={formThanhToan.ma_giaodich}
+                                    onChange={(event) => setFormThanhToan((hienTai) => ({ ...hienTai, ma_giaodich: event.target.value }))}
+                                    placeholder="Nhập mã giao dịch nếu có"
+                                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-orange-400 focus:bg-white"
+                                />
+                            </label>
+
+                            <label className="block">
+                                <span className="mb-2 block text-sm font-semibold text-slate-700">Nội dung thanh toán</span>
+                                <textarea
+                                    rows={3}
+                                    value={formThanhToan.noi_dung_thanhtoan}
+                                    onChange={(event) => setFormThanhToan((hienTai) => ({ ...hienTai, noi_dung_thanhtoan: event.target.value }))}
+                                    className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-orange-400 focus:bg-white"
+                                />
+                            </label>
+                        </div>
+
+                        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                            <button
+                                type="button"
+                                onClick={dongThanhToan}
+                                disabled={dangThanhToan}
+                                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={dangThanhToan}
+                                className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {dangThanhToan ? "Đang xử lý..." : "Xác nhận thanh toán"}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
         </div>
     );
 }
