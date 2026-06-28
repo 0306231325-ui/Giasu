@@ -157,7 +157,7 @@ class DatLichController extends Controller
                 'goiHoc.phanHoiMoiNhat',
             ])
             ->where('giasu_id', $giaSu->id)
-            ->whereHas('goiHoc.phanHoiMoiNhat', fn ($query) => $query->where('phan_hoi', PhanHoi::DONG_Y))
+            ->whereHas('goiHoc', fn ($query) => $query->whereIn('trang_thai', ['danghoc', 'hoanthanh']))
             ->orderBy('ngay_hoc')
             ->orderBy('gio_batdau')
             ->get()

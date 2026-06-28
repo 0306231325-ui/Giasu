@@ -8,6 +8,7 @@ function Navbar() {
     const navigate = useNavigate();
     const { user, logout, isAuthenticated } = useAuth();
     const avatarUrl = layUrlAnhDaiDien(user?.anh_dai_dien);
+    const laTaiKhoanGiaSu = user?.vai_tro === "giasu";
     const [monHocs, setMonHocs] = useState([]);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -66,12 +67,14 @@ function Navbar() {
                     Danh Sách Gia Sư
                 </Link>
 
-                <Link
-                    to="/dang-ky-lam-gia-su"
-                    className="transition hover:text-white"
-                >
-                    Đăng Ký Làm Gia Sư
-                </Link>
+                {!laTaiKhoanGiaSu && (
+                    <Link
+                        to="/dang-ky-lam-gia-su"
+                        className="transition hover:text-white"
+                    >
+                        Đăng Ký Làm Gia Sư
+                    </Link>
+                )}
 
                 <div
                     className="relative flex items-center gap-1"

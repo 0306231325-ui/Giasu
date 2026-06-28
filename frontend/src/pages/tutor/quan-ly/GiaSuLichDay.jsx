@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import api from "../../../services/api";
 import TabDanhSachLichHoc from "./lich-day/TabDanhSachLichHoc";
+import TabLichTuan from "./lich-day/TabLichTuan";
 import TabYeuCauDatGiaSu from "./lich-day/TabYeuCauDatGiaSu";
 
 function GiaSuLichDay() {
@@ -115,12 +116,19 @@ function GiaSuLichDay() {
                 </div>
             )}
 
-            <div className="mt-6 grid gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 sm:grid-cols-2">
+            <div className="mt-6 grid gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 lg:grid-cols-3">
                 <NutTab
                     dangChon={tab === "lich_hoc"}
                     onClick={() => setTab("lich_hoc")}
                     tieuDe="Danh sách lịch học"
                     moTa="Các buổi học đã được xác nhận"
+                    soLuong={danhSachLichHoc.length}
+                />
+                <NutTab
+                    dangChon={tab === "lich_tuan"}
+                    onClick={() => setTab("lich_tuan")}
+                    tieuDe="Lịch tuần"
+                    moTa="Xem lịch theo thứ và khung giờ"
                     soLuong={danhSachLichHoc.length}
                 />
                 <NutTab
@@ -139,6 +147,8 @@ function GiaSuLichDay() {
                 </div>
             ) : tab === "lich_hoc" ? (
                 <TabDanhSachLichHoc danhSach={danhSachLichHoc} />
+            ) : tab === "lich_tuan" ? (
+                <TabLichTuan danhSach={danhSachLichHoc} />
             ) : (
                 <TabYeuCauDatGiaSu
                     danhSach={danhSachYeuCau}
