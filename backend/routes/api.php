@@ -50,6 +50,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/dat-goi', [DatLichController::class, 'danhSachDatGoiAdmin']);
     Route::patch('/admin/dat-goi/{goiHocId}/gui-gia-su', [DatLichController::class, 'guiGoiChoGiaSu']);
     Route::patch('/admin/dat-goi/{goiHocId}/cho-thanh-toan', [DatLichController::class, 'chuyenGoiChoThanhToan']);
+    Route::patch('/admin/dat-goi/{goiHocId}/duyet-thanh-toan', [DatLichController::class, 'duyetThanhToanAdmin']);
+    Route::patch('/admin/dat-goi/{goiHocId}/tu-choi-thanh-toan', [DatLichController::class, 'tuChoiThanhToanAdmin']);
     Route::patch('/admin/dat-goi/{goiHocId}/huy', [DatLichController::class, 'huyGoiAdmin']);
     Route::get('/admin/gia-su/xet-duyet', [AdminGiaSuController::class, 'danhSachHoSoChoDuyet']);
     Route::patch('/admin/gia-su/xet-duyet/{giaSuId}', [AdminGiaSuController::class, 'xuLyHoSoDangKy']);

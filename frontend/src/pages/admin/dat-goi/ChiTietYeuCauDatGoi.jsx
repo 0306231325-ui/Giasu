@@ -1,6 +1,8 @@
 import IconAdminGiaSu from "../gia-su/IconAdminGiaSu";
 import { TRANG_THAI_GOI } from "./constants";
-import { dinhDangNgay, layHanhDong } from "./utils";
+import { dinhDangNgay, layHanhDong, layNhanThanhToanPhu } from "./utils";
+
+const API_ORIGIN = (import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api").replace(/\/api\/?$/, "");
 
 function ChiTietYeuCauDatGoi({ yeuCau, onThucHien }) {
     return (
@@ -56,6 +58,7 @@ function ChiTietYeuCauDatGoi({ yeuCau, onThucHien }) {
                 </KhoiThongTin>
 
                 <KhoiPhanHoi yeuCau={yeuCau} />
+                <KhoiThanhToan yeuCau={yeuCau} />
 
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                     <h3 className="text-base font-extrabold">Hành động tiếp theo</h3>
@@ -75,6 +78,54 @@ function ChiTietYeuCauDatGoi({ yeuCau, onThucHien }) {
             </div>
         </div>
     );
+}
+
+function KhoiThanhToan({ yeuCau }) {
+    if (!["cho_thanh_toan", "da_tao_lich"].includes(yeuCau.trangThai)) {
+        return null;
+    }
+
+    const thanhToan = yeuCau.thanhToan || {};
+    const nhanPhu = layNhanThanhToanPhu(yeuCau);
+    const anhMinhChung = thanhToan.anhMinhChung || thanhToan.anh_minh_chung;
+    const urlMinhChung = taoUrlFile(anhMinhChung);
+
+    return (
+        <KhoiThongTin tieuDe="Thanh toán" icon="money">
+            <div className="grid gap-4 md:grid-cols-3">
+                <ThongTin label="Trạng thái" value={nhanPhu?.nhan || "Chưa cập nhật"} noiBat />
+                <ThongTin label="Số tiền" value={thanhToan.soTien || thanhToan.so_tien || yeuCau.tongTien} />
+                <ThongTin label="Phương thức" value={thanhToan.phuongThuc || thanhToan.phuong_thuc || "Chưa gửi"} />
+                <ThongTin label="Mã giao dịch" value={thanhToan.maGiaoDich || thanhToan.ma_giaodich || "Chưa gửi"} />
+                <ThongTin label="Ngày gửi" value={thanhToan.ngayThanhToan || thanhToan.ngay_thanhtoan || "Chưa gửi"} />
+                <ThongTin label="Minh chứng" value={anhMinhChung ? "Đã gửi minh chứng" : "Chưa gửi"} />
+            </div>
+
+            {urlMinhChung && (
+                <a
+                    href={urlMinhChung}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100"
+                >
+                    Xem minh chứng thanh toán
+                </a>
+            )}
+
+            {yeuCau.trangThai === "cho_thanh_toan" && (
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500">
+                    Khi học viên gửi minh chứng thanh toán, gói sẽ xuất hiện ở tab Xác nhận thanh toán.
+                </div>
+            )}
+        </KhoiThongTin>
+    );
+}
+
+function taoUrlFile(duongDan) {
+    if (!duongDan) return "";
+    if (/^https?:\/\//i.test(duongDan)) return duongDan;
+    if (duongDan.startsWith("/")) return `${API_ORIGIN}${duongDan}`;
+    return `${API_ORIGIN}/${duongDan}`;
 }
 
 function DanhSachBuoiHoc({ yeuCau }) {

@@ -9,6 +9,7 @@ function IconAdminGiaSu({ ten, className = "h-5 w-5" }) {
         x: <path d="m6 6 12 12M18 6 6 18" />,
         eye: <><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" /><circle cx="12" cy="12" r="2.5" /></>,
         mail: <><path d="M3 5h18v14H3z" /><path d="m3 6 9 7 9-7" /></>,
+        money: <><rect x="3" y="6" width="18" height="12" rx="2" /><circle cx="12" cy="12" r="2.5" /><path d="M7 9H5v2M17 15h2v-2" /></>,
         phone: <><path d="M7 3H4v4c0 7 6 13 13 13h4v-3l-5-2-2 2c-3-1-6-4-7-7l2-2z" /></>,
         location: <><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>,
     };

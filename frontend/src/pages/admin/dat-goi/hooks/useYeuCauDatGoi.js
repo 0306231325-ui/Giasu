@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import api from "../../../../services/api";
 import { TRANG_THAI_MAC_DINH } from "../constants";
+import { coThongTinChoXacNhanThanhToan } from "../utils";
 
 function useYeuCauDatGoi() {
     const [danhSachYeuCau, setDanhSachYeuCau] = useState([]);
@@ -80,10 +81,28 @@ function useYeuCauDatGoi() {
         const tuKhoaChuanHoa = tuKhoa.trim().toLowerCase();
 
         return danhSachYeuCau.filter((yeuCau) => {
+            const laBoLocDacBiet = [
+                "cho_thanh_toan",
+                "xac_nhan_thanh_toan",
+                "danh_sach_goi_hoc",
+            ].includes(boLocTrangThai);
+
+            const khopNhomThanhToan =
+                (boLocTrangThai === "cho_thanh_toan" &&
+                    yeuCau.trangThai === "cho_thanh_toan" &&
+                    !coThongTinChoXacNhanThanhToan(yeuCau)) ||
+                (boLocTrangThai === "xac_nhan_thanh_toan" &&
+                    yeuCau.trangThai === "cho_thanh_toan" &&
+                    coThongTinChoXacNhanThanhToan(yeuCau)) ||
+                (boLocTrangThai === "danh_sach_goi_hoc" &&
+                    yeuCau.trangThai === "da_tao_lich");
+
             const khopTrangThai =
-                yeuCau.trangThai === boLocTrangThai ||
-                (boLocTrangThai === "da_phan_hoi" &&
-                    ["giasu_dong_y", "giasu_tu_choi"].includes(yeuCau.trangThai));
+                laBoLocDacBiet
+                    ? khopNhomThanhToan
+                    : yeuCau.trangThai === boLocTrangThai ||
+                        (boLocTrangThai === "da_phan_hoi" &&
+                            ["giasu_dong_y", "giasu_tu_choi"].includes(yeuCau.trangThai));
 
             const khopPhanHoi =
                 boLocTrangThai !== "da_phan_hoi" ||
@@ -117,6 +136,24 @@ function useYeuCauDatGoi() {
             return danhSachYeuCau.filter((yeuCau) =>
                 ["giasu_dong_y", "giasu_tu_choi"].includes(yeuCau.trangThai),
             ).length;
+        }
+
+        if (trangThai === "cho_thanh_toan") {
+            return danhSachYeuCau.filter((yeuCau) =>
+                yeuCau.trangThai === "cho_thanh_toan" &&
+                !coThongTinChoXacNhanThanhToan(yeuCau),
+            ).length;
+        }
+
+        if (trangThai === "xac_nhan_thanh_toan") {
+            return danhSachYeuCau.filter((yeuCau) =>
+                yeuCau.trangThai === "cho_thanh_toan" &&
+                coThongTinChoXacNhanThanhToan(yeuCau),
+            ).length;
+        }
+
+        if (trangThai === "danh_sach_goi_hoc") {
+            return danhSachYeuCau.filter((yeuCau) => yeuCau.trangThai === "da_tao_lich").length;
         }
 
         return danhSachYeuCau.filter((yeuCau) => yeuCau.trangThai === trangThai).length;
@@ -174,6 +211,42 @@ function useYeuCauDatGoi() {
 
         if (hanhDong === "nhac_thanh_toan") {
             hienThongBao(`Đã gửi nhắc thanh toán cho học viên ${yeuCau.hocVien}.`);
+            return;
+        }
+
+        if (hanhDong === "duyet_thanh_toan") {
+            const dongY = window.confirm(`Xác nhận thanh toán cho gói ${yeuCau.ma}?`);
+            if (!dongY) return;
+
+            try {
+                const response = await api.patch(`/admin/dat-goi/${yeuCau.id}/duyet-thanh-toan`);
+                capNhatYeuCau(yeuCau.id, response.data.data);
+                setBoLocTrangThai("danh_sach_goi_hoc");
+                setYeuCauDangChonId(yeuCau.id);
+                hienThongBao(response.data.message || `Đã xác nhận thanh toán cho ${yeuCau.ma}.`);
+            } catch (error) {
+                console.error("Không thể duyệt thanh toán:", error);
+                hienThongBao(error.response?.data?.message || "Không thể duyệt thanh toán.");
+            }
+            return;
+        }
+
+        if (hanhDong === "tu_choi_thanh_toan") {
+            const lyDo = window.prompt(`Nhập lý do từ chối thanh toán cho ${yeuCau.ma}:`);
+            if (lyDo === null) return;
+
+            try {
+                const response = await api.patch(`/admin/dat-goi/${yeuCau.id}/tu-choi-thanh-toan`, {
+                    ly_do: lyDo.trim(),
+                });
+                capNhatYeuCau(yeuCau.id, response.data.data);
+                setBoLocTrangThai("cho_thanh_toan");
+                setYeuCauDangChonId(yeuCau.id);
+                hienThongBao(response.data.message || `Đã từ chối thanh toán của ${yeuCau.ma}.`);
+            } catch (error) {
+                console.error("Không thể từ chối thanh toán:", error);
+                hienThongBao(error.response?.data?.message || "Không thể từ chối thanh toán.");
+            }
             return;
         }
 

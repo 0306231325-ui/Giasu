@@ -1,7 +1,9 @@
 import { TRANG_THAI_GOI } from "./constants";
+import { layNhanThanhToanPhu } from "./utils";
 
 function TheYeuCauDatGoi({ yeuCau, active, onClick }) {
     const trangThai = TRANG_THAI_GOI[yeuCau.trangThai] ?? TRANG_THAI_GOI.cho_xu_ly;
+    const nhanThanhToanPhu = layNhanThanhToanPhu(yeuCau);
 
     return (
         <button
@@ -52,6 +54,12 @@ function TheYeuCauDatGoi({ yeuCau, active, onClick }) {
                 ].join(" ")}
                 >
                     Phản hồi: {yeuCau.phanHoi.ketQua === "dong_y" ? "Đồng ý" : "Từ chối"}
+                </div>
+            )}
+
+            {nhanThanhToanPhu && (
+                <div className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-bold ${nhanThanhToanPhu.className}`}>
+                    {nhanThanhToanPhu.nhan}
                 </div>
             )}
         </button>
