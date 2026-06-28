@@ -63,10 +63,15 @@ function layThongDiepLoi(error, fallback) {
         .replace("The ly do field is required.", "Vui lòng nhập lý do đổi buổi.")
         .replace("The ngay hoc field is required.", "Vui lòng chọn ngày học mới.")
         .replace("The gio batdau field is required.", "Vui lòng chọn giờ bắt đầu.")
-        .replace("The gio ketthuc field is required.", "Vui lòng chọn giờ kết thúc.");
+        .replace("The gio ketthuc field is required.", "Vui lòng chọn giờ kết thúc.")
+        .replace("The anh minh chung field is required.", "Vui lòng tải ảnh minh chứng giao dịch.")
+        .replace("The anh minh chung must be an image.", "Minh chứng giao dịch phải là hình ảnh.")
+        .replace("The anh minh chung must not be greater than 4096 kilobytes.", "Ảnh minh chứng không được vượt quá 4MB.");
 }
 
 const ngayHomNay = () => new Date().toISOString().slice(0, 10);
+
+const taoMaGiaoDich = (maGoi) => `GD${Date.now()}${String(maGoi || "").replace(/\D/g, "").slice(-6)}`;
 
 function NhanTrangThai({ trangThai, loai = "goi" }) {
     const cauHinh = loai === "buoi"
@@ -93,6 +98,7 @@ function LichHocCuaToi() {
         phuong_thuc: "banking",
         ma_giaodich: "",
         noi_dung_thanhtoan: "",
+        anh_minh_chung: null,
     });
     const [chiTietBuoi, setChiTietBuoi] = useState(null);
     const [dangGuiDanhGia, setDangGuiDanhGia] = useState(false);
@@ -174,8 +180,9 @@ function LichHocCuaToi() {
         setGoiThanhToan(goiHoc);
         setFormThanhToan({
             phuong_thuc: "banking",
-            ma_giaodich: "",
+            ma_giaodich: taoMaGiaoDich(goiHoc.ma),
             noi_dung_thanhtoan: `Thanh toan ${goiHoc.ma}`,
+            anh_minh_chung: null,
         });
         setThongBao("");
     };
@@ -193,7 +200,18 @@ function LichHocCuaToi() {
         setThongBao("");
 
         try {
-            const response = await api.post(`/hoc-vien/goi-hoc/${goiThanhToan.id}/thanh-toan`, formThanhToan);
+            const duLieuGui = new FormData();
+            duLieuGui.append("phuong_thuc", formThanhToan.phuong_thuc);
+            duLieuGui.append("ma_giaodich", formThanhToan.ma_giaodich);
+            duLieuGui.append("noi_dung_thanhtoan", formThanhToan.noi_dung_thanhtoan);
+
+            if (formThanhToan.anh_minh_chung) {
+                duLieuGui.append("anh_minh_chung", formThanhToan.anh_minh_chung);
+            }
+
+            const response = await api.post(`/hoc-vien/goi-hoc/${goiThanhToan.id}/thanh-toan`, duLieuGui, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
 
             if (response.data.success) {
                 const goiMoi = response.data.data;
@@ -201,7 +219,7 @@ function LichHocCuaToi() {
                     hienTai.map((item) => (item.id === goiMoi.id ? goiMoi : item)),
                 );
                 setGoiThanhToan(null);
-                setTab("dang_hoc");
+                setTab("cho_thanhtoan");
                 setThongBao(response.data.message || "Thanh toán thành công.");
             }
         } catch (error) {
@@ -698,6 +716,22 @@ function LichHocCuaToi() {
 
                             <label className="block">
                                 <span className="mb-2 block text-sm font-semibold text-slate-700">Nội dung thanh toán</span>
+                                <div className="mb-4">
+                                    <span className="mb-2 block text-sm font-semibold text-slate-700">Ảnh minh chứng giao dịch</span>
+                                    <input
+                                        type="file"
+                                        accept="image/png,image/jpeg,image/jpg,image/webp"
+                                        required
+                                        onChange={(event) => setFormThanhToan((hienTai) => ({
+                                            ...hienTai,
+                                            anh_minh_chung: event.target.files?.[0] || null,
+                                        }))}
+                                        className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 file:mr-3 file:rounded-md file:border-0 file:bg-orange-100 file:px-3 file:py-1.5 file:text-sm file:font-bold file:text-orange-700 hover:file:bg-orange-200"
+                                    />
+                                    <p className="mt-2 text-xs font-semibold text-slate-500">
+                                        Chụp màn hình chuyển khoản hoặc hóa đơn thanh toán, tối đa 4MB.
+                                    </p>
+                                </div>
                                 <textarea
                                     rows={3}
                                     value={formThanhToan.noi_dung_thanhtoan}
