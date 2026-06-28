@@ -192,12 +192,16 @@ function AdminYeuCauDatGiaSu() {
         }
 
         if (hanhDong === "cho_thanh_toan") {
-            capNhatYeuCau(yeuCau.id, {
-                trangThai: "cho_thanh_toan",
-            });
-            setBoLocTrangThai("cho_thanh_toan");
-            setYeuCauDangChonId(yeuCau.id);
-            hienThongBao(`Đã chuyển ${yeuCau.ma} sang trạng thái chờ học viên thanh toán.`);
+            try {
+                const response = await api.patch(`/admin/dat-goi/${yeuCau.id}/cho-thanh-toan`);
+                capNhatYeuCau(yeuCau.id, response.data.data);
+                setBoLocTrangThai("cho_thanh_toan");
+                setYeuCauDangChonId(yeuCau.id);
+                hienThongBao(response.data.message || `Đã chuyển ${yeuCau.ma} sang trạng thái chờ học viên thanh toán.`);
+            } catch (error) {
+                console.error("Không thể chuyển sang chờ thanh toán:", error);
+                hienThongBao(error.response?.data?.message || "Không thể chuyển sang chờ thanh toán.");
+            }
             return;
         }
 

@@ -24,6 +24,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/dang-ky-gia-su', [DangKyGiaSuController::class, 'guiDon']);
     Route::post('/gia-su/{giaSuId}/goi-hoc', [DatLichController::class, 'datLich']);
     Route::get('/hoc-vien/lich-hoc', [DatLichController::class, 'lichHocCuaToi']);
+    Route::get('/gia-su/lich-day', [DatLichController::class, 'lichDayGiaSu']);
+    Route::get('/gia-su/yeu-cau-dat-goi', [DatLichController::class, 'danhSachYeuCauGiaSu']);
+    Route::patch('/gia-su/yeu-cau-dat-goi/{goiHocId}/phan-hoi', [DatLichController::class, 'phanHoiYeuCauGiaSu']);
     Route::get('/hoc-vien/ho-so', [AuthController::class, 'hoSoHocVien']);
     Route::patch('/hoc-vien/ho-so', [AuthController::class, 'capNhatHoSoHocVien']);
     Route::post('/hoc-vien/ho-so/cap-nhat', [AuthController::class, 'capNhatHoSoHocVien']);
@@ -43,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/gia-su', [AdminGiaSuController::class, 'danhSachGiaSu']);
     Route::get('/admin/dat-goi', [DatLichController::class, 'danhSachDatGoiAdmin']);
     Route::patch('/admin/dat-goi/{goiHocId}/gui-gia-su', [DatLichController::class, 'guiGoiChoGiaSu']);
+    Route::patch('/admin/dat-goi/{goiHocId}/cho-thanh-toan', [DatLichController::class, 'chuyenGoiChoThanhToan']);
     Route::patch('/admin/dat-goi/{goiHocId}/huy', [DatLichController::class, 'huyGoiAdmin']);
     Route::get('/admin/gia-su/xet-duyet', [AdminGiaSuController::class, 'danhSachHoSoChoDuyet']);
     Route::patch('/admin/gia-su/xet-duyet/{giaSuId}', [AdminGiaSuController::class, 'xuLyHoSoDangKy']);

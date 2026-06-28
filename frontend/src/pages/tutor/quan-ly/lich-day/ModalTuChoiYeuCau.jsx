@@ -4,7 +4,7 @@ import {
     TieuDeModal,
 } from "./ModalChiTietLichHoc";
 
-function ModalTuChoiYeuCau({ yeuCau, onDong, onXacNhan }) {
+function ModalTuChoiYeuCau({ yeuCau, dangXuLy, onDong, onXacNhan }) {
     const [lyDo, setLyDo] = useState("");
 
     return (
@@ -52,10 +52,10 @@ function ModalTuChoiYeuCau({ yeuCau, onDong, onXacNhan }) {
                     </button>
                     <button
                         type="submit"
-                        disabled={!lyDo.trim()}
+                        disabled={dangXuLy || !lyDo.trim()}
                         className="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                        Xác nhận từ chối
+                        {dangXuLy ? "Đang xử lý..." : "Xác nhận từ chối"}
                     </button>
                 </div>
             </form>
