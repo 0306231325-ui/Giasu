@@ -5,6 +5,46 @@ export function dinhDangNgay(ngay) {
     return `${ngayTrongThang}/${thang}/${nam}`;
 }
 
+export function coThongTinChoXacNhanThanhToan(yeuCau) {
+    const thanhToan = yeuCau?.thanhToan;
+
+    if (!thanhToan) return false;
+
+    return Boolean(
+        thanhToan.anhMinhChung ||
+        thanhToan.anh_minh_chung ||
+        thanhToan.maGiaoDich ||
+        thanhToan.ma_giaodich ||
+        thanhToan.ngayThanhToan ||
+        thanhToan.ngay_thanhtoan,
+    );
+}
+
+export function layNhanThanhToanPhu(yeuCau) {
+    if (yeuCau?.trangThai === "da_tao_lich") {
+        return {
+            nhan: "Đã thanh toán",
+            className: "bg-emerald-400/10 text-emerald-200",
+        };
+    }
+
+    if (yeuCau?.trangThai !== "cho_thanh_toan") {
+        return null;
+    }
+
+    if (coThongTinChoXacNhanThanhToan(yeuCau)) {
+        return {
+            nhan: "Chờ xác nhận TT",
+            className: "bg-sky-400/10 text-sky-200",
+        };
+    }
+
+    return {
+        nhan: "Chưa gửi TT",
+        className: "bg-purple-400/10 text-purple-200",
+    };
+}
+
 export function layHanhDong(yeuCau) {
     const nutChinh = "rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-700";
     const nutPhu = "rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50";

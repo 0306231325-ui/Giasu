@@ -4,11 +4,39 @@ import { BO_LOC_TRANG_THAI } from "./constants";
 import TheYeuCauDatGoi from "./TheYeuCauDatGoi";
 import useYeuCauDatGoi from "./hooks/useYeuCauDatGoi";
 
+const MO_TA_DANH_SACH = {
+    cho_xu_ly: {
+        tieuDe: "Danh sách yêu cầu",
+        moTa: "Các yêu cầu đặt gói đang chờ admin xử lý hoặc gửi cho gia sư.",
+    },
+    da_phan_hoi: {
+        tieuDe: "Gia sư đã phản hồi",
+        moTa: "Các gói học đã được gia sư đồng ý hoặc từ chối.",
+    },
+    cho_thanh_toan: {
+        tieuDe: "Chờ thanh toán",
+        moTa: "Các gói đang chờ học viên gửi thông tin thanh toán.",
+    },
+    xac_nhan_thanh_toan: {
+        tieuDe: "Xác nhận thanh toán",
+        moTa: "Các gói học viên đã gửi minh chứng, chờ admin xác nhận.",
+    },
+    danh_sach_goi_hoc: {
+        tieuDe: "Danh sách gói học",
+        moTa: "Các gói học đã thanh toán và chuyển sang trạng thái đang học/hoàn thành.",
+    },
+    da_huy: {
+        tieuDe: "Gói học đã huỷ",
+        moTa: "Các yêu cầu hoặc gói học đã bị huỷ.",
+    },
+};
+
 function AdminYeuCauDatGiaSu() {
     const {
         boLocPhanHoi,
         boLocTrangThai,
         dangTai,
+        dangDungDuLieuMau,
         danhSachDaLoc,
         thongBao,
         tuKhoa,
@@ -20,6 +48,7 @@ function AdminYeuCauDatGiaSu() {
         setYeuCauDangChonId,
         xuLyHanhDong,
     } = useYeuCauDatGoi();
+    const thongTinDanhSach = MO_TA_DANH_SACH[boLocTrangThai] ?? MO_TA_DANH_SACH.cho_xu_ly;
 
     return (
         <div className="mx-auto max-w-[1500px]">
@@ -64,6 +93,12 @@ function AdminYeuCauDatGiaSu() {
                 </div>
             )}
 
+            {dangDungDuLieuMau && (
+                <div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/10 px-4 py-3 text-sm font-semibold text-amber-100">
+                    Đang hiển thị dữ liệu mẫu để xem giao diện, không lưu vào database.
+                </div>
+            )}
+
             <BoLocDatGoi
                 boLocTrangThai={boLocTrangThai}
                 boLocPhanHoi={boLocPhanHoi}
@@ -76,9 +111,9 @@ function AdminYeuCauDatGiaSu() {
             <div className="mt-5 grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
                 <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#0a0f24]">
                     <div className="border-b border-white/10 px-5 py-4">
-                        <h2 className="text-lg font-extrabold">Danh sách yêu cầu</h2>
+                        <h2 className="text-lg font-extrabold">{thongTinDanhSach.tieuDe}</h2>
                         <p className="mt-1 text-sm text-white/45">
-                            Một danh sách chung, lọc theo trạng thái gói học.
+                            {thongTinDanhSach.moTa}
                         </p>
                     </div>
 
