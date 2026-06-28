@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import DanhSachBaiViet from "./bai-viet/DanhSachBaiViet";
-import FormChinhSuaBaiViet from "./bai-viet/FormChinhSuaBaiViet";
-import FormTaoBaiViet from "./bai-viet/FormTaoBaiViet";
-import TabButton from "./bai-viet/TabButton";
-import ThungRacBaiViet from "./bai-viet/ThungRacBaiViet";
-import useChinhSuaBaiViet from "./bai-viet/hooks/useChinhSuaBaiViet";
-import useDanhSachBaiViet from "./bai-viet/hooks/useDanhSachBaiViet";
-import useTaoBaiViet from "./bai-viet/hooks/useTaoBaiViet";
-import useThungRacBaiViet from "./bai-viet/hooks/useThungRacBaiViet";
+import DanhSachBaiViet from "./DanhSachBaiViet";
+import FormChinhSuaBaiViet from "./FormChinhSuaBaiViet";
+import FormTaoBaiViet from "./FormTaoBaiViet";
+import TabButton from "./TabButton";
+import ThungRacBaiViet from "./ThungRacBaiViet";
+import useChinhSuaBaiViet from "./hooks/useChinhSuaBaiViet";
+import useDanhSachBaiViet from "./hooks/useDanhSachBaiViet";
+import useTaoBaiViet from "./hooks/useTaoBaiViet";
+import useThungRacBaiViet from "./hooks/useThungRacBaiViet";
 
 function AdminBaiViet() {
   const navigate = useNavigate();

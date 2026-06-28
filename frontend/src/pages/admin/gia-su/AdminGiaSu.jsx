@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import api from "../../services/api";
-import ChiTietXetDuyet from "./gia-su/ChiTietXetDuyet";
-import DanhSachChoDuyet from "./gia-su/DanhSachChoDuyet";
-import DanhSachGiaSuAdmin from "./gia-su/DanhSachGiaSuAdmin";
-import ModalTuChoi from "./gia-su/ModalTuChoi";
+import api from "../../../services/api";
+import ChiTietXetDuyet from "./ChiTietXetDuyet";
+import DanhSachChoDuyet from "./DanhSachChoDuyet";
+import DanhSachGiaSuAdmin from "./DanhSachGiaSuAdmin";
+import ModalTuChoi from "./ModalTuChoi";
 
 function AdminGiaSu() {
     const [tab, setTab] = useState("xet_duyet");
