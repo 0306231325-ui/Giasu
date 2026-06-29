@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import api from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
@@ -45,6 +45,20 @@ const tinhGioKetThuc = (gioBatDau) => {
     if (phutBatDau === null) return "";
     return phutSangThoiGian(phutBatDau + THOI_LUONG_BUOI_PHUT);
 };
+
+const taoDanhSachKhungGio = () => {
+    const batDau = thoiGianSangPhut(GIO_BAT_DAU_MIN);
+    const ketThuc = thoiGianSangPhut(GIO_BAT_DAU_MAX);
+    const danhSach = [];
+
+    for (let phut = batDau; phut <= ketThuc; phut += 30) {
+        danhSach.push(phutSangThoiGian(phut));
+    }
+
+    return danhSach;
+};
+
+const cacKhungGioBatDau = taoDanhSachKhungGio();
 
 const gioiHanGioBatDau = (gioBatDau) => {
     const phutBatDau = thoiGianSangPhut(gioBatDau);
@@ -162,6 +176,7 @@ function ChonGoiHoc() {
     const [giaSus, setGiaSus] = useState([]);
     const [monHocs, setMonHocs] = useState([]);
     const [goiDinhKy, setGoiDinhKy] = useState([]);
+    const [lichBanGiaSu, setLichBanGiaSu] = useState([]);
     const [loading, setLoading] = useState(true);
     const [dangGui, setDangGui] = useState(false);
     const [loaiGoi, setLoaiGoi] = useState("dinh_ky");
@@ -210,6 +225,27 @@ function ChonGoiHoc() {
         };
     }, []);
 
+    useEffect(() => {
+        let cancelled = false;
+
+        const fetchLichBan = async () => {
+            try {
+                const response = await api.get(`/gia-su/${id}/lich-ban`);
+                if (!cancelled && response.data.success) {
+                    setLichBanGiaSu(response.data.data || []);
+                }
+            } catch (error) {
+                if (!cancelled) setLichBanGiaSu([]);
+            }
+        };
+
+        if (id) fetchLichBan();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [id]);
+
     const giaSu = useMemo(
         () => giaSus.find((item) => String(item.id) === String(id)),
         [giaSus, id],
@@ -229,7 +265,7 @@ function ChonGoiHoc() {
         : loaiGoi === "dinh_ky"
             ? goiDinhKy
             : goiKhongDinhKy.filter((goi) => goi.id !== "linh-hoat-1");
-    const goiDangChon = danhSachGoi.find((goi) => String(goi.id) === String(goiId)) || danhSachGoi[0];
+    const goiDangChon = danhSachGoi.find((goi) => String(goi.id) === String(goiId));
     const monHocDaChon = monHocsCoTheDat.find((mon) => String(mon.id) === String(form.monhoc_id));
     const tienGoi = tinhTienGoi(giaSu, goiDangChon);
     const soBuoi = tienGoi.tongBuoi;
@@ -242,26 +278,9 @@ function ChonGoiHoc() {
 
     const doiLoaiGoi = (value) => {
         setLoaiGoi(value);
-        const danhSachMoi = value === "hoc_thu"
-            ? [goiHocThu]
-            : value === "dinh_ky"
-                ? goiDinhKy
-                : goiKhongDinhKy.filter((goi) => goi.id !== "linh-hoat-1");
-        setGoiId(danhSachMoi[0]?.id || "");
+        setGoiId("");
         setThongBao("");
     };
-
-    useEffect(() => {
-        if (!goiDangChon && danhSachGoi.length > 0) {
-            const boDem = setTimeout(() => {
-                setGoiId(danhSachGoi[0].id);
-            }, 0);
-
-            return () => clearTimeout(boDem);
-        }
-
-        return undefined;
-    }, [danhSachGoi, goiDangChon]);
 
     useEffect(() => {
         if (loaiGoi !== "khong_dinh_ky" || soBuoi <= 0) return;
@@ -276,10 +295,51 @@ function ChonGoiHoc() {
                 return { ...prev, gio_batdau: gioBatDau, gio_ketthuc: tinhGioKetThuc(gioBatDau) };
             }
 
+            if (field === "ngay_batdau" && loaiGoi === "hoc_thu") {
+                const gioBatDau = slotTrungLichBan(value, prev.gio_batdau)
+                    ? khungGioGiaSuRanhDauTien(value)
+                    : prev.gio_batdau;
+
+                return { ...prev, ngay_batdau: value, gio_batdau: gioBatDau, gio_ketthuc: tinhGioKetThuc(gioBatDau) };
+            }
+
             return { ...prev, [field]: value };
         });
         setThongBao("");
     };
+
+    const slotTrungLichBan = (ngay, gioBatDau) => {
+        const gioKetThuc = tinhGioKetThuc(gioBatDau);
+
+        return lichBanGiaSu.some((lich) => (
+            lich.ngay_hoc === ngay
+            && gioBatDau < lich.gio_ketthuc
+            && gioKetThuc > lich.gio_batdau
+        ));
+    };
+
+    const slotTrungBuoiDangChon = (ngay, gioBatDau, boQuaIndex = null) => {
+        const gioKetThuc = tinhGioKetThuc(gioBatDau);
+
+        return buoiLinhHoat.some((buoi, index) => (
+            index !== boQuaIndex
+            && buoi.ngay === ngay
+            && gioBatDau < buoi.gio_ketthuc
+            && gioKetThuc > buoi.gio_batdau
+        ));
+    };
+
+    const slotBiKhoa = (ngay, gioBatDau, boQuaIndex = null) => (
+        slotTrungLichBan(ngay, gioBatDau) || slotTrungBuoiDangChon(ngay, gioBatDau, boQuaIndex)
+    );
+
+    const khungGioRanhDauTien = (ngay, boQuaIndex = null) => (
+        cacKhungGioBatDau.find((gio) => !slotBiKhoa(ngay, gio, boQuaIndex)) || GIO_BAT_DAU_MIN
+    );
+
+    const khungGioGiaSuRanhDauTien = (ngay) => (
+        cacKhungGioBatDau.find((gio) => !slotTrungLichBan(ngay, gio)) || GIO_BAT_DAU_MIN
+    );
 
     const toggleThu = (thu) => {
         setThuHoc((prev) => {
@@ -294,13 +354,23 @@ function ChonGoiHoc() {
         setBuoiLinhHoat((prev) =>
             prev.map((buoi, currentIndex) =>
                 currentIndex === index
-                    ? {
-                        ...buoi,
-                        [field]: field === "gio_batdau" ? gioiHanGioBatDau(value) : value,
-                        ...(field === "gio_batdau"
-                            ? { gio_ketthuc: tinhGioKetThuc(gioiHanGioBatDau(value)) }
-                            : {}),
-                    }
+                    ? (() => {
+                        if (field === "ngay") {
+                            const gioBatDau = slotBiKhoa(value, buoi.gio_batdau, index)
+                                ? khungGioRanhDauTien(value, index)
+                                : buoi.gio_batdau;
+
+                            return { ...buoi, ngay: value, gio_batdau: gioBatDau, gio_ketthuc: tinhGioKetThuc(gioBatDau) };
+                        }
+
+                        const gioBatDau = field === "gio_batdau" ? gioiHanGioBatDau(value) : buoi.gio_batdau;
+
+                        return {
+                            ...buoi,
+                            [field]: field === "gio_batdau" ? gioBatDau : value,
+                            ...(field === "gio_batdau" ? { gio_ketthuc: tinhGioKetThuc(gioBatDau) } : {}),
+                        };
+                    })()
                     : buoi,
             ),
         );
@@ -342,8 +412,13 @@ function ChonGoiHoc() {
             return;
         }
 
+        if (danhSachGoi.length === 0) {
+            setThongBao("Chưa có dữ liệu gói học. Vui lòng chạy seeder loại gói.");
+            return;
+        }
+
         if (!goiDangChon) {
-            setThongBao("Chưa có loại gói học để đặt. Vui lòng chạy seeder loại gói.");
+            setThongBao("Vui lòng chọn một gói học trước khi gửi yêu cầu.");
             return;
         }
 
@@ -387,6 +462,11 @@ function ChonGoiHoc() {
             return;
         }
 
+        if (loaiGoi === "hoc_thu" && slotTrungLichBan(form.ngay_batdau, form.gio_batdau)) {
+            setThongBao("Khung giờ học thử này đã có lịch. Vui lòng chọn khung giờ khác.");
+            return;
+        }
+
         if (loaiGoi === "khong_dinh_ky" && buoiLinhHoat.length === 0) {
             setThongBao("Vui lòng thêm ít nhất một buổi học.");
             return;
@@ -404,6 +484,11 @@ function ChonGoiHoc() {
 
         if (loaiGoi === "khong_dinh_ky" && buoiLinhHoatGui.some((buoi) => !cachNhauDungThoiLuong(buoi.gio_batdau, buoi.gio_ketthuc))) {
             setThongBao("Mỗi buổi học phải kéo dài đúng 1 giờ 30 phút.");
+            return;
+        }
+
+        if (loaiGoi === "khong_dinh_ky" && buoiLinhHoatGui.some((buoi, index) => slotBiKhoa(buoi.ngay, buoi.gio_batdau, index))) {
+            setThongBao("Có buổi học bị trùng lịch hoặc trùng khung giờ vừa chọn. Vui lòng chọn lại.");
             return;
         }
 
@@ -566,7 +651,12 @@ function ChonGoiHoc() {
                             <button
                                 type="button"
                                 onClick={() => setGoiId(goiHocThu.id)}
-                                className="mt-5 w-full rounded-2xl border border-blue-400 bg-blue-500/15 p-5 text-left transition hover:bg-blue-500/20"
+                                className={[
+                                    "mt-5 w-full rounded-2xl border p-5 text-left transition",
+                                    String(goiId) === String(goiHocThu.id)
+                                        ? "border-blue-400 bg-blue-500/15"
+                                        : "border-white/10 bg-white/[0.03] hover:border-white/25",
+                                ].join(" ")}
                             >
                                 <div>
                                     <span className="w-fit rounded-full bg-blue-300/15 px-3 py-1 text-xs font-bold text-blue-100">
@@ -581,6 +671,9 @@ function ChonGoiHoc() {
                                         <span className="rounded-full bg-white/10 px-3 py-1">90 phút</span>
                                         <span className="rounded-full bg-white/10 px-3 py-1">Chọn 1 ngày học</span>
                                     </div>
+                                </div>
+                                <div className="mt-5 text-sm font-bold text-white">
+                                    {String(goiId) === String(goiHocThu.id) ? "Đang chọn" : "Chọn gói này"}
                                 </div>
                                 <div className="hidden">
                                     <div className="text-sm font-semibold text-slate-300">Gói học thử</div>
@@ -723,15 +816,21 @@ function ChonGoiHoc() {
                                     <div className="grid gap-4 md:grid-cols-2">
                                         <label className="block">
                                             <span className="mb-2 block text-sm font-semibold text-slate-200">Giờ bắt đầu</span>
-                                            <input
-                                                type="time"
+                                            <select
                                                 value={form.gio_batdau}
-                                                min={GIO_BAT_DAU_MIN}
-                                                max={GIO_BAT_DAU_MAX}
-                                                step={BUOC_CHON_GIO_GIAY}
                                                 onChange={(event) => capNhatForm("gio_batdau", event.target.value)}
                                                 className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
-                                            />
+                                            >
+                                                {cacKhungGioBatDau.map((gio) => {
+                                                    const biKhoa = slotTrungLichBan(form.ngay_batdau, gio);
+
+                                                    return (
+                                                        <option key={gio} value={gio} disabled={biKhoa}>
+                                                            {gio}{biKhoa ? " - đã có lịch" : ""}
+                                                        </option>
+                                                    );
+                                                })}
+                                            </select>
                                         </label>
                                         <label className="block">
                                             <span className="mb-2 block text-sm font-semibold text-slate-200">Giờ kết thúc</span>
@@ -764,15 +863,21 @@ function ChonGoiHoc() {
                                             onChange={(event) => capNhatBuoi(index, "ngay", event.target.value)}
                                             className="rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
                                         />
-                                        <input
-                                            type="time"
+                                        <select
                                             value={buoi.gio_batdau}
-                                            min={GIO_BAT_DAU_MIN}
-                                            max={GIO_BAT_DAU_MAX}
-                                            step={BUOC_CHON_GIO_GIAY}
                                             onChange={(event) => capNhatBuoi(index, "gio_batdau", event.target.value)}
                                             className="rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
-                                        />
+                                        >
+                                            {cacKhungGioBatDau.map((gio) => {
+                                                const biKhoa = slotBiKhoa(buoi.ngay, gio, index);
+
+                                                return (
+                                                    <option key={gio} value={gio} disabled={biKhoa}>
+                                                        {gio}{biKhoa ? " - đã có lịch" : ""}
+                                                    </option>
+                                                );
+                                            })}
+                                        </select>
                                         <input
                                             type="time"
                                             value={buoi.gio_ketthuc}
@@ -916,3 +1021,4 @@ function ChonGoiHoc() {
 }
 
 export default ChonGoiHoc;
+

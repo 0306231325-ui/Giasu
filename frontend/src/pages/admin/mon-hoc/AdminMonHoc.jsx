@@ -14,7 +14,7 @@ const dinhDangTien = (gia) => {
   return soTien ? `${soTien.toLocaleString("vi-VN")} đ/giờ` : "Chưa cập nhật";
 };
 
-function AdminMonHoc() {
+function AdminMonHoc({ compact = false }) {
   const [danhSach, setDanhSach] = useState([]);
   const [capHocs, setCapHocs] = useState([]);
   const [tuKhoa, setTuKhoa] = useState("");
