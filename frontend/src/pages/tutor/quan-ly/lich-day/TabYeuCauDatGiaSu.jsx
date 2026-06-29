@@ -16,11 +16,9 @@ function TabYeuCauDatGiaSu({
 
     const danhSachDaLoc = useMemo(
         () =>
-            boLoc
-                ? danhSach.filter(
-                    (yeuCau) => yeuCau.trangThai === boLoc,
-                )
-                : danhSach,
+            danhSach.filter(
+                (yeuCau) => yeuCau.trangThai === boLoc,
+            ),
         [boLoc, danhSach],
     );
 
@@ -38,18 +36,15 @@ function TabYeuCauDatGiaSu({
                         ["cho_phan_hoi", "Chờ phản hồi"],
                         ["da_dong_y", "Đã đồng ý"],
                         ["tu_choi", "Đã từ chối"],
-                        ["", "Tất cả"],
                     ].map(([giaTri, nhan]) => {
-                        const soLuong = giaTri
-                            ? danhSach.filter(
-                                (yeuCau) =>
-                                    yeuCau.trangThai === giaTri,
-                            ).length
-                            : danhSach.length;
+                        const soLuong = danhSach.filter(
+                            (yeuCau) =>
+                                yeuCau.trangThai === giaTri,
+                        ).length;
 
                         return (
                             <button
-                                key={giaTri || "tat_ca"}
+                                key={giaTri}
                                 type="button"
                                 onClick={() => setBoLoc(giaTri)}
                                 className={[

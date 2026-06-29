@@ -70,7 +70,14 @@ function Truong({ nhan, name, type = "text", placeholder, defaultValue = "", cla
     return (
         <label className={`${LOP_NHAN} ${className}`}>
             {nhan}<DauBatBuoc />
-            <input className={LOP_INPUT} type={type} name={name} placeholder={placeholder} defaultValue={defaultValue} />
+            <input
+                key={`${name}-${defaultValue}`}
+                className={LOP_INPUT}
+                type={type}
+                name={name}
+                placeholder={placeholder}
+                defaultValue={defaultValue}
+            />
         </label>
     );
 }

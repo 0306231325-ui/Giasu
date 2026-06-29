@@ -9,13 +9,18 @@ function XacNhanDangKy({ dangGui = false }) {
             </label>
             <div className="mt-8 flex flex-col-reverse items-center justify-between gap-4 border-t border-slate-100 pt-7 sm:flex-row">
                 <p className="text-sm text-slate-500">Các trường có dấu <span className="text-red-500">*</span> là bắt buộc.</p>
-                <button
-                    type="submit"
-                    disabled={dangGui}
-                    className="w-full rounded-xl bg-blue-600 px-7 py-3.5 font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-                >
-                    {dangGui ? "Đang gửi đơn..." : "Gửi đơn đăng ký"}
-                </button>
+                <div className="w-full sm:w-auto">
+                    <button
+                        type="submit"
+                        disabled={dangGui}
+                        className="w-full rounded-xl bg-blue-600 px-7 py-3.5 font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        {dangGui ? "Đang gửi đơn..." : "Gửi đơn đăng ký"}
+                    </button>
+                    <p className="mt-3 max-w-xs text-center text-xs font-semibold leading-5 text-slate-500 sm:text-right">
+                        Sau khi gửi đơn, vui lòng theo dõi chuông thông báo để xem kết quả duyệt hồ sơ.
+                    </p>
+                </div>
             </div>
         </div>
     );

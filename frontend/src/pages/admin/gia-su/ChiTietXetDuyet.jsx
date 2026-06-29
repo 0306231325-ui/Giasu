@@ -31,6 +31,11 @@ function ChiTietXetDuyet({
                             <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700">
                                 Chờ duyệt
                             </span>
+                            {hoSo.laHoSoGuiLai && (
+                                <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
+                                    Gửi lại sau khi bị từ chối
+                                </span>
+                            )}
                         </div>
                         <p className="mt-1 text-xs text-slate-500">
                             Gửi hồ sơ lúc {hoSo.ngayGui}
@@ -60,6 +65,13 @@ function ChiTietXetDuyet({
             </div>
 
             <div className="space-y-4 p-4 sm:p-5">
+                {hoSo.laHoSoGuiLai && hoSo.lyDoTuChoiLanTruoc && (
+                    <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-800">
+                        <p className="font-extrabold">Lý do từ chối lần trước</p>
+                        <p className="mt-1">{hoSo.lyDoTuChoiLanTruoc}</p>
+                    </div>
+                )}
+
                 <KhoiChiTiet
                     icon="user"
                     tieuDe="Thông tin cá nhân"

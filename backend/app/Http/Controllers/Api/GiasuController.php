@@ -475,16 +475,18 @@ class GiasuController extends Controller
             'mon_hoc_ids.min' => 'Vui lòng chọn ít nhất một môn học.',
         ]);
 
-        $monHopLe = MonHoc::query()
+        $monDaiDien = MonHoc::query()
             ->whereIn('id', $duLieu['mon_hoc_ids'])
-            ->get(['id', 'cap_hoc_id']);
+            ->get(['id', 'cap_hoc_id', 'ten_mon']);
 
-        if ($monHopLe->count() !== count($duLieu['mon_hoc_ids'])) {
+        if ($monDaiDien->count() !== count($duLieu['mon_hoc_ids'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Có môn học không hợp lệ.',
             ], 422);
         }
+
+        $monHopLe = $this->layTatCaMonTheoCapVaTen($duLieu['mon_hoc_ids']);
 
         if ($giaSu->giasuGias()->whereIn('monhoc_id', $monHopLe->pluck('id'))->exists()) {
             return response()->json([
@@ -512,6 +514,36 @@ class GiasuController extends Controller
             'success' => true,
             'message' => 'Đã thêm môn dạy và gửi xét duyệt.',
         ], 201);
+    }
+
+    private function layTatCaMonTheoCapVaTen(array $monHocIds)
+    {
+        $monDaiDien = MonHoc::query()
+            ->whereIn('id', $monHocIds)
+            ->get(['id', 'cap_hoc_id', 'ten_mon']);
+
+        $nhomMon = $monDaiDien
+            ->unique(fn (MonHoc $monHoc) => "{$monHoc->cap_hoc_id}|{$monHoc->ten_mon}")
+            ->values();
+
+        if ($nhomMon->isEmpty()) {
+            return collect();
+        }
+
+        return MonHoc::query()
+            ->where(function ($query) use ($nhomMon) {
+                foreach ($nhomMon as $monHoc) {
+                    $query->orWhere(function ($subQuery) use ($monHoc) {
+                        $subQuery
+                            ->where('cap_hoc_id', $monHoc->cap_hoc_id)
+                            ->where('ten_mon', $monHoc->ten_mon);
+                    });
+                }
+            })
+            ->orderBy('cap_hoc_id')
+            ->orderBy('ten_mon')
+            ->orderBy('lop')
+            ->get(['id', 'cap_hoc_id', 'ten_mon', 'lop']);
     }
 
     public function xoaMonDay(Request $request, int $mucGiaId): JsonResponse

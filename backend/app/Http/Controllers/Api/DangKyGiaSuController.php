@@ -118,6 +118,7 @@ class DangKyGiaSuController extends Controller
             'anh_chan_dung.image' => 'Ảnh chân dung không hợp lệ.',
             'anh_chan_dung.mimes' => 'Ảnh chân dung chỉ hỗ trợ JPG, JPEG, PNG hoặc WEBP.',
             'anh_chan_dung.max' => 'Ảnh chân dung không được lớn hơn 5MB.',
+            'anh_chan_dung.uploaded' => 'Tải ảnh chân dung thất bại. Vui lòng chọn ảnh nhỏ hơn 2MB hoặc thử ảnh khác.',
             'gioi_thieu.required' => 'Vui lòng nhập giới thiệu bản thân.',
             'gioi_thieu.min' => 'Giới thiệu bản thân phải có ít nhất 10 ký tự.',
             'muc_kinh_nghiem_id.required' => 'Vui lòng chọn mức kinh nghiệm.',
@@ -127,7 +128,10 @@ class DangKyGiaSuController extends Controller
             'bang_cap.min' => 'Vui lòng thêm ít nhất một bằng cấp hoặc chứng chỉ.',
             'bang_cap.*.trinh_do_giasu_id.required' => 'Vui lòng chọn trình độ xác minh cho từng tài liệu.',
             'bang_cap.*.tai_lieu.required' => 'Vui lòng chọn file minh chứng cho từng tài liệu.',
+            'bang_cap.*.tai_lieu.file' => 'File minh chứng không hợp lệ. Vui lòng chọn lại file.',
             'bang_cap.*.tai_lieu.mimes' => 'File minh chứng chỉ hỗ trợ PDF, JPG, JPEG hoặc PNG.',
+            'bang_cap.*.tai_lieu.max' => 'File minh chứng không được lớn hơn 5MB.',
+            'bang_cap.*.tai_lieu.uploaded' => 'Tải file minh chứng thất bại. Vui lòng chọn file nhỏ hơn 2MB hoặc thử file khác.',
             'dong_y.accepted' => 'Vui lòng xác nhận cam kết thông tin.',
         ]);
 
@@ -180,7 +184,6 @@ class DangKyGiaSuController extends Controller
                     'trang_thai_ho_so' => 'cho_duyet',
                     'duyet_boi' => null,
                     'duyet_luc' => null,
-                    'ly_do_tu_choi' => null,
                 ]);
 
                 foreach ($duLieu['bang_cap'] as $index => $taiLieu) {
@@ -205,9 +208,7 @@ class DangKyGiaSuController extends Controller
                     ]);
                 }
 
-                $monHoc = MonHoc::query()
-                    ->whereIn('id', $duLieu['mon_hoc_ids'])
-                    ->get(['id', 'cap_hoc_id']);
+                $monHoc = $this->layTatCaMonTheoCapVaTen($duLieu['mon_hoc_ids']);
 
                 $giaSu->capHocs()->sync($monHoc->pluck('cap_hoc_id')->unique()->all());
 
@@ -263,6 +264,36 @@ class DangKyGiaSuController extends Controller
             ->orderByDesc('thu_tu')
             ->orderByDesc('id')
             ->value('id');
+    }
+
+    private function layTatCaMonTheoCapVaTen(array $monHocIds)
+    {
+        $monDaiDien = MonHoc::query()
+            ->whereIn('id', $monHocIds)
+            ->get(['id', 'cap_hoc_id', 'ten_mon']);
+
+        $nhomMon = $monDaiDien
+            ->unique(fn (MonHoc $monHoc) => "{$monHoc->cap_hoc_id}|{$monHoc->ten_mon}")
+            ->values();
+
+        if ($nhomMon->isEmpty()) {
+            return collect();
+        }
+
+        return MonHoc::query()
+            ->where(function ($query) use ($nhomMon) {
+                foreach ($nhomMon as $monHoc) {
+                    $query->orWhere(function ($subQuery) use ($monHoc) {
+                        $subQuery
+                            ->where('cap_hoc_id', $monHoc->cap_hoc_id)
+                            ->where('ten_mon', $monHoc->ten_mon);
+                    });
+                }
+            })
+            ->orderBy('cap_hoc_id')
+            ->orderBy('ten_mon')
+            ->orderBy('lop')
+            ->get(['id', 'cap_hoc_id', 'ten_mon', 'lop']);
     }
 
     private function luuAnhChanDung(Request $request): string

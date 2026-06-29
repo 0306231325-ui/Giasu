@@ -693,6 +693,12 @@ class DatLichController extends Controller
             'ma_giaodich' => ['nullable', 'string', 'max:255'],
             'noi_dung_thanhtoan' => ['nullable', 'string', 'max:1000'],
             'anh_minh_chung' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+        ], [
+            'anh_minh_chung.required' => 'Vui lòng chọn ảnh minh chứng thanh toán.',
+            'anh_minh_chung.image' => 'Ảnh minh chứng thanh toán không hợp lệ.',
+            'anh_minh_chung.mimes' => 'Ảnh minh chứng chỉ hỗ trợ JPG, JPEG, PNG hoặc WEBP.',
+            'anh_minh_chung.max' => 'Ảnh minh chứng không được lớn hơn 4MB.',
+            'anh_minh_chung.uploaded' => 'Tải ảnh minh chứng thất bại. Vui lòng chọn ảnh nhỏ hơn 2MB hoặc thử ảnh khác.',
         ]);
 
         $goiHoc = GoiHoc::query()

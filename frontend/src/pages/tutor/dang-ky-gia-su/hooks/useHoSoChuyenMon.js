@@ -5,6 +5,7 @@ export default function useHoSoChuyenMon() {
     const [danhSach, setDanhSach] = useState([]);
     const [hienForm, setHienForm] = useState(false);
     const [form, setForm] = useState(HO_SO_CHUYEN_MON_MAC_DINH);
+    const [idDangSua, setIdDangSua] = useState(null);
 
     const thayDoi = ({ target: { name, value, files } }) => {
         setForm((hienTai) => ({
@@ -16,6 +17,7 @@ export default function useHoSoChuyenMon() {
     const dongForm = () => {
         setHienForm(false);
         setForm(HO_SO_CHUYEN_MON_MAC_DINH);
+        setIdDangSua(null);
     };
 
     const them = () => {
@@ -27,11 +29,28 @@ export default function useHoSoChuyenMon() {
         ) {
             return;
         }
-        setDanhSach((hienTai) => [
-            ...hienTai,
-            { ...form, id: crypto.randomUUID() },
-        ]);
+        setDanhSach((hienTai) => {
+            if (idDangSua) {
+                return hienTai.map((muc) =>
+                    muc.id === idDangSua ? { ...form, id: idDangSua } : muc,
+                );
+            }
+
+            return [
+                ...hienTai,
+                { ...form, id: crypto.randomUUID() },
+            ];
+        });
         dongForm();
+    };
+
+    const sua = (id) => {
+        const mucCanSua = danhSach.find((muc) => muc.id === id);
+        if (!mucCanSua) return;
+
+        setForm(mucCanSua);
+        setIdDangSua(id);
+        setHienForm(true);
     };
 
     const xoa = (id) => {
@@ -42,7 +61,20 @@ export default function useHoSoChuyenMon() {
         setDanhSach([]);
         setHienForm(false);
         setForm(HO_SO_CHUYEN_MON_MAC_DINH);
+        setIdDangSua(null);
     };
 
-    return { danhSach, hienForm, form, setHienForm, thayDoi, dongForm, them, xoa, reset };
+    return {
+        danhSach,
+        hienForm,
+        form,
+        idDangSua,
+        setHienForm,
+        thayDoi,
+        dongForm,
+        them,
+        sua,
+        xoa,
+        reset,
+    };
 }

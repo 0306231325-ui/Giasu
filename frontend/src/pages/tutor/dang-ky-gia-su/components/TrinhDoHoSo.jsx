@@ -51,7 +51,10 @@ function TrinhDoHoSo({ danhMuc, hoSo }) {
                                                 {layNhanLoaiTaiLieu(muc.loai_bang)}
                                             </p>
                                         </div>
-                                        <button type="button" onClick={() => hoSo.xoa(muc.id)} className="text-xs font-bold text-red-600">Xóa</button>
+                                        <div className="flex shrink-0 items-center gap-3">
+                                            <button type="button" onClick={() => hoSo.sua(muc.id)} className="text-xs font-bold text-blue-600 hover:text-blue-700">Sửa</button>
+                                            <button type="button" onClick={() => hoSo.xoa(muc.id)} className="text-xs font-bold text-red-600 hover:text-red-700">Xóa</button>
+                                        </div>
                                     </div>
                                     <div className="mt-3 grid gap-3 text-xs sm:grid-cols-2">
                                         <ThongTinTaiLieu nhan="Chuyên ngành" giaTri={muc.chuyen_nganh || "Chưa nhập"} />

@@ -7,6 +7,7 @@ use App\Models\DanhGia;
 use App\Models\Giasu;
 use App\Models\GiasuBangCap;
 use App\Models\GiasuGia;
+use App\Models\MonHoc;
 use App\Models\ThongBao;
 use App\Models\TrinhDoGiasu;
 use App\Services\GiaTinhService;
@@ -135,6 +136,8 @@ class AdminGiaSuController extends Controller
                         'ly_do' => null,
                     ]);
 
+                $this->dongBoMonDayTheoCapVaTen($giaSu);
+
                 foreach ($giaSu->giasuGias()->get() as $mucGia) {
                     $giaMoi = GiaTinhService::tinhGiaGiasu($mucGia->monhoc_id, $giaSu->id) ?? [];
                     $mucGia->update(array_merge($giaMoi, [
@@ -194,6 +197,47 @@ class AdminGiaSuController extends Controller
                 ? 'Đã duyệt hồ sơ gia sư.'
                 : 'Đã từ chối hồ sơ gia sư.',
         ]);
+    }
+
+    private function dongBoMonDayTheoCapVaTen(Giasu $giaSu): void
+    {
+        $giaSu->loadMissing('giasuGias.monHoc:id,cap_hoc_id,ten_mon');
+
+        $nhomMon = $giaSu->giasuGias
+            ->filter(fn (GiasuGia $mucGia) => $mucGia->monHoc)
+            ->map(fn (GiasuGia $mucGia) => $mucGia->monHoc)
+            ->unique(fn (MonHoc $monHoc) => "{$monHoc->cap_hoc_id}|{$monHoc->ten_mon}")
+            ->values();
+
+        if ($nhomMon->isEmpty()) {
+            return;
+        }
+
+        $tatCaMonTheoNhom = MonHoc::query()
+            ->where(function ($query) use ($nhomMon) {
+                foreach ($nhomMon as $monHoc) {
+                    $query->orWhere(function ($subQuery) use ($monHoc) {
+                        $subQuery
+                            ->where('cap_hoc_id', $monHoc->cap_hoc_id)
+                            ->where('ten_mon', $monHoc->ten_mon);
+                    });
+                }
+            })
+            ->get(['id']);
+
+        $monDaCo = $giaSu->giasuGias->pluck('monhoc_id')->map(fn ($id) => (int) $id);
+
+        foreach ($tatCaMonTheoNhom as $monHoc) {
+            if ($monDaCo->contains((int) $monHoc->id)) {
+                continue;
+            }
+
+            $giaSu->giasuGias()->create([
+                'monhoc_id' => $monHoc->id,
+                'trang_thai' => GiasuGia::TRANG_THAI_CHO_DUYET,
+                'ly_do_tu_choi' => null,
+            ]);
+        }
     }
 
     public function xemBangCapAdmin(Request $request, int $bangCapId)
@@ -450,6 +494,8 @@ class AdminGiaSuController extends Controller
             ),
             'heSoGia' => (float) ($giaSu->he_so_gia ?? 0),
             'gioiThieu' => $giaSu->mo_ta ?: 'Chưa cập nhật giới thiệu.',
+            'laHoSoGuiLai' => filled($giaSu->ly_do_tu_choi),
+            'lyDoTuChoiLanTruoc' => $giaSu->ly_do_tu_choi,
             'bangCap' => $bangCap,
             'monDay' => $monDay,
         ];

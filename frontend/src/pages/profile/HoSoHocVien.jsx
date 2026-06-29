@@ -220,6 +220,8 @@ function HoSoHocVien() {
                 ngay_sinh: duLieuMoi.ngay_sinh,
                 email: duLieuMoi.email,
                 sdt: duLieuMoi.sdt,
+                dia_chi: duLieuMoi.dia_chi,
+                hocvien: duLieuMoi.hocvien,
                 anh_dai_dien: duLieuMoi.anh_dai_dien,
             });
             setThongBao({
