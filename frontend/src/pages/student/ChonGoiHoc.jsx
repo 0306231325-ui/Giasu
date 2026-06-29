@@ -347,6 +347,16 @@ function ChonGoiHoc() {
             return;
         }
 
+        const buoiLinhHoatGui = buoiLinhHoat.map((buoi) => {
+            const gioBatDau = gioiHanGioBatDau(buoi.gio_batdau);
+
+            return {
+                ngay: buoi.ngay,
+                gio_batdau: gioBatDau,
+                gio_ketthuc: tinhGioKetThuc(gioBatDau),
+            };
+        });
+
         if (loaiGoi === "dinh_ky" && thuHoc.length === 0) {
             setThongBao("Vui lòng chọn ít nhất một thứ học cố định.");
             return;
@@ -387,12 +397,12 @@ function ChonGoiHoc() {
             return;
         }
 
-        if (loaiGoi === "khong_dinh_ky" && buoiLinhHoat.some((buoi) => !hopLeKhoangGioBatDau(buoi.gio_batdau))) {
+        if (loaiGoi === "khong_dinh_ky" && buoiLinhHoatGui.some((buoi) => !hopLeKhoangGioBatDau(buoi.gio_batdau))) {
             setThongBao(`Giờ bắt đầu phải trong khoảng ${GIO_BAT_DAU_MIN} - ${GIO_BAT_DAU_MAX}.`);
             return;
         }
 
-        if (loaiGoi === "khong_dinh_ky" && buoiLinhHoat.some((buoi) => !cachNhauDungThoiLuong(buoi.gio_batdau, buoi.gio_ketthuc))) {
+        if (loaiGoi === "khong_dinh_ky" && buoiLinhHoatGui.some((buoi) => !cachNhauDungThoiLuong(buoi.gio_batdau, buoi.gio_ketthuc))) {
             setThongBao("Mỗi buổi học phải kéo dài đúng 1 giờ 30 phút.");
             return;
         }
@@ -418,11 +428,7 @@ function ChonGoiHoc() {
                 gio_batdau: form.gio_batdau,
                 gio_ketthuc: form.gio_ketthuc,
                 thu_hoc: loaiGoi === "dinh_ky" ? thuHoc.map((thu) => thuSangSo[thu]).filter(Boolean) : [],
-                buoi_linh_hoat: loaiGoi === "khong_dinh_ky" ? buoiLinhHoat.map((buoi) => ({
-                    ngay: buoi.ngay,
-                    gio_batdau: buoi.gio_batdau,
-                    gio_ketthuc: buoi.gio_ketthuc,
-                })) : [],
+                buoi_linh_hoat: loaiGoi === "khong_dinh_ky" ? buoiLinhHoatGui : [],
                 hinh_thuc_hoc: form.hinh_thuc_hoc,
                 dia_chi_hoc: form.dia_chi_hoc,
                 ghi_chu: form.ghi_chu,
