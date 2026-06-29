@@ -131,7 +131,19 @@ class DatLichController extends Controller
                 'phanHoiMoiNhat',
             ])
             ->where('giasu_id', $giaSu->id)
-            ->whereIn('trang_thai', ['cho_xacnhan', 'cho_thanhtoan', 'dahuy'])
+            ->where(function ($query) use ($giaSu) {
+                $query
+                    ->whereIn('trang_thai', ['cho_xacnhan', 'cho_thanhtoan'])
+                    ->orWhere(function ($huyQuery) use ($giaSu) {
+                        $huyQuery
+                            ->where('trang_thai', 'dahuy')
+                            ->whereHas('phanHois', function ($phanHoiQuery) use ($giaSu) {
+                                $phanHoiQuery
+                                    ->where('gia_su_id', $giaSu->id)
+                                    ->where('phan_hoi', PhanHoi::TU_CHOI);
+                            });
+                    });
+            })
             ->latest()
             ->get()
             ->map(fn (GoiHoc $goiHoc) => $this->dinhDangYeuCauChoGiaSu($goiHoc))
@@ -503,6 +515,17 @@ class DatLichController extends Controller
                 'url' => '/hoc-vien/lich-hoc',
                 'da_doc' => false,
             ]);
+
+            if ($goiHoc->giasu?->user_id) {
+                ThongBao::create([
+                    'user_id' => $goiHoc->giasu->user_id,
+                    'tieu_de' => 'Yeu cau dat goi da bi huy',
+                    'noi_dung' => 'Yeu cau dat goi ' . 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT)
+                        . ' da bi admin huy' . (filled($duLieu['ly_do'] ?? null) ? ': ' . trim($duLieu['ly_do']) : '.'),
+                    'url' => '/gia-su/quan-ly/lich-day',
+                    'da_doc' => false,
+                ]);
+            }
         });
 
         return response()->json([

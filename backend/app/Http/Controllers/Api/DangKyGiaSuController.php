@@ -159,12 +159,20 @@ class DangKyGiaSuController extends Controller
         }
 
         $fileDaLuu = [];
+        $anhCuCanXoa = [];
 
         try {
-            $giaSu = DB::transaction(function () use ($request, $user, $duLieu, $trinhDoCaoNhatId, $avatarMoi, &$fileDaLuu) {
+            $giaSu = DB::transaction(function () use ($request, $user, $duLieu, $trinhDoCaoNhatId, $avatarMoi, &$fileDaLuu, &$anhCuCanXoa) {
                 $giaSu = $user->giasu()->firstOrCreate([]);
 
                 $this->xoaTaiLieuDangKyCu($giaSu);
+
+                if ($avatarMoi) {
+                    $anhCuCanXoa = array_filter([
+                        $user->anh_dai_dien,
+                        $giaSu->avatar,
+                    ]);
+                }
 
                 $user->update([
                     'ho_ten' => trim($duLieu['ho_ten']),
@@ -234,6 +242,10 @@ class DangKyGiaSuController extends Controller
             }
 
             throw $exception;
+        }
+
+        if ($avatarMoi) {
+            $this->xoaAnhChanDungCu($anhCuCanXoa, $avatarMoi);
         }
 
         return response()->json([
@@ -322,5 +334,15 @@ class DangKyGiaSuController extends Controller
         $giaSu->bangCaps()->delete();
         $giaSu->giasuGias()->delete();
         $giaSu->capHocs()->detach();
+    }
+
+    private function xoaAnhChanDungCu(array $danhSachDuongDan, string $avatarMoi): void
+    {
+        collect($danhSachDuongDan)
+            ->filter()
+            ->unique()
+            ->reject(fn (string $duongDan) => $duongDan === $avatarMoi)
+            ->filter(fn (string $duongDan) => str_starts_with($duongDan, 'images/avatar-gia-su/'))
+            ->each(fn (string $duongDan) => File::delete(public_path($duongDan)));
     }
 }
