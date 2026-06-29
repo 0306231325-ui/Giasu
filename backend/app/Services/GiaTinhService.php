@@ -75,23 +75,5 @@ class GiaTinhService
         ];
     }
 
-    // /** @deprecated Dùng tinhGiaGiasu */
-    // public static function tinhGiaGiasuMon(int $monhocId, int $giasuId): ?float
-    // {
-    //     $result = self::tinhGiaGiasu($monhocId, $giasuId);
 
-    //     return $result ? $result['tong_gia'] : null;
-    // }
-
-    // /** @deprecated Dùng tinhGiaGiasu */
-    // public static function tinhGiaChuan(int $monhocId, ?int $lopId = null, ?int $giasuId = null): ?float
-    // {
-    //     if ($giasuId) {
-    //         return self::tinhGiaGiasuMon($monhocId, $giasuId);
-    //     }
-
-    //     $monhoc = MonHoc::find($monhocId);
-
-    //     return $monhoc ? (float) $monhoc->gia : null;
-    // }
 }

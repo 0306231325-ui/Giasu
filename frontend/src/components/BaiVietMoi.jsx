@@ -72,7 +72,7 @@ function BaiVietMoi() {
                 </span>
 
                 <button
-                  onClick={() => navigate(`/baiviet/${item.slug}`)}
+                  onClick={() => navigate(`/bai-viet/${item.slug}`)}
                   className="text-blue-400 hover:text-blue-300"
                 >
                   Xem thêm

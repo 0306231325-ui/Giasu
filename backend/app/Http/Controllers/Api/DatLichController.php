@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Models\YeuCauHocBu;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -1240,7 +1241,7 @@ class DatLichController extends Controller
         ][$phuongThuc] ?? 'Chưa cập nhật';
     }
 
-    private function dinhDangLichMongMuon(GoiHoc $goiHoc, $lichHocs): string
+    private function dinhDangLichMongMuon(GoiHoc $goiHoc, Collection $lichHocs): string
     {
         if ($lichHocs->isEmpty()) {
             return $this->dinhDangKhoangNgay($goiHoc->ngay_batdau, $goiHoc->ngay_ketthuc);
@@ -1278,7 +1279,7 @@ class DatLichController extends Controller
         return $cacBuoiDau . ($soBuoiConLai > 0 ? " (+{$soBuoiConLai} buoi)" : '');
     }
 
-    private function dinhDangNgayMongMuon(GoiHoc $goiHoc, $lichHocs): string
+    private function dinhDangNgayMongMuon(GoiHoc $goiHoc, Collection $lichHocs): string
     {
         if ($lichHocs->isEmpty()) {
             return $this->dinhDangKhoangNgay($goiHoc->ngay_batdau, $goiHoc->ngay_ketthuc);
@@ -1301,7 +1302,7 @@ class DatLichController extends Controller
             . ($lichHocs->count() > 3 ? ' +' . ($lichHocs->count() - 3) . ' buoi' : '');
     }
 
-    private function dinhDangGioMongMuon($lichHocs): string
+    private function dinhDangGioMongMuon(Collection $lichHocs): string
     {
         if ($lichHocs->isEmpty()) {
             return 'Chua cap nhat';
@@ -1379,7 +1380,7 @@ class DatLichController extends Controller
     {
         return [
             'id' => $yeuCau->id,
-            'ngayHoc' => $yeuCau->ngay_hoc?->toDateString(),
+            'ngayHoc' => $yeuCau->ngay_hoc ? Carbon::parse($yeuCau->ngay_hoc)->toDateString() : null,
             'gioBatDau' => substr((string) $yeuCau->gio_batdau, 0, 5),
             'gioKetThuc' => substr((string) $yeuCau->gio_ketthuc, 0, 5),
             'lyDo' => $yeuCau->ly_do,
