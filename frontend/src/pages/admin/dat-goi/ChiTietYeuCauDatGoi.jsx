@@ -102,14 +102,33 @@ function KhoiThanhToan({ yeuCau }) {
             </div>
 
             {urlMinhChung && (
-                <a
-                    href={urlMinhChung}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100"
-                >
-                    Xem minh chứng thanh toán
-                </a>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p className="text-sm font-extrabold text-slate-900">
+                                Ảnh minh chứng thanh toán
+                            </p>
+                            <p className="mt-1 text-xs font-semibold text-slate-500">
+                                Admin kiểm tra ảnh trước khi duyệt hoặc từ chối thanh toán.
+                            </p>
+                        </div>
+                        <a
+                            href={urlMinhChung}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex justify-center rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100"
+                        >
+                            Mở ảnh gốc
+                        </a>
+                    </div>
+                    <a href={urlMinhChung} target="_blank" rel="noreferrer">
+                        <img
+                            src={urlMinhChung}
+                            alt="Minh chứng thanh toán"
+                            className="mt-4 max-h-[420px] w-full rounded-xl border border-slate-200 bg-white object-contain"
+                        />
+                    </a>
+                </div>
             )}
 
             {yeuCau.trangThai === "cho_thanh_toan" && (

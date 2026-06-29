@@ -303,6 +303,42 @@ class DatLichController extends Controller
         ]);
     }
 
+    public function nhacThanhToanAdmin(Request $request, int $goiHocId): JsonResponse
+    {
+        if ($request->user()?->vai_tro !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ban khong co quyen truy cap.',
+            ], 403);
+        }
+
+        $goiHoc = GoiHoc::query()
+            ->with(['hocVien:id,ho_ten', 'monHoc:id,ten_mon,lop', 'giasu.user:id,ho_ten', 'lichHocs', 'phanHoiMoiNhat', 'thanhToanMoiNhat'])
+            ->where('trang_thai', 'cho_thanhtoan')
+            ->find($goiHocId);
+
+        if (! $goiHoc) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chi co the nhac thanh toan voi goi dang cho thanh toan.',
+            ], 404);
+        }
+
+        ThongBao::create([
+            'user_id' => $goiHoc->hocvien_id,
+            'tieu_de' => 'Nhac thanh toan goi hoc',
+            'noi_dung' => 'Goi hoc ' . 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . ' dang cho thanh toan. Vui long hoan tat thanh toan de kich hoat lich hoc.',
+            'url' => '/hoc-vien/lich-hoc',
+            'da_doc' => false,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Da gui thong bao nhac thanh toan cho hoc vien.',
+            'data' => $this->dinhDangGoiHocChoAdmin($goiHoc),
+        ]);
+    }
+
     public function duyetThanhToanAdmin(Request $request, int $goiHocId): JsonResponse
     {
         if ($request->user()?->vai_tro !== 'admin') {

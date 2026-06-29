@@ -210,7 +210,15 @@ function useYeuCauDatGoi() {
         }
 
         if (hanhDong === "nhac_thanh_toan") {
-            hienThongBao(`Đã gửi nhắc thanh toán cho học viên ${yeuCau.hocVien}.`);
+            try {
+                const response = await api.patch(`/admin/dat-goi/${yeuCau.id}/nhac-thanh-toan`);
+                capNhatYeuCau(yeuCau.id, response.data.data);
+                setYeuCauDangChonId(yeuCau.id);
+                hienThongBao(response.data.message || `Đã gửi nhắc thanh toán cho học viên ${yeuCau.hocVien}.`);
+            } catch (error) {
+                console.error("Không thể nhắc học viên thanh toán:", error);
+                hienThongBao(error.response?.data?.message || "Không thể nhắc học viên thanh toán.");
+            }
             return;
         }
 
