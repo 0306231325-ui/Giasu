@@ -774,7 +774,7 @@ class DatLichController extends Controller
 
         $duLieu = $request->validate([
             'monhoc_id' => ['required', 'integer', 'exists:monhoc,id'],
-            'loai_goi' => ['required', Rule::in(['dinh_ky', 'khong_dinh_ky'])],
+            'loai_goi' => ['required', Rule::in(['hoc_thu', 'dinh_ky', 'khong_dinh_ky'])],
             'loai_goi_id' => ['required_if:loai_goi,dinh_ky', 'nullable', 'integer', 'exists:loai_goi,id'],
             'goi_id' => ['nullable'],
             'ten_goi' => ['nullable', 'string', 'max:120'],
@@ -782,8 +782,8 @@ class DatLichController extends Controller
             'so_buoi' => ['required', 'integer', 'min:1', 'max:120'],
             'giam_gia' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'ngay_batdau' => ['required', 'date'],
-            'gio_batdau' => ['required_if:loai_goi,dinh_ky', 'nullable', 'date_format:H:i'],
-            'gio_ketthuc' => ['required_if:loai_goi,dinh_ky', 'nullable', 'date_format:H:i'],
+            'gio_batdau' => ['required_if:loai_goi,hoc_thu,dinh_ky', 'nullable', 'date_format:H:i'],
+            'gio_ketthuc' => ['required_if:loai_goi,hoc_thu,dinh_ky', 'nullable', 'date_format:H:i'],
             'thu_hoc' => ['required_if:loai_goi,dinh_ky', 'array'],
             'thu_hoc.*' => ['integer', 'between:1,7'],
             'buoi_linh_hoat' => ['required_if:loai_goi,khong_dinh_ky', 'array'],
@@ -807,6 +807,12 @@ class DatLichController extends Controller
             $loaiGoi = LoaiGoi::query()->find($duLieu['loai_goi_id']);
             $duLieu['so_thang'] = (int) $loaiGoi->so_thang;
             $duLieu['giam_gia'] = (float) $loaiGoi->phan_tram_giam;
+        }
+
+        if ($duLieu['loai_goi'] === 'hoc_thu') {
+            $duLieu['so_thang'] = 1;
+            $duLieu['so_buoi'] = 1;
+            $duLieu['giam_gia'] = 0;
         }
 
         $giaSu = Giasu::query()
@@ -864,8 +870,8 @@ class DatLichController extends Controller
                 'so_buoi' => count($lichHocNhap),
                 'hoc_dinhky' => $duLieu['loai_goi'] === 'dinh_ky',
                 'thu' => $duLieu['loai_goi'] === 'dinh_ky' ? ($duLieu['thu_hoc'][0] ?? null) : null,
-                'gio_batdau' => $duLieu['loai_goi'] === 'dinh_ky' ? $duLieu['gio_batdau'] : null,
-                'gio_ketthuc' => $duLieu['loai_goi'] === 'dinh_ky' ? $duLieu['gio_ketthuc'] : null,
+                'gio_batdau' => in_array($duLieu['loai_goi'], ['hoc_thu', 'dinh_ky'], true) ? $duLieu['gio_batdau'] : null,
+                'gio_ketthuc' => in_array($duLieu['loai_goi'], ['hoc_thu', 'dinh_ky'], true) ? $duLieu['gio_ketthuc'] : null,
                 'dia_chi_hoc' => filled($duLieu['dia_chi_hoc'] ?? null) ? trim($duLieu['dia_chi_hoc']) : null,
                 'hinh_thuc_hoc' => $duLieu['hinh_thuc_hoc'],
                 'don_gia_theogio' => $donGia,
@@ -917,6 +923,12 @@ class DatLichController extends Controller
 
     private function taoLichHocTuYeuCau(array $duLieu): array
     {
+        if ($duLieu['loai_goi'] === 'hoc_thu') {
+            return [
+                $this->taoMotBuoi($duLieu['ngay_batdau'], $duLieu['gio_batdau'], $duLieu['gio_ketthuc']),
+            ];
+        }
+
         if ($duLieu['loai_goi'] === 'khong_dinh_ky') {
             return collect($duLieu['buoi_linh_hoat'] ?? [])
                 ->map(fn (array $buoi) => $this->taoMotBuoi($buoi['ngay'], $buoi['gio_batdau'], $buoi['gio_ketthuc']))
@@ -965,12 +977,34 @@ class DatLichController extends Controller
             ], 422));
         }
 
+        $gioSomNhat = Carbon::createFromFormat('H:i', '07:00');
+        $gioMuonNhat = Carbon::createFromFormat('H:i', '19:30');
+
+        if ($batDau->lessThan($gioSomNhat) || $batDau->greaterThan($gioMuonNhat)) {
+            abort(response()->json([
+                'success' => false,
+                'message' => 'Gio bat dau phai trong khoang 07:00 - 19:30.',
+            ], 422));
+        }
+
+        if ($batDau->diffInMinutes($ketThuc) !== 90) {
+            abort(response()->json([
+                'success' => false,
+                'message' => 'Moi buoi hoc phai keo dai dung 1 gio 30 phut.',
+            ], 422));
+        }
+
         return [
             'ngay_hoc' => Carbon::parse($ngayHoc)->toDateString(),
             'gio_batdau' => $gioBatDau,
             'gio_ketthuc' => $gioKetThuc,
             'so_gio' => $batDau->diffInMinutes($ketThuc) / 60,
         ];
+    }
+
+    private function laGoiHocThu(GoiHoc $goiHoc): bool
+    {
+        return ! $goiHoc->hoc_dinhky && (int) $goiHoc->so_buoi === 1;
     }
 
     private function dinhDangGoiHoc(GoiHoc $goiHoc): array
@@ -1036,6 +1070,7 @@ class DatLichController extends Controller
         $lichDau = $lichHocs->first();
         $phanHoiMoiNhat = $goiHoc->phanHoiMoiNhat;
         $thanhToanMoiNhat = $goiHoc->thanhToanMoiNhat;
+        $laHocThu = $this->laGoiHocThu($goiHoc);
         $trangThai = match ($goiHoc->trang_thai) {
             'cho_thanhtoan' => 'cho_thanh_toan',
             'danghoc' => 'da_tao_lich',
@@ -1059,7 +1094,7 @@ class DatLichController extends Controller
             'giaSuEmail' => $goiHoc->giasu?->user?->email ?? 'Chua cap nhat',
             'mon' => $goiHoc->monHoc?->ten_mon ?? 'Mon hoc',
             'capHoc' => $goiHoc->monHoc?->lop ?? 'Chua cap nhat',
-            'loaiGoi' => $goiHoc->hoc_dinhky ? 'Dinh ky' : 'Khong dinh ky',
+            'loaiGoi' => $goiHoc->hoc_dinhky ? 'Dinh ky' : ($laHocThu ? 'Hoc thu' : 'Khong dinh ky'),
             'hocDinhKy' => (bool) $goiHoc->hoc_dinhky,
             'soBuoi' => $goiHoc->so_buoi,
             'gioMoiBuoi' => $lichDau ? round(Carbon::parse($lichDau->gio_batdau)->diffInMinutes(Carbon::parse($lichDau->gio_ketthuc)) / 60, 1) : 0,
@@ -1084,6 +1119,7 @@ class DatLichController extends Controller
         $lichHocs = $goiHoc->lichHocs->sortBy(['ngay_hoc', 'gio_batdau'])->values();
         $lichDau = $lichHocs->first();
         $phanHoiMoiNhat = $goiHoc->phanHoiMoiNhat;
+        $laHocThu = $this->laGoiHocThu($goiHoc);
         $trangThai = match ($phanHoiMoiNhat?->phan_hoi) {
             PhanHoi::DONG_Y => 'da_dong_y',
             PhanHoi::TU_CHOI => 'tu_choi',
@@ -1098,7 +1134,7 @@ class DatLichController extends Controller
             'hocVien' => $goiHoc->hocVien?->ho_ten ?? 'Hoc vien',
             'mon' => $goiHoc->monHoc?->ten_mon ?? 'Mon hoc',
             'capHoc' => $goiHoc->monHoc?->lop ?? 'Chua cap nhat',
-            'lop' => $goiHoc->hoc_dinhky ? 'Hoc dinh ky' : 'Hoc khong dinh ky',
+            'lop' => $goiHoc->hoc_dinhky ? 'Hoc dinh ky' : ($laHocThu ? 'Hoc thu' : 'Hoc khong dinh ky'),
             'soBuoi' => $goiHoc->so_buoi,
             'gioMoiBuoi' => $lichDau ? round(Carbon::parse($lichDau->gio_batdau)->diffInMinutes(Carbon::parse($lichDau->gio_ketthuc)) / 60, 1) : 0,
             'lichMongMuon' => $this->dinhDangLichMongMuon($goiHoc, $lichHocs),
