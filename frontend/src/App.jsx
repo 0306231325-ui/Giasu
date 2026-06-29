@@ -16,7 +16,7 @@ import AdminHome from "./pages/admin/AdminHome";
 import AdminHocVien from "./pages/admin/hoc-vien/AdminHocVien";
 import AdminGiaSu from "./pages/admin/gia-su/AdminGiaSu";
 import AdminBaiViet from "./pages/admin/bai-viet/AdminBaiViet";
-import AdminMonHoc from "./pages/admin/mon-hoc/AdminMonHoc";
+import AdminDanhMuc from "./pages/admin/danh-muc/AdminDanhMuc";
 import AdminQuanLyDatGoi from "./pages/admin/dat-goi/AdminYeuCauDatGiaSu";
 import DangKyLamGiaSu from "./pages/tutor/dang-ky-gia-su/DangKyLamGiaSu";
 import GiaSuLayout from "./layouts/GiaSuLayout";
@@ -65,7 +65,7 @@ function App() {
         <Route index element={<AdminHome />} />
         <Route path="hoc-vien" element={<AdminHocVien />} />
         <Route path="gia-su" element={<AdminGiaSu />} />
-        <Route path="mon-hoc" element={<AdminMonHoc />} />
+        <Route path="danh-muc" element={<AdminDanhMuc />} />
         <Route path="quan-ly-dat-goi" element={<AdminQuanLyDatGoi />} />
         <Route path="yeu-cau-dat-gia-su" element={<AdminQuanLyDatGoi />} />
         <Route path="bai-viet" element={<AdminBaiViet />} />
