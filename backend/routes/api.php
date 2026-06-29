@@ -60,6 +60,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/admin/gia-su/{giaSuId}/trang-thai', [AdminGiaSuController::class, 'capNhatTrangThaiGiaSu']);
     Route::get('/admin/hoc-vien', [AdminHocVienController::class, 'danhSachHocVien']);
     Route::patch('/admin/hoc-vien/{hocVienId}/trang-thai', [AdminHocVienController::class, 'capNhatTrangThaiHocVien']);
+    Route::get('/admin/mon-hoc', [MonHocController::class, 'danhSachAdmin']);
+    Route::post('/admin/mon-hoc', [MonHocController::class, 'taoAdmin']);
+    Route::patch('/admin/mon-hoc/{monHocId}', [MonHocController::class, 'capNhatAdmin']);
+    Route::delete('/admin/mon-hoc/{monHocId}', [MonHocController::class, 'xoaAdmin']);
     Route::get('/admin/baiviet', [BaiVietController::class, 'danhSachBaiVietAdmin']);
     Route::get('/admin/baiviet/thung-rac', [BaiVietController::class, 'thungRacBaiVietAdmin']);
     Route::post('/admin/baiviet', [BaiVietController::class, 'taoBaiVietAdmin']);

@@ -987,7 +987,9 @@ class DatLichController extends Controller
             ], 422));
         }
 
-        if ($batDau->diffInMinutes($ketThuc) !== 90) {
+        $soPhut = (int) round($batDau->diffInMinutes($ketThuc));
+
+        if ($soPhut !== 90) {
             abort(response()->json([
                 'success' => false,
                 'message' => 'Moi buoi hoc phai keo dai dung 1 gio 30 phut.',
@@ -998,7 +1000,7 @@ class DatLichController extends Controller
             'ngay_hoc' => Carbon::parse($ngayHoc)->toDateString(),
             'gio_batdau' => $gioBatDau,
             'gio_ketthuc' => $gioKetThuc,
-            'so_gio' => $batDau->diffInMinutes($ketThuc) / 60,
+            'so_gio' => $soPhut / 60,
         ];
     }
 
