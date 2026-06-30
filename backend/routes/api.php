@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\Admin\AdminGiaSuController;
 use App\Http\Controllers\Api\Admin\AdminHocVienController;
 use App\Http\Controllers\Api\Admin\AdminTrangThaiGiaSuController;
 use App\Http\Controllers\Api\Admin\AdminXetDuyetGiaSuController;
+use App\Http\Controllers\Api\AdminDanhMucController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BaiViet\BaiVietController;
 use App\Http\Controllers\Api\DangKyGiaSuController;
@@ -94,6 +95,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::patch('/{goiHocId}/huy', [DatLichController::class, 'huyGoiAdmin']);
         });
 
+        Route::get('/lich-hoc', [DatLichController::class, 'danhSachLichHocAdmin']);
+
         Route::prefix('gia-su')->group(function () {
             Route::get('/', [AdminGiaSuController::class, 'danhSachGiaSu']);
             Route::get('/xet-duyet', [AdminXetDuyetGiaSuController::class, 'danhSachHoSoChoDuyet']);
@@ -112,6 +115,13 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/', [MonHocController::class, 'taoAdmin']);
             Route::patch('/{monHocId}', [MonHocController::class, 'capNhatAdmin']);
             Route::delete('/{monHocId}', [MonHocController::class, 'xoaAdmin']);
+        });
+
+        Route::prefix('danh-muc')->group(function () {
+            Route::get('/', [AdminDanhMucController::class, 'index']);
+            Route::post('/{loai}', [AdminDanhMucController::class, 'store']);
+            Route::patch('/{loai}/{id}', [AdminDanhMucController::class, 'update']);
+            Route::delete('/{loai}/{id}', [AdminDanhMucController::class, 'destroy']);
         });
 
         Route::prefix('baiviet')->group(function () {
@@ -134,6 +144,7 @@ Route::get('/baiviet/{slug}', [BaiVietController::class, 'chiTiet']);
 Route::get('/banner', [BannerController::class, 'index']);
 
 Route::get('/gia-su', [GiasuController::class, 'index']);
+Route::get('/gia-su/{giaSuId}/lich-ban', [DatLichController::class, 'lichBanGiaSu']);
 Route::get('/tim-gia-su-theo-yeu-cau', [GiasuController::class, 'timTheoYeuCau']);
 
 Route::get('/dang-ky-gia-su/danh-muc', [DangKyGiaSuController::class, 'danhMuc']);

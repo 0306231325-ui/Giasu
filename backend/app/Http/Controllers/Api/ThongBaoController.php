@@ -17,7 +17,6 @@ class ThongBaoController extends Controller
             ->where('user_id', $user->id)
             ->orderBy('da_doc')
             ->latest()
-            ->limit(10)
             ->get()
             ->map(fn (ThongBao $thongBao) => $this->dinhDang($thongBao))
             ->values();
