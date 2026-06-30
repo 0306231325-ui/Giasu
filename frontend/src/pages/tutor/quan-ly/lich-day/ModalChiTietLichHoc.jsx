@@ -1,10 +1,15 @@
+import { useState } from "react";
 import IconLichDay from "./IconLichDay";
 import { trangThaiLichHoc } from "./duLieuQuanLyLich";
 
-function ModalChiTietLichHoc({ lichHoc, onDong }) {
+function ModalChiTietLichHoc({ lichHoc, dangXuLy = false, onXacNhan, onDong }) {
+    const [ghiChuVanDe, setGhiChuVanDe] = useState("");
     const trangThai = trangThaiLichHoc[lichHoc.trangThai];
     const daHoanThanh = lichHoc.trangThai === "hoan_thanh";
     const daHuy = lichHoc.trangThai === "da_huy";
+    const xacNhan = lichHoc.xacNhan || {};
+    const giaSuDaGui = xacNhan.giaSuDaXacNhan || xacNhan.giaSuBaoVanDe;
+    const coTheXacNhan = lichHoc.coTheXacNhanHoanThanh && !dangXuLy && !giaSuDaGui;
 
     return (
         <LopModal onDong={onDong}>
@@ -68,6 +73,14 @@ function ModalChiTietLichHoc({ lichHoc, onDong }) {
                             <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
                                 Gia sư xác nhận sau khi buổi học đã kết thúc để hệ thống ghi nhận tiến độ.
                             </p>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                                <NhanXacNhan active={xacNhan.hocVienDaXacNhan} warning={xacNhan.hocVienBaoVanDe}>
+                                    Hoc vien
+                                </NhanXacNhan>
+                                <NhanXacNhan active={xacNhan.giaSuDaXacNhan} warning={xacNhan.giaSuBaoVanDe}>
+                                    Gia su
+                                </NhanXacNhan>
+                            </div>
                         </div>
 
                         {daHoanThanh ? (
@@ -78,10 +91,11 @@ function ModalChiTietLichHoc({ lichHoc, onDong }) {
                         ) : (
                             <button
                                 type="button"
-                                disabled={daHuy}
+                                disabled={!coTheXacNhan}
+                                onClick={() => onXacNhan?.(lichHoc, { trang_thai: "daxacnhan" })}
                                 className={[
                                     "inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-extrabold transition",
-                                    daHuy
+                                    !coTheXacNhan
                                         ? "cursor-not-allowed bg-slate-200 text-slate-400"
                                         : "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-700",
                                 ].join(" ")}
@@ -91,6 +105,38 @@ function ModalChiTietLichHoc({ lichHoc, onDong }) {
                             </button>
                         )}
                     </div>
+                    {!daHoanThanh && !daHuy && !giaSuDaGui && (
+                        <form
+                            className="mt-4 border-t border-slate-200 pt-4"
+                            onSubmit={(event) => {
+                                event.preventDefault();
+                                onXacNhan?.(lichHoc, {
+                                    trang_thai: "baovan_de",
+                                    ghi_chu: ghiChuVanDe,
+                                });
+                                setGhiChuVanDe("");
+                            }}
+                        >
+                            <label className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                                Bao van de cho admin
+                            </label>
+                            <textarea
+                                rows={3}
+                                required
+                                value={ghiChuVanDe}
+                                onChange={(event) => setGhiChuVanDe(event.target.value)}
+                                placeholder="Nhap noi dung neu buoi hoc chua hoan thanh dung thuc te"
+                                className="mt-2 w-full resize-none rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-amber-400"
+                            />
+                            <button
+                                type="submit"
+                                disabled={dangXuLy || !lichHoc.daQuaGioKetThuc}
+                                className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                Bao van de
+                            </button>
+                        </form>
+                    )}
                 </div>
 
                 <div className="mt-6 flex justify-end">
@@ -104,6 +150,23 @@ function ModalChiTietLichHoc({ lichHoc, onDong }) {
                 </div>
             </div>
         </LopModal>
+    );
+}
+
+function NhanXacNhan({ active, warning, children }) {
+    return (
+        <span
+            className={[
+                "rounded-full px-3 py-1 text-xs font-bold",
+                warning
+                    ? "bg-amber-100 text-amber-700"
+                    : active
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-slate-200 text-slate-500",
+            ].join(" ")}
+        >
+            {children}: {warning ? "Bao van de" : active ? "Da xac nhan" : "Chua xac nhan"}
+        </span>
     );
 }
 

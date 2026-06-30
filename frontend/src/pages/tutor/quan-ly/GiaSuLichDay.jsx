@@ -69,6 +69,35 @@ function GiaSuLichDay() {
         );
     };
 
+    const capNhatLichHoc = (lichMoi) => {
+        setDanhSachLichHoc((hienTai) =>
+            hienTai.map((lichHoc) =>
+                lichHoc.id === lichMoi.id ? lichMoi : lichHoc,
+            ),
+        );
+    };
+
+    const xacNhanBuoiHoc = async (lichHoc, payload) => {
+        if (!lichHoc || dangXuLyId) return;
+
+        setDangXuLyId(`lich-${lichHoc.id}`);
+
+        try {
+            const response = await api.post(
+                `/gia-su/lich-day/${lichHoc.id}/xac-nhan-hoan-thanh`,
+                payload,
+            );
+
+            capNhatLichHoc(response.data.data);
+            hienThongBao(response.data.message || "Da ghi nhan xac nhan buoi hoc.");
+        } catch (error) {
+            console.error("Khong the xac nhan buoi hoc:", error);
+            hienThongBao(error.response?.data?.message || "Khong the xac nhan buoi hoc.");
+        } finally {
+            setDangXuLyId(null);
+        }
+    };
+
     const phanHoiYeuCau = async (yeuCau, ketQua, lyDo = "") => {
         if (!yeuCau || dangXuLyId) return;
 
@@ -146,9 +175,17 @@ function GiaSuLichDay() {
                     Đang tải dữ liệu lịch dạy...
                 </div>
             ) : tab === "lich_hoc" ? (
-                <TabDanhSachLichHoc danhSach={danhSachLichHoc} />
+                <TabDanhSachLichHoc
+                    danhSach={danhSachLichHoc}
+                    dangXuLyId={dangXuLyId}
+                    onXacNhan={xacNhanBuoiHoc}
+                />
             ) : tab === "lich_tuan" ? (
-                <TabLichTuan danhSach={danhSachLichHoc} />
+                <TabLichTuan
+                    danhSach={danhSachLichHoc}
+                    dangXuLyId={dangXuLyId}
+                    onXacNhan={xacNhanBuoiHoc}
+                />
             ) : (
                 <TabYeuCauDatGiaSu
                     danhSach={danhSachYeuCau}
