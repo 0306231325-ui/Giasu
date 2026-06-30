@@ -190,7 +190,6 @@ function ChonGoiHoc() {
         gio_ketthuc: "19:30",
         hinh_thuc_hoc: "online",
         dia_chi_hoc: "",
-        ghi_chu: "",
     });
     const [buoiLinhHoat, setBuoiLinhHoat] = useState([
         { ngay: ngayMai(), gio_batdau: "18:00", gio_ketthuc: "19:30" },
@@ -516,7 +515,6 @@ function ChonGoiHoc() {
                 buoi_linh_hoat: loaiGoi === "khong_dinh_ky" ? buoiLinhHoatGui : [],
                 hinh_thuc_hoc: form.hinh_thuc_hoc,
                 dia_chi_hoc: form.dia_chi_hoc,
-                ghi_chu: form.ghi_chu,
             });
 
             if (response.data.success) {
@@ -921,17 +919,8 @@ function ChonGoiHoc() {
                     )}
 
                     <section className="rounded-2xl border border-white/10 bg-[#0d1854] p-5 shadow-xl">
-                        <h2 className="text-xl font-extrabold">Ghi chú</h2>
-                        <textarea
-                            rows={4}
-                            value={form.ghi_chu}
-                            onChange={(event) => capNhatForm("ghi_chu", event.target.value)}
-                            placeholder="Ví dụ: muốn học thử buổi đầu, cần ôn mất gốc, mục tiêu điểm số..."
-                            className="mt-5 w-full resize-none rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-blue-400"
-                        />
-
                         {thongBao && (
-                            <div className="mt-5 rounded-xl border border-blue-300/30 bg-blue-400/10 px-4 py-3 text-sm text-blue-100">
+                            <div className="rounded-xl border border-blue-300/30 bg-blue-400/10 px-4 py-3 text-sm text-blue-100">
                                 {thongBao}
                             </div>
                         )}
@@ -939,7 +928,7 @@ function ChonGoiHoc() {
                         <button
                             type="submit"
                             disabled={dangGui}
-                            className="mt-5 rounded-xl bg-blue-500 px-6 py-3 text-sm font-bold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-xl bg-blue-500 px-6 py-3 text-sm font-bold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {dangGui ? "Đang gửi yêu cầu..." : "Gửi yêu cầu đặt lịch"}
                         </button>
@@ -1021,4 +1010,3 @@ function ChonGoiHoc() {
 }
 
 export default ChonGoiHoc;
-

@@ -1283,7 +1283,6 @@ class DatLichController extends Controller
             'buoi_linh_hoat.*.gio_ketthuc' => ['required_if:loai_goi,khong_dinh_ky', 'date_format:H:i'],
             'hinh_thuc_hoc' => ['required', Rule::in(['online', 'offline'])],
             'dia_chi_hoc' => ['nullable', 'string', 'max:255'],
-            'ghi_chu' => ['nullable', 'string', 'max:1000'],
         ]);
 
         if ($duLieu['hinh_thuc_hoc'] === 'offline' && blank($duLieu['dia_chi_hoc'] ?? null)) {
@@ -1391,7 +1390,6 @@ class DatLichController extends Controller
                     'phi_hoahong' => $phiHoaHong,
                     'tien_giasu_nhan' => max($tienHoc - $phiHoaHong, 0),
                     'trang_thai' => 'cho_xacnhan',
-                    'ghi_chu' => filled($duLieu['ghi_chu'] ?? null) ? trim($duLieu['ghi_chu']) : null,
                 ]);
             }
 
@@ -1729,7 +1727,6 @@ class DatLichController extends Controller
             'diaDiem' => $goiHoc->dia_chi_hoc ?: ($goiHoc->hinh_thuc_hoc === 'online' ? 'Online' : 'Chua cap nhat'),
             'donGia' => number_format((float) $goiHoc->don_gia_theogio, 0, ',', '.') . 'd/gio',
             'tongTien' => number_format((float) $goiHoc->tong_tien, 0, ',', '.') . 'd',
-            'ghiChu' => $lichDau?->ghi_chu ?: 'Khong co ghi chu.',
             'lyDoTuChoi' => $phanHoiMoiNhat?->phan_hoi === PhanHoi::TU_CHOI ? $phanHoiMoiNhat->ly_do : null,
             'lichHoc' => $lichHocs
                 ->map(fn (LichHoc $lichHoc) => $this->dinhDangLichHoc($lichHoc))

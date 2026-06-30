@@ -74,11 +74,6 @@ function ModalChiTietYeuCau({
                         nhan="Tổng giá trị gói"
                         giaTri={yeuCau.tongTien}
                     />
-                    <ThongTin
-                        nhan="Ghi chú của học viên"
-                        giaTri={yeuCau.ghiChu}
-                        className="sm:col-span-2"
-                    />
                 </div>
 
                 {yeuCau.lyDoTuChoi && (
