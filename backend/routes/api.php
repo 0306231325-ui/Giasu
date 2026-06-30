@@ -25,6 +25,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/dang-ky-gia-su', [DangKyGiaSuController::class, 'guiDon']);
     Route::post('/gia-su/{giaSuId}/goi-hoc', [DatLichController::class, 'datLich']);
     Route::get('/hoc-vien/lich-hoc', [DatLichController::class, 'lichHocCuaToi']);
+    Route::post('/hoc-vien/lich-hoc/{lichHocId}/xac-nhan-hoan-thanh', [DatLichController::class, 'hocVienXacNhanHoanThanhBuoiHoc']);
     Route::post('/hoc-vien/lich-hoc/{lichHocId}/danh-gia', [DatLichController::class, 'danhGiaBuoiHoc']);
     Route::post('/hoc-vien/lich-hoc/{lichHocId}/doi-buoi', [DatLichController::class, 'yeuCauDoiBuoiHoc']);
     Route::post('/hoc-vien/goi-hoc/{goiHocId}/thanh-toan', [DatLichController::class, 'thanhToanGoiHoc']);

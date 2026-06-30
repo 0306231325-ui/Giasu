@@ -680,6 +680,95 @@ class DatLichController extends Controller
         ]);
     }
 
+    public function hocVienXacNhanHoanThanhBuoiHoc(Request $request, int $lichHocId): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->vai_tro !== 'hocvien') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chuc nang xac nhan buoi hoc chi danh cho tai khoan hoc vien.',
+            ], 403);
+        }
+
+        $duLieu = $request->validate([
+            'trang_thai' => ['required', Rule::in(['daxacnhan', 'baovan_de'])],
+            'ghi_chu' => ['required_if:trang_thai,baovan_de', 'nullable', 'string', 'max:1000'],
+        ]);
+
+        $lichHoc = LichHoc::query()
+            ->with([
+                'goiHoc',
+                'giasu.user:id,ho_ten',
+                'danhGia',
+                'yeuCauHocBus' => fn ($query) => $query->latest(),
+            ])
+            ->whereHas('goiHoc', fn ($query) => $query->where('hocvien_id', $user->id))
+            ->find($lichHocId);
+
+        if (! $lichHoc) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Khong tim thay buoi hoc cua ban.',
+            ], 404);
+        }
+
+        if (in_array($lichHoc->trang_thai, ['hoanthanh', 'dahuy'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Buoi hoc nay khong con can xac nhan.',
+            ], 422);
+        }
+
+        $thoiDiemKetThuc = Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_ketthuc);
+        if (now()->lt($thoiDiemKetThuc)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chi co the xac nhan sau khi buoi hoc ket thuc.',
+            ], 422);
+        }
+
+        $trangThaiXacNhan = $duLieu['trang_thai'];
+        $ghiChuCu = trim((string) $lichHoc->ghi_chu);
+        $ghiChuMoi = $trangThaiXacNhan === 'baovan_de'
+            ? trim($ghiChuCu . "\n\n[Học viên báo vấn đề] " . trim((string) ($duLieu['ghi_chu'] ?? '')))
+            : $ghiChuCu;
+
+        $lichHoc->update([
+            'trang_thai' => $trangThaiXacNhan === 'daxacnhan' ? 'hoanthanh' : $lichHoc->trang_thai,
+            'ghi_chu' => $ghiChuMoi !== '' ? $ghiChuMoi : null,
+        ]);
+
+        if ($lichHoc->giasu?->user_id) {
+            ThongBao::create([
+                'user_id' => $lichHoc->giasu->user_id,
+                'tieu_de' => $trangThaiXacNhan === 'baovan_de'
+                    ? 'Hoc vien bao van de buoi hoc'
+                    : 'Hoc vien da xac nhan buoi hoc',
+                'noi_dung' => $trangThaiXacNhan === 'baovan_de'
+                    ? "{$user->ho_ten} da bao co van de voi buoi hoc."
+                    : "{$user->ho_ten} da xac nhan da hoc xong buoi hoc.",
+                'url' => '/gia-su/quan-ly/lich-day',
+                'da_doc' => false,
+            ]);
+        }
+
+        $lichHoc->refresh()->load([
+            'goiHoc.monHoc',
+            'giasu.user',
+            'danhGia',
+            'yeuCauHocBus' => fn ($query) => $query->latest(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => $trangThaiXacNhan === 'baovan_de'
+                ? 'Da ghi nhan van de cua buoi hoc. Admin se kiem tra tren trang quan ly lich hoc.'
+                : 'Da xac nhan hoan thanh buoi hoc.',
+            'data' => $this->dinhDangLichHoc($lichHoc),
+        ]);
+    }
+
     public function yeuCauDoiBuoiHoc(Request $request, int $lichHocId): JsonResponse
     {
         $user = $request->user();
@@ -1538,6 +1627,7 @@ class DatLichController extends Controller
     private function dinhDangLichHoc(LichHoc $lichHoc): array
     {
         $ngayHoc = Carbon::parse($lichHoc->ngay_hoc);
+        $daQuaGioKetThuc = now()->gte(Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_ketthuc));
         $yeuCauHocBuMoiNhat = $lichHoc->relationLoaded('yeuCauHocBus')
             ? $lichHoc->yeuCauHocBus->sortByDesc('created_at')->first()
             : null;
@@ -1547,6 +1637,7 @@ class DatLichController extends Controller
             'hoanthanh' => 'hoan_thanh',
             'dahuy' => 'da_huy',
         ][$lichHoc->trang_thai] ?? $lichHoc->trang_thai;
+        $daBaoVanDe = str_contains((string) $lichHoc->ghi_chu, '[Học viên báo vấn đề]');
 
         return [
             'id' => $lichHoc->id,
@@ -1563,6 +1654,20 @@ class DatLichController extends Controller
             'loaiBuoi' => $lichHoc->loai_buoi === 'hoc_bu' ? 'Hoc bu' : 'Hoc thuong',
             'ghiChu' => $lichHoc->ghi_chu,
             'lyDoHuy' => $lichHoc->lydo_huy,
+            'daQuaGioKetThuc' => $daQuaGioKetThuc,
+            'coTheXacNhanHoanThanh' => $daQuaGioKetThuc
+                && ! $daBaoVanDe
+                && $lichHoc->trang_thai === 'da_nhan',
+            'hocVienXacNhan' => [
+                'trangThai' => $lichHoc->trang_thai === 'hoanthanh' ? 'daxacnhan' : ($daBaoVanDe ? 'baovan_de' : null),
+                'thoiGian' => null,
+                'ghiChu' => $daBaoVanDe ? $lichHoc->ghi_chu : null,
+            ],
+            'giaSuXacNhan' => [
+                'trangThai' => null,
+                'thoiGian' => null,
+                'ghiChu' => null,
+            ],
             'coTheDanhGia' => $lichHoc->trang_thai === 'hoanthanh',
             'coTheDoiBuoi' => in_array($lichHoc->trang_thai, ['cho_xacnhan', 'da_nhan'], true)
                 && ! ($yeuCauHocBuMoiNhat?->trang_thai === 'cho_duyet'),

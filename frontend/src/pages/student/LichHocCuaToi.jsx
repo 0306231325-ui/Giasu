@@ -66,7 +66,8 @@ function layThongDiepLoi(error, fallback) {
         .replace("The gio ketthuc field is required.", "Vui lòng chọn giờ kết thúc.")
         .replace("The anh minh chung field is required.", "Vui lòng tải ảnh minh chứng giao dịch.")
         .replace("The anh minh chung must be an image.", "Minh chứng giao dịch phải là hình ảnh.")
-        .replace("The anh minh chung must not be greater than 4096 kilobytes.", "Ảnh minh chứng không được vượt quá 4MB.");
+        .replace("The anh minh chung must not be greater than 4096 kilobytes.", "Ảnh minh chứng không được vượt quá 4MB.")
+        .replace("The ghi chu field is required when trang thai is baovan de.", "Vui lòng nhập nội dung vấn đề.");
 }
 
 const ngayHomNay = () => new Date().toISOString().slice(0, 10);
@@ -103,9 +104,14 @@ function LichHocCuaToi() {
     const [chiTietBuoi, setChiTietBuoi] = useState(null);
     const [dangGuiDanhGia, setDangGuiDanhGia] = useState(false);
     const [dangGuiDoiBuoi, setDangGuiDoiBuoi] = useState(false);
+    const [dangGuiXacNhanBuoi, setDangGuiXacNhanBuoi] = useState(false);
     const [formDanhGia, setFormDanhGia] = useState({
         so_sao: 5,
         noi_dung: "",
+    });
+    const [formXacNhanBuoi, setFormXacNhanBuoi] = useState({
+        trang_thai: "daxacnhan",
+        ghi_chu: "",
     });
     const [formDoiBuoi, setFormDoiBuoi] = useState({
         ngay_hoc: ngayHomNay(),
@@ -258,6 +264,10 @@ function LichHocCuaToi() {
             gio_ketthuc: lichHoc.gioKetThuc || "19:30",
             ly_do: "",
         });
+        setFormXacNhanBuoi({
+            trang_thai: "daxacnhan",
+            ghi_chu: "",
+        });
         setThongBao("");
     };
 
@@ -306,6 +316,32 @@ function LichHocCuaToi() {
             setThongBao(layThongDiepLoi(error, "Không thể gửi yêu cầu đổi buổi."));
         } finally {
             setDangGuiDoiBuoi(false);
+        }
+    };
+
+    const guiXacNhanBuoiHoc = async (event) => {
+        event.preventDefault();
+        if (!chiTietBuoi) return;
+
+        setDangGuiXacNhanBuoi(true);
+        setThongBao("");
+
+        try {
+            const response = await api.post(
+                `/hoc-vien/lich-hoc/${chiTietBuoi.lichHoc.id}/xac-nhan-hoan-thanh`,
+                formXacNhanBuoi,
+            );
+
+            if (response.data.success) {
+                capNhatBuoiHoc(chiTietBuoi.lichHoc.id, response.data.data);
+                setFormXacNhanBuoi({ trang_thai: "daxacnhan", ghi_chu: "" });
+                setThongBao(response.data.message || "Đã xác nhận buổi học.");
+            }
+        } catch (error) {
+            console.error("Không thể xác nhận buổi học:", error);
+            setThongBao(layThongDiepLoi(error, "Không thể xác nhận buổi học."));
+        } finally {
+            setDangGuiXacNhanBuoi(false);
         }
     };
 
@@ -527,6 +563,116 @@ function LichHocCuaToi() {
                                 {chiTietBuoi.lichHoc.ghiChu && (
                                     <p className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
                                         {chiTietBuoi.lichHoc.ghiChu}
+                                    </p>
+                                )}
+                            </section>
+
+                            <section className="rounded-lg border border-slate-200 p-4">
+                                <h3 className="text-base font-bold text-slate-950">Xác nhận sau buổi học</h3>
+
+                                {(chiTietBuoi.lichHoc.hocVienXacNhan?.trangThai || chiTietBuoi.lichHoc.giaSuXacNhan?.trangThai) && (
+                                    <div className="mt-3 grid gap-2 text-sm">
+                                        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                                            <p className="font-bold text-slate-800">
+                                                Học viên: {nhanTrangThaiXacNhan(chiTietBuoi.lichHoc.hocVienXacNhan?.trangThai)}
+                                            </p>
+                                            {chiTietBuoi.lichHoc.hocVienXacNhan?.thoiGian && (
+                                                <p className="mt-1 text-xs text-slate-500">
+                                                    {chiTietBuoi.lichHoc.hocVienXacNhan.thoiGian}
+                                                </p>
+                                            )}
+                                            {chiTietBuoi.lichHoc.hocVienXacNhan?.ghiChu && (
+                                                <p className="mt-1 text-slate-600">{chiTietBuoi.lichHoc.hocVienXacNhan.ghiChu}</p>
+                                            )}
+                                        </div>
+                                        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                                            <p className="font-bold text-slate-800">
+                                                Gia sư: {nhanTrangThaiXacNhan(chiTietBuoi.lichHoc.giaSuXacNhan?.trangThai)}
+                                            </p>
+                                            {chiTietBuoi.lichHoc.giaSuXacNhan?.thoiGian && (
+                                                <p className="mt-1 text-xs text-slate-500">
+                                                    {chiTietBuoi.lichHoc.giaSuXacNhan.thoiGian}
+                                                </p>
+                                            )}
+                                            {chiTietBuoi.lichHoc.giaSuXacNhan?.ghiChu && (
+                                                <p className="mt-1 text-slate-600">{chiTietBuoi.lichHoc.giaSuXacNhan.ghiChu}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {chiTietBuoi.lichHoc.coTheXacNhanHoanThanh ? (
+                                    <form onSubmit={guiXacNhanBuoiHoc} className="mt-4 space-y-3">
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                            <label className={[
+                                                "cursor-pointer rounded-lg border px-3 py-3 transition",
+                                                formXacNhanBuoi.trang_thai === "daxacnhan"
+                                                    ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                                                    : "border-slate-200 bg-white text-slate-600 hover:border-emerald-200",
+                                            ].join(" ")}>
+                                                <input
+                                                    type="radio"
+                                                    name="xac_nhan_buoi_hoc"
+                                                    value="daxacnhan"
+                                                    checked={formXacNhanBuoi.trang_thai === "daxacnhan"}
+                                                    onChange={(event) => setFormXacNhanBuoi((hienTai) => ({
+                                                        ...hienTai,
+                                                        trang_thai: event.target.value,
+                                                        ghi_chu: "",
+                                                    }))}
+                                                    className="sr-only"
+                                                />
+                                                <span className="block text-sm font-bold">Đã học xong</span>
+                                                <span className="mt-1 block text-xs">Buổi học diễn ra bình thường.</span>
+                                            </label>
+                                            <label className={[
+                                                "cursor-pointer rounded-lg border px-3 py-3 transition",
+                                                formXacNhanBuoi.trang_thai === "baovan_de"
+                                                    ? "border-red-300 bg-red-50 text-red-800"
+                                                    : "border-slate-200 bg-white text-slate-600 hover:border-red-200",
+                                            ].join(" ")}>
+                                                <input
+                                                    type="radio"
+                                                    name="xac_nhan_buoi_hoc"
+                                                    value="baovan_de"
+                                                    checked={formXacNhanBuoi.trang_thai === "baovan_de"}
+                                                    onChange={(event) => setFormXacNhanBuoi((hienTai) => ({
+                                                        ...hienTai,
+                                                        trang_thai: event.target.value,
+                                                    }))}
+                                                    className="sr-only"
+                                                />
+                                                <span className="block text-sm font-bold">Có vấn đề</span>
+                                                <span className="mt-1 block text-xs">Gia sư vắng, học thiếu giờ hoặc lỗi khác.</span>
+                                            </label>
+                                        </div>
+
+                                        {formXacNhanBuoi.trang_thai === "baovan_de" && (
+                                            <textarea
+                                                rows={3}
+                                                value={formXacNhanBuoi.ghi_chu}
+                                                onChange={(event) => setFormXacNhanBuoi((hienTai) => ({
+                                                    ...hienTai,
+                                                    ghi_chu: event.target.value,
+                                                }))}
+                                                placeholder="Mô tả vấn đề để admin/gia sư kiểm tra"
+                                                className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-red-300 focus:bg-white"
+                                            />
+                                        )}
+
+                                        <button
+                                            type="submit"
+                                            disabled={dangGuiXacNhanBuoi}
+                                            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                            {dangGuiXacNhanBuoi ? "Đang gửi..." : "Gửi xác nhận"}
+                                        </button>
+                                    </form>
+                                ) : (
+                                    <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-500">
+                                        {chiTietBuoi.lichHoc.daQuaGioKetThuc
+                                            ? "Buổi học này chưa cần hoặc đã được bạn xác nhận."
+                                            : "Sau khi buổi học kết thúc, bạn có thể xác nhận đã học hoặc báo vấn đề tại đây."}
                                     </p>
                                 )}
                             </section>
@@ -780,6 +926,13 @@ function nhanTrangThaiYeuCau(trangThai) {
         da_duyet: "Đã duyệt",
         tu_choi: "Từ chối",
     }[trangThai] || "Chưa cập nhật";
+}
+
+function nhanTrangThaiXacNhan(trangThai) {
+    return {
+        daxacnhan: "Đã xác nhận",
+        baovan_de: "Báo vấn đề",
+    }[trangThai] || "Chưa xác nhận";
 }
 
 export default LichHocCuaToi;
