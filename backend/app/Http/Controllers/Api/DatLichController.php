@@ -1743,12 +1743,13 @@ class DatLichController extends Controller
         $ngayHoc = Carbon::parse($lichHoc->ngay_hoc);
         $daQuaGioKetThuc = now()->gte(Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_ketthuc));
         $xacNhan = $this->thongTinXacNhanLichHoc($lichHoc);
-        $trangThai = [
+        $trangThai = match ($lichHoc->trang_thai) {
             'cho_xacnhan' => 'cho_xac_nhan',
-            'da_nhan' => 'sap_dien_ra',
+            'da_nhan' => $daQuaGioKetThuc ? 'cho_xac_nhan' : 'sap_dien_ra',
             'hoanthanh' => 'hoan_thanh',
             'dahuy' => 'da_huy',
-        ][$lichHoc->trang_thai] ?? 'sap_dien_ra';
+            default => 'sap_dien_ra',
+        };
 
         return [
             'id' => $lichHoc->id,

@@ -51,11 +51,6 @@ function ModalChiTietLichHoc({ lichHoc, dangXuLy = false, onXacNhan, onDong }) {
                         nhan="Tiền gia sư nhận"
                         giaTri={lichHoc.tienNhan}
                     />
-                    <ThongTin
-                        nhan="Nội dung buổi học"
-                        giaTri={lichHoc.ghiChu}
-                        className="sm:col-span-2"
-                    />
                 </div>
 
                 {lichHoc.lienKet && (
