@@ -3,7 +3,7 @@ import IconLichDay from "./IconLichDay";
 import { trangThaiLichHoc } from "./duLieuQuanLyLich";
 
 function ModalChiTietLichHoc({ lichHoc, dangXuLy = false, onXacNhan, onDong }) {
-    const [ghiChuVanDe, setGhiChuVanDe] = useState("");
+    const [dangMoFormDoiBuoi, setDangMoFormDoiBuoi] = useState(false);
     const trangThai = trangThaiLichHoc[lichHoc.trangThai];
     const daHoanThanh = lichHoc.trangThai === "hoan_thanh";
     const daHuy = lichHoc.trangThai === "da_huy";
@@ -47,10 +47,6 @@ function ModalChiTietLichHoc({ lichHoc, dangXuLy = false, onXacNhan, onDong }) {
                         nhan="Địa điểm/phòng học"
                         giaTri={lichHoc.diaDiem}
                     />
-                    <ThongTin
-                        nhan="Tiền gia sư nhận"
-                        giaTri={lichHoc.tienNhan}
-                    />
                 </div>
 
                 {lichHoc.lienKet && (
@@ -58,6 +54,90 @@ function ModalChiTietLichHoc({ lichHoc, dangXuLy = false, onXacNhan, onDong }) {
                         Link vào lớp: {lichHoc.lienKet}
                     </div>
                 )}
+
+                <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p className="text-sm font-extrabold text-slate-900">
+                                Đổi buổi học
+                            </p>
+                            <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
+                                Gửi yêu cầu đổi ngày hoặc khung giờ nếu buổi học cần sắp xếp lại.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            disabled={daHoanThanh || daHuy}
+                            onClick={() => setDangMoFormDoiBuoi((hienTai) => !hienTai)}
+                            className={[
+                                "inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-extrabold transition",
+                                daHoanThanh || daHuy
+                                    ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                                    : "border-blue-200 bg-white text-blue-700 hover:bg-blue-100",
+                            ].join(" ")}
+                        >
+                            <IconLichDay ten="calendar" className="h-4 w-4" />
+                            {dangMoFormDoiBuoi ? "Ẩn form đổi buổi" : "Yêu cầu đổi buổi"}
+                        </button>
+                    </div>
+                    {dangMoFormDoiBuoi && !daHoanThanh && !daHuy && (
+                        <form
+                            className="mt-4 border-t border-blue-100 pt-4"
+                            onSubmit={(event) => event.preventDefault()}
+                        >
+                            <div className="grid gap-3 sm:grid-cols-3">
+                                <label>
+                                    <span className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                                        Ngày mới
+                                    </span>
+                                    <input
+                                        type="date"
+                                        className="mt-2 h-11 w-full rounded-xl border border-blue-100 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-blue-400"
+                                    />
+                                </label>
+                                <label>
+                                    <span className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                                        Giờ bắt đầu
+                                    </span>
+                                    <input
+                                        type="time"
+                                        defaultValue={lichHoc.batDau}
+                                        className="mt-2 h-11 w-full rounded-xl border border-blue-100 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-blue-400"
+                                    />
+                                </label>
+                                <label>
+                                    <span className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                                        Giờ kết thúc
+                                    </span>
+                                    <input
+                                        type="time"
+                                        defaultValue={lichHoc.ketThuc}
+                                        className="mt-2 h-11 w-full rounded-xl border border-blue-100 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-blue-400"
+                                    />
+                                </label>
+                            </div>
+                            <label className="mt-3 block">
+                                <span className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                                    Lý do đổi buổi
+                                </span>
+                                <textarea
+                                    rows={3}
+                                    placeholder="Nhập lý do cần đổi buổi học..."
+                                    className="mt-2 w-full resize-none rounded-xl border border-blue-100 bg-white px-3 py-2 text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400 focus:border-blue-400"
+                                />
+                            </label>
+                            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                               
+                                <button
+                                    type="submit"
+                                    className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white transition hover:bg-blue-700"
+                                >
+                                    Gửi yêu cầu đổi buổi
+                                </button>
+                            </div>
+                        </form>
+                    )}
+                </div>
 
                 <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -100,38 +180,6 @@ function ModalChiTietLichHoc({ lichHoc, dangXuLy = false, onXacNhan, onDong }) {
                             </button>
                         )}
                     </div>
-                    {!daHoanThanh && !daHuy && !giaSuDaGui && (
-                        <form
-                            className="mt-4 border-t border-slate-200 pt-4"
-                            onSubmit={(event) => {
-                                event.preventDefault();
-                                onXacNhan?.(lichHoc, {
-                                    trang_thai: "baovan_de",
-                                    ghi_chu: ghiChuVanDe,
-                                });
-                                setGhiChuVanDe("");
-                            }}
-                        >
-                            <label className="text-xs font-bold uppercase tracking-wide text-slate-400">
-                                Bao van de cho admin
-                            </label>
-                            <textarea
-                                rows={3}
-                                required
-                                value={ghiChuVanDe}
-                                onChange={(event) => setGhiChuVanDe(event.target.value)}
-                                placeholder="Nhap noi dung neu buoi hoc chua hoan thanh dung thuc te"
-                                className="mt-2 w-full resize-none rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-amber-400"
-                            />
-                            <button
-                                type="submit"
-                                disabled={dangXuLy || !lichHoc.daQuaGioKetThuc}
-                                className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                                Bao van de
-                            </button>
-                        </form>
-                    )}
                 </div>
 
                 <div className="mt-6 flex justify-end">
