@@ -90,7 +90,7 @@ function TabDanhSachLichHoc({ danhSach }) {
                     </div>
                 </div>
 
-                <div className="mt-4 space-y-3">
+                <div className="mt-4 max-h-[620px] space-y-3 overflow-y-auto rounded-2xl border border-white/10 bg-[#070d22] p-3 pr-2 [scrollbar-width:thin]">
                     {danhSach.length === 0 ? (
                         <TrangThaiRong
                             tieuDe="Chưa có lịch học"
