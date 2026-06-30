@@ -15,6 +15,7 @@ class ThongBaoController extends Controller
 
         $danhSach = ThongBao::query()
             ->where('user_id', $user->id)
+            ->orderBy('da_doc')
             ->latest()
             ->limit(10)
             ->get()

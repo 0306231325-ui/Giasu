@@ -220,16 +220,25 @@ class DatLichController extends Controller
         $lyDo = filled($duLieu['ly_do'] ?? null) ? trim($duLieu['ly_do']) : null;
 
         DB::transaction(function () use ($goiHoc, $giaSu, $duLieu, $laTuChoi, $lyDo) {
-            PhanHoi::query()->updateOrCreate(
-                [
-                    'gia_su_id' => $giaSu->id,
-                    'goi_hoc_id' => $goiHoc->id,
-                ],
-                [
-                    'phan_hoi' => $duLieu['phan_hoi'],
-                    'ly_do' => $laTuChoi ? $lyDo : null,
-                ],
-            );
+            $phanHoiDaCo = PhanHoi::query()
+                ->where('gia_su_id', $giaSu->id)
+                ->where('goi_hoc_id', $goiHoc->id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($phanHoiDaCo) {
+                abort(response()->json([
+                    'success' => false,
+                    'message' => 'Ban da phan hoi yeu cau nay roi.',
+                ], 422));
+            }
+
+            PhanHoi::create([
+                'gia_su_id' => $giaSu->id,
+                'goi_hoc_id' => $goiHoc->id,
+                'phan_hoi' => $duLieu['phan_hoi'],
+                'ly_do' => $laTuChoi ? $lyDo : null,
+            ]);
 
             if ($laTuChoi) {
                 $goiHoc->update([
