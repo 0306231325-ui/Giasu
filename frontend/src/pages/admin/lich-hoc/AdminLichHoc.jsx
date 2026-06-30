@@ -20,7 +20,9 @@ function AdminLichHoc() {
   const [danhSach, setDanhSach] = useState([]);
   const [thongKe, setThongKe] = useState({});
   const [dangTai, setDangTai] = useState(true);
+  const [dangXuLy, setDangXuLy] = useState(false);
   const [loi, setLoi] = useState("");
+  const [thongBao, setThongBao] = useState("");
   const [lichDangChonId, setLichDangChonId] = useState(null);
   const [boLoc, setBoLoc] = useState({
     trang_thai: "",
@@ -72,6 +74,38 @@ function AdminLichHoc() {
 
   const capNhatBoLoc = (field, value) => {
     setBoLoc((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const capNhatLichTrongDanhSach = (lichMoi) => {
+    setDanhSach((hienTai) =>
+      hienTai.map((lich) => (lich.id === lichMoi.id ? lichMoi : lich)),
+    );
+    setLichDangChonId(lichMoi.id);
+  };
+
+  const xuLyLichHoc = async (lich, hanhDong, duLieu) => {
+    if (!lich || dangXuLy) return;
+
+    setDangXuLy(true);
+    setLoi("");
+    setThongBao("");
+
+    try {
+      const endpoint = hanhDong === "hoan-thanh"
+        ? `/admin/lich-hoc/${lich.id}/hoan-thanh`
+        : `/admin/lich-hoc/${lich.id}/huy`;
+      const response = await api.patch(endpoint, duLieu);
+
+      if (response.data.success) {
+        capNhatLichTrongDanhSach(response.data.data);
+        setThongBao(response.data.message || "Đã cập nhật buổi học.");
+        await taiLichHoc();
+      }
+    } catch (error) {
+      setLoi(error.response?.data?.message || "Không xử lý được buổi học.");
+    } finally {
+      setDangXuLy(false);
+    }
   };
 
   return (
@@ -135,6 +169,11 @@ function AdminLichHoc() {
           {loi}
         </div>
       )}
+      {thongBao && (
+        <div className="mt-4 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-100">
+          {thongBao}
+        </div>
+      )}
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
         <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#0a0f24]">
@@ -196,7 +235,7 @@ function AdminLichHoc() {
           </div>
         </section>
 
-        <ChiTietLichHoc lich={lichDangChon} />
+        <ChiTietLichHoc lich={lichDangChon} dangXuLy={dangXuLy} onXuLy={xuLyLichHoc} />
       </div>
     </div>
   );
@@ -214,7 +253,10 @@ function TrangThaiBadge({ lich }) {
   );
 }
 
-function ChiTietLichHoc({ lich }) {
+function ChiTietLichHoc({ lich, dangXuLy, onXuLy }) {
+  const [ghiChuHoanThanh, setGhiChuHoanThanh] = useState("");
+  const [lyDoHuy, setLyDoHuy] = useState("");
+
   if (!lich) {
     return (
       <aside className="rounded-2xl border border-white/10 bg-white p-6 text-center text-sm text-slate-500">
@@ -222,6 +264,10 @@ function ChiTietLichHoc({ lich }) {
       </aside>
     );
   }
+
+  const coTheXuLy = !["hoanthanh", "dahuy"].includes(lich.trangThai);
+  const xacNhan = lich.xacNhan || {};
+  const coTheHoanThanh = Boolean(lich.coTheAdminXacNhanHoanThanh);
 
   return (
     <aside className="h-fit rounded-2xl border border-white/10 bg-white p-5 text-slate-900">
@@ -245,6 +291,14 @@ function ChiTietLichHoc({ lich }) {
           <div className="mt-2 flex items-center justify-between gap-3">
             <span className="text-sm text-slate-500">Gói học</span>
             <span className="text-sm font-bold text-slate-900">{lich.goiHoc?.trangThaiText || "Chưa cập nhật"}</span>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <NhanXacNhan active={xacNhan.hocVienDaXacNhan} warning={xacNhan.hocVienBaoVanDe}>
+              Hoc vien
+            </NhanXacNhan>
+            <NhanXacNhan active={xacNhan.giaSuDaXacNhan} warning={xacNhan.giaSuBaoVanDe}>
+              Gia su
+            </NhanXacNhan>
           </div>
         </KhoiThongTin>
 
@@ -287,6 +341,73 @@ function ChiTietLichHoc({ lich }) {
             {lich.lyDoHuy && <p className="mt-2 text-sm leading-6 text-red-600">{lich.lyDoHuy}</p>}
           </KhoiThongTin>
         )}
+
+        <KhoiThongTin title="Xử lý admin">
+          {coTheXuLy ? (
+            <div className="space-y-4">
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  if (!coTheHoanThanh) return;
+                  onXuLy(lich, "hoan-thanh", { ghi_chu: ghiChuHoanThanh });
+                  setGhiChuHoanThanh("");
+                }}
+                className="rounded-xl border border-emerald-200 bg-emerald-50 p-3"
+              >
+                <p className="text-sm font-bold text-emerald-900">Xác nhận hoàn thành</p>
+                {!coTheHoanThanh && (
+                  <p className="mt-2 rounded-lg bg-white/70 px-3 py-2 text-xs font-semibold leading-5 text-emerald-800">
+                    Can hoc vien va gia su cung xac nhan hoan thanh, dong thoi khong co bao van de.
+                  </p>
+                )}
+                <textarea
+                  rows={3}
+                  value={ghiChuHoanThanh}
+                  onChange={(event) => setGhiChuHoanThanh(event.target.value)}
+                  placeholder="Ghi chú xử lý nếu có"
+                  className="mt-3 w-full resize-none rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
+                />
+                <button
+                  type="submit"
+                  disabled={dangXuLy || !coTheHoanThanh}
+                  className="mt-3 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {dangXuLy ? "Đang xử lý..." : "Xác nhận hoàn thành"}
+                </button>
+              </form>
+
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  onXuLy(lich, "huy", { ly_do: lyDoHuy });
+                  setLyDoHuy("");
+                }}
+                className="rounded-xl border border-red-200 bg-red-50 p-3"
+              >
+                <p className="text-sm font-bold text-red-900">Hủy buổi học</p>
+                <textarea
+                  rows={3}
+                  required
+                  value={lyDoHuy}
+                  onChange={(event) => setLyDoHuy(event.target.value)}
+                  placeholder="Nhập lý do hủy buổi học"
+                  className="mt-3 w-full resize-none rounded-lg border border-red-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-red-400"
+                />
+                <button
+                  type="submit"
+                  disabled={dangXuLy}
+                  className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {dangXuLy ? "Đang xử lý..." : "Hủy buổi học"}
+                </button>
+              </form>
+            </div>
+          ) : (
+            <div className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500">
+              Buổi học đã ở trạng thái cuối, không cần xử lý thêm.
+            </div>
+          )}
+        </KhoiThongTin>
       </div>
     </aside>
   );
@@ -298,6 +419,23 @@ function KhoiThongTin({ title, children }) {
       <h3 className="text-sm font-extrabold text-slate-900">{title}</h3>
       <div className="mt-3">{children}</div>
     </section>
+  );
+}
+
+function NhanXacNhan({ active, warning, children }) {
+  return (
+    <span
+      className={[
+        "rounded-full px-3 py-1 text-xs font-bold",
+        warning
+          ? "bg-amber-100 text-amber-700"
+          : active
+            ? "bg-emerald-100 text-emerald-700"
+            : "bg-slate-100 text-slate-500",
+      ].join(" ")}
+    >
+      {children}: {warning ? "Bao van de" : active ? "Da xac nhan" : "Chua xac nhan"}
+    </span>
   );
 }
 

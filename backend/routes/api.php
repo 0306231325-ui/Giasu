@@ -58,6 +58,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('gia-su')->group(function () {
         Route::post('/{giaSuId}/goi-hoc', [DatLichController::class, 'datLich']);
         Route::get('/lich-day', [DatLichController::class, 'lichDayGiaSu']);
+        Route::post('/lich-day/{lichHocId}/xac-nhan-hoan-thanh', [DatLichController::class, 'giaSuXacNhanHoanThanhBuoiHoc']);
         Route::get('/yeu-cau-dat-goi', [DatLichController::class, 'danhSachYeuCauGiaSu']);
         Route::patch('/yeu-cau-dat-goi/{goiHocId}/phan-hoi', [DatLichController::class, 'phanHoiYeuCauGiaSu']);
 
@@ -96,7 +97,11 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::patch('/{goiHocId}/huy', [DatLichController::class, 'huyGoiAdmin']);
         });
 
-        Route::get('/lich-hoc', [DatLichController::class, 'danhSachLichHocAdmin']);
+        Route::prefix('lich-hoc')->group(function () {
+            Route::get('/', [DatLichController::class, 'danhSachLichHocAdmin']);
+            Route::patch('/{lichHocId}/hoan-thanh', [DatLichController::class, 'adminXacNhanHoanThanhLichHoc']);
+            Route::patch('/{lichHocId}/huy', [DatLichController::class, 'adminHuyLichHoc']);
+        });
 
         Route::prefix('gia-su')->group(function () {
             Route::get('/', [AdminGiaSuController::class, 'danhSachGiaSu']);

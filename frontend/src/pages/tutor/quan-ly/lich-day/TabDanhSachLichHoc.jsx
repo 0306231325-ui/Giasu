@@ -3,7 +3,7 @@ import IconLichDay from "./IconLichDay";
 import ModalChiTietLichHoc from "./ModalChiTietLichHoc";
 import { trangThaiLichHoc } from "./duLieuQuanLyLich";
 
-function TabDanhSachLichHoc({ danhSach }) {
+function TabDanhSachLichHoc({ danhSach, dangXuLyId, onXacNhan }) {
     const [tuKhoa, setTuKhoa] = useState("");
     const [trangThai, setTrangThai] = useState("");
     const [lichDangXem, setLichDangXem] = useState(null);
@@ -116,6 +116,8 @@ function TabDanhSachLichHoc({ danhSach }) {
             {lichDangXem && (
                 <ModalChiTietLichHoc
                     lichHoc={lichDangXem}
+                    dangXuLy={dangXuLyId === `lich-${lichDangXem.id}`}
+                    onXacNhan={onXacNhan}
                     onDong={() => setLichDangXem(null)}
                 />
             )}

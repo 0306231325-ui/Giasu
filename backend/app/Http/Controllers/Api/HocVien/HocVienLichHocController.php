@@ -15,6 +15,11 @@ use Illuminate\Http\Request;
 
 class HocVienLichHocController extends Controller
 {
+    private const DAU_HOCVIEN_XACNHAN = 'Hoc vien xac nhan hoan thanh';
+    private const DAU_GIASU_XACNHAN = 'Gia su xac nhan hoan thanh';
+    private const DAU_HOCVIEN_BAO_VAN_DE = 'Hoc vien bao van de';
+    private const DAU_GIASU_BAO_VAN_DE = 'Gia su bao van de';
+
     public function lichHocCuaToi(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -216,6 +221,7 @@ class HocVienLichHocController extends Controller
     private function dinhDangLichHoc(LichHoc $lichHoc): array
     {
         $ngayHoc = Carbon::parse($lichHoc->ngay_hoc);
+        $daQuaGioKetThuc = now()->gte(Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_ketthuc));
         $yeuCauHocBuMoiNhat = $lichHoc->relationLoaded('yeuCauHocBus')
             ? $lichHoc->yeuCauHocBus->sortByDesc('created_at')->first()
             : null;
@@ -225,6 +231,7 @@ class HocVienLichHocController extends Controller
             'hoanthanh' => 'hoan_thanh',
             'dahuy' => 'da_huy',
         ][$lichHoc->trang_thai] ?? $lichHoc->trang_thai;
+        $xacNhan = $this->thongTinXacNhanLichHoc($lichHoc);
 
         return [
             'id' => $lichHoc->id,
@@ -241,11 +248,47 @@ class HocVienLichHocController extends Controller
             'loaiBuoi' => $lichHoc->loai_buoi === 'hoc_bu' ? 'Hoc bu' : 'Hoc thuong',
             'ghiChu' => $lichHoc->ghi_chu,
             'lyDoHuy' => $lichHoc->lydo_huy,
+            'daQuaGioKetThuc' => $daQuaGioKetThuc,
+            'coTheXacNhanHoanThanh' => $daQuaGioKetThuc
+                && $lichHoc->trang_thai === 'da_nhan'
+                && ! $xacNhan['hocVienDaXacNhan']
+                && ! $xacNhan['hocVienBaoVanDe'],
+            'xacNhan' => $xacNhan,
+            'hocVienXacNhan' => [
+                'trangThai' => $xacNhan['hocVienDaXacNhan'] ? 'daxacnhan' : ($xacNhan['hocVienBaoVanDe'] ? 'baovan_de' : null),
+                'thoiGian' => null,
+                'ghiChu' => $xacNhan['hocVienBaoVanDe'] ? $lichHoc->ghi_chu : null,
+            ],
+            'giaSuXacNhan' => [
+                'trangThai' => $xacNhan['giaSuDaXacNhan'] ? 'daxacnhan' : ($xacNhan['giaSuBaoVanDe'] ? 'baovan_de' : null),
+                'thoiGian' => null,
+                'ghiChu' => $xacNhan['giaSuBaoVanDe'] ? $lichHoc->ghi_chu : null,
+            ],
             'coTheDanhGia' => $lichHoc->trang_thai === 'hoanthanh',
             'coTheDoiBuoi' => in_array($lichHoc->trang_thai, ['cho_xacnhan', 'da_nhan'], true)
                 && ! ($yeuCauHocBuMoiNhat?->trang_thai === 'cho_duyet'),
             'danhGia' => $lichHoc->danhGia ? $this->dinhDangDanhGia($lichHoc->danhGia) : null,
             'yeuCauDoiBuoi' => $yeuCauHocBuMoiNhat ? $this->dinhDangYeuCauHocBu($yeuCauHocBuMoiNhat) : null,
+        ];
+    }
+
+    private function thongTinXacNhanLichHoc(LichHoc $lichHoc): array
+    {
+        $ghiChu = (string) $lichHoc->ghi_chu;
+        $hocVienDaXacNhan = str_contains($ghiChu, self::DAU_HOCVIEN_XACNHAN);
+        $giaSuDaXacNhan = str_contains($ghiChu, self::DAU_GIASU_XACNHAN);
+        $hocVienBaoVanDe = str_contains($ghiChu, self::DAU_HOCVIEN_BAO_VAN_DE)
+            || str_contains($ghiChu, 'Hoc vien bao van de')
+            || str_contains($ghiChu, 'Học viên báo vấn đề');
+        $giaSuBaoVanDe = str_contains($ghiChu, self::DAU_GIASU_BAO_VAN_DE);
+
+        return [
+            'hocVienDaXacNhan' => $hocVienDaXacNhan,
+            'giaSuDaXacNhan' => $giaSuDaXacNhan,
+            'hocVienBaoVanDe' => $hocVienBaoVanDe,
+            'giaSuBaoVanDe' => $giaSuBaoVanDe,
+            'duHaiBenXacNhan' => $hocVienDaXacNhan && $giaSuDaXacNhan,
+            'coBaoVanDe' => $hocVienBaoVanDe || $giaSuBaoVanDe,
         ];
     }
 

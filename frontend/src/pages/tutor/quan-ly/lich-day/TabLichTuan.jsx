@@ -8,7 +8,7 @@ const GIO_KET_THUC = 22;
 const CHIEU_CAO_MOI_GIO = 76;
 const CAC_THU = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "CN"];
 
-function TabLichTuan({ danhSach }) {
+function TabLichTuan({ danhSach, dangXuLyId, onXacNhan }) {
     const [ngayTrongTuan, setNgayTrongTuan] = useState(() => new Date());
     const [lichDangXem, setLichDangXem] = useState(null);
 
@@ -176,6 +176,8 @@ function TabLichTuan({ danhSach }) {
             {lichDangXem && (
                 <ModalChiTietLichHoc
                     lichHoc={lichDangXem}
+                    dangXuLy={dangXuLyId === `lich-${lichDangXem.id}`}
+                    onXacNhan={onXacNhan}
                     onDong={() => setLichDangXem(null)}
                 />
             )}
