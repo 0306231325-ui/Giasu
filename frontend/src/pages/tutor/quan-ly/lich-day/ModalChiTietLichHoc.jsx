@@ -3,6 +3,8 @@ import { trangThaiLichHoc } from "./duLieuQuanLyLich";
 
 function ModalChiTietLichHoc({ lichHoc, onDong }) {
     const trangThai = trangThaiLichHoc[lichHoc.trangThai];
+    const daHoanThanh = lichHoc.trangThai === "hoan_thanh";
+    const daHuy = lichHoc.trangThai === "da_huy";
 
     return (
         <LopModal onDong={onDong}>
@@ -56,6 +58,40 @@ function ModalChiTietLichHoc({ lichHoc, onDong }) {
                         Link vào lớp: {lichHoc.lienKet}
                     </div>
                 )}
+
+                <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p className="text-sm font-extrabold text-slate-900">
+                                Xác nhận hoàn thành buổi học
+                            </p>
+                            <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
+                                Gia sư xác nhận sau khi buổi học đã kết thúc để hệ thống ghi nhận tiến độ.
+                            </p>
+                        </div>
+
+                        {daHoanThanh ? (
+                            <span className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-emerald-50 px-4 py-2.5 text-sm font-extrabold text-emerald-700">
+                                <IconLichDay ten="check" className="h-4 w-4" />
+                                Đã hoàn thành
+                            </span>
+                        ) : (
+                            <button
+                                type="button"
+                                disabled={daHuy}
+                                className={[
+                                    "inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-extrabold transition",
+                                    daHuy
+                                        ? "cursor-not-allowed bg-slate-200 text-slate-400"
+                                        : "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-700",
+                                ].join(" ")}
+                            >
+                                <IconLichDay ten={daHuy ? "x" : "check"} className="h-4 w-4" />
+                                {daHuy ? "Buổi học đã huỷ" : "Xác nhận đã hoàn thành"}
+                            </button>
+                        )}
+                    </div>
+                </div>
 
                 <div className="mt-6 flex justify-end">
                     <button
