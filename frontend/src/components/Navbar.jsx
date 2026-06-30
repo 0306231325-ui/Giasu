@@ -131,6 +131,10 @@ function Navbar() {
                     )}
                 </div>
 
+                <Link to="/bai-viet" className="transition hover:text-white">
+                    Bài viết
+                </Link>
+
                 <Link to="/gioi-thieu" className="transition hover:text-white">
                     Giới Thiệu
                 </Link>

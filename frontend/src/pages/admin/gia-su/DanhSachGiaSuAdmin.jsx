@@ -87,6 +87,18 @@ function DanhSachGiaSuAdmin({ trangThaiHoSo = "duyet" }) {
         [],
     );
 
+    useEffect(() => {
+        const lamMoi = () => {
+            setLanTaiLai((hienTai) => hienTai + 1);
+        };
+
+        window.addEventListener("admin:refresh", lamMoi);
+
+        return () => {
+            window.removeEventListener("admin:refresh", lamMoi);
+        };
+    }, []);
+
     const hienThongBaoTamThoi = (noiDung) => {
         if (boDemAnThongBao.current) {
             clearTimeout(boDemAnThongBao.current);

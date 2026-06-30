@@ -1,6 +1,7 @@
 import Home from "./pages/Home"
 import { Routes, Route } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
+import BaiViet from "./pages/BaiViet";
 import BaiVietDetail from "./pages/BaiVietDetail";
 import DanhSachGiaSu from './pages/tutor/DanhSachGiaSu';
 import GiaSuDetail from "./pages/tutor/GiaSuDetail";
@@ -55,10 +56,11 @@ function App() {
 
         <Route path="/hoc-vien/lich-hoc" element={<LichHocCuaToi />} />
 
-        <Route
-          path="/baiviet/:slug"
-          element={<BaiVietDetail />}
-        />
+        <Route path="/bai-viet" element={<BaiViet />} />
+
+        <Route path="/bai-viet/:slug" element={<BaiVietDetail />} />
+
+        <Route path="/baiviet/:slug" element={<BaiVietDetail />} />
 
       </Route>
 

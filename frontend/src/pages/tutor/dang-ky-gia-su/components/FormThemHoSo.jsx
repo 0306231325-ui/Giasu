@@ -3,6 +3,7 @@ import { DauBatBuoc } from "./ThanhPhanChung";
 
 function FormThemHoSo({ hoSo, danhMuc, dangTaiDanhMuc }) {
     if (!hoSo.hienForm) return null;
+    const dangSua = Boolean(hoSo.idDangSua);
     const duDieuKien =
         hoSo.form.ten_bang.trim() &&
         hoSo.form.trinh_do_giasu_id &&
@@ -21,7 +22,7 @@ function FormThemHoSo({ hoSo, danhMuc, dangTaiDanhMuc }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
             <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white text-slate-900 shadow-2xl">
                 <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
-                    <div><h2 className="text-xl font-extrabold">Thêm bằng cấp hoặc chứng chỉ</h2><p className="mt-1 text-sm text-slate-500">File tải lên sẽ được gửi quản trị viên xét duyệt.</p></div>
+                    <div><h2 className="text-xl font-extrabold">{dangSua ? "Sửa bằng cấp hoặc chứng chỉ" : "Thêm bằng cấp hoặc chứng chỉ"}</h2><p className="mt-1 text-sm text-slate-500">File tải lên sẽ được gửi quản trị viên xét duyệt.</p></div>
                     <button type="button" onClick={hoSo.dongForm} aria-label="Đóng" className="rounded-xl p-2 text-2xl text-slate-400 hover:bg-slate-100">×</button>
                 </div>
                 <div className="grid gap-5 p-6 md:grid-cols-2">
@@ -66,7 +67,9 @@ function FormThemHoSo({ hoSo, danhMuc, dangTaiDanhMuc }) {
                     )}
                     <div className="flex justify-end gap-3 border-t border-slate-100 pt-5 md:col-span-2">
                         <button type="button" onClick={hoSo.dongForm} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600">Hủy</button>
-                        <button type="button" onClick={hoSo.them} disabled={!duDieuKien} className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50">Thêm tài liệu</button>
+                        <button type="button" onClick={hoSo.them} disabled={!duDieuKien} className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50">
+                            {dangSua ? "Lưu thay đổi" : "Thêm tài liệu"}
+                        </button>
                     </div>
                 </div>
             </div>

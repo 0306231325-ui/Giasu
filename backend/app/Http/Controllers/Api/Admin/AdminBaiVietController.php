@@ -1,17 +1,20 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\BaiViet;
+use App\Services\BaiVietService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
 
-class BaiVietController extends Controller
+class AdminBaiVietController extends Controller
 {
     private const SO_BAI_VIET_MOI_TRANG = 5;
     private const DUNG_LUONG_ANH_BIA_TOI_DA_KB = 2048;
+
+    public function __construct(private readonly BaiVietService $baiVietService)
+    {
+    }
 
     private function quyTacValidateBaiViet(): array
     {
@@ -37,16 +40,6 @@ class BaiVietController extends Controller
             'anh_bia.mimes' => 'Ảnh bìa chỉ hỗ trợ định dạng JPG, PNG hoặc WebP.',
             'anh_bia.max' => 'Ảnh bìa không được lớn hơn 2MB.',
         ];
-    }
-
-    public function baiVietMoi()
-    {
-        $baiviet = BaiViet::where('trang_thai', 'xuat_ban')
-            ->latest()
-            ->take(4)
-            ->get();
-
-        return response()->json($baiviet);
     }
 
     public function danhSachBaiVietAdmin(Request $request)
@@ -116,15 +109,6 @@ class BaiVietController extends Controller
         ]);
     }
 
-    public function chiTiet($slug)
-    {
-        $baiviet = BaiViet::where('slug', $slug)->firstOrFail();
-
-        $baiviet->increment('luot_xem');
-
-        return response()->json($baiviet);
-    }
-
     public function taoBaiVietAdmin(Request $request)
     {
         if ($request->user()?->vai_tro !== 'admin') {
@@ -139,20 +123,14 @@ class BaiVietController extends Controller
             $this->thongBaoValidateBaiViet(),
         );
 
-        $slug = $this->taoSlugKhongTrung($duLieu['tieu_de']);
+        $slug = $this->baiVietService->taoSlugKhongTrung($duLieu['tieu_de']);
         $anhBiaUrl = null;
 
         if ($request->hasFile('anh_bia')) {
-            $thuMucAnh = public_path('images/baiviet');
-
-            if (! File::isDirectory($thuMucAnh)) {
-                File::makeDirectory($thuMucAnh, 0755, true);
-            }
-
-            $file = $request->file('anh_bia');
-            $tenFile = $slug . '-' . time() . '.' . $file->getClientOriginalExtension();
-            $file->move($thuMucAnh, $tenFile);
-            $anhBiaUrl = url('images/baiviet/' . $tenFile);
+            $anhBiaUrl = $this->baiVietService->luuAnhBia(
+                $request->file('anh_bia'),
+                $slug,
+            );
         }
 
         $baiViet = BaiViet::create([
@@ -196,26 +174,20 @@ class BaiVietController extends Controller
         );
 
         $anhBiaUrl = $baiViet->anh_bia;
+        $slugMoi = $this->baiVietService->taoSlugKhongTrung($duLieu['tieu_de'], $baiViet->id);
 
         if ($request->hasFile('anh_bia')) {
-            $thuMucAnh = public_path('images/baiviet');
+            $this->baiVietService->xoaAnhBaiVietCu($baiViet->anh_bia);
 
-            if (! File::isDirectory($thuMucAnh)) {
-                File::makeDirectory($thuMucAnh, 0755, true);
-            }
-
-            $this->xoaAnhBaiVietCu($baiViet->anh_bia);
-
-            $slugMoi = $this->taoSlugKhongTrung($duLieu['tieu_de'], $baiViet->id);
-            $file = $request->file('anh_bia');
-            $tenFile = $slugMoi . '-' . time() . '.' . $file->getClientOriginalExtension();
-            $file->move($thuMucAnh, $tenFile);
-            $anhBiaUrl = url('images/baiviet/' . $tenFile);
+            $anhBiaUrl = $this->baiVietService->luuAnhBia(
+                $request->file('anh_bia'),
+                $slugMoi,
+            );
         }
 
         $baiViet->fill([
             'tieu_de' => $duLieu['tieu_de'],
-            'slug' => $this->taoSlugKhongTrung($duLieu['tieu_de'], $baiViet->id),
+            'slug' => $slugMoi,
             'tom_tat' => $duLieu['tom_tat'] ?? null,
             'noi_dung' => $duLieu['noi_dung'],
             'anh_bia' => $anhBiaUrl,
@@ -305,7 +277,7 @@ class BaiVietController extends Controller
             ], 404);
         }
 
-        $this->xoaAnhBaiVietCu($baiViet->anh_bia);
+        $this->baiVietService->xoaAnhBaiVietCu($baiViet->anh_bia);
         $baiViet->forceDelete();
 
         return response()->json([
@@ -314,50 +286,4 @@ class BaiVietController extends Controller
         ]);
     }
 
-    private function taoSlugKhongTrung(string $tieuDe, ?int $boQuaBaiVietId = null): string
-    {
-        $slugGoc = Str::slug($tieuDe);
-        $slugGoc = $slugGoc !== '' ? $slugGoc : 'bai-viet';
-        $slug = $slugGoc;
-        $dem = 2;
-
-        while (
-            BaiViet::where('slug', $slug)
-                ->when($boQuaBaiVietId, function ($query) use ($boQuaBaiVietId) {
-                    $query->where('id', '!=', $boQuaBaiVietId);
-                })
-                ->exists()
-        ) {
-            $slug = $slugGoc . '-' . $dem;
-            $dem++;
-        }
-
-        return $slug;
-    }
-
-    private function xoaAnhBaiVietCu(?string $anhBia): void
-    {
-        if (! $anhBia) {
-            return;
-        }
-
-        $duongDan = parse_url($anhBia, PHP_URL_PATH) ?: $anhBia;
-        $prefix = '/images/baiviet/';
-
-        if (! str_starts_with($duongDan, $prefix)) {
-            return;
-        }
-
-        $tenFile = basename($duongDan);
-
-        if ($tenFile === '' || $tenFile === '.gitkeep') {
-            return;
-        }
-
-        $duongDanFile = public_path('images/baiviet/' . $tenFile);
-
-        if (File::exists($duongDanFile)) {
-            File::delete($duongDanFile);
-        }
-    }
 }

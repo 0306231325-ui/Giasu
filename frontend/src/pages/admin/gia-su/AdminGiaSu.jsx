@@ -35,7 +35,7 @@ function AdminGiaSu() {
         }, 3000);
     }, []);
 
-    const taiHoSoChoDuyet = useCallback(async (tuKhoaTimKiem = "") => {
+    const taiHoSoChoDuyet = useCallback(async (tuKhoaTimKiem = "", { capNhatDanhSach = true } = {}) => {
         setDangTai(true);
         try {
             const response = await api.get("/admin/gia-su/xet-duyet", {
@@ -50,6 +50,11 @@ function AdminGiaSu() {
                     daDuyet: 0,
                     tuChoi: 0,
                 });
+
+                if (!capNhatDanhSach) {
+                    return;
+                }
+
                 const hoSoDuocChon =
                     danhSach.find((hoSo) => hoSo.id === hoSoDangChon?.id) ??
                     danhSach[0] ??
@@ -59,9 +64,11 @@ function AdminGiaSu() {
             }
         } catch (error) {
             hienThongBao(error.response?.data?.message || "Không thể tải hồ sơ chờ duyệt.");
-            setDanhSachChoDuyet([]);
-            setHoSoDangChon(null);
-            setHeSoGiaDuyet("0");
+            if (capNhatDanhSach) {
+                setDanhSachChoDuyet([]);
+                setHoSoDangChon(null);
+                setHeSoGiaDuyet("0");
+            }
         } finally {
             setDangTai(false);
         }
@@ -83,6 +90,23 @@ function AdminGiaSu() {
         }, 350);
 
         return () => clearTimeout(boDem);
+    }, [taiHoSoChoDuyet, tuKhoa, tab]);
+
+    useEffect(() => {
+        const lamMoi = () => {
+            if (tab === "xet_duyet") {
+                taiHoSoChoDuyet(tuKhoa);
+                return;
+            }
+
+            taiHoSoChoDuyet("", { capNhatDanhSach: false });
+        };
+
+        window.addEventListener("admin:refresh", lamMoi);
+
+        return () => {
+            window.removeEventListener("admin:refresh", lamMoi);
+        };
     }, [taiHoSoChoDuyet, tuKhoa, tab]);
 
     const xuLyHoSo = async (hoSo, hanhDong, lyDo = "", heSoGia = 0) => {

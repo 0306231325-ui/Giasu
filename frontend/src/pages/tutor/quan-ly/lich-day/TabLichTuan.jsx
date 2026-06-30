@@ -27,21 +27,16 @@ function TabLichTuan({ danhSach }) {
         [ngayDauTuan],
     );
 
-    const danhSachHienThi = useMemo(
-        () => danhSach.length > 0 ? danhSach : taoLichMauTheoTuan(cacNgayTrongTuan),
-        [cacNgayTrongTuan, danhSach],
-    );
-
     const danhSachTrongTuan = useMemo(
         () =>
-            danhSachHienThi.filter((lichHoc) => {
+            danhSach.filter((lichHoc) => {
                 const ngayHoc = docNgayVietNam(lichHoc.ngayHoc);
                 if (!ngayHoc) return false;
 
                 return ngayHoc >= cacNgayTrongTuan[0]
                     && ngayHoc <= ketThucNgay(cacNgayTrongTuan[6]);
             }),
-        [cacNgayTrongTuan, danhSachHienThi],
+        [cacNgayTrongTuan, danhSach],
     );
 
     const doLechTuan = tinhDoLechTuan(ngayDauTuan, layNgayDauTuan(new Date()));
@@ -95,12 +90,6 @@ function TabLichTuan({ danhSach }) {
                         </NutChuyenTuan>
                     </div>
                 </div>
-
-                {danhSach.length === 0 && (
-                    <div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/10 px-4 py-3 text-sm font-semibold text-amber-100">
-                        Đang hiển thị dữ liệu mẫu để xem giao diện, không lưu vào database.
-                    </div>
-                )}
 
                 <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-[#0a132d]">
                     <div className="grid grid-cols-[76px_repeat(7,minmax(130px,1fr))] border-b border-white/10 bg-white/[0.03]">
@@ -258,81 +247,6 @@ function ketThucNgay(ngay) {
     const ketQua = new Date(ngay);
     ketQua.setHours(23, 59, 59, 999);
     return ketQua;
-}
-
-function taoLichMauTheoTuan(cacNgayTrongTuan) {
-    const taoNgay = (index) => dinhDangNgayDayDu(cacNgayTrongTuan[index]);
-
-    return [
-        {
-            id: "demo-1",
-            ma: "DEMO001",
-            batDau: "08:00",
-            ketThuc: "09:30",
-            thu: "Thứ 2",
-            ngayHoc: taoNgay(0),
-            loaiBuoi: "Học thường",
-            mon: "Toán",
-            capHoc: "THCS",
-            hocVien: "Nguyễn Minh Anh",
-            hinhThuc: "Trực tuyến",
-            diaDiem: "Online",
-            trangThai: "sap_dien_ra",
-            ghiChu: "Dữ liệu mẫu chỉ dùng để xem giao diện.",
-        },
-        {
-            id: "demo-2",
-            ma: "DEMO002",
-            batDau: "14:00",
-            ketThuc: "15:30",
-            thu: "Thứ 4",
-            ngayHoc: taoNgay(2),
-            loaiBuoi: "Học thường",
-            mon: "Tiếng Anh",
-            capHoc: "THPT",
-            hocVien: "Trần Gia Bảo",
-            hinhThuc: "Trực tiếp",
-            diaDiem: "Quận 5, TP.HCM",
-            trangThai: "sap_dien_ra",
-            ghiChu: "Dữ liệu mẫu chỉ dùng để xem giao diện.",
-        },
-        {
-            id: "demo-3",
-            ma: "DEMO003",
-            batDau: "18:00",
-            ketThuc: "19:30",
-            thu: "Thứ 6",
-            ngayHoc: taoNgay(4),
-            loaiBuoi: "Học thường",
-            mon: "Vật lý",
-            capHoc: "THPT",
-            hocVien: "Lê Thanh Tâm",
-            hinhThuc: "Trực tuyến",
-            diaDiem: "Online",
-            trangThai: "hoan_thanh",
-            ghiChu: "Dữ liệu mẫu chỉ dùng để xem giao diện.",
-        },
-        {
-            id: "demo-4",
-            ma: "DEMO004",
-            batDau: "19:30",
-            ketThuc: "21:00",
-            thu: "Thứ 7",
-            ngayHoc: taoNgay(5),
-            loaiBuoi: "Học bù",
-            mon: "Hóa học",
-            capHoc: "THCS",
-            hocVien: "Phạm Ngọc Linh",
-            hinhThuc: "Trực tiếp",
-            diaDiem: "Bình Thạnh, TP.HCM",
-            trangThai: "sap_dien_ra",
-            ghiChu: "Dữ liệu mẫu chỉ dùng để xem giao diện.",
-        },
-    ];
-}
-
-function dinhDangNgayDayDu(ngay) {
-    return `${String(ngay.getDate()).padStart(2, "0")}/${String(ngay.getMonth() + 1).padStart(2, "0")}/${ngay.getFullYear()}`;
 }
 
 function docNgayVietNam(giaTri) {
