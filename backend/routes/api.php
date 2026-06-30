@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\MonHocController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminGiaSuController;
 use App\Http\Controllers\Api\AdminHocVienController;
+use App\Http\Controllers\Api\AdminDanhMucController;
 use App\Http\Controllers\Api\DangKyGiaSuController;
 use App\Http\Controllers\Api\DatLichController;
 use App\Http\Controllers\Api\ThongBaoController;
@@ -48,6 +49,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/gia-su/ho-so/bang-cap/{bangCapId}', [GiasuController::class, 'xoaBangCap']);
     Route::get('/admin/gia-su', [AdminGiaSuController::class, 'danhSachGiaSu']);
     Route::get('/admin/dat-goi', [DatLichController::class, 'danhSachDatGoiAdmin']);
+    Route::get('/admin/lich-hoc', [DatLichController::class, 'danhSachLichHocAdmin']);
     Route::patch('/admin/dat-goi/{goiHocId}/gui-gia-su', [DatLichController::class, 'guiGoiChoGiaSu']);
     Route::patch('/admin/dat-goi/{goiHocId}/cho-thanh-toan', [DatLichController::class, 'chuyenGoiChoThanhToan']);
     Route::patch('/admin/dat-goi/{goiHocId}/duyet-thanh-toan', [DatLichController::class, 'duyetThanhToanAdmin']);
@@ -63,6 +65,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/mon-hoc', [MonHocController::class, 'taoAdmin']);
     Route::patch('/admin/mon-hoc/{monHocId}', [MonHocController::class, 'capNhatAdmin']);
     Route::delete('/admin/mon-hoc/{monHocId}', [MonHocController::class, 'xoaAdmin']);
+    Route::get('/admin/danh-muc', [AdminDanhMucController::class, 'index']);
+    Route::post('/admin/danh-muc/{loai}', [AdminDanhMucController::class, 'store']);
+    Route::patch('/admin/danh-muc/{loai}/{id}', [AdminDanhMucController::class, 'update']);
+    Route::delete('/admin/danh-muc/{loai}/{id}', [AdminDanhMucController::class, 'destroy']);
     Route::get('/admin/baiviet', [BaiVietController::class, 'danhSachBaiVietAdmin']);
     Route::get('/admin/baiviet/thung-rac', [BaiVietController::class, 'thungRacBaiVietAdmin']);
     Route::post('/admin/baiviet', [BaiVietController::class, 'taoBaiVietAdmin']);
@@ -84,6 +90,7 @@ Route::get('/baiviet/{slug}', [BaiVietController::class, 'chiTiet']);
 Route::get('/banner', [BannerController::class, 'index']);
 
 Route::get('/gia-su', [GiasuController::class, 'index']);
+Route::get('/gia-su/{giaSuId}/lich-ban', [DatLichController::class, 'lichBanGiaSu']);
 Route::get('/tim-gia-su-theo-yeu-cau', [GiasuController::class, 'timTheoYeuCau']);
 
 Route::get('/dang-ky-gia-su/danh-muc', [DangKyGiaSuController::class, 'danhMuc']);
