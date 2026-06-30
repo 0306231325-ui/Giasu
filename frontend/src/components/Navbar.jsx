@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import api from "../services/api";
 import ThongBaoDropdown from "./ThongBaoDropdown";
 
 function Navbar() {
@@ -9,33 +8,11 @@ function Navbar() {
     const { user, logout, isAuthenticated } = useAuth();
     const avatarUrl = layUrlAnhDaiDien(user?.anh_dai_dien);
     const laTaiKhoanGiaSu = user?.vai_tro === "giasu";
-    const [monHocs, setMonHocs] = useState([]);
-    const [dropdownOpen, setDropdownOpen] = useState(false);
     const [userDropdownOpen, setUserDropdownOpen] = useState(false);
-    const dropdownRef = useRef(null);
     const userDropdownRef = useRef(null);
 
     useEffect(() => {
-        const fetchMonHoc = async () => {
-            try {
-                const response = await api.get("/mon-hoc");
-                if (response.data.success) {
-                    setMonHocs(response.data.data);
-                }
-            } catch (error) {
-                console.error("Lỗi khi tải môn học cho menu:", error);
-            }
-        };
-
-        fetchMonHoc();
-    }, []);
-
-    useEffect(() => {
         const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setDropdownOpen(false);
-            }
-
             if (
                 userDropdownRef.current &&
                 !userDropdownRef.current.contains(event.target)
@@ -75,61 +52,6 @@ function Navbar() {
                         Đăng Ký Làm Gia Sư
                     </Link>
                 )}
-
-                <div
-                    className="relative flex items-center gap-1"
-                    ref={dropdownRef}
-                >
-                    <Link to="/mon-hoc" className="transition hover:text-white">
-                        Môn Học
-                    </Link>
-
-                    <button
-                        type="button"
-                        onClick={() => setDropdownOpen((prev) => !prev)}
-                        className="px-1 text-xs transition hover:text-white"
-                        aria-label="Mở danh sách môn học"
-                    >
-                        <span
-                            className={`inline-block transition-transform duration-200 ${
-                                dropdownOpen ? "rotate-180" : ""
-                            }`}
-                        >
-                            ▾
-                        </span>
-                    </button>
-
-                    {dropdownOpen && (
-                        <div className="absolute left-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-gray-700 bg-gray-800 shadow-xl">
-                            <div className="max-h-[200px] overflow-y-auto">
-                                {monHocs.length === 0 ? (
-                                    <p className="px-4 py-3 text-sm text-gray-400">
-                                        Chưa có môn học
-                                    </p>
-                                ) : (
-                                    monHocs.map((mon) => (
-                                        <Link
-                                            key={mon.id}
-                                            to={`/mon-hoc?mon=${mon.id}`}
-                                            onClick={() => setDropdownOpen(false)}
-                                            className="block border-b border-gray-700/50 px-4 py-2.5 text-sm font-medium transition last:border-0 hover:bg-gray-700 hover:text-white"
-                                        >
-                                            {mon.ten_mon}
-                                        </Link>
-                                    ))
-                                )}
-                            </div>
-
-                            <Link
-                                to="/mon-hoc"
-                                onClick={() => setDropdownOpen(false)}
-                                className="block border-t border-gray-700 px-4 py-2.5 text-center text-sm font-semibold text-blue-400 hover:bg-gray-700"
-                            >
-                                Xem tất cả môn học
-                            </Link>
-                        </div>
-                    )}
-                </div>
 
                 <Link to="/bai-viet" className="transition hover:text-white">
                     Bài viết

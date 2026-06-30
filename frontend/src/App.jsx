@@ -6,7 +6,6 @@ import BaiVietDetail from "./pages/BaiVietDetail";
 import DanhSachGiaSu from './pages/tutor/DanhSachGiaSu';
 import GiaSuDetail from "./pages/tutor/GiaSuDetail";
 import TimGiaSuTheoYeuCau from "./pages/tutor/TimGiaSuTheoYeuCau";
-import DanhSachMonHoc from './pages/subject/DanhSachMonHoc';
 import ChonGoiHoc from "./pages/student/ChonGoiHoc";
 import Login from "./pages/login/Login";
 import Register from "./pages/register/Register";
@@ -45,8 +44,6 @@ function App() {
         <Route path="/tim-gia-su-theo-yeu-cau" element={<TimGiaSuTheoYeuCau />} />
 
         <Route path="/dang-ky-lam-gia-su" element={<DangKyLamGiaSu />} />
-
-        <Route path="/mon-hoc" element={<DanhSachMonHoc />} />
 
         <Route path="/login" element={<Login />} />
 

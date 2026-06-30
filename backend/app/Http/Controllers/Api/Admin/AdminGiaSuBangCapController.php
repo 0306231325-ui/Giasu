@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\GiasuBangCap;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 
 class AdminGiaSuBangCapController extends Controller
 {
@@ -27,7 +27,7 @@ class AdminGiaSuBangCapController extends Controller
             ], 404);
         }
 
-        if (! Storage::disk('local')->exists($bangCap->file_url)) {
+        if (! $this->fileTonTai($bangCap->file_url)) {
             return response()->json([
                 'success' => false,
                 'message' => 'File tài liệu không còn tồn tại.',
@@ -35,8 +35,27 @@ class AdminGiaSuBangCapController extends Controller
         }
 
         return response()->file(
-            Storage::disk('local')->path($bangCap->file_url),
+            $this->duongDanFile($bangCap->file_url),
             ['Content-Disposition' => 'inline'],
         );
+    }
+
+    private function fileTonTai(?string $duongDan): bool
+    {
+        if (! filled($duongDan)) {
+            return false;
+        }
+
+        return File::exists(public_path($this->layDuongDanTuongDoi($duongDan)));
+    }
+
+    private function duongDanFile(string $duongDan): string
+    {
+        return public_path($this->layDuongDanTuongDoi($duongDan));
+    }
+
+    private function layDuongDanTuongDoi(string $duongDan): string
+    {
+        return ltrim(parse_url($duongDan, PHP_URL_PATH) ?: $duongDan, '/');
     }
 }

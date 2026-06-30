@@ -195,6 +195,61 @@ function ChonGoiHoc() {
         { ngay: ngayMai(), gio_batdau: "18:00", gio_ketthuc: "19:30" },
     ]);
 
+    const slotTrungDanhSachLichBan = (danhSachLich, ngay, gioBatDau) => {
+        const gioKetThuc = tinhGioKetThuc(gioBatDau);
+
+        return danhSachLich.some((lich) => (
+            lich.ngay_hoc === ngay
+            && gioBatDau < lich.gio_ketthuc
+            && gioKetThuc > lich.gio_batdau
+        ));
+    };
+
+    const khungGioGiaSuRanhDauTien = (ngay, danhSachLich = lichBanGiaSu) => (
+        cacKhungGioBatDau.find((gio) => !slotTrungDanhSachLichBan(danhSachLich, ngay, gio)) || ""
+    );
+
+    const dieuChinhBuoiLinhHoatTheoLichBan = (danhSachBuoi, danhSachLich = lichBanGiaSu) => {
+        let daThayDoi = false;
+
+        const danhSachMoi = danhSachBuoi.map((buoi, index) => {
+            const biTrungGiaSu = slotTrungDanhSachLichBan(danhSachLich, buoi.ngay, buoi.gio_batdau);
+            const biTrungBuoiKhac = danhSachBuoi.some((buoiKhac, currentIndex) => (
+                currentIndex !== index
+                && buoiKhac.ngay === buoi.ngay
+                && buoi.gio_batdau < buoiKhac.gio_ketthuc
+                && buoi.gio_ketthuc > buoiKhac.gio_batdau
+            ));
+
+            if (!biTrungGiaSu && !biTrungBuoiKhac) return buoi;
+
+            const gioRanh = cacKhungGioBatDau.find((gio) => {
+                const gioKetThuc = tinhGioKetThuc(gio);
+                const trungLichGiaSu = slotTrungDanhSachLichBan(danhSachLich, buoi.ngay, gio);
+                const trungBuoiKhac = danhSachBuoi.some((buoiKhac, currentIndex) => (
+                    currentIndex !== index
+                    && buoiKhac.ngay === buoi.ngay
+                    && gio < buoiKhac.gio_ketthuc
+                    && gioKetThuc > buoiKhac.gio_batdau
+                ));
+
+                return !trungLichGiaSu && !trungBuoiKhac;
+            });
+
+            if (!gioRanh || gioRanh === buoi.gio_batdau) return buoi;
+
+            daThayDoi = true;
+
+            return {
+                ...buoi,
+                gio_batdau: gioRanh,
+                gio_ketthuc: tinhGioKetThuc(gioRanh),
+            };
+        });
+
+        return daThayDoi ? danhSachMoi : danhSachBuoi;
+    };
+
     useEffect(() => {
         let cancelled = false;
 
@@ -231,9 +286,26 @@ function ChonGoiHoc() {
             try {
                 const response = await api.get(`/gia-su/${id}/lich-ban`);
                 if (!cancelled && response.data.success) {
-                    setLichBanGiaSu(response.data.data || []);
+                    const lichBanMoi = response.data.data || [];
+                    setLichBanGiaSu(lichBanMoi);
+
+                    if (loaiGoi === "hoc_thu" && slotTrungDanhSachLichBan(lichBanMoi, form.ngay_batdau, form.gio_batdau)) {
+                        const gioBatDau = khungGioGiaSuRanhDauTien(form.ngay_batdau, lichBanMoi);
+
+                        if (gioBatDau && gioBatDau !== form.gio_batdau) {
+                            setForm((prev) => ({
+                                ...prev,
+                                gio_batdau: gioBatDau,
+                                gio_ketthuc: tinhGioKetThuc(gioBatDau),
+                            }));
+                        }
+                    }
+
+                    if (loaiGoi === "khong_dinh_ky") {
+                        setBuoiLinhHoat((prev) => dieuChinhBuoiLinhHoatTheoLichBan(prev, lichBanMoi));
+                    }
                 }
-            } catch (error) {
+            } catch {
                 if (!cancelled) setLichBanGiaSu([]);
             }
         };
@@ -279,13 +351,33 @@ function ChonGoiHoc() {
         setLoaiGoi(value);
         setGoiId("");
         setThongBao("");
+
+        if (value === "hoc_thu" && slotTrungLichBan(form.ngay_batdau, form.gio_batdau)) {
+            const gioBatDau = khungGioGiaSuRanhDauTien(form.ngay_batdau);
+
+            if (gioBatDau && gioBatDau !== form.gio_batdau) {
+                setForm((prev) => ({
+                    ...prev,
+                    gio_batdau: gioBatDau,
+                    gio_ketthuc: tinhGioKetThuc(gioBatDau),
+                }));
+            }
+        }
+
+        if (value === "khong_dinh_ky") {
+            setBuoiLinhHoat((prev) => dieuChinhBuoiLinhHoatTheoLichBan(prev));
+        }
     };
 
-    useEffect(() => {
-        if (loaiGoi !== "khong_dinh_ky" || soBuoi <= 0) return;
+    const chonGoi = (goi) => {
+        setGoiId(goi.id);
 
-        setBuoiLinhHoat((prev) => prev.slice(0, soBuoi));
-    }, [loaiGoi, soBuoi]);
+        if (loaiGoi === "khong_dinh_ky") {
+            const soBuoiMoi = tinhTienGoi(giaSu, goi).tongBuoi;
+            setBuoiLinhHoat((prev) => dieuChinhBuoiLinhHoatTheoLichBan(prev.slice(0, soBuoiMoi)));
+        }
+    };
+
 
     const capNhatForm = (field, value) => {
         setForm((prev) => {
@@ -307,15 +399,7 @@ function ChonGoiHoc() {
         setThongBao("");
     };
 
-    const slotTrungLichBan = (ngay, gioBatDau) => {
-        const gioKetThuc = tinhGioKetThuc(gioBatDau);
-
-        return lichBanGiaSu.some((lich) => (
-            lich.ngay_hoc === ngay
-            && gioBatDau < lich.gio_ketthuc
-            && gioKetThuc > lich.gio_batdau
-        ));
-    };
+    const slotTrungLichBan = (ngay, gioBatDau) => slotTrungDanhSachLichBan(lichBanGiaSu, ngay, gioBatDau);
 
     const slotTrungBuoiDangChon = (ngay, gioBatDau, boQuaIndex = null) => {
         const gioKetThuc = tinhGioKetThuc(gioBatDau);
@@ -334,10 +418,6 @@ function ChonGoiHoc() {
 
     const khungGioRanhDauTien = (ngay, boQuaIndex = null) => (
         cacKhungGioBatDau.find((gio) => !slotBiKhoa(ngay, gio, boQuaIndex)) || GIO_BAT_DAU_MIN
-    );
-
-    const khungGioGiaSuRanhDauTien = (ngay) => (
-        cacKhungGioBatDau.find((gio) => !slotTrungLichBan(ngay, gio)) || GIO_BAT_DAU_MIN
     );
 
     const toggleThu = (thu) => {
@@ -380,9 +460,22 @@ function ChonGoiHoc() {
         setBuoiLinhHoat((prev) => {
             if (prev.length >= soBuoi) return prev;
 
+            const ngay = ngayMai();
+            const gioBatDau = cacKhungGioBatDau.find((gio) => {
+                const gioKetThuc = tinhGioKetThuc(gio);
+                const trungLichGiaSu = slotTrungLichBan(ngay, gio);
+                const trungBuoiDangChon = prev.some((buoi) => (
+                    buoi.ngay === ngay
+                    && gio < buoi.gio_ketthuc
+                    && gioKetThuc > buoi.gio_batdau
+                ));
+
+                return !trungLichGiaSu && !trungBuoiDangChon;
+            }) || GIO_BAT_DAU_MIN;
+
             return [
                 ...prev,
-                { ngay: ngayMai(), gio_batdau: form.gio_batdau, gio_ketthuc: form.gio_ketthuc },
+                { ngay, gio_batdau: gioBatDau, gio_ketthuc: tinhGioKetThuc(gioBatDau) },
             ];
         });
         setThongBao("");
@@ -648,7 +741,7 @@ function ChonGoiHoc() {
                         {loaiGoi === "hoc_thu" && (
                             <button
                                 type="button"
-                                onClick={() => setGoiId(goiHocThu.id)}
+                                onClick={() => chonGoi(goiHocThu)}
                                 className={[
                                     "mt-5 w-full rounded-2xl border p-5 text-left transition",
                                     String(goiId) === String(goiHocThu.id)
@@ -687,7 +780,7 @@ function ChonGoiHoc() {
                                 <button
                                     key={goi.id}
                                     type="button"
-                                    onClick={() => setGoiId(goi.id)}
+                                    onClick={() => chonGoi(goi)}
                                     className={[
                                         "flex min-h-56 flex-col rounded-2xl border p-5 text-left transition",
                                         String(goiId) === String(goi.id)
@@ -824,7 +917,7 @@ function ChonGoiHoc() {
 
                                                     return (
                                                         <option key={gio} value={gio} disabled={biKhoa}>
-                                                            {gio}{biKhoa ? " - đã có lịch" : ""}
+                                                            {gio}{biKhoa ? " - trùng lịch gia sư" : ""}
                                                         </option>
                                                     );
                                                 })}
@@ -867,11 +960,13 @@ function ChonGoiHoc() {
                                             className="rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
                                         >
                                             {cacKhungGioBatDau.map((gio) => {
-                                                const biKhoa = slotBiKhoa(buoi.ngay, gio, index);
+                                                const trungLichGiaSu = slotTrungLichBan(buoi.ngay, gio);
+                                                const trungBuoiDaChon = slotTrungBuoiDangChon(buoi.ngay, gio, index);
+                                                const biKhoa = trungLichGiaSu || trungBuoiDaChon;
 
                                                 return (
                                                     <option key={gio} value={gio} disabled={biKhoa}>
-                                                        {gio}{biKhoa ? " - đã có lịch" : ""}
+                                                        {gio}{trungLichGiaSu ? " - trùng lịch gia sư" : trungBuoiDaChon ? " - trùng buổi đã chọn" : ""}
                                                     </option>
                                                 );
                                             })}

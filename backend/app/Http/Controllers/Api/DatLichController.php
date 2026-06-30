@@ -19,6 +19,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Validation\Rule;
 
 class DatLichController extends Controller
@@ -1212,7 +1213,7 @@ class DatLichController extends Controller
             ], 422);
         }
 
-        $duongDanMinhChung = $request->file('anh_minh_chung')->store('images/minh-chung-thanh-toan', 'public');
+        $duongDanMinhChung = $this->luuAnhMinhChungThanhToan($request);
         $maGiaoDich = filled($duLieu['ma_giaodich'] ?? null)
             ? trim($duLieu['ma_giaodich'])
             : 'GD' . now()->format('YmdHis') . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT);
@@ -1226,7 +1227,7 @@ class DatLichController extends Controller
                 'noi_dung_thanhtoan' => filled($duLieu['noi_dung_thanhtoan'] ?? null)
                     ? trim($duLieu['noi_dung_thanhtoan'])
                     : 'Hoc vien gui minh chung thanh toan goi hoc.',
-                'anh_minh_chung' => '/storage/' . $duongDanMinhChung,
+                'anh_minh_chung' => $duongDanMinhChung,
                 'ngay_thanhtoan' => now(),
                 'trang_thai' => 'cho_thanhtoan',
             ]);
@@ -1923,6 +1924,23 @@ class DatLichController extends Controller
             'lyDo' => $phanHoi->ly_do,
             'thoiGian' => $phanHoi->updated_at?->format('d/m/Y H:i') ?? '',
         ];
+    }
+
+    private function luuAnhMinhChungThanhToan(Request $request): string
+    {
+        $thuMucAnh = public_path('images/minh-chung-thanh-toan');
+
+        if (! File::exists($thuMucAnh)) {
+            File::makeDirectory($thuMucAnh, 0755, true);
+        }
+
+        $file = $request->file('anh_minh_chung');
+        $tenFile = 'minh-chung-' . $request->user()->id . '-' . time() . '-' . bin2hex(random_bytes(4))
+            . '.' . $file->getClientOriginalExtension();
+
+        $file->move($thuMucAnh, $tenFile);
+
+        return 'images/minh-chung-thanh-toan/' . $tenFile;
     }
 
     private function dinhDangThanhToan(ThanhToan $thanhToan): array
