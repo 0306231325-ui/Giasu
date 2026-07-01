@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\GiaSu\GiaSuBangCapController;
 use App\Http\Controllers\Api\GiaSu\GiaSuChuyenMonController;
 use App\Http\Controllers\Api\GiaSu\GiaSuHoSoController;
 use App\Http\Controllers\Api\GiaSu\GiaSuMonDayController;
+use App\Http\Controllers\Api\GiaSu\GiaSuThuNhapController;
 use App\Http\Controllers\Api\GiaSu\GiasuController;
 use App\Http\Controllers\Api\HocVien\HocVienHoSoController;
 use App\Http\Controllers\Api\HocVien\HocVienLichHocController;
@@ -59,6 +60,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{giaSuId}/goi-hoc', [DatLichController::class, 'datLich']);
         Route::get('/lich-day', [DatLichController::class, 'lichDayGiaSu']);
         Route::post('/lich-day/{lichHocId}/xac-nhan-hoan-thanh', [DatLichController::class, 'giaSuXacNhanHoanThanhBuoiHoc']);
+        Route::get('/thu-nhap', [GiaSuThuNhapController::class, 'thongKe']);
         Route::get('/yeu-cau-dat-goi', [DatLichController::class, 'danhSachYeuCauGiaSu']);
         Route::patch('/yeu-cau-dat-goi/{goiHocId}/phan-hoi', [DatLichController::class, 'phanHoiYeuCauGiaSu']);
 

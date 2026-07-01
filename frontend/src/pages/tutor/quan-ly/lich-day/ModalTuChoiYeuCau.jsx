@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
     LopModal,
     TieuDeModal,
@@ -6,10 +6,6 @@ import {
 
 function ModalTuChoiYeuCau({ yeuCau, dangXuLy, onDong, onXacNhan }) {
     const [lyDo, setLyDo] = useState("");
-
-    useEffect(() => {
-        setLyDo("");
-    }, [yeuCau?.id]);
 
     return (
         <LopModal onDong={onDong}>

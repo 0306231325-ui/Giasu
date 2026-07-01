@@ -107,6 +107,7 @@ function TabYeuCauDatGiaSu({
 
             {yeuCauDangTuChoi && (
                 <ModalTuChoiYeuCau
+                    key={yeuCauDangTuChoi.id}
                     yeuCau={yeuCauDangTuChoi}
                     onDong={() => setYeuCauDangTuChoi(null)}
                     dangXuLy={dangXuLyId === yeuCauDangTuChoi.id}

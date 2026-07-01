@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import api from "../../../services/api";
 
 const cauHinhBoLoc = {
     ngay: {
@@ -18,9 +19,80 @@ const cauHinhBoLoc = {
     },
 };
 
+const homNay = new Date();
+const giaTriMacDinh = {
+    ngay: homNay.toISOString().slice(0, 10),
+    thang: homNay.toISOString().slice(0, 7),
+    nam: String(homNay.getFullYear()),
+};
+
+const duLieuRong = {
+    boLoc: {},
+    tongQuan: {
+        tongThuNhap: 0,
+        soBuoiHoanThanh: 0,
+        trungBinhMoiBuoi: 0,
+        monThuNhapCaoNhat: null,
+    },
+    bieuDo: [],
+    chiTiet: [],
+};
+
 function GiaSuThuNhap() {
     const [boLoc, setBoLoc] = useState("thang");
+    const [giaTriBoLoc, setGiaTriBoLoc] = useState(giaTriMacDinh.thang);
+    const [duLieu, setDuLieu] = useState(duLieuRong);
+    const [dangTai, setDangTai] = useState(false);
+    const [loi, setLoi] = useState("");
     const cauHinh = cauHinhBoLoc[boLoc];
+
+    const doiBoLoc = (giaTri) => {
+        setBoLoc(giaTri);
+        setGiaTriBoLoc(giaTriMacDinh[giaTri]);
+    };
+
+    useEffect(() => {
+        let daHuy = false;
+
+        const taiThuNhap = async () => {
+            setDangTai(true);
+            setLoi("");
+
+            try {
+                const response = await api.get("/gia-su/thu-nhap", {
+                    params: {
+                        loai: boLoc,
+                        gia_tri: giaTriBoLoc,
+                    },
+                });
+
+                if (!daHuy) {
+                    setDuLieu(response.data.data || duLieuRong);
+                }
+            } catch (error) {
+                if (!daHuy) {
+                    console.error("Không thể tải thu nhập gia sư:", error);
+                    setDuLieu(duLieuRong);
+                    setLoi(error.response?.data?.message || "Không thể tải dữ liệu thu nhập.");
+                }
+            } finally {
+                if (!daHuy) {
+                    setDangTai(false);
+                }
+            }
+        };
+
+        taiThuNhap();
+
+        return () => {
+            daHuy = true;
+        };
+    }, [boLoc, giaTriBoLoc]);
+
+    const tongQuan = duLieu.tongQuan || duLieuRong.tongQuan;
+    const chiTiet = duLieu.chiTiet || [];
+    const bieuDo = duLieu.bieuDo || [];
+    const monCaoNhat = tongQuan.monThuNhapCaoNhat;
 
     return (
         <div className="mx-auto max-w-7xl pb-10">
@@ -49,7 +121,7 @@ function GiaSuThuNhap() {
                             <button
                                 key={giaTri}
                                 type="button"
-                                onClick={() => setBoLoc(giaTri)}
+                                onClick={() => doiBoLoc(giaTri)}
                                 className={[
                                     "rounded-lg px-4 py-2 text-sm font-bold transition",
                                     boLoc === giaTri
@@ -66,6 +138,8 @@ function GiaSuThuNhap() {
                         <span className="sr-only">Chọn thời gian</span>
                         <input
                             type={cauHinh.loaiInput}
+                            value={giaTriBoLoc}
+                            onChange={(event) => setGiaTriBoLoc(event.target.value)}
                             min={boLoc === "nam" ? "2020" : undefined}
                             max={boLoc === "nam" ? "2030" : undefined}
                             className="h-11 w-full rounded-xl border border-white/10 bg-[#101a39] px-4 pr-11 text-sm font-semibold text-white outline-none transition [color-scheme:dark] focus:border-blue-400 sm:w-48 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-y-0 [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-11 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
@@ -77,34 +151,44 @@ function GiaSuThuNhap() {
                 </div>
             </div>
 
+            {loi && (
+                <div className="mt-5 rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-100">
+                    {loi}
+                </div>
+            )}
+
             <div className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <TheThongKe
                     tieuDe="Tổng thu nhập"
-                    giaTri="0đ"
-                    phuDe="Chưa có dữ liệu từ backend"
+                    giaTri={dinhDangTien(tongQuan.tongThuNhap)}
+                    phuDe={`Trong ${duLieu.boLoc?.nhanThoiGian || cauHinh.nhanThoiGian}`}
                     bieuTuong="wallet"
                     mau="blue"
+                    dangTai={dangTai}
                 />
                 <TheThongKe
                     tieuDe="Buổi đã hoàn thành"
-                    giaTri="0"
-                    phuDe="Chờ kết nối dữ liệu lịch học"
+                    giaTri={tongQuan.soBuoiHoanThanh}
+                    phuDe="Chỉ tính buổi trạng thái hoàn thành"
                     bieuTuong="calendar"
                     mau="emerald"
+                    dangTai={dangTai}
                 />
                 <TheThongKe
                     tieuDe="Trung bình mỗi buổi"
-                    giaTri="0đ"
-                    phuDe="Sẽ tính theo bộ lọc đã chọn"
+                    giaTri={dinhDangTien(tongQuan.trungBinhMoiBuoi)}
+                    phuDe="Tổng thu nhập / số buổi"
                     bieuTuong="average"
                     mau="violet"
+                    dangTai={dangTai}
                 />
                 <TheThongKe
                     tieuDe="Môn thu nhập cao nhất"
-                    giaTri="—"
-                    phuDe="Chưa có buổi học hoàn thành"
+                    giaTri={monCaoNhat?.tenMon || "—"}
+                    phuDe={monCaoNhat ? `${monCaoNhat.soBuoi} buổi · ${dinhDangTien(monCaoNhat.tongThuNhap)}` : "Chưa có buổi học hoàn thành"}
                     bieuTuong="star"
                     mau="amber"
+                    dangTai={dangTai}
                 />
             </div>
 
@@ -122,7 +206,7 @@ function GiaSuThuNhap() {
                     </div>
                 </div>
 
-                <BieuDoCot />
+                <BieuDoCot duLieu={bieuDo} dangTai={dangTai} />
             </section>
 
             <section className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white text-slate-900 shadow-xl shadow-black/10">
@@ -152,25 +236,26 @@ function GiaSuThuNhap() {
                     <span className="text-right">Thu nhập</span>
                 </div>
 
-                <div className="px-5 py-12 text-center sm:px-7">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-                        <BieuTuong ten="wallet" />
+                {dangTai ? (
+                    <TrangThaiBang noiDung="Đang tải dữ liệu thu nhập..." />
+                ) : chiTiet.length === 0 ? (
+                    <TrangThaiBang noiDung="Chưa có buổi học hoàn thành trong thời gian này." />
+                ) : (
+                    <div className="max-h-[420px] overflow-y-auto">
+                        {chiTiet.map((dong) => (
+                            <DongThuNhap key={dong.id} dong={dong} />
+                        ))}
                     </div>
-                    
-                   
-                </div>
+                )}
 
                 <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/70 px-5 py-4 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-7">
                     <p className="text-slate-500">
-                        Hiển thị <span className="font-bold text-slate-800">0</span>{" "}
+                        Hiển thị <span className="font-bold text-slate-800">{chiTiet.length}</span>{" "}
                         buổi học
                     </p>
-                    <button
-                        type="button"
-                        className="font-bold text-blue-600 transition hover:text-blue-700"
-                    >
-                        Xem tất cả buổi học
-                    </button>
+                    <p className="font-bold text-blue-600">
+                        Tổng: {dinhDangTien(tongQuan.tongThuNhap)}
+                    </p>
                 </div>
             </section>
 
@@ -180,23 +265,31 @@ function GiaSuThuNhap() {
                 </span>
                 <p className="leading-6">
                     Thu nhập chỉ được ghi nhận từ những buổi học đã hoàn thành.
-                    Các buổi bị hủy hoặc chưa diễn ra không được tính vào báo cáo.
+                    Hệ thống lấy số tiền từ cột <span className="font-bold">tien_giasu_nhan</span>;
+                    nếu dữ liệu cũ chưa có tiền nhận thì tạm tính bằng tiền học trừ phí hoa hồng.
                 </p>
             </div>
         </div>
     );
 }
 
-function BieuDoCot() {
+function BieuDoCot({ duLieu, dangTai }) {
+    const duLieuCoTien = useMemo(
+        () => duLieu.filter((cot) => Number(cot.thuNhap) > 0 || Number(cot.soBuoi) > 0),
+        [duLieu],
+    );
+    const giaTriLonNhat = Math.max(...duLieu.map((cot) => Number(cot.thuNhap) || 0), 0);
+    const mocCaoNhat = giaTriLonNhat || 1;
+
     return (
         <div className="px-4 pb-6 pt-7 sm:px-7">
             <div className="flex h-72 gap-3 sm:gap-5">
-                <div className="flex w-12 shrink-0 flex-col justify-between pb-7 text-right text-[10px] text-white/30">
+                <div className="flex w-16 shrink-0 flex-col justify-between pb-8 text-right text-[10px] text-white/30">
+                    <span>{dinhDangTien(mocCaoNhat)}</span>
+                    <span>{dinhDangTien(mocCaoNhat * 0.75)}</span>
+                    <span>{dinhDangTien(mocCaoNhat * 0.5)}</span>
+                    <span>{dinhDangTien(mocCaoNhat * 0.25)}</span>
                     <span>0đ</span>
-                    <span>0đ</span>
-                    <span>0đ</span>
-                    <span>0đ</span>
-                    <span>0</span>
                 </div>
 
                 <div className="relative min-w-0 flex-1">
@@ -209,21 +302,81 @@ function BieuDoCot() {
                         ))}
                     </div>
 
-                    <div className="relative flex h-full items-center justify-center pb-7">
-                        <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.03] px-6 py-5 text-center">
-                            <p className="text-sm font-extrabold text-white">
-                                Chưa có dữ liệu biểu đồ
-                            </p>
-                            
+                    {dangTai ? (
+                        <KhungBieuDoRong noiDung="Đang tải dữ liệu biểu đồ..." />
+                    ) : duLieuCoTien.length === 0 ? (
+                        <KhungBieuDoRong noiDung="Chưa có dữ liệu biểu đồ" />
+                    ) : (
+                        <div className="relative flex h-full items-end gap-2 overflow-x-auto pb-8">
+                            {duLieu.map((cot) => {
+                                const thuNhap = Number(cot.thuNhap) || 0;
+                                const chieuCao = Math.max((thuNhap / mocCaoNhat) * 100, thuNhap > 0 ? 8 : 0);
+
+                                return (
+                                    <div
+                                        key={cot.nhan}
+                                        className="flex h-full min-w-10 flex-1 flex-col justify-end gap-2"
+                                        title={`${cot.nhan}: ${dinhDangTien(thuNhap)}`}
+                                    >
+                                        <div className="flex h-[244px] items-end">
+                                            <div
+                                                className="w-full rounded-t-xl bg-gradient-to-t from-blue-700 to-blue-300 shadow-lg shadow-blue-950/20"
+                                                style={{ height: `${chieuCao}%` }}
+                                            />
+                                        </div>
+                                        <span className="truncate text-center text-[10px] font-semibold text-white/40">
+                                            {cot.nhan}
+                                        </span>
+                                    </div>
+                                );
+                            })}
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
         </div>
     );
 }
 
-function TheThongKe({ tieuDe, giaTri, phuDe, bieuTuong, mau }) {
+function KhungBieuDoRong({ noiDung }) {
+    return (
+        <div className="relative flex h-full items-center justify-center pb-7">
+            <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.03] px-6 py-5 text-center">
+                <p className="text-sm font-extrabold text-white">{noiDung}</p>
+            </div>
+        </div>
+    );
+}
+
+function DongThuNhap({ dong }) {
+    return (
+        <div className="grid gap-3 border-t border-slate-100 px-5 py-4 text-sm first:border-t-0 sm:px-7 lg:grid-cols-[1.05fr_1.25fr_1fr_0.9fr_0.8fr] lg:items-center">
+            <div>
+                <p className="font-extrabold text-slate-900">{dong.thoiGian}</p>
+                <p className="mt-1 text-xs font-semibold text-slate-400">{dong.ma}</p>
+            </div>
+            <p className="font-bold text-slate-700">{dong.hocVien}</p>
+            <p className="font-bold text-blue-600">{dong.monHoc}</p>
+            <p className="text-slate-500">{dong.loaiBuoi}</p>
+            <p className="text-right text-base font-extrabold text-emerald-600">
+                {dinhDangTien(dong.thuNhap)}
+            </p>
+        </div>
+    );
+}
+
+function TrangThaiBang({ noiDung }) {
+    return (
+        <div className="px-5 py-12 text-center sm:px-7">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                <BieuTuong ten="wallet" />
+            </div>
+            <p className="mt-4 text-sm font-bold text-slate-500">{noiDung}</p>
+        </div>
+    );
+}
+
+function TheThongKe({ tieuDe, giaTri, phuDe, bieuTuong, mau, dangTai }) {
     const mauSac = {
         blue: "bg-blue-500/15 text-blue-300 border-blue-400/20",
         emerald: "bg-emerald-500/15 text-emerald-300 border-emerald-400/20",
@@ -234,10 +387,10 @@ function TheThongKe({ tieuDe, giaTri, phuDe, bieuTuong, mau }) {
     return (
         <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-lg shadow-black/10">
             <div className="flex items-start justify-between gap-3">
-                <div>
+                <div className="min-w-0">
                     <p className="text-xs font-semibold text-white/45">{tieuDe}</p>
-                    <p className="mt-3 text-2xl font-extrabold tracking-tight text-white">
-                        {giaTri}
+                    <p className="mt-3 truncate text-2xl font-extrabold tracking-tight text-white">
+                        {dangTai ? "..." : giaTri}
                     </p>
                 </div>
                 <span
@@ -249,6 +402,10 @@ function TheThongKe({ tieuDe, giaTri, phuDe, bieuTuong, mau }) {
             <p className="mt-3 truncate text-xs text-white/35">{phuDe}</p>
         </div>
     );
+}
+
+function dinhDangTien(giaTri) {
+    return `${Math.round(Number(giaTri) || 0).toLocaleString("vi-VN")}đ`;
 }
 
 function BieuTuong({ ten }) {
