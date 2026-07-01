@@ -146,16 +146,8 @@ function ModalChiTietLichHoc({ lichHoc, dangXuLy = false, onXacNhan, onDong }) {
                                 Xác nhận hoàn thành buổi học
                             </p>
                             <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
-                                Gia sư xác nhận sau khi buổi học đã kết thúc để hệ thống ghi nhận tiến độ.
+                                Gia sư xác nhận khi buổi học đã bắt đầu để hệ thống ghi nhận tiến độ.
                             </p>
-                            <div className="mt-3 flex flex-wrap gap-2">
-                                <NhanXacNhan active={xacNhan.hocVienDaXacNhan} warning={xacNhan.hocVienBaoVanDe}>
-                                    Hoc vien
-                                </NhanXacNhan>
-                                <NhanXacNhan active={xacNhan.giaSuDaXacNhan} warning={xacNhan.giaSuBaoVanDe}>
-                                    Gia su
-                                </NhanXacNhan>
-                            </div>
                         </div>
 
                         {daHoanThanh ? (
@@ -193,23 +185,6 @@ function ModalChiTietLichHoc({ lichHoc, dangXuLy = false, onXacNhan, onDong }) {
                 </div>
             </div>
         </LopModal>
-    );
-}
-
-function NhanXacNhan({ active, warning, children }) {
-    return (
-        <span
-            className={[
-                "rounded-full px-3 py-1 text-xs font-bold",
-                warning
-                    ? "bg-amber-100 text-amber-700"
-                    : active
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-slate-200 text-slate-500",
-            ].join(" ")}
-        >
-            {children}: {warning ? "Bao van de" : active ? "Da xac nhan" : "Chua xac nhan"}
-        </span>
     );
 }
 
