@@ -53,6 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         Route::post('/goi-hoc/{goiHocId}/thanh-toan', [HocVienThanhToanController::class, 'thanhToanGoiHoc']);
+        Route::patch('/goi-hoc/{goiHocId}/huy', [DatLichController::class, 'hocVienHuyGoiHoc']);
     });
 
     Route::prefix('gia-su')->group(function () {

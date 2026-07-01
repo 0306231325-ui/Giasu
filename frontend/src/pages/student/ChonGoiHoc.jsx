@@ -4,9 +4,21 @@ import api from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 
 const ngayMai = () => {
-    const date = new Date();
+    const vnTimeString = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+    const date = new Date(vnTimeString.replace(" ", "T"));
     date.setDate(date.getDate() + 1);
-    return date.toISOString().slice(0, 10);
+    
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+};
+
+const dinhDangNgay = (date) => {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
 };
 
 const cacThu = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"];
@@ -25,7 +37,32 @@ const SO_THU_TOI_DA = 2;
 const THOI_LUONG_BUOI_PHUT = 90;
 const GIO_BAT_DAU_MIN = "07:00";
 const GIO_BAT_DAU_MAX = "19:30";
+const GIO_BAT_DAU_MAC_DINH = "07:00";
+const GIO_KET_THUC_MAC_DINH = "08:30";
 const BUOC_CHON_GIO_GIAY = 30 * 60;
+
+const ngayHocDauTienTheoThu = (danhSachThu) => {
+    const danhSachThuSo = danhSachThu
+        .map((thu) => thuSangSo[thu])
+        .filter(Boolean);
+
+    if (danhSachThuSo.length === 0) return ngayMai();
+
+    const ngayBatDau = new Date(`${ngayMai()}T00:00:00`);
+    const tapThu = new Set(danhSachThuSo);
+
+    for (let soNgayThem = 0; soNgayThem < 14; soNgayThem += 1) {
+        const ngay = new Date(ngayBatDau);
+        ngay.setDate(ngayBatDau.getDate() + soNgayThem);
+        const thuIso = ngay.getDay() === 0 ? 7 : ngay.getDay();
+
+        if (tapThu.has(thuIso)) {
+            return dinhDangNgay(ngay);
+        }
+    }
+
+    return ngayMai();
+};
 
 const thoiGianSangPhut = (value) => {
     const [gio, phut] = String(value || "").split(":").map(Number);
@@ -121,7 +158,7 @@ const goiKhongDinhKy = [
         ten: "Gói linh hoạt",
         soBuoiMoiThang: 8,
         soThang: 1,
-        giamGia: 3,
+        giamGia: 0,
         moTa: "Không cố định thứ hằng tuần, học theo lịch rảnh của học viên và gia sư.",
         phuHop: "Lịch thay đổi",
     },
@@ -138,6 +175,8 @@ const dinhDangGia = (giaSu) => {
     return `${giaTu.toLocaleString("vi-VN")} đ/giờ`;
 };
 
+const dinhDangTien = (value) => `${Number(value || 0).toLocaleString("vi-VN")}đ`;
+
 const dinhDangTenMon = (mon) => {
     if (!mon?.lop) return mon?.ten_mon || "";
 
@@ -147,9 +186,18 @@ const dinhDangTenMon = (mon) => {
     return `${mon.ten_mon} - ${lopHienThi}`;
 };
 
-const tinhTienGoi = (giaSu, goi) => {
+const layMucGiaTheoMon = (giaSu, monHocId) => {
+    if (!monHocId) return null;
+
+    return (giaSu?.giasu_gias || []).find(
+        (mucGia) => String(mucGia.monhoc_id) === String(monHocId),
+    ) || null;
+};
+
+const tinhTienGoi = (mucGia, goi) => {
     if (!goi) {
         return {
+            donGia: 0,
             tongBuoi: 0,
             tongTruocGiam: 0,
             tienGiam: 0,
@@ -157,12 +205,13 @@ const tinhTienGoi = (giaSu, goi) => {
         };
     }
 
-    const donGia = Number(giaSu?.gia_tu || 0);
+    const donGia = Number(mucGia?.tong_gia || 0);
     const tongBuoi = goi.soBuoiMoiThang * goi.soThang;
     const tongTruocGiam = donGia * tongBuoi * 1.5;
     const tienGiam = Math.round((tongTruocGiam * goi.giamGia) / 100);
 
     return {
+        donGia,
         tongBuoi,
         tongTruocGiam,
         tienGiam,
@@ -176,6 +225,7 @@ function ChonGoiHoc() {
     const [giaSus, setGiaSus] = useState([]);
     const [monHocs, setMonHocs] = useState([]);
     const [goiDinhKy, setGoiDinhKy] = useState([]);
+    const [goiHocCuaToi, setGoiHocCuaToi] = useState([]);
     const [lichBanGiaSu, setLichBanGiaSu] = useState([]);
     const [loading, setLoading] = useState(true);
     const [dangGui, setDangGui] = useState(false);
@@ -186,14 +236,14 @@ function ChonGoiHoc() {
     const [form, setForm] = useState({
         monhoc_id: "",
         ngay_batdau: ngayMai(),
-        gio_batdau: "18:00",
-        gio_ketthuc: "19:30",
+        gio_batdau: GIO_BAT_DAU_MAC_DINH,
+        gio_ketthuc: GIO_KET_THUC_MAC_DINH,
         hinh_thuc_hoc: "online",
         dia_chi_hoc: "",
         ghi_chu: "",
     });
     const [buoiLinhHoat, setBuoiLinhHoat] = useState([
-        { ngay: ngayMai(), gio_batdau: "18:00", gio_ketthuc: "19:30" },
+        { ngay: ngayMai(), gio_batdau: GIO_BAT_DAU_MAC_DINH, gio_ketthuc: GIO_KET_THUC_MAC_DINH },
     ]);
 
     useEffect(() => {
@@ -226,6 +276,32 @@ function ChonGoiHoc() {
     }, []);
 
     useEffect(() => {
+        if (!isAuthenticated || user?.vai_tro !== "hocvien") {
+            setGoiHocCuaToi([]);
+            return;
+        }
+
+        let cancelled = false;
+
+        const fetchGoiHocCuaToi = async () => {
+            try {
+                const response = await api.get("/hoc-vien/lich-hoc");
+                if (!cancelled && response.data.success) {
+                    setGoiHocCuaToi(response.data.data || []);
+                }
+            } catch (error) {
+                if (!cancelled) setGoiHocCuaToi([]);
+            }
+        };
+
+        fetchGoiHocCuaToi();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [isAuthenticated, user?.vai_tro]);
+
+    useEffect(() => {
         let cancelled = false;
 
         const fetchLichBan = async () => {
@@ -255,10 +331,35 @@ function ChonGoiHoc() {
             .map((mucGia) => mucGia.mon_hoc)
             .filter(Boolean);
 
-        if (monTuGiaSu.length > 0) return monTuGiaSu;
+        const danhSachMon = monTuGiaSu.length > 0 ? monTuGiaSu : monHocs;
 
-        return monHocs;
+        return [...danhSachMon].sort((a, b) => {
+            const tenA = (a.ten_mon || "").toLowerCase();
+            const tenB = (b.ten_mon || "").toLowerCase();
+            
+            if (tenA !== tenB) {
+                return tenA.localeCompare(tenB);
+            }
+            
+            const getLopSo = (lop) => {
+                if (!lop) return 999;
+                const match = String(lop).match(/\d+/);
+                return match ? parseInt(match[0], 10) : 999;
+            };
+            
+            return getLopSo(a.lop) - getLopSo(b.lop);
+        });
     }, [giaSu, monHocs]);
+    const monHocDaDatIds = useMemo(() => {
+        const trangThaiDangMo = new Set(["cho_xacnhan", "cho_thanhtoan", "dang_hoc"]);
+
+        return new Set(
+            goiHocCuaToi
+                .filter((goiHoc) => trangThaiDangMo.has(goiHoc.trangThai))
+                .map((goiHoc) => String(goiHoc.monHocId || ""))
+                .filter(Boolean),
+        );
+    }, [goiHocCuaToi]);
 
     const danhSachGoi = loaiGoi === "hoc_thu"
         ? [goiHocThu]
@@ -267,7 +368,8 @@ function ChonGoiHoc() {
             : goiKhongDinhKy.filter((goi) => goi.id !== "linh-hoat-1");
     const goiDangChon = danhSachGoi.find((goi) => String(goi.id) === String(goiId));
     const monHocDaChon = monHocsCoTheDat.find((mon) => String(mon.id) === String(form.monhoc_id));
-    const tienGoi = tinhTienGoi(giaSu, goiDangChon);
+    const mucGiaDangChon = layMucGiaTheoMon(giaSu, form.monhoc_id);
+    const tienGoi = tinhTienGoi(mucGiaDangChon, goiDangChon);
     const soBuoi = tienGoi.tongBuoi;
     const tamTinh = tienGoi.tongSauGiam;
     const lopLuoiGoi = danhSachGoi.length === 1
@@ -279,6 +381,27 @@ function ChonGoiHoc() {
     const doiLoaiGoi = (value) => {
         setLoaiGoi(value);
         setGoiId("");
+        datKhungGioMacDinh();
+        setThongBao("");
+    };
+
+    const datKhungGioMacDinh = () => {
+        setForm((prev) => ({
+            ...prev,
+            gio_batdau: GIO_BAT_DAU_MAC_DINH,
+            gio_ketthuc: GIO_KET_THUC_MAC_DINH,
+        }));
+        setBuoiLinhHoat((prev) =>
+            prev.map((buoi, index) => ({
+                ...buoi,
+                ...(index === 0 ? { gio_batdau: GIO_BAT_DAU_MAC_DINH, gio_ketthuc: GIO_KET_THUC_MAC_DINH } : {}),
+            })),
+        );
+    };
+
+    const chonGoi = (idGoi) => {
+        setGoiId(idGoi);
+        datKhungGioMacDinh();
         setThongBao("");
     };
 
@@ -287,6 +410,24 @@ function ChonGoiHoc() {
 
         setBuoiLinhHoat((prev) => prev.slice(0, soBuoi));
     }, [loaiGoi, soBuoi]);
+
+    useEffect(() => {
+        if (!form.monhoc_id || !monHocDaDatIds.has(String(form.monhoc_id))) return;
+
+        setForm((prev) => ({ ...prev, monhoc_id: "" }));
+        setThongBao("Môn học này đã có gói đang xử lý hoặc đang học. Vui lòng chọn môn khác.");
+    }, [form.monhoc_id, monHocDaDatIds]);
+
+    useEffect(() => {
+        if (loaiGoi !== "dinh_ky") return;
+
+        const ngayDauTien = ngayHocDauTienTheoThu(thuHoc);
+        setForm((prev) => (
+            prev.ngay_batdau === ngayDauTien
+                ? prev
+                : { ...prev, ngay_batdau: ngayDauTien }
+        ));
+    }, [loaiGoi, thuHoc]);
 
     const capNhatForm = (field, value) => {
         setForm((prev) => {
@@ -341,6 +482,36 @@ function ChonGoiHoc() {
         cacKhungGioBatDau.find((gio) => !slotTrungLichBan(ngay, gio)) || GIO_BAT_DAU_MIN
     );
 
+    const taoLichDinhKyXemTruoc = (gioBatDau) => {
+        const thuHocSo = thuHoc.map((thu) => thuSangSo[thu]).filter(Boolean);
+        const lich = [];
+        const ngay = new Date(`${form.ngay_batdau}T00:00:00`);
+
+        if (thuHocSo.length === 0 || Number.isNaN(ngay.getTime())) return lich;
+
+        while (lich.length < soBuoi) {
+            const thuIso = ngay.getDay() === 0 ? 7 : ngay.getDay();
+            if (thuHocSo.includes(thuIso)) {
+                lich.push({
+                    ngay: dinhDangNgay(ngay),
+                    gio_batdau: gioBatDau,
+                    gio_ketthuc: tinhGioKetThuc(gioBatDau),
+                });
+            }
+
+            ngay.setDate(ngay.getDate() + 1);
+        }
+
+        return lich;
+    };
+
+    const lichTrungDinhKy = (gioBatDau) => (
+        taoLichDinhKyXemTruoc(gioBatDau)
+            .filter((buoi) => slotTrungLichBan(buoi.ngay, buoi.gio_batdau))
+    );
+
+    const khungGioDinhKyBiKhoa = (gioBatDau) => lichTrungDinhKy(gioBatDau).length > 0;
+
     const toggleThu = (thu) => {
         setThuHoc((prev) => {
             if (prev.includes(thu)) return prev.filter((item) => item !== thu);
@@ -351,6 +522,14 @@ function ChonGoiHoc() {
     };
 
     const capNhatBuoi = (index, field, value) => {
+        if (field === "ngay") {
+            const soBuoiTrongNgay = buoiLinhHoat.filter((buoi, i) => i !== index && buoi.ngay === value).length;
+            if (soBuoiTrongNgay >= 2) {
+                setThongBao("Một ngày tối đa chỉ được chọn 2 buổi học. Vui lòng chọn ngày khác.");
+                return;
+            }
+        }
+
         setBuoiLinhHoat((prev) =>
             prev.map((buoi, currentIndex) =>
                 currentIndex === index
@@ -381,9 +560,26 @@ function ChonGoiHoc() {
         setBuoiLinhHoat((prev) => {
             if (prev.length >= soBuoi) return prev;
 
+            let count = 1;
+            let ngayMoi = ngayMai();
+            while (true) {
+                const vnTimeString = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+                const d = new Date(vnTimeString.replace(" ", "T"));
+                d.setDate(d.getDate() + count);
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, "0");
+                const dd = String(d.getDate()).padStart(2, "0");
+                ngayMoi = `${yyyy}-${mm}-${dd}`;
+                
+                if (prev.filter((b) => b.ngay === ngayMoi).length < 2) {
+                    break;
+                }
+                count++;
+            }
+
             return [
                 ...prev,
-                { ngay: ngayMai(), gio_batdau: form.gio_batdau, gio_ketthuc: form.gio_ketthuc },
+                { ngay: ngayMoi, gio_batdau: form.gio_batdau, gio_ketthuc: form.gio_ketthuc },
             ];
         });
         setThongBao("");
@@ -409,6 +605,11 @@ function ChonGoiHoc() {
 
         if (!form.monhoc_id) {
             setThongBao("Vui lòng chọn môn học.");
+            return;
+        }
+
+        if (monHocDaDatIds.has(String(form.monhoc_id))) {
+            setThongBao("Môn học này đã có gói đang xử lý hoặc đang học. Vui lòng chọn môn khác.");
             return;
         }
 
@@ -450,6 +651,14 @@ function ChonGoiHoc() {
         if (loaiGoi === "dinh_ky" && !cachNhauDungThoiLuong(form.gio_batdau, form.gio_ketthuc)) {
             setThongBao("Giờ kết thúc phải cách giờ bắt đầu đúng 1 giờ 30 phút.");
             return;
+        }
+
+        if (loaiGoi === "dinh_ky") {
+            const buoiTrung = lichTrungDinhKy(form.gio_batdau)[0];
+            if (buoiTrung) {
+                setThongBao(`Khung giờ ${buoiTrung.ngay} ${buoiTrung.gio_batdau} - ${buoiTrung.gio_ketthuc} đã có lịch của gia sư. Vui lòng chọn giờ khác.`);
+                return;
+            }
         }
 
         if (loaiGoi === "hoc_thu" && !hopLeKhoangGioBatDau(form.gio_batdau)) {
@@ -521,6 +730,15 @@ function ChonGoiHoc() {
 
             if (response.data.success) {
                 const maGoi = response.data.data?.ma;
+                setGoiHocCuaToi((prev) => [
+                    ...prev,
+                    {
+                        id: response.data.data?.id || `moi-${Date.now()}`,
+                        monHocId: form.monhoc_id,
+                        trangThai: "cho_xacnhan",
+                    },
+                ]);
+                setForm((prev) => ({ ...prev, monhoc_id: "" }));
                 setThongBao(`${response.data.message}${maGoi ? ` Mã gói học: ${maGoi}.` : ""}`);
             }
         } catch (error) {
@@ -593,12 +811,26 @@ function ChonGoiHoc() {
                                     className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
                                 >
                                     <option value="">Chọn môn học</option>
-                                    {monHocsCoTheDat.map((mon) => (
-                                        <option key={mon.id} value={mon.id}>
-                                            {dinhDangTenMon(mon)}
-                                        </option>
-                                    ))}
+                                    {monHocsCoTheDat.map((mon) => {
+                                        const daDatMon = monHocDaDatIds.has(String(mon.id));
+
+                                        return (
+                                            <option
+                                                key={mon.id}
+                                                value={mon.id}
+                                                disabled={daDatMon}
+                                                className={daDatMon ? "bg-slate-900 text-slate-500" : ""}
+                                            >
+                                                {dinhDangTenMon(mon)}{daDatMon ? " - đã đặt" : ""}
+                                            </option>
+                                        );
+                                    })}
                                 </select>
+                                {monHocDaDatIds.size > 0 && (
+                                    <p className="mt-2 text-xs font-medium text-slate-400">
+                                        Môn đã có gói đang xử lý hoặc đang học sẽ bị khóa riêng với tài khoản của bạn.
+                                    </p>
+                                )}
                             </label>
 
                             <label className="block">
@@ -650,7 +882,7 @@ function ChonGoiHoc() {
                         {loaiGoi === "hoc_thu" && (
                             <button
                                 type="button"
-                                onClick={() => setGoiId(goiHocThu.id)}
+                                onClick={() => chonGoi(goiHocThu.id)}
                                 className={[
                                     "mt-5 w-full rounded-2xl border p-5 text-left transition",
                                     String(goiId) === String(goiHocThu.id)
@@ -689,7 +921,7 @@ function ChonGoiHoc() {
                                 <button
                                     key={goi.id}
                                     type="button"
-                                    onClick={() => setGoiId(goi.id)}
+                                    onClick={() => chonGoi(goi.id)}
                                     className={[
                                         "flex min-h-56 flex-col rounded-2xl border p-5 text-left transition",
                                         String(goiId) === String(goi.id)
@@ -727,16 +959,6 @@ function ChonGoiHoc() {
 
                         {loaiGoi === "dinh_ky" ? (
                             <div className="mt-5 space-y-5">
-                                <label className="block">
-                                    <span className="mb-2 block text-sm font-semibold text-slate-200">Ngày bắt đầu</span>
-                                    <input
-                                        type="date"
-                                        value={form.ngay_batdau}
-                                        onChange={(event) => capNhatForm("ngay_batdau", event.target.value)}
-                                        className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400 md:w-64"
-                                    />
-                                </label>
-
                                 <div>
                                     <div className="mb-2 text-sm font-semibold text-slate-200">Thứ học cố định</div>
                                     <p className="mb-3 text-xs font-medium text-blue-200">
@@ -767,6 +989,20 @@ function ChonGoiHoc() {
                                     </div>
                                 </div>
 
+                                <label className="block">
+                                    <span className="mb-2 block text-sm font-semibold text-slate-200">Ngày bắt đầu</span>
+                                    <input
+                                        type="date"
+                                        value={form.ngay_batdau}
+                                        readOnly
+                                        tabIndex={-1}
+                                        className="w-full cursor-not-allowed rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white/80 outline-none transition focus:border-blue-400 md:w-64"
+                                    />
+                                    <p className="mt-2 text-xs font-medium text-blue-200">
+                                        Tự sinh theo ngày học đầu tiên gần nhất trong các thứ đã chọn.
+                                    </p>
+                                </label>
+
                                 <div className="space-y-3">
                                     <p className="text-xs font-medium leading-5 text-blue-200">
                                         Khung giờ học: bắt đầu từ 07:00 đến 19:30, mỗi buổi kéo dài 1 giờ 30 phút và kết thúc muộn nhất lúc 21:00.
@@ -774,20 +1010,30 @@ function ChonGoiHoc() {
                                     <div className="grid gap-4 md:grid-cols-2">
                                         <label className="block">
                                         <span className="mb-2 block text-sm font-semibold text-slate-200">Giờ bắt đầu</span>
-                                        <input
-                                            type="time"
+                                        <select
                                             value={form.gio_batdau}
-                                            min={GIO_BAT_DAU_MIN}
-                                            max={GIO_BAT_DAU_MAX}
-                                            step={BUOC_CHON_GIO_GIAY}
                                             onChange={(event) => capNhatForm("gio_batdau", event.target.value)}
                                             className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
-                                        />
+                                        >
+                                            {cacKhungGioBatDau.map((gio) => {
+                                                const biKhoa = khungGioDinhKyBiKhoa(gio);
+                                                return (
+                                                    <option key={gio} value={gio} disabled={biKhoa}>
+                                                        {gio}{biKhoa ? " - đã có lịch" : ""}
+                                                    </option>
+                                                );
+                                            })}
+                                        </select>
+                                        {lichTrungDinhKy(form.gio_batdau)[0] && (
+                                            <p className="mt-2 text-xs font-medium leading-5 text-amber-200">
+                                                Khung giờ này đã có lịch ngày {lichTrungDinhKy(form.gio_batdau)[0].ngay}. Vui lòng chọn giờ khác.
+                                            </p>
+                                        )}
                                         </label>
                                         <label className="block">
                                         <span className="mb-2 block text-sm font-semibold text-slate-200">Giờ kết thúc</span>
                                         <input
-                                            type="time"
+                                            type="text"
                                             value={form.gio_ketthuc}
                                             readOnly
                                             tabIndex={-1}
@@ -835,7 +1081,7 @@ function ChonGoiHoc() {
                                         <label className="block">
                                             <span className="mb-2 block text-sm font-semibold text-slate-200">Giờ kết thúc</span>
                                             <input
-                                                type="time"
+                                                type="text"
                                                 value={form.gio_ketthuc}
                                                 readOnly
                                                 tabIndex={-1}
@@ -879,7 +1125,7 @@ function ChonGoiHoc() {
                                             })}
                                         </select>
                                         <input
-                                            type="time"
+                                            type="text"
                                             value={buoi.gio_ketthuc}
                                             readOnly
                                             tabIndex={-1}
@@ -955,7 +1201,7 @@ function ChonGoiHoc() {
                         </div>
                         <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
                             <span className="text-slate-400">Môn học</span>
-                            <span className="text-right font-semibold">{monHocDaChon?.ten_mon || "Chưa chọn"}</span>
+                            <span className="text-right font-semibold">{monHocDaChon ? dinhDangTenMon(monHocDaChon) : "Chưa chọn"}</span>
                         </div>
                         <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
                             <span className="text-slate-400">Loại gói</span>
@@ -968,24 +1214,29 @@ function ChonGoiHoc() {
                             <span className="text-right font-semibold">{goiDangChon?.ten || "Chưa chọn"}</span>
                         </div>
                         <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
-                            <span className="text-slate-400">Thời lượng</span>
-                            <span className="text-right font-semibold">{goiDangChon?.soThang || 0} tháng</span>
-                        </div>
-                        <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
                             <span className="text-slate-400">Số buổi</span>
                             <span className="text-right font-semibold">{soBuoi} buổi</span>
                         </div>
                         <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
                             <span className="text-slate-400">Giảm giá</span>
-                            <span className="text-right font-semibold">{goiDangChon?.giamGia || 0}%</span>
+                            <span className="text-right font-semibold">
+                                {(goiDangChon?.giamGia || 0) > 0 ? `${goiDangChon.giamGia}%` : "Không có"}
+                            </span>
                         </div>
                         <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
                             <span className="text-slate-400">Trước giảm</span>
-                            <span className="text-right font-semibold">
-                                {tienGoi.tongTruocGiam
-                                    ? `${tienGoi.tongTruocGiam.toLocaleString("vi-VN")} đ`
-                                    : "Chờ báo giá"}
-                            </span>
+                            <div className="flex flex-col text-right">
+                                <span className="font-semibold">
+                                    {tienGoi.tongTruocGiam
+                                        ? `${tienGoi.tongTruocGiam.toLocaleString("vi-VN")} đ`
+                                        : "Chờ báo giá"}
+                                </span>
+                                {tienGoi.tongTruocGiam > 0 && (
+                                    <div className="mt-1 space-y-1 text-xs text-slate-400">
+                                        <div>({dinhDangTien(tienGoi.donGia)} x {soBuoi} buổi x 1.5 giờ.)</div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         {tienGoi.tienGiam > 0 && (
                             <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
@@ -1012,6 +1263,33 @@ function ChonGoiHoc() {
                             <div className="mt-2 text-2xl font-extrabold text-blue-300">
                                 {tamTinh ? `${tamTinh.toLocaleString("vi-VN")} đ` : "Chờ báo giá"}
                             </div>
+                            {tienGoi.donGia > 0 && (
+                                <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/30 p-3 text-xs text-slate-300">
+                                    <div className="mb-2 font-semibold text-slate-200">Cách tính đơn giá/giờ</div>
+                                    <div className="space-y-1.5">
+                                        <div className="flex justify-between gap-3">
+                                            <span>Giá môn</span>
+                                            <span className="font-semibold text-slate-100">{dinhDangTien(mucGiaDangChon?.gia_mon)}</span>
+                                        </div>
+                                        <div className="flex justify-between gap-3">
+                                            <span>Cộng trình độ</span>
+                                            <span className="font-semibold text-slate-100">{dinhDangTien(mucGiaDangChon?.gia_cong_trinh_do)}</span>
+                                        </div>
+                                        <div className="flex justify-between gap-3">
+                                            <span>Cộng kinh nghiệm</span>
+                                            <span className="font-semibold text-slate-100">{dinhDangTien(mucGiaDangChon?.gia_cong_kinh_nghiem)}</span>
+                                        </div>
+                                        <div className="flex justify-between gap-3">
+                                            <span>Cộng hệ số giá</span>
+                                            <span className="font-semibold text-slate-100">{dinhDangTien(mucGiaDangChon?.gia_cong_them)}</span>
+                                        </div>
+                                    </div>
+                                    <div className="mt-2 flex justify-between gap-3 border-t border-white/10 pt-2 font-bold text-blue-200">
+                                        <span>Đơn giá/giờ</span>
+                                        <span>{dinhDangTien(tienGoi.donGia)}</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </aside>
@@ -1021,4 +1299,3 @@ function ChonGoiHoc() {
 }
 
 export default ChonGoiHoc;
-
