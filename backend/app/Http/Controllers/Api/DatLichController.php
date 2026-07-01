@@ -956,11 +956,11 @@ class DatLichController extends Controller
             ], 422);
         }
 
-        $thoiDiemKetThuc = Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_ketthuc);
-        if (now()->lt($thoiDiemKetThuc)) {
+        $thoiDiemBatDau = Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_batdau);
+        if (now()->lt($thoiDiemBatDau)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Chi co the xac nhan sau khi buoi hoc ket thuc.',
+                'message' => 'Chi co the xac nhan khi buoi hoc da bat dau.',
             ], 422);
         }
 
@@ -1072,11 +1072,11 @@ class DatLichController extends Controller
             ], 422);
         }
 
-        $thoiDiemKetThuc = Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_ketthuc);
-        if (now()->lt($thoiDiemKetThuc)) {
+        $thoiDiemBatDau = Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_batdau);
+        if (now()->lt($thoiDiemBatDau)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Chi co the xac nhan sau khi buoi hoc ket thuc.',
+                'message' => 'Chi co the xac nhan khi buoi hoc da bat dau.',
             ], 422);
         }
 
@@ -1279,6 +1279,70 @@ class DatLichController extends Controller
         ]);
     }
 
+    public function hocVienHuyGoiHoc(Request $request, int $goiHocId): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->vai_tro !== 'hocvien') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chuc nang huy goi chi danh cho tai khoan hoc vien.',
+            ], 403);
+        }
+
+        $goiHoc = GoiHoc::query()
+            ->with(['hocVien:id,ho_ten', 'giasu.user:id,ho_ten', 'monHoc:id,ten_mon,lop', 'lichHocs', 'thanhToanMoiNhat'])
+            ->where('hocvien_id', $user->id)
+            ->where('trang_thai', 'cho_xacnhan')
+            ->find($goiHocId);
+
+        if (! $goiHoc) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Khong tim thay goi hoc co the huy.',
+            ], 404);
+        }
+
+        $goiHocMoi = DB::transaction(function () use ($goiHoc, $user) {
+            $lyDo = 'Hoc vien tu huy goi hoc.';
+
+            $goiHoc->update(['trang_thai' => 'dahuy']);
+            $goiHoc->lichHocs()->update([
+                'trang_thai' => 'dahuy',
+                'lydo_huy' => $lyDo,
+            ]);
+
+            User::query()
+                ->where('vai_tro', 'admin')
+                ->get(['id'])
+                ->each(fn (User $admin) => ThongBao::create([
+                    'user_id' => $admin->id,
+                    'tieu_de' => 'Hoc vien huy goi hoc',
+                    'noi_dung' => "{$user->ho_ten} da huy goi hoc GH" . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . '.',
+                    'url' => '/admin/quan-ly-dat-goi',
+                    'da_doc' => false,
+                ]));
+
+            if ($goiHoc->giasu?->user_id) {
+                ThongBao::create([
+                    'user_id' => $goiHoc->giasu->user_id,
+                    'tieu_de' => 'Hoc vien huy yeu cau dat goi',
+                    'noi_dung' => "{$user->ho_ten} da huy goi hoc GH" . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . '.',
+                    'url' => '/gia-su/quan-ly/lich-day',
+                    'da_doc' => false,
+                ]);
+            }
+
+            return $goiHoc->fresh(['hocVien:id,ho_ten', 'giasu.user:id,ho_ten', 'monHoc:id,ten_mon,lop', 'lichHocs', 'thanhToanMoiNhat']);
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Da huy goi hoc.',
+            'data' => $this->dinhDangGoiHocChoHocVien($goiHocMoi),
+        ]);
+    }
+
     public function datLich(Request $request, int $giaSuId): JsonResponse
     {
         $user = $request->user();
@@ -1378,7 +1442,11 @@ class DatLichController extends Controller
 
         $goiHoc = DB::transaction(function () use ($duLieu, $user, $giaSu, $mucGia, $lichHocNhap, $donGia, $tongTien, $heSoGiam, $loaiGoi) {
             $ngayBatDau = collect($lichHocNhap)->min('ngay_hoc');
-            $ngayKetThuc = collect($lichHocNhap)->max('ngay_hoc');
+            $ngayKetThuc = $duLieu['loai_goi'] === 'dinh_ky'
+                ? Carbon::parse($ngayBatDau)
+                    ->addDays(max(((int) $duLieu['so_thang']) * 30, 1) - 1)
+                    ->toDateString()
+                : collect($lichHocNhap)->max('ngay_hoc');
 
             $goiHoc = GoiHoc::create([
                 'hocvien_id' => $user->id,
@@ -1528,7 +1596,6 @@ class DatLichController extends Controller
     {
         $daCoGoiDangMo = GoiHoc::query()
             ->where('hocvien_id', $hocVienId)
-            ->where('giasu_id', $giaSuId)
             ->where('monhoc_id', $monHocId)
             ->whereIn('trang_thai', ['cho_xacnhan', 'cho_thanhtoan', 'danghoc'])
             ->exists();
@@ -1536,7 +1603,7 @@ class DatLichController extends Controller
         if ($daCoGoiDangMo) {
             abort(response()->json([
                 'success' => false,
-                'message' => 'Ban da co goi hoc dang xu ly hoac dang hoc voi gia su nay cho mon hoc nay.',
+                'message' => 'Ban da co goi hoc dang xu ly hoac dang hoc cho mon hoc nay.',
             ], 422));
         }
     }
@@ -1657,6 +1724,7 @@ class DatLichController extends Controller
             'hoanthanh' => 'hoan_thanh',
             'dahuy' => 'da_huy',
         ][$goiHoc->trang_thai] ?? $goiHoc->trang_thai;
+        $ngayKetThuc = $this->ngayKetThucGoiHocHienThi($goiHoc);
 
         return [
             'id' => $goiHoc->id,
@@ -1664,7 +1732,7 @@ class DatLichController extends Controller
             'mon' => $goiHoc->monHoc?->ten_mon ?? 'Mon hoc',
             'giaSu' => $goiHoc->giasu?->user?->ho_ten ?? 'Gia su',
             'ngayBatDau' => $goiHoc->ngay_batdau,
-            'ngayKetThuc' => $goiHoc->ngay_ketthuc,
+            'ngayKetThuc' => $ngayKetThuc,
             'soBuoi' => $goiHoc->so_buoi,
             'soBuoiDaLenLich' => $goiHoc->lichHocs->count(),
             'hinhThuc' => $goiHoc->hinh_thuc_hoc === 'online' ? 'Online' : 'Tai nha',
@@ -1679,6 +1747,19 @@ class DatLichController extends Controller
                 ->map(fn (LichHoc $lichHoc) => $this->dinhDangLichHoc($lichHoc))
                 ->values(),
         ];
+    }
+
+    private function ngayKetThucGoiHocHienThi(GoiHoc $goiHoc): ?string
+    {
+        if (! $goiHoc->ngay_batdau || ! $goiHoc->hoc_dinhky) {
+            return $goiHoc->ngay_ketthuc;
+        }
+
+        $soThang = (int) ($goiHoc->loaiGoi?->so_thang ?: 1);
+
+        return Carbon::parse($goiHoc->ngay_batdau)
+            ->addDays(max($soThang * 30, 1) - 1)
+            ->toDateString();
     }
 
     private function dinhDangGoiHocChoAdmin(GoiHoc $goiHoc): array
@@ -1772,11 +1853,12 @@ class DatLichController extends Controller
     {
         $goiHoc = $lichHoc->goiHoc;
         $ngayHoc = Carbon::parse($lichHoc->ngay_hoc);
+        $daToiGioBatDau = now()->gte(Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_batdau));
         $daQuaGioKetThuc = now()->gte(Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_ketthuc));
         $xacNhan = $this->thongTinXacNhanLichHoc($lichHoc);
         $trangThai = match ($lichHoc->trang_thai) {
             'cho_xacnhan' => 'cho_xac_nhan',
-            'da_nhan' => $daQuaGioKetThuc ? 'cho_xac_nhan' : 'sap_dien_ra',
+            'da_nhan' => $daToiGioBatDau ? 'cho_xac_nhan' : 'sap_dien_ra',
             'hoanthanh' => 'hoan_thanh',
             'dahuy' => 'da_huy',
             default => 'sap_dien_ra',
@@ -1797,8 +1879,9 @@ class DatLichController extends Controller
             'diaDiem' => $lichHoc->dia_chi_hoc ?: ($lichHoc->hinh_thuc_hoc === 'online' ? 'Online' : 'Chua cap nhat'),
             'trangThai' => $trangThai,
             'ghiChu' => $lichHoc->ghi_chu ?: 'Khong co ghi chu.',
+            'daToiGioBatDau' => $daToiGioBatDau,
             'daQuaGioKetThuc' => $daQuaGioKetThuc,
-            'coTheXacNhanHoanThanh' => $daQuaGioKetThuc
+            'coTheXacNhanHoanThanh' => $daToiGioBatDau
                 && $lichHoc->trang_thai === 'da_nhan'
                 && ! $xacNhan['giaSuDaXacNhan']
                 && ! $xacNhan['giaSuBaoVanDe'],
@@ -2093,6 +2176,7 @@ class DatLichController extends Controller
     private function dinhDangLichHoc(LichHoc $lichHoc): array
     {
         $ngayHoc = Carbon::parse($lichHoc->ngay_hoc);
+        $daToiGioBatDau = now()->gte(Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_batdau));
         $daQuaGioKetThuc = now()->gte(Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_ketthuc));
         $yeuCauHocBuMoiNhat = $lichHoc->relationLoaded('yeuCauHocBus')
             ? $lichHoc->yeuCauHocBus->sortByDesc('created_at')->first()
@@ -2120,8 +2204,9 @@ class DatLichController extends Controller
             'loaiBuoi' => $lichHoc->loai_buoi === 'hoc_bu' ? 'Hoc bu' : 'Hoc thuong',
             'ghiChu' => $lichHoc->ghi_chu,
             'lyDoHuy' => $lichHoc->lydo_huy,
+            'daToiGioBatDau' => $daToiGioBatDau,
             'daQuaGioKetThuc' => $daQuaGioKetThuc,
-            'coTheXacNhanHoanThanh' => $daQuaGioKetThuc
+            'coTheXacNhanHoanThanh' => $daToiGioBatDau
                 && $lichHoc->trang_thai === 'da_nhan'
                 && ! $xacNhan['hocVienDaXacNhan']
                 && ! $xacNhan['hocVienBaoVanDe'],

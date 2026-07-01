@@ -21,7 +21,17 @@ class GiasuController extends Controller
                 'mucKinhNghiem:id,tu_khoang,den_khoang',
                 'giasuGias' => function ($query) {
                     $query
-                        ->select('id', 'giasu_id', 'monhoc_id', 'tong_gia', 'trang_thai')
+                        ->select(
+                            'id',
+                            'giasu_id',
+                            'monhoc_id',
+                            'gia_mon',
+                            'gia_cong_trinh_do',
+                            'gia_cong_kinh_nghiem',
+                            'gia_cong_them',
+                            'tong_gia',
+                            'trang_thai',
+                        )
                         ->whereNotIn('trang_thai', [
                             GiasuGia::TRANG_THAI_TU_CHOI,
                             GiasuGia::TRANG_THAI_NGUNG_DAY,

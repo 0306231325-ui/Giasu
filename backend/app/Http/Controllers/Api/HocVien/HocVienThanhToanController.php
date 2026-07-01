@@ -115,6 +115,9 @@ class HocVienThanhToanController extends Controller
             'id' => $goiHoc->id,
             'ma' => 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT),
             'mon' => $goiHoc->monHoc?->ten_mon ?? 'Mon hoc',
+            'lop' => $goiHoc->monHoc?->lop,
+            'loaiGoi' => $this->nhanLoaiGoi($goiHoc),
+            'hocDinhKy' => (bool) $goiHoc->hoc_dinhky,
             'giaSu' => $goiHoc->giasu?->user?->ho_ten ?? 'Gia su',
             'ngayBatDau' => $goiHoc->ngay_batdau,
             'ngayKetThuc' => $goiHoc->ngay_ketthuc,
@@ -156,6 +159,15 @@ class HocVienThanhToanController extends Controller
         $file->move($thuMucAnh, $tenFile);
 
         return 'images/minh-chung-thanh-toan/' . $tenFile;
+    }
+
+    private function nhanLoaiGoi(GoiHoc $goiHoc): string
+    {
+        if ($goiHoc->hoc_dinhky) {
+            return 'Gói học định kỳ';
+        }
+
+        return (int) $goiHoc->so_buoi === 1 ? 'Gói học thử' : 'Gói học không định kỳ';
     }
 
     private function dinhDangThanhToan(ThanhToan $thanhToan): array

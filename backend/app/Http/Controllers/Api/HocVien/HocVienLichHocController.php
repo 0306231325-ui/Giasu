@@ -34,6 +34,7 @@ class HocVienLichHocController extends Controller
         $danhSach = GoiHoc::query()
             ->with([
                 'monHoc:id,ten_mon,lop',
+                'loaiGoi:id,so_thang',
                 'giasu.user:id,ho_ten',
                 'lichHocs' => fn ($query) => $query
                     ->with(['danhGia', 'yeuCauHocBus' => fn ($yeuCau) => $yeuCau->latest()])
@@ -194,14 +195,19 @@ class HocVienLichHocController extends Controller
             'hoanthanh' => 'hoan_thanh',
             'dahuy' => 'da_huy',
         ][$goiHoc->trang_thai] ?? $goiHoc->trang_thai;
+        $ngayKetThuc = $this->ngayKetThucHienThi($goiHoc);
 
         return [
             'id' => $goiHoc->id,
             'ma' => 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT),
+            'monHocId' => $goiHoc->monhoc_id,
             'mon' => $goiHoc->monHoc?->ten_mon ?? 'Mon hoc',
+            'lop' => $goiHoc->monHoc?->lop,
+            'loaiGoi' => $this->nhanLoaiGoi($goiHoc),
+            'hocDinhKy' => (bool) $goiHoc->hoc_dinhky,
             'giaSu' => $goiHoc->giasu?->user?->ho_ten ?? 'Gia su',
             'ngayBatDau' => $goiHoc->ngay_batdau,
-            'ngayKetThuc' => $goiHoc->ngay_ketthuc,
+            'ngayKetThuc' => $ngayKetThuc,
             'soBuoi' => $goiHoc->so_buoi,
             'soBuoiDaLenLich' => $goiHoc->lichHocs->count(),
             'hinhThuc' => $goiHoc->hinh_thuc_hoc === 'online' ? 'Online' : 'Tai nha',
@@ -216,6 +222,32 @@ class HocVienLichHocController extends Controller
                 ->map(fn (LichHoc $lichHoc) => $this->dinhDangLichHoc($lichHoc))
                 ->values(),
         ];
+    }
+
+    private function nhanLoaiGoi(GoiHoc $goiHoc): string
+    {
+        if ($goiHoc->hoc_dinhky) {
+            return 'Gói học định kỳ';
+        }
+
+        return (int) $goiHoc->so_buoi === 1 ? 'Gói học thử' : 'Gói học không định kỳ';
+    }
+
+    private function ngayKetThucHienThi(GoiHoc $goiHoc): ?string
+    {
+        if (! $goiHoc->ngay_batdau) {
+            return $goiHoc->ngay_ketthuc;
+        }
+
+        if (! $goiHoc->hoc_dinhky) {
+            return $goiHoc->ngay_ketthuc;
+        }
+
+        $soThang = (int) ($goiHoc->loaiGoi?->so_thang ?: 1);
+
+        return Carbon::parse($goiHoc->ngay_batdau)
+            ->addDays(max($soThang * 30, 1) - 1)
+            ->toDateString();
     }
 
     private function dinhDangLichHoc(LichHoc $lichHoc): array
