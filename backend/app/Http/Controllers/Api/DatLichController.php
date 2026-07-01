@@ -74,7 +74,7 @@ class DatLichController extends Controller
             ->where('giasu_id', $giaSu->id)
             ->whereBetween('ngay_hoc', [$tuNgay, $denNgay])
             ->where('trang_thai', '!=', 'dahuy')
-            ->whereHas('goiHoc', fn ($query) => $query->where('trang_thai', '!=', 'dahuy'))
+            ->whereHas('goiHoc', fn ($query) => $this->apDungDieuKienLichDaDuocGiu($query))
             ->orderBy('ngay_hoc')
             ->orderBy('gio_batdau')
             ->get(['id', 'ngay_hoc', 'gio_batdau', 'gio_ketthuc'])
@@ -342,6 +342,10 @@ class DatLichController extends Controller
             ], 404);
         }
 
+        $goiHoc->update([
+            'gui_giasu_luc' => now(),
+        ]);
+
         ThongBao::create([
             'user_id' => $goiHoc->giasu->user_id,
             'tieu_de' => 'Co yeu cau dat goi moi',
@@ -378,7 +382,11 @@ class DatLichController extends Controller
             ->where('giasu_id', $giaSu->id)
             ->where(function ($query) use ($giaSu) {
                 $query
-                    ->whereIn('trang_thai', ['cho_xacnhan', 'cho_thanhtoan'])
+                    ->where(function ($dangXuLyQuery) {
+                        $dangXuLyQuery
+                            ->whereIn('trang_thai', ['cho_xacnhan', 'cho_thanhtoan'])
+                            ->whereNotNull('gui_giasu_luc');
+                    })
                     ->orWhere(function ($huyQuery) use ($giaSu) {
                         $huyQuery
                             ->where('trang_thai', 'dahuy')
@@ -475,6 +483,24 @@ class DatLichController extends Controller
                     'success' => false,
                     'message' => 'Ban da phan hoi yeu cau nay roi.',
                 ], 422));
+            }
+
+            if (! $laTuChoi) {
+                foreach ($goiHoc->lichHocs as $lichHoc) {
+                    if ($this->coLichTrungCuaGiaSu($giaSu->id, [
+                        'ngay_hoc' => Carbon::parse($lichHoc->ngay_hoc)->toDateString(),
+                        'gio_batdau' => substr((string) $lichHoc->gio_batdau, 0, 5),
+                        'gio_ketthuc' => substr((string) $lichHoc->gio_ketthuc, 0, 5),
+                    ])) {
+                        abort(response()->json([
+                            'success' => false,
+                            'message' => 'Khung gio ' . Carbon::parse($lichHoc->ngay_hoc)->format('d/m/Y')
+                                . ' ' . substr((string) $lichHoc->gio_batdau, 0, 5)
+                                . ' - ' . substr((string) $lichHoc->gio_ketthuc, 0, 5)
+                                . ' da co yeu cau hoac goi hoc khac duoc xac nhan.',
+                        ], 422));
+                    }
+                }
             }
 
             PhanHoi::create([
@@ -1560,7 +1586,7 @@ class DatLichController extends Controller
             ->where('giasu_id', $giaSuId)
             ->where('ngay_hoc', $lichHoc['ngay_hoc'])
             ->where('trang_thai', '!=', 'dahuy')
-            ->whereHas('goiHoc', fn ($query) => $query->where('trang_thai', '!=', 'dahuy'))
+            ->whereHas('goiHoc', fn ($query) => $this->apDungDieuKienLichDaDuocGiu($query))
             ->where('gio_batdau', '<', $lichHoc['gio_ketthuc'])
             ->where('gio_ketthuc', '>', $lichHoc['gio_batdau'])
             ->exists();
@@ -1574,11 +1600,18 @@ class DatLichController extends Controller
             ->whereHas('goiHoc', function ($query) use ($hocVienId) {
                 $query
                     ->where('hocvien_id', $hocVienId)
-                    ->where('trang_thai', '!=', 'dahuy');
+                    ->where(fn ($query) => $this->apDungDieuKienLichDaDuocGiu($query));
             })
             ->where('gio_batdau', '<', $lichHoc['gio_ketthuc'])
             ->where('gio_ketthuc', '>', $lichHoc['gio_batdau'])
             ->exists();
+    }
+
+    private function apDungDieuKienLichDaDuocGiu($query)
+    {
+        return $query
+            ->whereIn('trang_thai', ['cho_thanhtoan', 'danghoc', 'hoanthanh'])
+            ->orWhereHas('phanHois', fn ($phanHoi) => $phanHoi->where('phan_hoi', PhanHoi::DONG_Y));
     }
 
     private function haiKhungGioTrungNhau(string $batDauA, string $ketThucA, string $batDauB, string $ketThucB): bool
