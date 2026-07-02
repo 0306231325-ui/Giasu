@@ -253,6 +253,7 @@ class HocVienLichHocController extends Controller
     private function dinhDangLichHoc(LichHoc $lichHoc): array
     {
         $ngayHoc = Carbon::parse($lichHoc->ngay_hoc);
+        $daToiGioBatDau = now()->gte(Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_batdau));
         $daQuaGioKetThuc = now()->gte(Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_ketthuc));
         $yeuCauHocBuMoiNhat = $lichHoc->relationLoaded('yeuCauHocBus')
             ? $lichHoc->yeuCauHocBus->sortByDesc('created_at')->first()
@@ -280,8 +281,9 @@ class HocVienLichHocController extends Controller
             'loaiBuoi' => $lichHoc->loai_buoi === 'hoc_bu' ? 'Hoc bu' : 'Hoc thuong',
             'ghiChu' => $lichHoc->ghi_chu,
             'lyDoHuy' => $lichHoc->lydo_huy,
+            'daToiGioBatDau' => $daToiGioBatDau,
             'daQuaGioKetThuc' => $daQuaGioKetThuc,
-            'coTheXacNhanHoanThanh' => $daQuaGioKetThuc
+            'coTheXacNhanHoanThanh' => $daToiGioBatDau
                 && $lichHoc->trang_thai === 'da_nhan'
                 && ! $xacNhan['hocVienDaXacNhan']
                 && ! $xacNhan['hocVienBaoVanDe'],

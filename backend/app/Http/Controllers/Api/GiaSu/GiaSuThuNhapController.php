@@ -164,16 +164,30 @@ class GiaSuThuNhapController extends Controller
                 ->all();
         }
 
-        return collect(CarbonPeriod::create($tuNgay, $denNgay))
-            ->map(function (Carbon $ngay) use ($lichHocs) {
-                $trongNgay = $lichHocs->filter(fn (LichHoc $lichHoc) => Carbon::parse($lichHoc->ngay_hoc)->isSameDay($ngay));
+        return collect(range(0, 4))
+            ->map(function (int $tuanIndex) use ($lichHocs, $tuNgay, $denNgay) {
+                $batDauTuan = $tuNgay->copy()->addDays($tuanIndex * 7);
+
+                if ($batDauTuan->gt($denNgay)) {
+                    return null;
+                }
+
+                $ketThucTuan = $batDauTuan->copy()->addDays(6)->min($denNgay);
+                $trongTuan = $lichHocs->filter(function (LichHoc $lichHoc) use ($batDauTuan, $ketThucTuan) {
+                    $ngayHoc = Carbon::parse($lichHoc->ngay_hoc);
+
+                    return $ngayHoc->betweenIncluded($batDauTuan, $ketThucTuan);
+                });
 
                 return [
-                    'nhan' => $ngay->format('d/m'),
-                    'thuNhap' => $trongNgay->sum(fn (LichHoc $lichHoc) => $this->tienGiaSuNhan($lichHoc)),
-                    'soBuoi' => $trongNgay->count(),
+                    'nhan' => 'Tuần ' . ($tuanIndex + 1),
+                    'thuNhap' => $trongTuan->sum(fn (LichHoc $lichHoc) => $this->tienGiaSuNhan($lichHoc)),
+                    'soBuoi' => $trongTuan->count(),
+                    'moTa' => $batDauTuan->format('d/m') . ' - ' . $ketThucTuan->format('d/m'),
                 ];
             })
+            ->filter()
+            ->values()
             ->all();
     }
 

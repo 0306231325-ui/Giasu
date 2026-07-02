@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import api from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
@@ -244,7 +244,7 @@ function ChonGoiHoc() {
         { ngay: ngayMai(), gio_batdau: GIO_BAT_DAU_MAC_DINH, gio_ketthuc: GIO_KET_THUC_MAC_DINH },
     ]);
 
-    const slotTrungDanhSachLichBan = (danhSachLich, ngay, gioBatDau) => {
+    const slotTrungDanhSachLichBan = useCallback((danhSachLich, ngay, gioBatDau) => {
         const gioKetThuc = tinhGioKetThuc(gioBatDau);
 
         return danhSachLich.some((lich) => (
@@ -252,13 +252,13 @@ function ChonGoiHoc() {
             && gioBatDau < lich.gio_ketthuc
             && gioKetThuc > lich.gio_batdau
         ));
-    };
+    }, []);
 
-    const khungGioGiaSuRanhDauTien = (ngay, danhSachLich = lichBanGiaSu) => (
+    const khungGioGiaSuRanhDauTien = useCallback((ngay, danhSachLich = lichBanGiaSu) => (
         cacKhungGioBatDau.find((gio) => !slotTrungDanhSachLichBan(danhSachLich, ngay, gio)) || ""
-    );
+    ), [lichBanGiaSu, slotTrungDanhSachLichBan]);
 
-    const dieuChinhBuoiLinhHoatTheoLichBan = (danhSachBuoi, danhSachLich = lichBanGiaSu) => {
+    const dieuChinhBuoiLinhHoatTheoLichBan = useCallback((danhSachBuoi, danhSachLich = lichBanGiaSu) => {
         let daThayDoi = false;
 
         const danhSachMoi = danhSachBuoi.map((buoi, index) => {
@@ -297,7 +297,7 @@ function ChonGoiHoc() {
         });
 
         return daThayDoi ? danhSachMoi : danhSachBuoi;
-    };
+    }, [lichBanGiaSu, slotTrungDanhSachLichBan]);
 
     useEffect(() => {
         let cancelled = false;
@@ -390,7 +390,15 @@ function ChonGoiHoc() {
         return () => {
             cancelled = true;
         };
-    }, [id]);
+    }, [
+        dieuChinhBuoiLinhHoatTheoLichBan,
+        form.gio_batdau,
+        form.ngay_batdau,
+        id,
+        khungGioGiaSuRanhDauTien,
+        loaiGoi,
+        slotTrungDanhSachLichBan,
+    ]);
 
     const giaSu = useMemo(
         () => giaSus.find((item) => String(item.id) === String(id)),

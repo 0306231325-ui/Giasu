@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../../../services/api";
 
 const BO_LOC_TRANG_THAI = [
@@ -36,7 +36,7 @@ function AdminLichHoc() {
     [danhSach, lichDangChonId],
   );
 
-  const taiLichHoc = async () => {
+  const taiLichHoc = useCallback(async () => {
     setDangTai(true);
     setLoi("");
 
@@ -55,22 +55,24 @@ function AdminLichHoc() {
     } finally {
       setDangTai(false);
     }
-  };
+  }, [boLoc]);
 
   useEffect(() => {
-    taiLichHoc();
-  }, [boLoc.trang_thai, boLoc.tu_ngay, boLoc.den_ngay]);
+    const timer = window.setTimeout(() => {
+      void taiLichHoc();
+    }, boLoc.q ? 350 : 0);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => taiLichHoc(), 350);
     return () => window.clearTimeout(timer);
-  }, [boLoc.q]);
+  }, [boLoc.q, taiLichHoc]);
 
   useEffect(() => {
-    const lamMoi = () => taiLichHoc();
+    const lamMoi = () => {
+      void taiLichHoc();
+    };
+
     window.addEventListener("admin:refresh", lamMoi);
     return () => window.removeEventListener("admin:refresh", lamMoi);
-  }, [boLoc]);
+  }, [taiLichHoc]);
 
   const capNhatBoLoc = (field, value) => {
     setBoLoc((prev) => ({ ...prev, [field]: value }));

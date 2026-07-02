@@ -68,10 +68,6 @@ function GiaSuHoSo() {
     return (
         <div className="mx-auto max-w-6xl pb-10">
             <div>
-                <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-400/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-blue-200">
-                    <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
-                    Hồ sơ giảng dạy
-                </div>
                 <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
                     Hồ sơ gia sư
                 </h1>

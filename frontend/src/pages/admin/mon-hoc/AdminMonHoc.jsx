@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../../../services/api";
 
 const formMacDinh = {
@@ -14,7 +14,7 @@ const dinhDangTien = (gia) => {
   return soTien ? `${soTien.toLocaleString("vi-VN")} đ/giờ` : "Chưa cập nhật";
 };
 
-function AdminMonHoc({ compact = false }) {
+function AdminMonHoc() {
   const [danhSach, setDanhSach] = useState([]);
   const [capHocs, setCapHocs] = useState([]);
   const [tuKhoa, setTuKhoa] = useState("");
@@ -29,7 +29,7 @@ function AdminMonHoc({ compact = false }) {
 
   const danhSachLoc = useMemo(() => danhSach, [danhSach]);
 
-  const taiDanhSach = async () => {
+  const taiDanhSach = useCallback(async () => {
     setDangTai(true);
     setLoi("");
 
@@ -50,11 +50,15 @@ function AdminMonHoc({ compact = false }) {
     } finally {
       setDangTai(false);
     }
-  };
+  }, [capHocLoc, tuKhoa]);
 
   useEffect(() => {
-    taiDanhSach();
-  }, [tuKhoa, capHocLoc]);
+    const timer = window.setTimeout(() => {
+      void taiDanhSach();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [taiDanhSach]);
 
   const capNhatForm = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));

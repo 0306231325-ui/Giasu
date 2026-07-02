@@ -8,10 +8,6 @@ function GiaSuTheoDoiHoatDong() {
         <div className="mx-auto max-w-7xl pb-10">
             <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
                 <div>
-                    <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-400/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-violet-200">
-                        <span className="h-1.5 w-1.5 rounded-full bg-violet-400" />
-                        Theo dõi chất lượng
-                    </div>
                     <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
                         Theo dõi hoạt động
                     </h1>

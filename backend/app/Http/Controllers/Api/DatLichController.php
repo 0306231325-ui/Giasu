@@ -15,6 +15,7 @@ use App\Models\ThongBao;
 use App\Models\User;
 use App\Models\YeuCauHocBu;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
@@ -1674,7 +1675,7 @@ class DatLichController extends Controller
             ->exists();
     }
 
-    private function apDungDieuKienLichDaDuocGiu($query)
+    private function apDungDieuKienLichDaDuocGiu(Builder $query): Builder
     {
         return $query
             ->whereIn('trang_thai', ['cho_thanhtoan', 'danghoc', 'hoanthanh'])

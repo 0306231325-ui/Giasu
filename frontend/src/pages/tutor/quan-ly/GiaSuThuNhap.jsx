@@ -10,7 +10,7 @@ const cauHinhBoLoc = {
     thang: {
         nhanThoiGian: "tháng đã chọn",
         loaiInput: "month",
-        moTaBieuDo: "Thu nhập theo ngày trong tháng",
+        moTaBieuDo: "Thu nhập theo từng tuần trong tháng",
     },
     nam: {
         nhanThoiGian: "năm đã chọn",
@@ -44,6 +44,7 @@ function GiaSuThuNhap() {
     const [duLieu, setDuLieu] = useState(duLieuRong);
     const [dangTai, setDangTai] = useState(false);
     const [loi, setLoi] = useState("");
+    const [chiTietDangXem, setChiTietDangXem] = useState(null);
     const cauHinh = cauHinhBoLoc[boLoc];
 
     const doiBoLoc = (giaTri) => {
@@ -92,16 +93,11 @@ function GiaSuThuNhap() {
     const tongQuan = duLieu.tongQuan || duLieuRong.tongQuan;
     const chiTiet = duLieu.chiTiet || [];
     const bieuDo = duLieu.bieuDo || [];
-    const monCaoNhat = tongQuan.monThuNhapCaoNhat;
 
     return (
-        <div className="mx-auto max-w-7xl pb-10">
+        <div className="mx-auto max-w-7xl pb-8">
             <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
                 <div>
-                    <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-emerald-200">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                        Báo cáo giảng dạy
-                    </div>
                     <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
                         Thu nhập
                     </h1>
@@ -157,7 +153,7 @@ function GiaSuThuNhap() {
                 </div>
             )}
 
-            <div className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
                 <TheThongKe
                     tieuDe="Tổng thu nhập"
                     giaTri={dinhDangTien(tongQuan.tongThuNhap)}
@@ -174,49 +170,29 @@ function GiaSuThuNhap() {
                     mau="emerald"
                     dangTai={dangTai}
                 />
-                <TheThongKe
-                    tieuDe="Trung bình mỗi buổi"
-                    giaTri={dinhDangTien(tongQuan.trungBinhMoiBuoi)}
-                    phuDe="Tổng thu nhập / số buổi"
-                    bieuTuong="average"
-                    mau="violet"
-                    dangTai={dangTai}
-                />
-                <TheThongKe
-                    tieuDe="Môn thu nhập cao nhất"
-                    giaTri={monCaoNhat?.tenMon || "—"}
-                    phuDe={monCaoNhat ? `${monCaoNhat.soBuoi} buổi · ${dinhDangTien(monCaoNhat.tongThuNhap)}` : "Chưa có buổi học hoàn thành"}
-                    bieuTuong="star"
-                    mau="amber"
-                    dangTai={dangTai}
-                />
             </div>
 
-            <section className="mt-6 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#101d43] to-[#0b1533] shadow-2xl shadow-black/20">
-                <div className="flex flex-col gap-3 border-b border-white/10 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+            <section className="mt-5 overflow-hidden rounded-3xl border border-white/10 bg-[#111b3a]">
+                <div className="border-b border-white/10 px-5 py-4 sm:px-6">
                     <div>
                         <h2 className="text-lg font-extrabold">Biểu đồ thu nhập</h2>
                         <p className="mt-1 text-xs text-white/45">
                             {cauHinh.moTaBieuDo}
                         </p>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-white/50">
-                        <span className="h-2.5 w-2.5 rounded-full bg-blue-400" />
-                        Thu nhập thực nhận
-                    </div>
                 </div>
 
                 <BieuDoCot duLieu={bieuDo} dangTai={dangTai} />
             </section>
 
-            <section className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white text-slate-900 shadow-xl shadow-black/10">
-                <div className="flex flex-col gap-4 border-b border-slate-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+            <section className="mt-5 overflow-hidden rounded-3xl border border-slate-200 bg-white text-slate-900 shadow-xl shadow-black/10">
+                <div className="flex flex-col gap-4 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                     <div>
                         <h2 className="text-lg font-extrabold text-slate-950">
-                            Chi tiết buổi học
+                            Bảng tính thu nhập
                         </h2>
                         <p className="mt-1 text-xs text-slate-500">
-                            Các buổi học đã hoàn thành trong {cauHinh.nhanThoiGian}.
+                            Chỉ hiển thị các buổi học đã hoàn thành trong {cauHinh.nhanThoiGian}.
                         </p>
                     </div>
                     <button
@@ -228,12 +204,13 @@ function GiaSuThuNhap() {
                     </button>
                 </div>
 
-                <div className="hidden grid-cols-[1.05fr_1.25fr_1fr_0.9fr_0.8fr] gap-4 bg-slate-50 px-7 py-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-400 lg:grid">
-                    <span>Thời gian</span>
-                    <span>Học viên</span>
-                    <span>Môn học</span>
-                    <span>Loại buổi</span>
-                    <span className="text-right">Thu nhập</span>
+                <div className="hidden grid-cols-[0.9fr_1fr_1fr_1fr_1fr_0.8fr] gap-4 bg-slate-50 px-6 py-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-400 lg:grid">
+                    <span>Mã buổi</span>
+                    <span>Ngày học</span>
+                    <span className="text-right">Tiền học</span>
+                    <span className="text-right">Hoa hồng</span>
+                    <span className="text-right">Gia sư nhận</span>
+                    <span className="text-right">Chi tiết</span>
                 </div>
 
                 {dangTai ? (
@@ -243,21 +220,23 @@ function GiaSuThuNhap() {
                 ) : (
                     <div className="max-h-[420px] overflow-y-auto">
                         {chiTiet.map((dong) => (
-                            <DongThuNhap key={dong.id} dong={dong} />
+                            <DongThuNhap
+                                key={dong.id}
+                                dong={dong}
+                                onXemChiTiet={() => setChiTietDangXem(dong)}
+                            />
                         ))}
                     </div>
                 )}
 
-                <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/70 px-5 py-4 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-7">
-                    <p className="text-slate-500">
-                        Hiển thị <span className="font-bold text-slate-800">{chiTiet.length}</span>{" "}
-                        buổi học
-                    </p>
-                    <p className="font-bold text-blue-600">
-                        Tổng: {dinhDangTien(tongQuan.tongThuNhap)}
-                    </p>
-                </div>
             </section>
+
+            {chiTietDangXem && (
+                <ModalChiTietThuNhap
+                    dong={chiTietDangXem}
+                    onDong={() => setChiTietDangXem(null)}
+                />
+            )}
 
             <div className="mt-5 flex items-start gap-3 rounded-2xl border border-blue-400/20 bg-blue-400/10 p-4 text-sm text-blue-100">
                 <span className="mt-0.5 shrink-0 text-blue-300">
@@ -282,9 +261,9 @@ function BieuDoCot({ duLieu, dangTai }) {
     const mocCaoNhat = giaTriLonNhat || 1;
 
     return (
-        <div className="px-4 pb-6 pt-7 sm:px-7">
-            <div className="flex h-72 gap-3 sm:gap-5">
-                <div className="flex w-16 shrink-0 flex-col justify-between pb-8 text-right text-[10px] text-white/30">
+        <div className="px-4 pb-5 pt-6 sm:px-6">
+            <div className="flex h-64 gap-3 sm:gap-5">
+                <div className="flex w-16 shrink-0 flex-col justify-between pb-8 text-right text-[10px] text-white/35">
                     <span>{dinhDangTien(mocCaoNhat)}</span>
                     <span>{dinhDangTien(mocCaoNhat * 0.75)}</span>
                     <span>{dinhDangTien(mocCaoNhat * 0.5)}</span>
@@ -293,11 +272,11 @@ function BieuDoCot({ duLieu, dangTai }) {
                 </div>
 
                 <div className="relative min-w-0 flex-1">
-                    <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[244px] flex-col justify-between">
+                    <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[220px] flex-col justify-between">
                         {[1, 2, 3, 4, 5].map((dong) => (
                             <span
                                 key={dong}
-                                className="block border-t border-dashed border-white/10"
+                                className="block border-t border-white/10"
                             />
                         ))}
                     </div>
@@ -307,7 +286,7 @@ function BieuDoCot({ duLieu, dangTai }) {
                     ) : duLieuCoTien.length === 0 ? (
                         <KhungBieuDoRong noiDung="Chưa có dữ liệu biểu đồ" />
                     ) : (
-                        <div className="relative flex h-full items-end gap-2 overflow-x-auto pb-8">
+                        <div className="relative flex h-full items-end gap-3 overflow-x-auto pb-8">
                             {duLieu.map((cot) => {
                                 const thuNhap = Number(cot.thuNhap) || 0;
                                 const chieuCao = Math.max((thuNhap / mocCaoNhat) * 100, thuNhap > 0 ? 8 : 0);
@@ -318,13 +297,13 @@ function BieuDoCot({ duLieu, dangTai }) {
                                         className="flex h-full min-w-10 flex-1 flex-col justify-end gap-2"
                                         title={`${cot.nhan}: ${dinhDangTien(thuNhap)}`}
                                     >
-                                        <div className="flex h-[244px] items-end">
+                                        <div className="flex h-[220px] items-end">
                                             <div
-                                                className="w-full rounded-t-xl bg-gradient-to-t from-blue-700 to-blue-300 shadow-lg shadow-blue-950/20"
+                                                className="w-full rounded-t-lg bg-blue-500"
                                                 style={{ height: `${chieuCao}%` }}
                                             />
                                         </div>
-                                        <span className="truncate text-center text-[10px] font-semibold text-white/40">
+                                        <span className="truncate text-center text-[10px] font-semibold text-white/50">
                                             {cot.nhan}
                                         </span>
                                     </div>
@@ -348,19 +327,85 @@ function KhungBieuDoRong({ noiDung }) {
     );
 }
 
-function DongThuNhap({ dong }) {
+function DongThuNhap({ dong, onXemChiTiet }) {
+    const [ngayHoc] = String(dong.thoiGian || "").split(" · ");
+
     return (
-        <div className="grid gap-3 border-t border-slate-100 px-5 py-4 text-sm first:border-t-0 sm:px-7 lg:grid-cols-[1.05fr_1.25fr_1fr_0.9fr_0.8fr] lg:items-center">
+        <div className="grid gap-3 border-t border-slate-100 px-5 py-4 text-sm first:border-t-0 sm:px-7 lg:grid-cols-[0.9fr_1fr_1fr_1fr_1fr_0.8fr] lg:items-center">
             <div>
-                <p className="font-extrabold text-slate-900">{dong.thoiGian}</p>
-                <p className="mt-1 text-xs font-semibold text-slate-400">{dong.ma}</p>
+                <p className="font-extrabold text-slate-900">{dong.ma}</p>
+                <p className="mt-1 text-xs font-semibold text-slate-400 lg:hidden">{ngayHoc}</p>
             </div>
-            <p className="font-bold text-slate-700">{dong.hocVien}</p>
-            <p className="font-bold text-blue-600">{dong.monHoc}</p>
-            <p className="text-slate-500">{dong.loaiBuoi}</p>
+            <p className="hidden font-bold text-slate-700 lg:block">{ngayHoc}</p>
+            <p className="flex items-center justify-between gap-3 font-bold text-slate-700 lg:block lg:text-right">
+                <span className="text-xs uppercase tracking-wider text-slate-400 lg:hidden">Tiền học</span>
+                {dinhDangTien(dong.tienHoc)}
+            </p>
+            <p className="flex items-center justify-between gap-3 font-bold text-rose-500 lg:block lg:text-right">
+                <span className="text-xs uppercase tracking-wider text-slate-400 lg:hidden">Hoa hồng</span>
+                -{dinhDangTien(dong.phiHoaHong)}
+            </p>
             <p className="text-right text-base font-extrabold text-emerald-600">
                 {dinhDangTien(dong.thuNhap)}
             </p>
+            <button
+                type="button"
+                onClick={onXemChiTiet}
+                className="rounded-xl border border-blue-200 px-3 py-2 text-xs font-extrabold text-blue-600 transition hover:bg-blue-50 lg:justify-self-end"
+            >
+                Xem chi tiết
+            </button>
+        </div>
+    );
+}
+
+function ModalChiTietThuNhap({ dong, onDong }) {
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4 py-6 backdrop-blur-sm">
+            <div className="w-full max-w-xl overflow-hidden rounded-3xl bg-white text-slate-900 shadow-2xl">
+                <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5">
+                    <div>
+                        <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-blue-500">
+                            Chi tiết buổi học
+                        </p>
+                        <h3 className="mt-2 text-xl font-extrabold">{dong.ma}</h3>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onDong}
+                        className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+                    >
+                        Đóng
+                    </button>
+                </div>
+
+                <div className="grid gap-3 px-6 py-5 text-sm sm:grid-cols-2">
+                    <DongChiTiet label="Thời gian" value={dong.thoiGian} />
+                    <DongChiTiet label="Loại buổi" value={dong.loaiBuoi} />
+                    <DongChiTiet label="Học viên" value={dong.hocVien} />
+                    <DongChiTiet label="Môn học" value={dong.monHoc} />
+                    <DongChiTiet label="Tiền học" value={dinhDangTien(dong.tienHoc)} />
+                    <DongChiTiet label="Phí hoa hồng" value={`-${dinhDangTien(dong.phiHoaHong)}`} />
+                </div>
+
+                <div className="border-t border-slate-100 bg-slate-50 px-6 py-5">
+                    <div className="flex items-center justify-between gap-4 rounded-2xl bg-white px-4 py-4">
+                        <span className="text-sm font-bold text-slate-500">Gia sư thực nhận</span>
+                        <span className="text-xl font-extrabold text-emerald-600">
+                            {dinhDangTien(dong.thuNhap)}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function DongChiTiet({ label, value }) {
+    return (
+        <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+            <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">{label}</p>
+            <p className="mt-1 font-bold text-slate-800">{value || "-"}</p>
         </div>
     );
 }
