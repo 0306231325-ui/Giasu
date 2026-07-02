@@ -1,8 +1,64 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import api from "../../../services/api";
+
+const duLieuRong = {
+    tongQuan: {
+        diemTrungBinh: 0,
+        tongPhanHoi: 0,
+        danhGiaTichCuc: 0,
+        danhGiaTieuCuc: 0,
+    },
+    phanBoDanhGia: [5, 4, 3, 2, 1].map((soSao) => ({ soSao, soLuong: 0 })),
+    danhSach: [],
+};
 
 function GiaSuTheoDoiHoatDong() {
     const [boLocDanhGia, setBoLocDanhGia] = useState("");
     const [boLocThoiGian, setBoLocThoiGian] = useState("tat_ca");
+    const [duLieu, setDuLieu] = useState(duLieuRong);
+    const [dangTai, setDangTai] = useState(false);
+    const [loi, setLoi] = useState("");
+
+    useEffect(() => {
+        let daHuy = false;
+
+        const taiTheoDoiHoatDong = async () => {
+            setDangTai(true);
+            setLoi("");
+
+            try {
+                const response = await api.get("/gia-su/theo-doi-hoat-dong", {
+                    params: {
+                        thoi_gian: boLocThoiGian,
+                        so_sao: boLocDanhGia || undefined,
+                    },
+                });
+
+                if (!daHuy) {
+                    setDuLieu(response.data.data || duLieuRong);
+                }
+            } catch (error) {
+                if (!daHuy) {
+                    setDuLieu(duLieuRong);
+                    setLoi(error.response?.data?.message || "Không thể tải dữ liệu theo dõi hoạt động.");
+                }
+            } finally {
+                if (!daHuy) {
+                    setDangTai(false);
+                }
+            }
+        };
+
+        void taiTheoDoiHoatDong();
+
+        return () => {
+            daHuy = true;
+        };
+    }, [boLocDanhGia, boLocThoiGian]);
+
+    const tongQuan = duLieu.tongQuan || duLieuRong.tongQuan;
+    const phanBoDanhGia = duLieu.phanBoDanhGia || duLieuRong.phanBoDanhGia;
+    const danhSach = duLieu.danhSach || [];
 
     return (
         <div className="mx-auto max-w-7xl pb-10">
@@ -44,33 +100,39 @@ function GiaSuTheoDoiHoatDong() {
             <div className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <TheThongKe
                     nhan="Điểm trung bình"
-                    giaTri="—"
-                    phuDe="Chưa có đánh giá"
+                    giaTri={dangTai ? "..." : tongQuan.tongPhanHoi > 0 ? `${Number(tongQuan.diemTrungBinh).toFixed(1)}/5` : "—"}
+                    phuDe={tongQuan.tongPhanHoi > 0 ? `${tongQuan.tongPhanHoi} lượt đánh giá` : "Chưa có đánh giá"}
                     bieuTuong="star"
                     mau="amber"
                 />
                 <TheThongKe
                     nhan="Tổng phản hồi"
-                    giaTri="0"
+                    giaTri={dangTai ? "..." : tongQuan.tongPhanHoi}
                     phuDe="Từ học viên"
                     bieuTuong="message"
                     mau="blue"
                 />
                 <TheThongKe
                     nhan="Đánh giá tích cực"
-                    giaTri="0"
+                    giaTri={dangTai ? "..." : tongQuan.danhGiaTichCuc}
                     phuDe="Từ 4 sao trở lên"
                     bieuTuong="check"
                     mau="emerald"
                 />
                 <TheThongKe
                     nhan="Đánh giá tiêu cực"
-                    giaTri="0"
-                    phuDe="Dưới 4 sao hoặc có góp ý"
+                    giaTri={dangTai ? "..." : tongQuan.danhGiaTieuCuc}
+                    phuDe="Dưới 4 sao"
                     bieuTuong="alert"
                     mau="red"
                 />
             </div>
+
+            {loi && (
+                <div className="mt-5 rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-100">
+                    {loi}
+                </div>
+            )}
 
             <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
                 <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white text-slate-900 shadow-xl shadow-black/10">
@@ -105,7 +167,17 @@ function GiaSuTheoDoiHoatDong() {
                         <span className="text-right">Đánh giá</span>
                     </div>
 
-                    <TrangThaiRong />
+                    {dangTai ? (
+                        <TrangThaiBang noiDung="Đang tải phản hồi học viên..." />
+                    ) : danhSach.length === 0 ? (
+                        <TrangThaiRong />
+                    ) : (
+                        <div className="max-h-[520px] overflow-y-auto">
+                            {danhSach.map((danhGia) => (
+                                <DongDanhGia key={danhGia.id} danhGia={danhGia} />
+                            ))}
+                        </div>
+                    )}
                 </section>
 
                 <aside className="space-y-5">
@@ -125,22 +197,7 @@ function GiaSuTheoDoiHoatDong() {
                         </div>
 
                         <div className="mt-5 space-y-3">
-                            {[5, 4, 3, 2, 1].map((soSao) => (
-                                <div
-                                    key={soSao}
-                                    className="grid grid-cols-[48px_minmax(0,1fr)_32px] items-center gap-3 text-sm"
-                                >
-                                    <span className="font-bold text-white/70">
-                                        {soSao} sao
-                                    </span>
-                                    <span className="h-2 overflow-hidden rounded-full bg-white/10">
-                                        <span className="block h-full w-0 rounded-full bg-amber-400" />
-                                    </span>
-                                    <span className="text-right text-white/35">
-                                        0
-                                    </span>
-                                </div>
-                            ))}
+                            <PhanBoDanhGia danhSach={phanBoDanhGia} />
                         </div>
                     </section>
 
@@ -191,6 +248,82 @@ function TheThongKe({ nhan, giaTri, phuDe, bieuTuong, mau }) {
                 </span>
             </div>
             <p className="mt-3 truncate text-xs text-white/35">{phuDe}</p>
+        </div>
+    );
+}
+
+function DongDanhGia({ danhGia }) {
+    return (
+        <div className="grid gap-3 border-t border-slate-100 px-5 py-4 text-sm first:border-t-0 sm:px-7 lg:grid-cols-[1fr_1.15fr_0.8fr_0.7fr] lg:items-center">
+            <div>
+                <p className="font-extrabold text-slate-900">{danhGia.maBuoiHoc}</p>
+                <p className="mt-1 text-xs font-semibold text-slate-500">{danhGia.thoiGian}</p>
+                <p className="mt-1 text-xs text-slate-400">HV: {danhGia.hocVien}</p>
+            </div>
+
+            <div>
+                <p className="font-semibold text-slate-800">
+                    {danhGia.noiDung || "Học viên chưa để lại nhận xét."}
+                </p>
+                <p className="mt-1 text-xs text-slate-400">
+                    Đánh giá lúc {danhGia.ngayDanhGia || "chưa cập nhật"}
+                </p>
+            </div>
+
+            <p className="font-bold text-blue-600">{danhGia.monHoc}</p>
+
+            <div className="flex items-center gap-2 lg:justify-end">
+                <span className={[
+                    "rounded-full px-3 py-1 text-xs font-extrabold",
+                    danhGia.soSao >= 4
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-red-100 text-red-700",
+                ].join(" ")}>
+                    {danhGia.soSao}/5 sao
+                </span>
+            </div>
+        </div>
+    );
+}
+
+function PhanBoDanhGia({ danhSach }) {
+    const lonNhat = Math.max(...danhSach.map((item) => Number(item.soLuong) || 0), 1);
+
+    return danhSach.map((item) => {
+        const soLuong = Number(item.soLuong) || 0;
+        const chieuRong = `${(soLuong / lonNhat) * 100}%`;
+
+        return (
+            <div
+                key={item.soSao}
+                className="grid grid-cols-[48px_minmax(0,1fr)_32px] items-center gap-3 text-sm"
+            >
+                <span className="font-bold text-white/70">
+                    {item.soSao} sao
+                </span>
+                <span className="h-2 overflow-hidden rounded-full bg-white/10">
+                    <span
+                        className="block h-full rounded-full bg-amber-400"
+                        style={{ width: chieuRong }}
+                    />
+                </span>
+                <span className="text-right text-white/35">
+                    {soLuong}
+                </span>
+            </div>
+        );
+    });
+}
+
+function TrangThaiBang({ noiDung }) {
+    return (
+        <div className="px-5 py-14 text-center sm:px-7">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                <BieuTuong ten="message" />
+            </div>
+            <p className="mt-4 text-sm font-extrabold text-slate-800">
+                {noiDung}
+            </p>
         </div>
     );
 }
