@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import api from "../../services/api";
-import { layUrlAnhGiaSu } from "../tutor/dang-ky-goi/avatarGiaSu";
+import api from "../../../services/api";
+import { layUrlAnhGiaSu } from "./avatarGiaSu";
 
 const mucTieuHoc = [
     "Mất gốc cần học lại",

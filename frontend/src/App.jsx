@@ -1,15 +1,15 @@
 import Home from "./pages/Home"
 import { Routes, Route } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
-import BaiViet from "./pages/BaiViet";
-import BaiVietDetail from "./pages/BaiVietDetail";
-import DanhSachGiaSu from './pages/tutor/DanhSachGiaSu';
-import GiaSuDetail from "./pages/tutor/GiaSuDetail";
-import TimGiaSuTheoYeuCau from "./pages/tutor/TimGiaSuTheoYeuCau";
+import BaiViet from "./pages/bai-viet/BaiViet";
+import BaiVietDetail from "./pages/bai-viet/BaiVietDetail";
+import DanhSachGiaSu from "./pages/tutor/dang-ky-goi/DanhSachGiaSu";
+import GiaSuDetail from "./pages/tutor/dang-ky-goi/GiaSuDetail";
+import TimGiaSuTheoYeuCau from "./pages/tutor/dang-ky-goi/TimGiaSuTheoYeuCau";
 import ChonGoiHoc from "./pages/student/ChonGoiHoc";
-import Login from "./pages/login/Login";
-import Register from "./pages/register/Register";
-import HoSoHocVien from "./pages/profile/HoSoHocVien";
+import Login from "./pages/auth/login/Login";
+import Register from "./pages/auth/register/Register";
+import HoSoHocVien from "./pages/auth/profile/HoSoHocVien";
 import LichHocCuaToi from "./pages/student/LichHocCuaToi";
 import AdminLayout from "./layouts/AdminLayout";
 import AdminHome from "./pages/admin/AdminHome";
@@ -22,10 +22,10 @@ import AdminLichHoc from "./pages/admin/lich-hoc/AdminLichHoc";
 import DangKyLamGiaSu from "./pages/tutor/dang-ky-gia-su/DangKyLamGiaSu";
 import GiaSuLayout from "./layouts/GiaSuLayout";
 import GiaSuTongQuan from "./pages/tutor/quan-ly/GiaSuTongQuan";
-import GiaSuHoSo from "./pages/tutor/quan-ly/GiaSuHoSo";
-import GiaSuLichDay from "./pages/tutor/quan-ly/GiaSuLichDay";
-import GiaSuThuNhap from "./pages/tutor/quan-ly/GiaSuThuNhap";
-import GiaSuTheoDoiHoatDong from "./pages/tutor/quan-ly/GiaSuTheoDoiHoatDong";
+import GiaSuHoSo from "./pages/tutor/quan-ly/ho-so/GiaSuHoSo";
+import GiaSuLichDay from "./pages/tutor/quan-ly/lich-day/GiaSuLichDay";
+import GiaSuThuNhap from "./pages/tutor/quan-ly/thu-nhap/GiaSuThuNhap";
+import GiaSuTheoDoiHoatDong from "./pages/tutor/quan-ly/theo-doi-hoat-dong/GiaSuTheoDoiHoatDong";
 
 function App() {
   return (
