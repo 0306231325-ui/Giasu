@@ -32,10 +32,7 @@ class GiasuController extends Controller
                             'tong_gia',
                             'trang_thai',
                         )
-                        ->whereNotIn('trang_thai', [
-                            GiasuGia::TRANG_THAI_TU_CHOI,
-                            GiasuGia::TRANG_THAI_NGUNG_DAY,
-                        ])
+                        ->where('trang_thai', GiasuGia::TRANG_THAI_DA_DUYET)
                         ->orderBy('tong_gia');
                 },
                 'giasuGias.monHoc:id,ten_mon,cap_hoc_id,lop',
@@ -46,8 +43,12 @@ class GiasuController extends Controller
                     $query->whereHas('danhGia');
                 },
             ])
-            ->withMin('giasuGias as gia_tu', 'tong_gia')
-            ->withMax('giasuGias as gia_den', 'tong_gia')
+            ->withMin([
+                'giasuGias as gia_tu' => fn ($query) => $query->where('trang_thai', GiasuGia::TRANG_THAI_DA_DUYET),
+            ], 'tong_gia')
+            ->withMax([
+                'giasuGias as gia_den' => fn ($query) => $query->where('trang_thai', GiasuGia::TRANG_THAI_DA_DUYET),
+            ], 'tong_gia')
             ->addSelect([
                 'danh_gias_avg_so_sao' => DanhGia::selectRaw('coalesce(avg(danhgia.so_sao), 0)')
                     ->join('lichhoc', 'lichhoc.id', '=', 'danhgia.lichhoc_id')
@@ -57,10 +58,24 @@ class GiasuController extends Controller
             ]);
     }
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         try {
-            $danhSachGiaSu = $this->truyVanDanhSachGiaSu()
+            $duLieu = $request->validate([
+                'monhoc_id' => ['nullable', 'integer', 'exists:monhoc,id'],
+            ]);
+
+            $query = $this->truyVanDanhSachGiaSu();
+
+            if (! empty($duLieu['monhoc_id'])) {
+                $query->whereHas('giasuGias', function ($giaQuery) use ($duLieu) {
+                    $giaQuery
+                        ->where('monhoc_id', $duLieu['monhoc_id'])
+                        ->where('trang_thai', GiasuGia::TRANG_THAI_DA_DUYET);
+                });
+            }
+
+            $danhSachGiaSu = $query
                 ->orderBy('id', 'desc')
                 ->paginate(12);
 
@@ -97,10 +112,7 @@ class GiasuController extends Controller
 
         if (! empty($duLieu['monhoc_id']) || ! empty($duLieu['cap_hoc_id']) || ! empty($duLieu['ten_mon']) || ! empty($duLieu['lop'])) {
             $query->whereHas('giasuGias', function ($giaQuery) use ($duLieu) {
-                $giaQuery->whereNotIn('trang_thai', [
-                    GiasuGia::TRANG_THAI_TU_CHOI,
-                    GiasuGia::TRANG_THAI_NGUNG_DAY,
-                ]);
+                $giaQuery->where('trang_thai', GiasuGia::TRANG_THAI_DA_DUYET);
 
                 if (! empty($duLieu['monhoc_id'])) {
                     $giaQuery->where('monhoc_id', $duLieu['monhoc_id']);
@@ -128,10 +140,7 @@ class GiasuController extends Controller
             $query->whereHas('giasuGias', function ($giaQuery) use ($duLieu) {
                 $giaQuery
                     ->where('tong_gia', '<=', $duLieu['ngan_sach'])
-                    ->whereNotIn('trang_thai', [
-                        GiasuGia::TRANG_THAI_TU_CHOI,
-                        GiasuGia::TRANG_THAI_NGUNG_DAY,
-                    ]);
+                    ->where('trang_thai', GiasuGia::TRANG_THAI_DA_DUYET);
             });
         }
 

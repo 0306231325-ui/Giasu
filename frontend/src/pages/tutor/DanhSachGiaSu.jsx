@@ -85,7 +85,7 @@ const GiaSuCard = memo(({ giasu }) => {
     const monDay = layMonDayHienThi(giasu);
 
     return (
-        <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0d1854] shadow-lg transition duration-200 hover:-translate-y-1 hover:border-blue-400/50">
+        <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0d1854] shadow-lg transition duration-200 hover:-translate-y-1 hover:border-blue-400/50">
             <div className="relative h-52 overflow-hidden bg-[#111d5e]">
                 <GiaSuAvatar giasu={giasu} />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0d1854]/95 to-transparent" />
@@ -97,7 +97,7 @@ const GiaSuCard = memo(({ giasu }) => {
                 </div>
             </div>
 
-            <div className="p-5">
+            <div className="flex flex-1 flex-col p-5">
                 <h2 className="truncate text-xl font-bold text-white">
                     {giasu.user?.ho_ten || "Đang cập nhật"}
                 </h2>
@@ -132,7 +132,7 @@ const GiaSuCard = memo(({ giasu }) => {
 
                 <Link
                     to={`/gia-su/${giasu.id}`}
-                    className="mt-5 block w-full rounded-xl bg-blue-500 py-2.5 text-center font-semibold text-white transition hover:bg-blue-600"
+                    className="mt-auto block w-full rounded-xl bg-blue-500 py-2.5 text-center font-semibold text-white transition hover:bg-blue-600"
                 >
                     Xem chi tiết
                 </Link>
