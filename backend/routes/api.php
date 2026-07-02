@@ -8,8 +8,12 @@ use App\Http\Controllers\Api\Admin\AdminXetDuyetGiaSuController;
 use App\Http\Controllers\Api\AdminDanhMucController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BaiViet\BaiVietController;
+use App\Http\Controllers\Api\BannerController;
 use App\Http\Controllers\Api\DangKyGiaSuController;
-use App\Http\Controllers\Api\DatLichController;
+use App\Http\Controllers\Api\DatGoi\AdminDatGoiController;
+use App\Http\Controllers\Api\DatGoi\DatGoiController;
+use App\Http\Controllers\Api\DatGoi\GiaSuYeuCauDatGoiController;
+use App\Http\Controllers\Api\DatGoi\ThanhToanGoiHocController;
 use App\Http\Controllers\Api\GiaSu\GiaSuBangCapController;
 use App\Http\Controllers\Api\GiaSu\GiaSuChuyenMonController;
 use App\Http\Controllers\Api\GiaSu\GiaSuHoSoController;
@@ -20,9 +24,11 @@ use App\Http\Controllers\Api\GiaSu\GiasuController;
 use App\Http\Controllers\Api\HocVien\HocVienHoSoController;
 use App\Http\Controllers\Api\HocVien\HocVienLichHocController;
 use App\Http\Controllers\Api\HocVien\HocVienThanhToanController;
+use App\Http\Controllers\Api\LichHoc\AdminLichHocController;
+use App\Http\Controllers\Api\LichHoc\GiaSuLichHocController;
+use App\Http\Controllers\Api\LichHoc\HocVienLichHocController as HocVienLichHocDatGoiController;
 use App\Http\Controllers\Api\MonHocController;
 use App\Http\Controllers\Api\ThongBaoController;
-use App\Http\Controllers\BannerController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -49,23 +55,23 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::prefix('lich-hoc')->group(function () {
             Route::get('/', [HocVienLichHocController::class, 'lichHocCuaToi']);
-            Route::post('/{lichHocId}/xac-nhan-hoan-thanh', [DatLichController::class, 'hocVienXacNhanHoanThanhBuoiHoc']);
+            Route::post('/{lichHocId}/xac-nhan-hoan-thanh', [HocVienLichHocDatGoiController::class, 'hocVienXacNhanHoanThanhBuoiHoc']);
             Route::post('/{lichHocId}/danh-gia', [HocVienLichHocController::class, 'danhGiaBuoiHoc']);
             Route::post('/{lichHocId}/doi-buoi', [HocVienLichHocController::class, 'yeuCauDoiBuoiHoc']);
         });
 
         Route::post('/goi-hoc/{goiHocId}/thanh-toan', [HocVienThanhToanController::class, 'thanhToanGoiHoc']);
-        Route::patch('/goi-hoc/{goiHocId}/huy', [DatLichController::class, 'hocVienHuyGoiHoc']);
+        Route::patch('/goi-hoc/{goiHocId}/huy', [DatGoiController::class, 'hocVienHuyGoiHoc']);
     });
 
     Route::prefix('gia-su')->group(function () {
-        Route::post('/{giaSuId}/goi-hoc', [DatLichController::class, 'datLich']);
-        Route::get('/lich-day', [DatLichController::class, 'lichDayGiaSu']);
-        Route::post('/lich-day/{lichHocId}/xac-nhan-hoan-thanh', [DatLichController::class, 'giaSuXacNhanHoanThanhBuoiHoc']);
+        Route::post('/{giaSuId}/goi-hoc', [DatGoiController::class, 'datLich']);
+        Route::get('/lich-day', [GiaSuLichHocController::class, 'lichDayGiaSu']);
+        Route::post('/lich-day/{lichHocId}/xac-nhan-hoan-thanh', [GiaSuLichHocController::class, 'giaSuXacNhanHoanThanhBuoiHoc']);
         Route::get('/thu-nhap', [GiaSuThuNhapController::class, 'thongKe']);
         Route::get('/theo-doi-hoat-dong', [GiaSuTheoDoiHoatDongController::class, 'thongKe']);
-        Route::get('/yeu-cau-dat-goi', [DatLichController::class, 'danhSachYeuCauGiaSu']);
-        Route::patch('/yeu-cau-dat-goi/{goiHocId}/phan-hoi', [DatLichController::class, 'phanHoiYeuCauGiaSu']);
+        Route::get('/yeu-cau-dat-goi', [GiaSuYeuCauDatGoiController::class, 'danhSachYeuCauGiaSu']);
+        Route::patch('/yeu-cau-dat-goi/{goiHocId}/phan-hoi', [GiaSuYeuCauDatGoiController::class, 'phanHoiYeuCauGiaSu']);
 
         Route::prefix('ho-so')->group(function () {
             Route::get('/ca-nhan', [GiaSuHoSoController::class, 'hoSoCaNhan']);
@@ -93,19 +99,19 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::prefix('admin')->group(function () {
         Route::prefix('dat-goi')->group(function () {
-            Route::get('/', [DatLichController::class, 'danhSachDatGoiAdmin']);
-            Route::patch('/{goiHocId}/gui-gia-su', [DatLichController::class, 'guiGoiChoGiaSu']);
-            Route::patch('/{goiHocId}/cho-thanh-toan', [DatLichController::class, 'chuyenGoiChoThanhToan']);
-            Route::patch('/{goiHocId}/nhac-thanh-toan', [DatLichController::class, 'nhacThanhToanAdmin']);
-            Route::patch('/{goiHocId}/duyet-thanh-toan', [DatLichController::class, 'duyetThanhToanAdmin']);
-            Route::patch('/{goiHocId}/tu-choi-thanh-toan', [DatLichController::class, 'tuChoiThanhToanAdmin']);
-            Route::patch('/{goiHocId}/huy', [DatLichController::class, 'huyGoiAdmin']);
+            Route::get('/', [AdminDatGoiController::class, 'danhSachDatGoiAdmin']);
+            Route::patch('/{goiHocId}/gui-gia-su', [AdminDatGoiController::class, 'guiGoiChoGiaSu']);
+            Route::patch('/{goiHocId}/cho-thanh-toan', [AdminDatGoiController::class, 'chuyenGoiChoThanhToan']);
+            Route::patch('/{goiHocId}/nhac-thanh-toan', [AdminDatGoiController::class, 'nhacThanhToanAdmin']);
+            Route::patch('/{goiHocId}/duyet-thanh-toan', [ThanhToanGoiHocController::class, 'duyetThanhToanAdmin']);
+            Route::patch('/{goiHocId}/tu-choi-thanh-toan', [ThanhToanGoiHocController::class, 'tuChoiThanhToanAdmin']);
+            Route::patch('/{goiHocId}/huy', [AdminDatGoiController::class, 'huyGoiAdmin']);
         });
 
         Route::prefix('lich-hoc')->group(function () {
-            Route::get('/', [DatLichController::class, 'danhSachLichHocAdmin']);
-            Route::patch('/{lichHocId}/hoan-thanh', [DatLichController::class, 'adminXacNhanHoanThanhLichHoc']);
-            Route::patch('/{lichHocId}/huy', [DatLichController::class, 'adminHuyLichHoc']);
+            Route::get('/', [AdminLichHocController::class, 'danhSachLichHocAdmin']);
+            Route::patch('/{lichHocId}/hoan-thanh', [AdminLichHocController::class, 'adminXacNhanHoanThanhLichHoc']);
+            Route::patch('/{lichHocId}/huy', [AdminLichHocController::class, 'adminHuyLichHoc']);
         });
 
         Route::prefix('gia-su')->group(function () {
@@ -155,11 +161,11 @@ Route::get('/baiviet/{slug}', [BaiVietController::class, 'chiTiet']);
 Route::get('/banner', [BannerController::class, 'index']);
 
 Route::get('/gia-su', [GiasuController::class, 'index']);
-Route::get('/gia-su/{giaSuId}/lich-ban', [DatLichController::class, 'lichBanGiaSu']);
+Route::get('/gia-su/{giaSuId}/lich-ban', [DatGoiController::class, 'lichBanGiaSu']);
 Route::get('/tim-gia-su-theo-yeu-cau', [GiasuController::class, 'timTheoYeuCau']);
 
 Route::get('/dang-ky-gia-su/danh-muc', [DangKyGiaSuController::class, 'danhMuc']);
 Route::post('/dang-ky-gia-su/tinh-gia', [DangKyGiaSuController::class, 'tinhGia']);
 
 Route::get('/mon-hoc', [MonHocController::class, 'index']);
-Route::get('/loai-goi', [DatLichController::class, 'danhSachLoaiGoi']);
+Route::get('/loai-goi', [DatGoiController::class, 'danhSachLoaiGoi']);
