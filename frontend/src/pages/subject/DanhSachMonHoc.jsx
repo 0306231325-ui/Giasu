@@ -9,7 +9,19 @@ const DanhSachMonHoc = () => {
     const [loading, setLoading] = useState(true);
     const [searchText, setSearchText] = useState("");
 
-    const filterMonId = searchParams.get("mon") || "";
+    const filterMon = searchParams.get("mon") || "";
+
+    const tenMonDaLoc = useMemo(() => {
+        if (!filterMon) return "";
+
+        const monTheoId = monHocs.find((mon) => String(mon.id) === filterMon);
+        return monTheoId?.ten_mon || filterMon;
+    }, [monHocs, filterMon]);
+
+    const danhSachTenMon = useMemo(() => {
+        return [...new Set(monHocs.map((mon) => mon.ten_mon).filter(Boolean))]
+            .sort((a, b) => a.localeCompare(b, "vi"));
+    }, [monHocs]);
 
     useEffect(() => {
         let cancelled = false;
@@ -40,15 +52,20 @@ const DanhSachMonHoc = () => {
 
         return monHocs.filter((mon) => {
             const matchFilter =
-                !filterMonId || String(mon.id) === filterMonId;
+                !tenMonDaLoc || mon.ten_mon === tenMonDaLoc;
 
             const tenMonKhongDau = boDauTiengViet(mon.ten_mon);
+            const lopKhongDau = boDauTiengViet(mon.lop || "");
+            const capHocKhongDau = boDauTiengViet(mon.cap_hoc?.ten || "");
             const matchSearch =
-                !keyword || tenMonKhongDau.includes(keyword);
+                !keyword
+                || tenMonKhongDau.includes(keyword)
+                || lopKhongDau.includes(keyword)
+                || capHocKhongDau.includes(keyword);
 
             return matchFilter && matchSearch;
         });
-    }, [monHocs, filterMonId, searchText]);
+    }, [monHocs, tenMonDaLoc, searchText]);
 
     const handleFilterChange = (e) => {
         const value = e.target.value;
@@ -56,6 +73,14 @@ const DanhSachMonHoc = () => {
         if (value) {
             setSearchParams({ mon: value });
         } else {
+            setSearchParams({});
+        }
+    };
+
+    const handleSearchChange = (e) => {
+        setSearchText(e.target.value);
+
+        if (filterMon) {
             setSearchParams({});
         }
     };
@@ -90,25 +115,25 @@ const DanhSachMonHoc = () => {
                 <input
                     type="text"
                     value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
+                    onChange={handleSearchChange}
                     placeholder="Gõ chữ cái để tìm "
                     className="flex-1 px-4 py-2.5 rounded-xl bg-[#0d1854] border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-blue-400"
                 />
 
                 <select
-                    value={filterMonId}
+                    value={tenMonDaLoc}
                     onChange={handleFilterChange}
                     className="sm:w-56 px-4 py-2.5 rounded-xl bg-[#0d1854] border border-white/10 text-white focus:outline-none focus:border-blue-400"
                 >
                     <option value="">Tất cả môn học</option>
-                    {monHocs.map((mon) => (
-                        <option key={mon.id} value={mon.id}>
-                            {mon.ten_mon}
+                    {danhSachTenMon.map((tenMon) => (
+                        <option key={tenMon} value={tenMon}>
+                            {tenMon}
                         </option>
                     ))}
                 </select>
 
-                {(filterMonId || searchText) && (
+                {(tenMonDaLoc || searchText) && (
                     <button
                         type="button"
                         onClick={handleClearFilters}
@@ -137,6 +162,9 @@ const DanhSachMonHoc = () => {
                             <h2 className="text-2xl font-bold text-white mb-2">
                                 {mon.ten_mon}
                             </h2>
+                            <p className="mb-3 text-sm font-semibold text-blue-200">
+                                {[mon.cap_hoc?.ten, mon.lop].filter(Boolean).join(" · ") || "Chưa cập nhật lớp"}
+                            </p>
 
                             <p className="text-gray-300 text-sm mb-4 line-clamp-3">
                                 {mon.mo_ta || "Chưa có mô tả"}
@@ -148,7 +176,7 @@ const DanhSachMonHoc = () => {
                                 </span>
 
                                 <Link
-                                    to="/gia-su"
+                                    to={`/gia-su?monhoc_id=${mon.id}`}
                                     className="text-sm text-gray-400 hover:text-white transition-colors"
                                 >
                                     Xem gia sư →
