@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\GiaSu;
 use App\Http\Controllers\Controller;
 use App\Models\CapHoc;
 use App\Models\GiasuGia;
+use App\Models\GoiHoc;
 use App\Models\MonHoc;
 use App\Models\ThongBao;
 use App\Models\User;
@@ -155,6 +156,20 @@ class GiaSuMonDayController extends Controller
                     ->where('ten_mon', $mucGia->monHoc->ten_mon);
             })
             ->get();
+
+        $monHocIds = $cacMucCungMon->pluck('monhoc_id')->all();
+        $coGoiDangXuLy = GoiHoc::query()
+            ->where('giasu_id', $giaSu->id)
+            ->whereIn('monhoc_id', $monHocIds)
+            ->whereIn('trang_thai', ['cho_xacnhan', 'cho_thanhtoan', 'danghoc'])
+            ->exists();
+
+        if ($coGoiDangXuLy) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Môn học này đang có gói học hoặc lịch học đang xử lý, không thể ngừng dạy.',
+            ], 422);
+        }
 
         $coMonDaDuyet = $cacMucCungMon->contains(
             fn (GiasuGia $muc) => $muc->trang_thai === GiasuGia::TRANG_THAI_DA_DUYET,
