@@ -74,7 +74,7 @@ class HocVienThanhToanController extends Controller
                 'ma_giaodich' => $maGiaoDich,
                 'noi_dung_thanhtoan' => filled($duLieu['noi_dung_thanhtoan'] ?? null)
                     ? trim($duLieu['noi_dung_thanhtoan'])
-                    : 'Hoc vien gui minh chung thanh toan goi hoc.',
+                    : 'Học viên gửi minh chứng thanh toán gói học.',
                 'anh_minh_chung' => $duongDanMinhChung,
                 'ngay_thanhtoan' => now(),
                 'trang_thai' => 'cho_thanhtoan',
@@ -85,8 +85,8 @@ class HocVienThanhToanController extends Controller
                 ->get(['id'])
                 ->each(fn (User $admin) => ThongBao::create([
                     'user_id' => $admin->id,
-                    'tieu_de' => 'Hoc vien gui minh chung thanh toan',
-                    'noi_dung' => "{$user->ho_ten} da gui minh chung thanh toan goi hoc GH" . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . '. Vui long kiem tra va xac nhan.',
+                    'tieu_de' => 'Học viên gửi minh chứng thanh toán',
+                    'noi_dung' => "{$user->ho_ten} đã gửi minh chứng thanh toán gói học GH" . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . '. Vui lòng kiểm tra và xác nhận.',
                     'url' => '/admin/quan-ly-dat-goi',
                     'da_doc' => false,
                 ]));

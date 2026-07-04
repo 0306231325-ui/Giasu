@@ -101,8 +101,8 @@ class HocVienLichHocController extends Controller
         if ($lichHoc->giasu?->user_id) {
             ThongBao::create([
                 'user_id' => $lichHoc->giasu->user_id,
-                'tieu_de' => 'Hoc vien da danh gia buoi hoc',
-                'noi_dung' => "{$user->ho_ten} da danh gia {$duLieu['so_sao']} sao cho buoi hoc.",
+                'tieu_de' => 'Học viên đã đánh giá buổi học',
+                'noi_dung' => "{$user->ho_ten} đã đánh giá {$duLieu['so_sao']} sao cho buổi học.",
                 'url' => '/gia-su/quan-ly/theo-doi-hoat-dong',
                 'da_doc' => false,
             ]);
@@ -172,8 +172,8 @@ class HocVienLichHocController extends Controller
         if ($lichHoc->giasu?->user_id) {
             ThongBao::create([
                 'user_id' => $lichHoc->giasu->user_id,
-                'tieu_de' => 'Hoc vien yeu cau doi buoi hoc',
-                'noi_dung' => "{$user->ho_ten} muon doi buoi hoc sang {$duLieu['ngay_hoc']} {$duLieu['gio_batdau']} - {$duLieu['gio_ketthuc']}.",
+                'tieu_de' => 'Học viên yêu cầu đổi buổi học',
+                'noi_dung' => "{$user->ho_ten} muốn đổi buổi học sang {$duLieu['ngay_hoc']} {$duLieu['gio_batdau']} - {$duLieu['gio_ketthuc']}.",
                 'url' => '/gia-su/quan-ly/lich-day',
                 'da_doc' => false,
             ]);

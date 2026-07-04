@@ -242,8 +242,8 @@ class DatGoiController extends DatLichBaseController
                 ->get(['id'])
                 ->each(fn (User $admin) => ThongBao::create([
                     'user_id' => $admin->id,
-                    'tieu_de' => 'Co yeu cau dat goi moi',
-                    'noi_dung' => "{$user->ho_ten} vua gui yeu cau dat " . count($lichHocNhap) . ' buoi hoc. Vui long kiem tra va gui cho gia su.',
+                    'tieu_de' => 'Có yêu cầu đặt gói mới',
+                    'noi_dung' => "{$user->ho_ten} vừa gửi yêu cầu đặt " . count($lichHocNhap) . ' buổi học. Vui lòng kiểm tra và gửi cho gia sư.',
                     'url' => '/admin/quan-ly-dat-goi',
                     'da_doc' => false,
                 ]));
@@ -282,7 +282,7 @@ class DatGoiController extends DatLichBaseController
         }
 
         $goiHocMoi = DB::transaction(function () use ($goiHoc, $user) {
-            $lyDo = 'Hoc vien tu huy goi hoc.';
+            $lyDo = 'Học viên tự hủy gói học.';
 
             $goiHoc->update(['trang_thai' => 'dahuy']);
             $goiHoc->lichHocs()->update([
@@ -295,8 +295,8 @@ class DatGoiController extends DatLichBaseController
                 ->get(['id'])
                 ->each(fn (User $admin) => ThongBao::create([
                     'user_id' => $admin->id,
-                    'tieu_de' => 'Hoc vien huy goi hoc',
-                    'noi_dung' => "{$user->ho_ten} da huy goi hoc GH" . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . '.',
+                    'tieu_de' => 'Học viên hủy gói học',
+                    'noi_dung' => "{$user->ho_ten} đã hủy gói học GH" . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . '.',
                     'url' => '/admin/quan-ly-dat-goi',
                     'da_doc' => false,
                 ]));
@@ -304,8 +304,8 @@ class DatGoiController extends DatLichBaseController
             if ($goiHoc->giasu?->user_id) {
                 ThongBao::create([
                     'user_id' => $goiHoc->giasu->user_id,
-                    'tieu_de' => 'Hoc vien huy yeu cau dat goi',
-                    'noi_dung' => "{$user->ho_ten} da huy goi hoc GH" . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . '.',
+                    'tieu_de' => 'Học viên hủy yêu cầu đặt gói',
+                    'noi_dung' => "{$user->ho_ten} đã hủy gói học GH" . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . '.',
                     'url' => '/gia-su/quan-ly/lich-day',
                     'da_doc' => false,
                 ]);

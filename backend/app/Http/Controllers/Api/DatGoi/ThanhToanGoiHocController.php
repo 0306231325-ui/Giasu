@@ -82,7 +82,7 @@ class ThanhToanGoiHocController extends DatLichBaseController
                 'ma_giaodich' => $maGiaoDich,
                 'noi_dung_thanhtoan' => filled($duLieu['noi_dung_thanhtoan'] ?? null)
                     ? trim($duLieu['noi_dung_thanhtoan'])
-                    : 'Hoc vien gui minh chung thanh toan goi hoc.',
+                    : 'Học viên gửi minh chứng thanh toán gói học.',
                 'anh_minh_chung' => $duongDanMinhChung,
                 'ngay_thanhtoan' => now(),
                 'trang_thai' => 'cho_thanhtoan',
@@ -93,8 +93,8 @@ class ThanhToanGoiHocController extends DatLichBaseController
                 ->get(['id'])
                 ->each(fn (User $admin) => ThongBao::create([
                     'user_id' => $admin->id,
-                    'tieu_de' => 'Hoc vien gui minh chung thanh toan',
-                    'noi_dung' => "{$user->ho_ten} da gui minh chung thanh toan goi hoc GH" . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . '. Vui long kiem tra va xac nhan.',
+                    'tieu_de' => 'Học viên gửi minh chứng thanh toán',
+                    'noi_dung' => "{$user->ho_ten} đã gửi minh chứng thanh toán gói học GH" . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . '. Vui lòng kiểm tra và xác nhận.',
                     'url' => '/admin/quan-ly-dat-goi',
                     'da_doc' => false,
                 ]));
@@ -151,8 +151,8 @@ class ThanhToanGoiHocController extends DatLichBaseController
 
             ThongBao::create([
                 'user_id' => $goiHoc->hocvien_id,
-                'tieu_de' => 'Thanh toan da duoc xac nhan',
-                'noi_dung' => 'Thanh toan goi hoc ' . 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . ' da duoc xac nhan. Lich hoc cua ban da duoc kich hoat.',
+                'tieu_de' => 'Thanh toán đã được xác nhận',
+                'noi_dung' => 'Thanh toán gói học ' . 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . ' đã được xác nhận. Lịch học của bạn đã được kích hoạt.',
                 'url' => '/hoc-vien/lich-hoc',
                 'da_doc' => false,
             ]);
@@ -160,8 +160,8 @@ class ThanhToanGoiHocController extends DatLichBaseController
             if ($goiHoc->giasu?->user_id) {
                 ThongBao::create([
                     'user_id' => $goiHoc->giasu->user_id,
-                    'tieu_de' => 'Goi hoc da duoc thanh toan',
-                    'noi_dung' => 'Goi hoc ' . 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . ' da duoc xac nhan thanh toan. Ban co the theo doi trong lich day.',
+                    'tieu_de' => 'Gói học đã được thanh toán',
+                    'noi_dung' => 'Gói học ' . 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . ' đã được xác nhận thanh toán. Bạn có thể theo dõi trong lịch dạy.',
                     'url' => '/gia-su/quan-ly/lich-day',
                     'da_doc' => false,
                 ]);
@@ -215,8 +215,8 @@ class ThanhToanGoiHocController extends DatLichBaseController
 
             ThongBao::create([
                 'user_id' => $goiHoc->hocvien_id,
-                'tieu_de' => 'Thanh toan chua hop le',
-                'noi_dung' => 'Thanh toan goi hoc ' . 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . ' chua duoc chap nhan' . ($lyDo ? ': ' . $lyDo : '. Vui long kiem tra va gui lai minh chung.'),
+                'tieu_de' => 'Thanh toán chưa hợp lệ',
+                'noi_dung' => 'Thanh toán gói học ' . 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . ' chưa được chấp nhận' . ($lyDo ? ': ' . $lyDo : '. Vui lòng kiểm tra và gửi lại minh chứng.'),
                 'url' => '/hoc-vien/lich-hoc',
                 'da_doc' => false,
             ]);

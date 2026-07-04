@@ -487,10 +487,10 @@ class DatLichBaseController extends Controller
     protected function guiThongBaoXuLyLichHoc(LichHoc $lichHoc, string $tieuDe): void
     {
         $lichHoc->loadMissing(['goiHoc.hocVien:id,ho_ten', 'giasu.user:id,ho_ten']);
-        $noiDung = 'Buoi hoc ngay ' . Carbon::parse($lichHoc->ngay_hoc)->format('d/m/Y')
-            . ' luc ' . substr((string) $lichHoc->gio_batdau, 0, 5)
+        $noiDung = 'Buổi học ngày ' . Carbon::parse($lichHoc->ngay_hoc)->format('d/m/Y')
+            . ' lúc ' . substr((string) $lichHoc->gio_batdau, 0, 5)
             . ' - ' . substr((string) $lichHoc->gio_ketthuc, 0, 5)
-            . ' da duoc admin cap nhat.';
+            . ' đã được admin cập nhật.';
 
         $nguoiNhan = [
             [$lichHoc->goiHoc?->hocvien_id, '/hoc-vien/lich-hoc'],
