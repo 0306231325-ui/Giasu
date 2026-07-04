@@ -204,7 +204,7 @@ class HocVienLichHocController extends Controller
             'mon' => $goiHoc->monHoc?->ten_mon ?? 'Mon hoc',
             'lop' => $goiHoc->monHoc?->lop,
             'loaiGoi' => $this->nhanLoaiGoi($goiHoc),
-            'hocDinhKy' => (bool) $goiHoc->hoc_dinhky,
+            'hocDinhKy' => $this->laGoiDinhKy($goiHoc),
             'giaSu' => $goiHoc->giasu?->user?->ho_ten ?? 'Gia su',
             'ngayBatDau' => $goiHoc->ngay_batdau,
             'ngayKetThuc' => $ngayKetThuc,
@@ -226,11 +226,11 @@ class HocVienLichHocController extends Controller
 
     private function nhanLoaiGoi(GoiHoc $goiHoc): string
     {
-        if ($goiHoc->hoc_dinhky) {
-            return 'Gói học định kỳ';
-        }
-
-        return (int) $goiHoc->so_buoi === 1 ? 'Gói học thử' : 'Gói học không định kỳ';
+        return match ($this->kieuGoiHoc($goiHoc)) {
+            'dinh_ky' => 'Gói học định kỳ',
+            'hoc_thu' => 'Gói học thử',
+            default => 'Gói học không định kỳ',
+        };
     }
 
     private function ngayKetThucHienThi(GoiHoc $goiHoc): ?string
@@ -239,7 +239,7 @@ class HocVienLichHocController extends Controller
             return $goiHoc->ngay_ketthuc;
         }
 
-        if (! $goiHoc->hoc_dinhky) {
+        if (! $this->laGoiDinhKy($goiHoc)) {
             return $goiHoc->ngay_ketthuc;
         }
 
@@ -248,6 +248,24 @@ class HocVienLichHocController extends Controller
         return Carbon::parse($goiHoc->ngay_batdau)
             ->addDays(max($soThang * 30, 1) - 1)
             ->toDateString();
+    }
+
+    private function laGoiDinhKy(GoiHoc $goiHoc): bool
+    {
+        return $this->kieuGoiHoc($goiHoc) === 'dinh_ky';
+    }
+
+    private function kieuGoiHoc(GoiHoc $goiHoc): string
+    {
+        if (in_array($goiHoc->kieu_goi, ['hoc_thu', 'dinh_ky', 'khong_dinh_ky'], true)) {
+            return $goiHoc->kieu_goi;
+        }
+
+        if ($goiHoc->hoc_dinhky) {
+            return 'dinh_ky';
+        }
+
+        return (int) $goiHoc->so_buoi === 1 ? 'hoc_thu' : 'khong_dinh_ky';
     }
 
     private function dinhDangLichHoc(LichHoc $lichHoc): array

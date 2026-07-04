@@ -3,7 +3,6 @@ import { Routes, Route } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
 import BaiViet from "./pages/bai-viet/BaiViet";
 import BaiVietDetail from "./pages/bai-viet/BaiVietDetail";
-import DanhSachMonHoc from "./pages/subject/DanhSachMonHoc";
 import DanhSachGiaSu from "./pages/tutor/dang-ky-goi/DanhSachGiaSu";
 import GiaSuDetail from "./pages/tutor/dang-ky-goi/GiaSuDetail";
 import TimGiaSuTheoYeuCau from "./pages/tutor/dang-ky-goi/TimGiaSuTheoYeuCau";
@@ -41,8 +40,6 @@ function App() {
         <Route path="/gia-su/:id" element={<GiaSuDetail />} />
 
         <Route path="/gia-su/:id/goi-hoc" element={<ChonGoiHoc />} />
-
-        <Route path="/mon-hoc" element={<DanhSachMonHoc />} />
 
         <Route path="/tim-gia-su-theo-yeu-cau" element={<TimGiaSuTheoYeuCau />} />
 

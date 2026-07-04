@@ -16,6 +16,23 @@ const MAU_TRANG_THAI = {
   dahuy: "border-red-300/30 bg-red-500/10 text-red-100",
 };
 
+const SO_BUOI_MOI_TRANG = 10;
+
+const dinhDangNgayInput = (date) => {
+  const nam = date.getFullYear();
+  const thang = String(date.getMonth() + 1).padStart(2, "0");
+  const ngay = String(date.getDate()).padStart(2, "0");
+
+  return `${nam}-${thang}-${ngay}`;
+};
+
+const congNgay = (date, soNgay) => {
+  const next = new Date(date);
+  next.setDate(next.getDate() + soNgay);
+
+  return next;
+};
+
 function AdminLichHoc() {
   const [danhSach, setDanhSach] = useState([]);
   const [thongKe, setThongKe] = useState({});
@@ -24,6 +41,7 @@ function AdminLichHoc() {
   const [loi, setLoi] = useState("");
   const [thongBao, setThongBao] = useState("");
   const [lichDangChonId, setLichDangChonId] = useState(null);
+  const [trangHienTai, setTrangHienTai] = useState(1);
   const [boLoc, setBoLoc] = useState({
     trang_thai: "",
     q: "",
@@ -35,6 +53,14 @@ function AdminLichHoc() {
     () => danhSach.find((lich) => lich.id === lichDangChonId) || danhSach[0] || null,
     [danhSach, lichDangChonId],
   );
+  const tongSoTrang = Math.max(Math.ceil(danhSach.length / SO_BUOI_MOI_TRANG), 1);
+  const trangHopLe = Math.min(trangHienTai, tongSoTrang);
+  const danhSachDangHienThi = useMemo(() => {
+    const batDau = (trangHopLe - 1) * SO_BUOI_MOI_TRANG;
+
+    return danhSach.slice(batDau, batDau + SO_BUOI_MOI_TRANG);
+  }, [danhSach, trangHopLe]);
+  const dangCoLoc = Boolean(boLoc.trang_thai || boLoc.q || boLoc.tu_ngay || boLoc.den_ngay);
 
   const taiLichHoc = useCallback(async () => {
     setDangTai(true);
@@ -76,6 +102,26 @@ function AdminLichHoc() {
 
   const capNhatBoLoc = (field, value) => {
     setBoLoc((prev) => ({ ...prev, [field]: value }));
+    setTrangHienTai(1);
+  };
+
+  const datKhoangNgay = (tuNgay, denNgay) => {
+    setBoLoc((prev) => ({
+      ...prev,
+      tu_ngay: tuNgay,
+      den_ngay: denNgay,
+    }));
+    setTrangHienTai(1);
+  };
+
+  const xoaBoLoc = () => {
+    setBoLoc({
+      trang_thai: "",
+      q: "",
+      tu_ngay: "",
+      den_ngay: "",
+    });
+    setTrangHienTai(1);
   };
 
   const capNhatLichTrongDanhSach = (lichMoi) => {
@@ -164,6 +210,40 @@ function AdminLichHoc() {
             className="rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none focus:border-blue-400"
           />
         </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              const homNay = dinhDangNgayInput(new Date());
+              datKhoangNgay(homNay, homNay);
+            }}
+            className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-white/75 transition hover:bg-white/5 hover:text-white"
+          >
+            Hôm nay
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const homNay = new Date();
+              datKhoangNgay(dinhDangNgayInput(homNay), dinhDangNgayInput(congNgay(homNay, 7)));
+            }}
+            className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-white/75 transition hover:bg-white/5 hover:text-white"
+          >
+            7 ngày tới
+          </button>
+          {dangCoLoc && (
+            <button
+              type="button"
+              onClick={xoaBoLoc}
+              className="rounded-lg border border-blue-300/30 px-3 py-2 text-xs font-bold text-blue-100 transition hover:bg-blue-500/15"
+            >
+              Xóa lọc
+            </button>
+          )}
+          <span className="text-xs font-semibold text-white/40">
+            Tìm theo tên, email, SĐT, môn học hoặc mã gói.
+          </span>
+        </div>
       </section>
 
       {loi && (
@@ -182,34 +262,34 @@ function AdminLichHoc() {
           <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
             <div>
               <h2 className="text-lg font-extrabold">Danh sách buổi học</h2>
-              <p className="mt-1 text-sm text-white/45">Hiển thị tối đa 300 buổi gần nhất theo bộ lọc.</p>
+              <p className="mt-1 text-sm text-white/45">Hiển thị 10 buổi mỗi trang, chọn một dòng để xem đủ chi tiết.</p>
             </div>
-            <div className="text-sm font-semibold text-white/55">{danhSach.length} buổi</div>
+            <div className="text-sm font-semibold text-white/55">
+              {danhSach.length} buổi
+            </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm">
               <thead className="bg-white/[0.04] text-xs uppercase text-white/50">
                 <tr>
-                  <th className="px-4 py-3">Thời gian</th>
-                  <th className="px-4 py-3">Môn học</th>
-                  <th className="px-4 py-3">Học viên</th>
-                  <th className="px-4 py-3">Gia sư</th>
+                  <th className="px-4 py-3">Buổi học</th>
+                  <th className="px-4 py-3">Người tham gia</th>
                   <th className="px-4 py-3">Trạng thái</th>
-                  <th className="px-4 py-3">Gói</th>
+                  <th className="px-4 py-3 text-right">Gói học</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
                 {dangTai ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-10 text-center text-white/50">Đang tải lịch học...</td>
+                    <td colSpan={4} className="px-4 py-10 text-center text-white/50">Đang tải lịch học...</td>
                   </tr>
                 ) : danhSach.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-10 text-center text-white/50">Chưa có buổi học phù hợp.</td>
+                    <td colSpan={4} className="px-4 py-10 text-center text-white/50">Chưa có buổi học phù hợp.</td>
                   </tr>
                 ) : (
-                  danhSach.map((lich) => (
+                  danhSachDangHienThi.map((lich) => (
                     <tr
                       key={lich.id}
                       onClick={() => setLichDangChonId(lich.id)}
@@ -219,22 +299,77 @@ function AdminLichHoc() {
                       ].join(" ")}
                     >
                       <td className="px-4 py-3">
-                        <div className="font-bold text-white">{lich.ngayHocText}</div>
-                        <div className="mt-1 text-xs text-white/45">{lich.thuText} · {lich.khungGio}</div>
+                        <div className="font-bold text-white">{lich.monHoc?.tenHienThi || "Chưa cập nhật"}</div>
+                        <div className="mt-1 text-xs font-semibold text-blue-200">
+                          {lich.ngayHocText} · {lich.khungGio}
+                        </div>
+                        <div className="mt-1 text-xs text-white/45">
+                          {lich.thuText} · {lich.hinhThucHocText || "Chưa cập nhật"}
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-white/75">{lich.monHoc?.tenHienThi || "Chưa cập nhật"}</td>
-                      <td className="px-4 py-3 text-white/75">{lich.hocVien?.hoTen || "Chưa cập nhật"}</td>
-                      <td className="px-4 py-3 text-white/75">{lich.giaSu?.hoTen || "Chưa cập nhật"}</td>
                       <td className="px-4 py-3">
-                        <TrangThaiBadge lich={lich} />
+                        <div className="font-semibold text-white/85">
+                          HV: {lich.hocVien?.hoTen || "Chưa cập nhật"}
+                        </div>
+                        <div className="mt-1 text-xs text-white/55">
+                          GS: {lich.giaSu?.hoTen || "Chưa cập nhật"}
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-white/60">{lich.maGoi}</td>
+                      <td className="px-4 py-3">
+                        <div className="space-y-2">
+                          <TrangThaiBadge lich={lich} />
+                          <div className="flex flex-wrap gap-1.5">
+                            <NhanXacNhanNho active={lich.xacNhan?.hocVienDaXacNhan} warning={lich.xacNhan?.hocVienBaoVanDe}>
+                              HV
+                            </NhanXacNhanNho>
+                            <NhanXacNhanNho active={lich.xacNhan?.giaSuDaXacNhan} warning={lich.xacNhan?.giaSuBaoVanDe}>
+                              GS
+                            </NhanXacNhanNho>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="font-semibold text-white/75">{lich.maGoi}</div>
+                        <div className="mt-1 text-xs text-white/45">{lich.loaiBuoiText}</div>
+                      </td>
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
           </div>
+          {danhSach.length > SO_BUOI_MOI_TRANG && (
+            <div className="flex flex-col gap-3 border-t border-white/10 px-5 py-4 text-sm text-white/60 sm:flex-row sm:items-center sm:justify-between">
+              <span>
+                Hiển thị {(trangHopLe - 1) * SO_BUOI_MOI_TRANG + 1}
+                {" - "}
+                {Math.min(trangHopLe * SO_BUOI_MOI_TRANG, danhSach.length)}
+                {" / "}
+                {danhSach.length} buổi
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTrangHienTai((trang) => Math.max(trang - 1, 1))}
+                  disabled={trangHopLe === 1}
+                  className="rounded-lg border border-white/10 px-3 py-2 font-bold text-white transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Trước
+                </button>
+                <span className="px-2 font-semibold text-white">
+                  {trangHopLe}/{tongSoTrang}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setTrangHienTai((trang) => Math.min(trang + 1, tongSoTrang))}
+                  disabled={trangHopLe === tongSoTrang}
+                  className="rounded-lg border border-white/10 px-3 py-2 font-bold text-white transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Sau
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         <ChiTietLichHoc lich={lichDangChon} dangXuLy={dangXuLy} onXuLy={xuLyLichHoc} />
@@ -255,9 +390,28 @@ function TrangThaiBadge({ lich }) {
   );
 }
 
+function NhanXacNhanNho({ active, warning, children }) {
+  return (
+    <span
+      className={[
+        "rounded-full px-2 py-0.5 text-[10px] font-extrabold",
+        warning
+          ? "bg-amber-300 text-amber-950"
+          : active
+            ? "bg-emerald-300 text-emerald-950"
+            : "bg-white/10 text-white/50",
+      ].join(" ")}
+      title={warning ? "Báo vấn đề" : active ? "Đã xác nhận" : "Chưa xác nhận"}
+    >
+      {children}
+    </span>
+  );
+}
+
 function ChiTietLichHoc({ lich, dangXuLy, onXuLy }) {
   const [ghiChuHoanThanh, setGhiChuHoanThanh] = useState("");
   const [lyDoHuy, setLyDoHuy] = useState("");
+  const [tab, setTab] = useState("tong_quan");
 
   if (!lich) {
     return (
@@ -284,7 +438,29 @@ function ChiTietLichHoc({ lich, dangXuLy, onXuLy }) {
         </span>
       </div>
 
-      <div className="mt-5 grid gap-3">
+      <div className="mt-5 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">
+        {[
+          { key: "tong_quan", label: "Tổng quan" },
+          { key: "xu_ly", label: "Xử lý" },
+        ].map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => setTab(item.key)}
+            className={[
+              "rounded-lg px-3 py-2 text-sm font-bold transition",
+              tab === item.key
+                ? "bg-white text-blue-700 shadow-sm"
+                : "text-slate-500 hover:text-slate-900",
+            ].join(" ")}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "tong_quan" ? (
+        <div className="mt-4 grid gap-3">
         <KhoiThongTin title="Trạng thái">
           <div className="flex items-center justify-between gap-3">
             <span className="text-sm text-slate-500">Buổi học</span>
@@ -304,23 +480,20 @@ function ChiTietLichHoc({ lich, dangXuLy, onXuLy }) {
           </div>
         </KhoiThongTin>
 
-        <KhoiThongTin title="Học viên">
-          <Dong label="Họ tên" value={lich.hocVien?.hoTen} />
-          <Dong label="Email" value={lich.hocVien?.email} />
-          <Dong label="SĐT" value={lich.hocVien?.sdt} />
-        </KhoiThongTin>
-
-        <KhoiThongTin title="Gia sư">
-          <Dong label="Họ tên" value={lich.giaSu?.hoTen} />
-          <Dong label="Email" value={lich.giaSu?.email} />
-          <Dong label="SĐT" value={lich.giaSu?.sdt} />
+        <KhoiThongTin title="Người tham gia">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <TheLienHe tieuDe="Học viên" nguoi={lich.hocVien} />
+            <TheLienHe tieuDe="Gia sư" nguoi={lich.giaSu} />
+          </div>
         </KhoiThongTin>
 
         <KhoiThongTin title="Thông tin học">
-          <Dong label="Hình thức" value={lich.hinhThucHocText} />
-          <Dong label="Địa chỉ" value={lich.diaChiHoc || (lich.hinhThucHoc === "online" ? "Online" : "Chưa cập nhật")} />
-          <Dong label="Tiền học" value={dinhDangTien(lich.tienHoc)} />
-          <Dong label="Gia sư nhận" value={dinhDangTien(lich.tienGiaSuNhan)} />
+          <div className="grid gap-2 sm:grid-cols-2">
+            <OThongTin label="Hình thức" value={lich.hinhThucHocText} />
+            <OThongTin label="Địa chỉ" value={lich.diaChiHoc || (lich.hinhThucHoc === "online" ? "Online" : "Chưa cập nhật")} />
+            <OThongTin label="Tiền học" value={dinhDangTien(lich.tienHoc)} />
+            <OThongTin label="Gia sư nhận" value={dinhDangTien(lich.tienGiaSuNhan)} />
+          </div>
         </KhoiThongTin>
 
         <KhoiThongTin title="Đánh giá">
@@ -343,7 +516,9 @@ function ChiTietLichHoc({ lich, dangXuLy, onXuLy }) {
             {lich.lyDoHuy && <p className="mt-2 text-sm leading-6 text-red-600">{lich.lyDoHuy}</p>}
           </KhoiThongTin>
         )}
-
+        </div>
+      ) : (
+        <div className="mt-4 grid gap-3">
         <KhoiThongTin title="Xử lý admin">
           {coTheXuLy ? (
             <div className="space-y-4">
@@ -410,7 +585,8 @@ function ChiTietLichHoc({ lich, dangXuLy, onXuLy }) {
             </div>
           )}
         </KhoiThongTin>
-      </div>
+        </div>
+      )}
     </aside>
   );
 }
@@ -438,6 +614,26 @@ function NhanXacNhan({ active, warning, children }) {
     >
       {children}: {warning ? "Bao van de" : active ? "Da xac nhan" : "Chua xac nhan"}
     </span>
+  );
+}
+
+function TheLienHe({ tieuDe, nguoi }) {
+  return (
+    <div className="rounded-xl bg-slate-50 p-3">
+      <div className="text-xs font-extrabold uppercase tracking-wide text-slate-400">{tieuDe}</div>
+      <div className="mt-2 text-sm font-bold text-slate-950">{nguoi?.hoTen || "Chưa cập nhật"}</div>
+      <div className="mt-1 truncate text-xs text-slate-500">{nguoi?.email || "Chưa có email"}</div>
+      <div className="mt-1 text-xs font-semibold text-slate-600">{nguoi?.sdt || "Chưa có SĐT"}</div>
+    </div>
+  );
+}
+
+function OThongTin({ label, value }) {
+  return (
+    <div className="rounded-xl bg-slate-50 p-3">
+      <div className="text-xs font-bold uppercase text-slate-400">{label}</div>
+      <div className="mt-1 text-sm font-bold text-slate-900">{value || "Chưa cập nhật"}</div>
+    </div>
   );
 }
 

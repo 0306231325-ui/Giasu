@@ -102,12 +102,12 @@ const GiaSuCard = memo(({ giasu }) => {
                     {giasu.user?.ho_ten || "Đang cập nhật"}
                 </h2>
 
-                <div className="mt-3 space-y-2 text-sm text-slate-300">
-                    <p className="line-clamp-2">
+                <div className="mt-3 flex flex-1 flex-col text-sm text-slate-300">
+                    <p className="line-clamp-2 min-h-[2.5rem]">
                         {[giasu.trinh_do?.ten, kinhNghiem].filter(Boolean).join(" · ") || "Chưa cập nhật chuyên môn"}
                     </p>
                     {monDay.hienThi.length > 0 ? (
-                        <div className="flex min-h-[4.5rem] flex-wrap content-start gap-2">
+                        <div className="mt-2 flex min-h-[4.5rem] flex-wrap content-start gap-2">
                             {monDay.hienThi.map((mon) => (
                                 <span
                                     key={mon}
@@ -124,15 +124,17 @@ const GiaSuCard = memo(({ giasu }) => {
                             )}
                         </div>
                     ) : (
-                        <p className="font-semibold text-slate-100">Chưa cập nhật môn dạy</p>
+                        <p className="mt-2 min-h-[4.5rem] font-semibold text-slate-100">Chưa cập nhật môn dạy</p>
                     )}
-                    <p className="font-bold text-blue-300">{dinhDangGia(giasu)}</p>
-                    <p className="line-clamp-2">{giasu.dia_chi || "Linh hoạt khu vực học"}</p>
+                    <div className="mt-auto pt-4">
+                        <p className="font-bold text-blue-300">{dinhDangGia(giasu)}</p>
+                        <p className="mt-2 line-clamp-2 min-h-[2.5rem]">{giasu.dia_chi || "Linh hoạt khu vực học"}</p>
+                    </div>
                 </div>
 
                 <Link
                     to={`/gia-su/${giasu.id}`}
-                    className="mt-auto block w-full rounded-xl bg-blue-500 py-2.5 text-center font-semibold text-white transition hover:bg-blue-600"
+                    className="mt-4 block w-full rounded-xl bg-blue-500 py-2.5 text-center font-semibold text-white transition hover:bg-blue-600"
                 >
                     Xem chi tiết
                 </Link>

@@ -209,7 +209,34 @@ class DatLichBaseController extends Controller
 
     protected function laGoiHocThu(GoiHoc $goiHoc): bool
     {
-        return ! $goiHoc->hoc_dinhky && (int) $goiHoc->so_buoi === 1;
+        return $this->kieuGoiHoc($goiHoc) === 'hoc_thu';
+    }
+
+    protected function laGoiDinhKy(GoiHoc $goiHoc): bool
+    {
+        return $this->kieuGoiHoc($goiHoc) === 'dinh_ky';
+    }
+
+    protected function kieuGoiHoc(GoiHoc $goiHoc): string
+    {
+        if (in_array($goiHoc->kieu_goi, ['hoc_thu', 'dinh_ky', 'khong_dinh_ky'], true)) {
+            return $goiHoc->kieu_goi;
+        }
+
+        if ($goiHoc->hoc_dinhky) {
+            return 'dinh_ky';
+        }
+
+        return (int) $goiHoc->so_buoi === 1 ? 'hoc_thu' : 'khong_dinh_ky';
+    }
+
+    protected function tenKieuGoiHoc(GoiHoc $goiHoc): string
+    {
+        return match ($this->kieuGoiHoc($goiHoc)) {
+            'dinh_ky' => 'Dinh ky',
+            'hoc_thu' => 'Hoc thu',
+            default => 'Khong dinh ky',
+        };
     }
 
     protected function dinhDangGoiHoc(GoiHoc $goiHoc): array
@@ -272,7 +299,7 @@ class DatLichBaseController extends Controller
 
     protected function ngayKetThucGoiHocHienThi(GoiHoc $goiHoc): ?string
     {
-        if (! $goiHoc->ngay_batdau || ! $goiHoc->hoc_dinhky) {
+        if (! $goiHoc->ngay_batdau || ! $this->laGoiDinhKy($goiHoc)) {
             return $goiHoc->ngay_ketthuc;
         }
 
@@ -289,7 +316,6 @@ class DatLichBaseController extends Controller
         $lichDau = $lichHocs->first();
         $phanHoiMoiNhat = $goiHoc->phanHoiMoiNhat;
         $thanhToanMoiNhat = $goiHoc->thanhToanMoiNhat;
-        $laHocThu = $this->laGoiHocThu($goiHoc);
         $trangThai = match ($goiHoc->trang_thai) {
             'cho_thanhtoan' => 'cho_thanh_toan',
             'danghoc' => 'da_tao_lich',
@@ -313,8 +339,8 @@ class DatLichBaseController extends Controller
             'giaSuEmail' => $goiHoc->giasu?->user?->email ?? 'Chua cap nhat',
             'mon' => $goiHoc->monHoc?->ten_mon ?? 'Mon hoc',
             'capHoc' => $goiHoc->monHoc?->lop ?? 'Chua cap nhat',
-            'loaiGoi' => $goiHoc->hoc_dinhky ? 'Dinh ky' : ($laHocThu ? 'Hoc thu' : 'Khong dinh ky'),
-            'hocDinhKy' => (bool) $goiHoc->hoc_dinhky,
+            'loaiGoi' => $this->tenKieuGoiHoc($goiHoc),
+            'hocDinhKy' => $this->laGoiDinhKy($goiHoc),
             'soBuoi' => $goiHoc->so_buoi,
             'gioMoiBuoi' => $lichDau ? round(Carbon::parse($lichDau->gio_batdau)->diffInMinutes(Carbon::parse($lichDau->gio_ketthuc)) / 60, 1) : 0,
             'tongTien' => number_format((float) $goiHoc->tong_tien, 0, ',', '.') . 'd',
@@ -338,7 +364,6 @@ class DatLichBaseController extends Controller
         $lichHocs = $goiHoc->lichHocs->sortBy(['ngay_hoc', 'gio_batdau'])->values();
         $lichDau = $lichHocs->first();
         $phanHoiMoiNhat = $goiHoc->phanHoiMoiNhat;
-        $laHocThu = $this->laGoiHocThu($goiHoc);
         $trangThai = match ($phanHoiMoiNhat?->phan_hoi) {
             PhanHoi::DONG_Y => 'da_dong_y',
             PhanHoi::TU_CHOI => 'tu_choi',
@@ -353,12 +378,16 @@ class DatLichBaseController extends Controller
             'hocVien' => $goiHoc->hocVien?->ho_ten ?? 'Hoc vien',
             'mon' => $goiHoc->monHoc?->ten_mon ?? 'Mon hoc',
             'capHoc' => $goiHoc->monHoc?->lop ?? 'Chua cap nhat',
-            'lop' => $goiHoc->hoc_dinhky ? 'Hoc dinh ky' : ($laHocThu ? 'Hoc thu' : 'Hoc khong dinh ky'),
+            'lop' => match ($this->kieuGoiHoc($goiHoc)) {
+                'dinh_ky' => 'Hoc dinh ky',
+                'hoc_thu' => 'Hoc thu',
+                default => 'Hoc khong dinh ky',
+            },
             'soBuoi' => $goiHoc->so_buoi,
             'gioMoiBuoi' => $lichDau ? round(Carbon::parse($lichDau->gio_batdau)->diffInMinutes(Carbon::parse($lichDau->gio_ketthuc)) / 60, 1) : 0,
             'lichMongMuon' => $this->dinhDangLichMongMuon($goiHoc, $lichHocs),
             'ngayBatDau' => $goiHoc->ngay_batdau ? Carbon::parse($goiHoc->ngay_batdau)->format('d/m/Y') : 'Chua cap nhat',
-            'hocDinhKy' => (bool) $goiHoc->hoc_dinhky,
+            'hocDinhKy' => $this->laGoiDinhKy($goiHoc),
             'hinhThuc' => $goiHoc->hinh_thuc_hoc === 'online' ? 'Trực tuyến' : 'Trực tiếp',
             'diaDiem' => $goiHoc->dia_chi_hoc ?: ($goiHoc->hinh_thuc_hoc === 'online' ? 'Online' : 'Chua cap nhat'),
             'donGia' => number_format((float) $goiHoc->don_gia_theogio, 0, ',', '.') . 'd/gio',
@@ -414,7 +443,7 @@ class DatLichBaseController extends Controller
     {
         return LichHoc::query()
             ->with([
-                'goiHoc:id,hocvien_id,giasu_id,monhoc_id,loai_goi_id,ngay_batdau,ngay_ketthuc,so_buoi,hoc_dinhky,tong_tien,trang_thai',
+                'goiHoc:id,hocvien_id,giasu_id,monhoc_id,loai_goi_id,ngay_batdau,ngay_ketthuc,so_buoi,hoc_dinhky,kieu_goi,tong_tien,trang_thai',
                 'goiHoc.hocVien:id,ho_ten,email,sdt',
                 'goiHoc.monHoc:id,ten_mon,lop',
                 'goiHoc.loaiGoi:id,ten_loai_goi,so_thang',
@@ -541,7 +570,7 @@ class DatLichBaseController extends Controller
                 'trangThaiText' => $goiHoc ? $this->tenTrangThaiGoiHoc($goiHoc->trang_thai) : null,
                 'loaiGoi' => $goiHoc?->loaiGoi?->ten_loai_goi,
                 'soBuoi' => $goiHoc?->so_buoi,
-                'hocDinhKy' => (bool) ($goiHoc?->hoc_dinhky),
+                'hocDinhKy' => $goiHoc ? $this->laGoiDinhKy($goiHoc) : false,
                 'ngayBatDau' => $goiHoc?->ngay_batdau,
                 'ngayKetThuc' => $goiHoc?->ngay_ketthuc,
                 'tongTien' => (float) ($goiHoc?->tong_tien ?? 0),
@@ -611,7 +640,7 @@ class DatLichBaseController extends Controller
             return $this->dinhDangKhoangNgay($goiHoc->ngay_batdau, $goiHoc->ngay_ketthuc);
         }
 
-        if ($goiHoc->hoc_dinhky) {
+        if ($this->laGoiDinhKy($goiHoc)) {
             $danhSachThu = $lichHocs
                 ->map(fn (LichHoc $lichHoc) => $this->tenThu(Carbon::parse($lichHoc->ngay_hoc)->isoWeekday()))
                 ->unique()
@@ -649,7 +678,7 @@ class DatLichBaseController extends Controller
             return $this->dinhDangKhoangNgay($goiHoc->ngay_batdau, $goiHoc->ngay_ketthuc);
         }
 
-        if ($goiHoc->hoc_dinhky) {
+        if ($this->laGoiDinhKy($goiHoc)) {
             $danhSachThu = $lichHocs
                 ->map(fn (LichHoc $lichHoc) => $this->tenThu(Carbon::parse($lichHoc->ngay_hoc)->isoWeekday()))
                 ->unique()

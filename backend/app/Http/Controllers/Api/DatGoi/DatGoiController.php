@@ -28,6 +28,7 @@ class DatGoiController extends DatLichBaseController
     public function danhSachLoaiGoi(): JsonResponse
     {
         $danhSach = LoaiGoi::query()
+            ->where('so_thang', '>', 0)
             ->orderBy('so_thang')
             ->orderBy('id')
             ->get()
@@ -100,7 +101,7 @@ class DatGoiController extends DatLichBaseController
         $duLieu = $request->validate([
             'monhoc_id' => ['required', 'integer', 'exists:monhoc,id'],
             'loai_goi' => ['required', Rule::in(['hoc_thu', 'dinh_ky', 'khong_dinh_ky'])],
-            'loai_goi_id' => ['required_if:loai_goi,dinh_ky', 'nullable', 'integer', 'exists:loai_goi,id'],
+            'loai_goi_id' => ['required_if:loai_goi,dinh_ky,khong_dinh_ky', 'nullable', 'integer', 'exists:loai_goi,id'],
             'goi_id' => ['nullable'],
             'ten_goi' => ['nullable', 'string', 'max:120'],
             'so_thang' => ['required', 'integer', 'min:1', 'max:12'],
@@ -127,13 +128,17 @@ class DatGoiController extends DatLichBaseController
         }
 
         $loaiGoi = null;
-        if ($duLieu['loai_goi'] === 'dinh_ky') {
+        if (in_array($duLieu['loai_goi'], ['dinh_ky', 'khong_dinh_ky'], true)) {
             $loaiGoi = LoaiGoi::query()->find($duLieu['loai_goi_id']);
             $duLieu['so_thang'] = (int) $loaiGoi->so_thang;
+            $duLieu['so_buoi'] = $duLieu['so_thang'] * 8;
             $duLieu['giam_gia'] = (float) $loaiGoi->phan_tram_giam;
         }
 
         if ($duLieu['loai_goi'] === 'hoc_thu') {
+            $loaiGoi = LoaiGoi::query()
+                ->where('so_thang', 0)
+                ->first();
             $duLieu['so_thang'] = 1;
             $duLieu['so_buoi'] = 1;
             $duLieu['giam_gia'] = 0;
@@ -201,6 +206,7 @@ class DatGoiController extends DatLichBaseController
                 'ngay_ketthuc' => $ngayKetThuc,
                 'so_buoi' => count($lichHocNhap),
                 'hoc_dinhky' => $duLieu['loai_goi'] === 'dinh_ky',
+                'kieu_goi' => $duLieu['loai_goi'],
                 'thu' => $duLieu['loai_goi'] === 'dinh_ky' ? ($duLieu['thu_hoc'][0] ?? null) : null,
                 'gio_batdau' => in_array($duLieu['loai_goi'], ['hoc_thu', 'dinh_ky'], true) ? $duLieu['gio_batdau'] : null,
                 'gio_ketthuc' => in_array($duLieu['loai_goi'], ['hoc_thu', 'dinh_ky'], true) ? $duLieu['gio_ketthuc'] : null,
