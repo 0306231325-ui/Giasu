@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import api from "../../../services/api";
 import AdminMonHoc from "../mon-hoc/AdminMonHoc";
 
@@ -8,7 +8,6 @@ const tabs = [
   { key: "loai-goi", label: "Loại gói học" },
   { key: "trinh-do-gia-su", label: "Trình độ gia sư" },
   { key: "muc-kinh-nghiem", label: "Mức kinh nghiệm" },
-  { key: "bang-gia", label: "Bảng giá" },
 ];
 
 const cauHinh = {
@@ -97,7 +96,7 @@ function AdminDanhMuc() {
       <div>
         <div className="text-2xl font-extrabold">Danh mục hệ thống</div>
         <div className="mt-2 text-sm text-white/70">
-          Quản lý dữ liệu nền: cấp học, môn học, loại gói học, trình độ, kinh nghiệm và bảng giá.
+          Quản lý dữ liệu nền: cấp học, môn học, loại gói học, trình độ và kinh nghiệm.
         </div>
       </div>
 
@@ -119,8 +118,6 @@ function AdminDanhMuc() {
 
       {tab === "mon-hoc" ? (
         <AdminMonHoc compact />
-      ) : tab === "bang-gia" ? (
-        <BangGia />
       ) : (
         <DanhMucCrud key={tab} config={cauHinh[tab]} />
       )}
@@ -304,30 +301,6 @@ function DanhMucCrud({ config }) {
         </div>
       </form>
     </div>
-  );
-}
-
-function BangGia() {
-  const ghiChu = useMemo(() => [
-    "Giá gốc theo môn học: chỉnh tại tab Môn học.",
-    "Phụ phí theo trình độ gia sư: chỉnh tại tab Trình độ gia sư.",
-    "Phụ phí theo kinh nghiệm: chỉnh tại tab Mức kinh nghiệm.",
-  ], []);
-
-  return (
-    <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-      <div className="text-lg font-extrabold">Bảng giá</div>
-      <div className="mt-2 text-sm leading-6 text-white/70">
-        Công thức hiện tại lấy giá gốc của môn học cộng phụ phí theo trình độ và kinh nghiệm của gia sư.
-      </div>
-      <div className="mt-5 grid gap-3 md:grid-cols-3">
-        {ghiChu.map((item) => (
-          <div key={item} className="rounded-2xl border border-white/10 bg-[#07122f] p-4 text-sm font-semibold text-white/80">
-            {item}
-          </div>
-        ))}
-      </div>
-    </section>
   );
 }
 
