@@ -4,6 +4,7 @@ import ChiTietXetDuyet from "./ChiTietXetDuyet";
 import DanhSachChoDuyet from "./DanhSachChoDuyet";
 import DanhSachGiaSuAdmin from "./DanhSachGiaSuAdmin";
 import ModalTuChoi from "./ModalTuChoi";
+import YeuCauChuyenMon from "./YeuCauChuyenMon";
 
 function AdminGiaSu() {
     const [tab, setTab] = useState("xet_duyet");
@@ -202,6 +203,12 @@ function AdminGiaSu() {
                         label="Danh sách gia sư"
                     />
                     <Tab
+                        active={tab === "chuyen_mon"}
+                        onClick={() => setTab("chuyen_mon")}
+                        label="Yêu cầu chuyên môn"
+                        badge={2}
+                    />
+                    <Tab
                         active={tab === "tu_choi"}
                         onClick={() => setTab("tu_choi")}
                         label="Hồ sơ bị từ chối"
@@ -248,6 +255,8 @@ function AdminGiaSu() {
                         onXemTaiLieu={xemTaiLieu}
                     />
                 </div>
+            ) : tab === "chuyen_mon" ? (
+                <YeuCauChuyenMon />
             ) : (
                 <DanhSachGiaSuAdmin
                     key={tab}
