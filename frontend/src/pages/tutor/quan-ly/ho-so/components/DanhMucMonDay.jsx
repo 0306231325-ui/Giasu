@@ -91,15 +91,21 @@ function MonDay({ mon, onXoa, dangXoa }) {
 }
 
 function FormThemMonDay({ duLieu }) {
+    const duDieuKienGui = duLieu.idsDaChon.length > 0;
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-4">
             <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-white text-slate-900 shadow-xl">
                 <div className="shrink-0 flex items-start justify-between border-b border-slate-100 px-6 py-5">
-                    <div><h2 className="text-xl font-extrabold">Thêm môn dạy</h2><p className="mt-1 text-sm text-slate-500">Môn mới sẽ được gửi quản trị viên xét duyệt.</p></div>
+                    <div><h2 className="text-xl font-extrabold">Thêm môn dạy</h2><p className="mt-1 text-sm text-slate-500">Chọn môn muốn dạy để gửi quản trị viên xét duyệt.</p></div>
                     <button type="button" onClick={duLieu.dongForm} disabled={duLieu.dangThem} className="rounded-xl p-2 text-slate-400 hover:bg-slate-100"><IconHoSo ten="x" /></button>
                 </div>
                 <form onSubmit={duLieu.them} className="flex min-h-0 flex-1 flex-col">
                     <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
+                        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold leading-6 text-amber-700">
+                            Bạn cần có ít nhất một bằng cấp/chứng chỉ đã được admin xác minh trước khi gửi yêu cầu thêm môn dạy.
+                        </div>
+
                         <fieldset>
                             <legend className="text-sm font-extrabold uppercase tracking-wide text-slate-600">
                                 1. Chọn cấp học
@@ -108,8 +114,7 @@ function FormThemMonDay({ duLieu }) {
                                 {duLieu.capHocs.map((capHoc) => {
                                     const idChuoi = String(capHoc.id);
                                     const daChon = duLieu.capHocIdsDaChon.includes(idChuoi);
-                                    const coMonDeThem =
-                                        duLieu.capHocIdsCoMonDeThem.has(idChuoi);
+                                    const coMonDeThem = duLieu.capHocIdsCoMonDeThem.has(idChuoi);
 
                                     return (
                                         <label
@@ -156,9 +161,7 @@ function FormThemMonDay({ duLieu }) {
                                                     return (
                                                         <label key={mon.id} className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 text-sm transition ${daChon ? "border-blue-400 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50"}`}>
                                                             <input type="checkbox" checked={daChon} onChange={() => duLieu.chonMon(mon.id)} className="h-4 w-4 accent-blue-600" />
-                                                            <span>
-                                                                <span className="block font-bold">{mon.ten_mon}</span>
-                                                            </span>
+                                                            <span className="block font-bold">{mon.ten_mon}</span>
                                                         </label>
                                                     );
                                                 })}
@@ -168,17 +171,69 @@ function FormThemMonDay({ duLieu }) {
                                 </div>
                             )}
                         </fieldset>
+
+                        <fieldset className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
+                            <legend className="px-1 text-sm font-extrabold uppercase tracking-wide text-slate-600">
+                                3. Bảng giá dự kiến
+                            </legend>
+                            <p className="mt-2 text-sm leading-6 text-slate-500">
+                                Giá được tính theo: giá môn + phụ cấp trình độ + phụ cấp kinh nghiệm + điều chỉnh hệ số giá.
+                            </p>
+                            <BangGiaDuKien danhSach={duLieu.giaDuKienDaChon} />
+                        </fieldset>
                     </div>
                     <div className="shrink-0 flex justify-end gap-3 border-t border-slate-100 px-6 py-5">
                         <button type="button" onClick={duLieu.dongForm} disabled={duLieu.dangThem} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600">Hủy</button>
-                        <button type="submit" disabled={duLieu.dangThem || duLieu.idsDaChon.length === 0} className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">
-                            {duLieu.dangThem ? "Đang thêm..." : `Thêm ${duLieu.idsDaChon.length || ""} môn`}
+                        <button type="submit" disabled={duLieu.dangThem || !duDieuKienGui} className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">
+                            {duLieu.dangThem ? "Đang gửi..." : "Gửi yêu cầu xét duyệt"}
                         </button>
                     </div>
                 </form>
             </div>
         </div>
     );
+}
+
+function BangGiaDuKien({ danhSach }) {
+    if (!danhSach.length) {
+        return (
+            <p className="mt-4 rounded-xl border border-dashed border-blue-200 bg-white px-4 py-5 text-center text-sm font-semibold text-slate-500">
+                Chọn môn muốn dạy để xem bảng giá dự kiến.
+            </p>
+        );
+    }
+
+    return (
+        <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+            <div className="min-w-[760px]">
+                <div className="grid grid-cols-[1.4fr_repeat(5,1fr)] gap-3 bg-slate-50 px-4 py-3 text-xs font-extrabold uppercase tracking-wide text-slate-400">
+                    <span>Môn học</span>
+                    <span>Giá môn</span>
+                    <span>Trình độ</span>
+                    <span>Kinh nghiệm</span>
+                    <span>Điều chỉnh</span>
+                    <span className="text-right">Tổng dự kiến</span>
+                </div>
+                {danhSach.map((gia) => (
+                    <div key={gia.id} className="grid grid-cols-[1.4fr_repeat(5,1fr)] gap-3 border-t border-slate-100 px-4 py-4 text-sm font-bold text-slate-700">
+                        <span>
+                            <span className="block text-slate-900">{gia.tenMon}</span>
+                            <span className="mt-1 block text-xs text-blue-600">{gia.capHoc}</span>
+                        </span>
+                        <span>{dinhDangTien(gia.giaMon)}</span>
+                        <span>+{dinhDangTien(gia.giaCongTrinhDo)}</span>
+                        <span>+{dinhDangTien(gia.giaCongKinhNghiem)}</span>
+                        <span>+{dinhDangTien(gia.giaCongThem)}</span>
+                        <span className="text-right text-blue-600">{dinhDangTien(gia.tongGia)}/giờ</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function dinhDangTien(giaTri) {
+    return Number(giaTri || 0).toLocaleString("vi-VN") + "đ";
 }
 
 export default DanhMucMonDay;

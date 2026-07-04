@@ -58,6 +58,17 @@ class GiaSuMonDayController extends Controller
             'mon_hoc_ids.min' => 'Vui lòng chọn ít nhất một môn học.',
         ]);
 
+        $coHoSoXacMinhDaDuyet = $giaSu->bangCaps()
+            ->where('trang_thai', 'duyet')
+            ->exists();
+
+        if (! $coHoSoXacMinhDaDuyet) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn cần có ít nhất một bằng cấp hoặc chứng chỉ đã được xác minh trước khi thêm môn dạy.',
+            ], 422);
+        }
+
         $monDaiDien = MonHoc::query()
             ->whereIn('id', $duLieu['mon_hoc_ids'])
             ->get(['id', 'cap_hoc_id', 'ten_mon']);

@@ -119,7 +119,11 @@ class AdminYeuCauChuyenMonController extends Controller
             ->map(fn (GiasuBangCap $bangCap) => $this->dinhDangBangCap($bangCap));
 
         $monDay = GiasuGia::query()
-            ->with(['giasu.user:id,ho_ten,email', 'monHoc.capHoc:id,ten'])
+            ->with([
+                'giasu.user:id,ho_ten,email',
+                'giasu.bangCaps.trinhDo:id,ten,thu_tu',
+                'monHoc.capHoc:id,ten',
+            ])
             ->where('trang_thai', '!=', GiasuGia::TRANG_THAI_NGUNG_DAY)
             ->latest()
             ->get()
@@ -199,7 +203,6 @@ class AdminYeuCauChuyenMonController extends Controller
             'thongTin' => [
                 ['Môn học', $monHoc?->ten_mon ?? 'Chưa cập nhật'],
                 ['Cấp học', $monHoc?->capHoc?->ten ?? 'Chưa cập nhật'],
-                ['Số lớp/mã môn được áp dụng', $nhom->count() . ' dòng'],
                 ['Giá môn', $this->dinhDangTien($mucGia->gia_mon)],
                 ['Phụ cấp trình độ', $this->dinhDangTien($mucGia->gia_cong_trinh_do)],
                 ['Phụ cấp kinh nghiệm', $this->dinhDangTien($mucGia->gia_cong_kinh_nghiem)],
@@ -207,11 +210,35 @@ class AdminYeuCauChuyenMonController extends Controller
                 ['Giá cộng thêm', $this->dinhDangTien($mucGia->gia_cong_them)],
                 ['Tổng giá', $this->dinhDangTien($mucGia->tong_gia) . '/giờ'],
             ],
+            'bangCapGiaSu' => $this->dinhDangBangCapCuaGiaSu($mucGia->giasu),
             'anhHuong' => [
                 'Nếu được duyệt, môn này sẽ hiển thị trong danh mục môn dạy của gia sư.',
                 'Học viên chỉ đặt được môn này sau khi trạng thái chuyển sang đã duyệt.',
             ],
         ];
+    }
+
+    private function dinhDangBangCapCuaGiaSu(?Giasu $giaSu): array
+    {
+        if (! $giaSu) {
+            return [];
+        }
+
+        return $giaSu->bangCaps
+            ->sortByDesc(fn (GiasuBangCap $bangCap) => optional($bangCap->created_at)->timestamp ?? 0)
+            ->map(fn (GiasuBangCap $bangCap) => [
+                'id' => $bangCap->id,
+                'ten' => $bangCap->ten_bang,
+                'loai' => $this->tenLoaiBang($bangCap->loai_bang),
+                'trinhDo' => $bangCap->trinhDo?->ten ?? 'Chưa cập nhật',
+                'chuyenNganh' => $bangCap->chuyen_nganh ?: 'Chưa cập nhật',
+                'donVi' => $bangCap->truong_don_vi ?: 'Chưa cập nhật',
+                'trangThai' => $this->quyDoiTrangThaiBangCap($bangCap->trang_thai),
+                'lyDo' => $bangCap->ly_do,
+                'urlXem' => $bangCap->file_url ? "/admin/gia-su/bang-cap/{$bangCap->id}/xem" : null,
+            ])
+            ->values()
+            ->all();
     }
 
     private function xuLyBangCap(Request $request, int $id, array $duLieu): JsonResponse

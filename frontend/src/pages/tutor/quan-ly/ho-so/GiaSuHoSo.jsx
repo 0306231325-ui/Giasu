@@ -55,11 +55,14 @@ function GiaSuHoSo() {
         baoThanhCong,
     });
     const chuyenMon = useChuyenMon({ baoLoi, baoThanhCong });
-    const monDay = useMonDay({ baoLoi, baoThanhCong });
     const bangCap = useBangCap({
         baoLoi,
         baoThanhCong,
         danhMucTrinhDo: chuyenMon.danhMuc.trinh_do,
+    });
+    const monDay = useMonDay({
+        baoLoi,
+        baoThanhCong,
     });
 
     const tenGiaSu =

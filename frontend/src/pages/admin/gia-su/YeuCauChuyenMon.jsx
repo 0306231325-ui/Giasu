@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import ModalNhapLyDo from "../../../components/ModalNhapLyDo";
+import ModalXemTaiLieu from "../../../components/ModalXemTaiLieu";
 import api from "../../../services/api";
 
 const boLocTrangThai = [
@@ -30,6 +32,12 @@ const tenTrangThai = {
     tu_choi: "Từ chối",
 };
 
+const cauHinhTrangThaiBangCap = {
+    cho_duyet: "bg-amber-50 text-amber-700",
+    da_duyet: "bg-emerald-50 text-emerald-700",
+    tu_choi: "bg-red-50 text-red-700",
+};
+
 function YeuCauChuyenMon() {
     const [trangThaiDangChon, setTrangThaiDangChon] = useState("cho_duyet");
     const [loaiDangChon, setLoaiDangChon] = useState("tat_ca");
@@ -41,6 +49,8 @@ function YeuCauChuyenMon() {
     const [dangTai, setDangTai] = useState(false);
     const [dangXuLy, setDangXuLy] = useState(false);
     const [thongBao, setThongBao] = useState("");
+    const [taiLieuDangXem, setTaiLieuDangXem] = useState(null);
+    const [dangMoTuChoi, setDangMoTuChoi] = useState(false);
     const boDemThongBao = useRef(null);
 
     const hienThongBao = useCallback((noiDung) => {
@@ -115,14 +125,11 @@ function YeuCauChuyenMon() {
         taiDanhSach({ trangThai: "cho_duyet", loai: "tat_ca", tuKhoa: "" });
     };
 
-    const xuLyYeuCau = async (hanhDong) => {
-        if (!yeuCauDangChon || dangXuLy) return;
+    const xuLyYeuCau = async (hanhDong, lyDo = "") => {
+        if (!yeuCauDangChon || dangXuLy) return false;
 
-        let lyDo = "";
-        if (hanhDong === "tu_choi") {
-            lyDo = window.prompt("Nhập lý do từ chối yêu cầu này:")?.trim() ?? "";
-            if (!lyDo) return;
-        }
+        const lyDoDaNhap = lyDo.trim();
+        if (hanhDong === "tu_choi" && !lyDoDaNhap) return false;
 
         setDangXuLy(true);
         try {
@@ -130,32 +137,29 @@ function YeuCauChuyenMon() {
                 `/admin/gia-su/yeu-cau-chuyen-mon/${yeuCauDangChon.loai}/${yeuCauDangChon.id}`,
                 {
                     hanh_dong: hanhDong,
-                    ly_do: lyDo || undefined,
+                    ly_do: lyDoDaNhap || undefined,
                 },
             );
 
             hienThongBao(response.data?.message || "Đã xử lý yêu cầu.");
             await taiDanhSach();
+            return true;
         } catch (error) {
             hienThongBao(error.response?.data?.message || "Không thể xử lý yêu cầu.");
+            return false;
         } finally {
             setDangXuLy(false);
         }
     };
 
-    const xemTaiLieu = async () => {
-        if (!yeuCauDangChon?.urlXem) return;
+    const xacNhanTuChoi = async (lyDo) => {
+        const thanhCong = await xuLyYeuCau("tu_choi", lyDo);
+        if (thanhCong) setDangMoTuChoi(false);
+    };
 
-        try {
-            const response = await api.get(yeuCauDangChon.urlXem, {
-                responseType: "blob",
-            });
-            const duongDanTam = URL.createObjectURL(response.data);
-            window.open(duongDanTam, "_blank", "noopener,noreferrer");
-            setTimeout(() => URL.revokeObjectURL(duongDanTam), 60_000);
-        } catch (error) {
-            hienThongBao(error.response?.data?.message || "Không thể mở file minh chứng.");
-        }
+    const xemTaiLieu = (taiLieu) => {
+        if (!taiLieu?.urlXem) return;
+        setTaiLieuDangXem(taiLieu);
     };
 
     const coTheXuLy = yeuCauDangChon?.trangThai === "cho_duyet";
@@ -301,37 +305,37 @@ function YeuCauChuyenMon() {
             <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900">
                 {yeuCauDangChon ? (
                     <>
-                        <div className="flex flex-col gap-4 border-b border-slate-200 p-5 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="flex flex-col gap-3 border-b border-slate-200 p-4 lg:flex-row lg:items-start lg:justify-between">
                             <div>
-                                <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-blue-600">
+                                <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-blue-600">
                                     {yeuCauDangChon.ma} · {yeuCauDangChon.loaiText || nhanLoai[yeuCauDangChon.loai]}
                                 </p>
-                                <h2 className="mt-2 text-2xl font-extrabold">
+                                <h2 className="mt-1.5 text-xl font-extrabold">
                                     {yeuCauDangChon.tieuDe}
                                 </h2>
-                                <p className="mt-2 max-w-3xl text-sm font-semibold text-slate-500">
+                                <p className="mt-1 max-w-3xl text-xs font-semibold text-slate-500">
                                     {yeuCauDangChon.moTa}
                                 </p>
                             </div>
                             <TrangThai trangThai={yeuCauDangChon.trangThai} nenSang />
                         </div>
 
-                        <div className="grid gap-5 p-5 xl:grid-cols-[minmax(0,1fr)_340px]">
-                            <div className="space-y-5">
+                        <div className="grid gap-4 p-4 xl:grid-cols-[minmax(0,1fr)_310px]">
+                            <div className="space-y-4">
                                 <div className="rounded-2xl border border-slate-200">
-                                    <div className="border-b border-slate-200 px-5 py-4">
-                                        <p className="text-lg font-extrabold">Thông tin yêu cầu</p>
-                                        <p className="mt-1 text-sm font-semibold text-slate-500">
+                                    <div className="border-b border-slate-200 px-4 py-3">
+                                        <p className="text-base font-extrabold">Thông tin yêu cầu</p>
+                                        <p className="mt-0.5 text-xs font-semibold text-slate-500">
                                             Dữ liệu lấy từ bảng {yeuCauDangChon.loai === "bang_cap" ? "bằng cấp/chứng chỉ" : "môn dạy và giá"}.
                                         </p>
                                     </div>
-                                    <div className="grid gap-3 p-5 md:grid-cols-2">
+                                    <div className="grid gap-2 p-4 sm:grid-cols-2 xl:grid-cols-3">
                                         {(yeuCauDangChon.thongTin ?? []).map(([nhan, giaTri]) => (
                                             <div
                                                 key={nhan}
-                                                className="rounded-xl bg-slate-50 px-4 py-3"
+                                                className="rounded-xl bg-slate-50 px-3 py-2.5"
                                             >
-                                                <p className="text-xs font-extrabold uppercase text-slate-400">
+                                                <p className="text-[11px] font-extrabold uppercase text-slate-400">
                                                     {nhan}
                                                 </p>
                                                 <p className="mt-1 text-sm font-extrabold text-slate-800">
@@ -342,14 +346,14 @@ function YeuCauChuyenMon() {
                                     </div>
                                 </div>
 
-                                <div className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4">
-                                    <p className="font-extrabold text-blue-700">
+                                <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
+                                    <p className="text-sm font-extrabold text-blue-700">
                                         Cách xử lý khi duyệt
                                     </p>
-                                    <ul className="mt-3 space-y-2 text-sm font-semibold leading-6 text-slate-600">
+                                    <ul className="mt-2 space-y-1.5 text-xs font-semibold leading-5 text-slate-600">
                                         {(yeuCauDangChon.anhHuong ?? []).map((noiDung) => (
                                             <li key={noiDung} className="flex gap-2">
-                                                <span className="mt-1 h-2 w-2 rounded-full bg-blue-500" />
+                                                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />
                                                 <span>{noiDung}</span>
                                             </li>
                                         ))}
@@ -357,59 +361,116 @@ function YeuCauChuyenMon() {
                                 </div>
 
                                 {yeuCauDangChon.lyDo && (
-                                    <div className="rounded-2xl border border-red-100 bg-red-50 px-5 py-4">
-                                        <p className="font-extrabold text-red-700">Lý do từ chối</p>
-                                        <p className="mt-2 text-sm font-semibold text-red-600">
+                                    <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3">
+                                        <p className="text-sm font-extrabold text-red-700">Lý do từ chối</p>
+                                        <p className="mt-1 text-xs font-semibold text-red-600">
                                             {yeuCauDangChon.lyDo}
                                         </p>
                                     </div>
                                 )}
                             </div>
 
-                            <aside className="space-y-4">
-                                <div className="rounded-2xl border border-slate-200 p-5">
-                                    <p className="text-sm font-extrabold uppercase text-slate-400">
+                            <aside className="space-y-3">
+                                <div className="rounded-2xl border border-slate-200 p-4">
+                                    <p className="text-xs font-extrabold uppercase text-slate-400">
                                         Gia sư gửi yêu cầu
                                     </p>
-                                    <p className="mt-3 text-xl font-extrabold">
+                                    <p className="mt-2 text-lg font-extrabold">
                                         {yeuCauDangChon.giaSu}
                                     </p>
-                                    <p className="mt-1 text-sm font-semibold text-slate-500">
+                                    <p className="mt-1 text-xs font-semibold text-slate-500">
                                         {yeuCauDangChon.email}
                                     </p>
-                                    <p className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm font-bold text-slate-600">
+                                    <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600">
                                         Gửi lúc: {yeuCauDangChon.ngayGui}
                                     </p>
                                     {yeuCauDangChon.urlXem && (
                                         <button
                                             type="button"
-                                            onClick={xemTaiLieu}
-                                            className="mt-3 w-full rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-extrabold text-blue-600 transition hover:bg-blue-100"
+                                            onClick={() => xemTaiLieu({
+                                                tieuDe: yeuCauDangChon.tieuDe,
+                                                ten: yeuCauDangChon.tieuDe,
+                                                urlXem: yeuCauDangChon.urlXem,
+                                            })}
+                                            className="mt-2 w-full rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-extrabold text-blue-600 transition hover:bg-blue-100"
                                         >
                                             Xem file minh chứng
                                         </button>
                                     )}
                                 </div>
 
-                                <div className="rounded-2xl border border-slate-200 p-5">
-                                    <p className="font-extrabold">Thao tác xử lý</p>
-                                    <p className="mt-1 text-sm font-semibold text-slate-500">
+                                {yeuCauDangChon.loai === "mon_day" && (
+                                    <div className="rounded-2xl border border-slate-200 p-4">
+                                        <p className="text-base font-extrabold">Hồ sơ xác minh</p>
+                                        <p className="mt-1 text-xs font-semibold text-slate-500">
+                                            Admin xem các bằng cấp/chứng chỉ này để quyết định duyệt môn dạy.
+                                        </p>
+
+                                        <div className="mt-3 max-h-[300px] space-y-2 overflow-y-scroll pr-1">
+                                            {(yeuCauDangChon.bangCapGiaSu ?? []).length === 0 ? (
+                                                <p className="rounded-xl border border-dashed border-slate-200 px-3 py-4 text-center text-xs font-bold text-slate-400">
+                                                    Gia sư chưa có hồ sơ xác minh.
+                                                </p>
+                                            ) : (
+                                                yeuCauDangChon.bangCapGiaSu.map((taiLieu) => (
+                                                    <div key={taiLieu.id} className="rounded-xl border border-slate-200 px-3 py-2.5">
+                                                        <div className="flex items-start justify-between gap-3">
+                                                            <div className="min-w-0">
+                                                                <p className="text-sm font-extrabold text-slate-900">{taiLieu.ten}</p>
+                                                                <p className="mt-1 text-xs font-semibold text-slate-500">
+                                                                    {taiLieu.loai} · {taiLieu.trinhDo}
+                                                                </p>
+                                                            </div>
+                                                            <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-extrabold ${cauHinhTrangThaiBangCap[taiLieu.trangThai] || "bg-slate-100 text-slate-600"}`}>
+                                                                {tenTrangThai[taiLieu.trangThai] || "Chưa rõ"}
+                                                            </span>
+                                                        </div>
+                                                        <p className="mt-2 text-xs font-semibold text-slate-500">
+                                                            {taiLieu.chuyenNganh} · {taiLieu.donVi}
+                                                        </p>
+                                                        {taiLieu.lyDo && (
+                                                            <p className="mt-2 rounded-md bg-red-50 px-2 py-1.5 text-[11px] font-semibold text-red-600">
+                                                                Lý do từ chối: {taiLieu.lyDo}
+                                                            </p>
+                                                        )}
+                                                        {taiLieu.urlXem && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => xemTaiLieu({
+                                                                    ...taiLieu,
+                                                                    tieuDe: taiLieu.ten,
+                                                                })}
+                                                                className="mt-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-extrabold text-blue-600 transition hover:bg-blue-100"
+                                                            >
+                                                                Xem tài liệu
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="rounded-2xl border border-slate-200 p-4">
+                                    <p className="text-base font-extrabold">Thao tác xử lý</p>
+                                    <p className="mt-1 text-xs font-semibold text-slate-500">
                                         Chỉ yêu cầu chờ duyệt mới được xử lý.
                                     </p>
-                                    <div className="mt-4 grid gap-3">
+                                    <div className="mt-3 grid gap-2">
                                         <button
                                             type="button"
                                             disabled={!coTheXuLy || dangXuLy}
                                             onClick={() => xuLyYeuCau("duyet")}
-                                            className="rounded-xl bg-blue-600 px-4 py-3 text-sm font-extrabold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+                                            className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                             {dangXuLy ? "Đang xử lý..." : "Duyệt yêu cầu"}
                                         </button>
                                         <button
                                             type="button"
                                             disabled={!coTheXuLy || dangXuLy}
-                                            onClick={() => xuLyYeuCau("tu_choi")}
-                                            className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-extrabold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                            onClick={() => setDangMoTuChoi(true)}
+                                            className="rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-extrabold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                             Từ chối
                                         </button>
@@ -424,6 +485,23 @@ function YeuCauChuyenMon() {
                     </div>
                 )}
             </section>
+
+            <ModalXemTaiLieu
+                taiLieu={taiLieuDangXem}
+                onDong={() => setTaiLieuDangXem(null)}
+                onLoi={hienThongBao}
+            />
+
+            <ModalNhapLyDo
+                mo={dangMoTuChoi}
+                tieuDe="Từ chối yêu cầu chuyên môn"
+                moTa={`Nhập lý do từ chối yêu cầu "${yeuCauDangChon?.tieuDe || "đang chọn"}". Nội dung này sẽ được gửi cho gia sư.`}
+                placeholder="Ví dụ: Hồ sơ minh chứng chưa phù hợp với môn đăng ký..."
+                nutXacNhan="Xác nhận từ chối"
+                dangXuLy={dangXuLy}
+                onDong={() => setDangMoTuChoi(false)}
+                onXacNhan={xacNhanTuChoi}
+            />
         </div>
     );
 }

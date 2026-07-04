@@ -73,17 +73,34 @@ class AdminXetDuyetGiaSuService
 
         $monDay = $giaSu->giasuGias
             ->filter(fn (GiasuGia $mucGia) => $mucGia->monHoc)
-            ->map(fn (GiasuGia $mucGia) => [
-                'id' => $mucGia->id,
-                'ten' => $mucGia->monHoc->ten_mon,
-                'cap' => $mucGia->monHoc->capHoc?->ten ?? 'Chưa cập nhật',
-                'giaMon' => number_format((float) $mucGia->gia_mon, 0, ',', '.') . 'đ',
-                'giaCongTrinhDo' => number_format((float) $mucGia->gia_cong_trinh_do, 0, ',', '.') . 'đ',
-                'giaCongKinhNghiem' => number_format((float) $mucGia->gia_cong_kinh_nghiem, 0, ',', '.') . 'đ',
-                'giaCongThem' => number_format((float) $mucGia->gia_cong_them, 0, ',', '.') . 'đ',
-                'tongGia' => number_format((float) $mucGia->tong_gia, 0, ',', '.') . 'đ',
-                'trangThai' => $mucGia->trang_thai,
-            ])
+            ->groupBy(fn (GiasuGia $mucGia) => implode('|', [
+                $mucGia->monHoc->cap_hoc_id,
+                $mucGia->monHoc->ten_mon,
+            ]))
+            ->map(function ($nhomMucGia) {
+                /** @var GiasuGia $mucGiaDaiDien */
+                $mucGiaDaiDien = $nhomMucGia
+                    ->sortBy(fn (GiasuGia $mucGia) => match ($mucGia->trang_thai) {
+                        GiasuGia::TRANG_THAI_CHO_DUYET => 0,
+                        GiasuGia::TRANG_THAI_DA_DUYET => 1,
+                        GiasuGia::TRANG_THAI_TU_CHOI => 2,
+                        default => 3,
+                    })
+                    ->first();
+
+                return [
+                    'id' => $mucGiaDaiDien->id,
+                    'ten' => $mucGiaDaiDien->monHoc->ten_mon,
+                    'cap' => $mucGiaDaiDien->monHoc->capHoc?->ten ?? 'Chưa cập nhật',
+                    'soDongMon' => $nhomMucGia->count(),
+                    'giaMon' => number_format((float) $mucGiaDaiDien->gia_mon, 0, ',', '.') . 'đ',
+                    'giaCongTrinhDo' => number_format((float) $mucGiaDaiDien->gia_cong_trinh_do, 0, ',', '.') . 'đ',
+                    'giaCongKinhNghiem' => number_format((float) $mucGiaDaiDien->gia_cong_kinh_nghiem, 0, ',', '.') . 'đ',
+                    'giaCongThem' => number_format((float) $mucGiaDaiDien->gia_cong_them, 0, ',', '.') . 'đ',
+                    'tongGia' => number_format((float) $mucGiaDaiDien->tong_gia, 0, ',', '.') . 'đ',
+                    'trangThai' => $mucGiaDaiDien->trang_thai,
+                ];
+            })
             ->values();
 
         return [
