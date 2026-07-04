@@ -206,7 +206,6 @@ function AdminGiaSu() {
                         active={tab === "chuyen_mon"}
                         onClick={() => setTab("chuyen_mon")}
                         label="Yêu cầu chuyên môn"
-                        badge={2}
                     />
                     <Tab
                         active={tab === "tu_choi"}
@@ -309,13 +308,13 @@ function ThongKe({ nhan, giaTri, mau, active, onClick }) {
             type="button"
             onClick={onClick}
             className={[
-                "min-w-24 rounded-xl border px-3 py-2 text-center transition hover:scale-[1.02]",
+                "min-w-32 rounded-xl border px-4 py-2 text-center transition hover:scale-[1.02]",
                 lopMau,
                 active ? "ring-2 ring-white/20" : "",
             ].join(" ")}
         >
             <p className="text-lg font-extrabold">{giaTri}</p>
-            <p className="text-[11px] font-semibold opacity-75">{nhan}</p>
+            <p className="whitespace-nowrap text-[11px] font-semibold opacity-75">{nhan}</p>
         </button>
     );
 }
