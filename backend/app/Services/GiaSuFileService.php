@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Giasu;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
 
 class GiaSuFileService
 {
@@ -57,23 +56,45 @@ class GiaSuFileService
 
     public function luuFileBangCap(Giasu $giaSu, UploadedFile $file): ?string
     {
-        return $file->store("giasu/{$giaSu->id}/bang-cap", 'local') ?: null;
+        $thuMuc = public_path("images/bang-cap-gia-su/{$giaSu->id}");
+
+        if (! File::isDirectory($thuMuc)) {
+            File::makeDirectory($thuMuc, 0755, true);
+        }
+
+        $tenFile = 'bang-cap-' . $giaSu->id . '-' . time() . '-' . bin2hex(random_bytes(4))
+            . '.' . $file->getClientOriginalExtension();
+
+        $file->move($thuMuc, $tenFile);
+
+        return "images/bang-cap-gia-su/{$giaSu->id}/{$tenFile}";
     }
 
     public function fileBangCapTonTai(?string $duongDan): bool
     {
-        return filled($duongDan) && Storage::disk('local')->exists($duongDan);
+        if (! filled($duongDan)) {
+            return false;
+        }
+
+        return File::exists(public_path($this->layDuongDanTuongDoi($duongDan)));
     }
 
     public function duongDanFileBangCap(string $duongDan): string
     {
-        return Storage::disk('local')->path($duongDan);
+        return public_path($this->layDuongDanTuongDoi($duongDan));
     }
 
     public function xoaFileBangCap(?string $duongDan): void
     {
-        if ($duongDan) {
-            Storage::disk('local')->delete($duongDan);
+        if (! $duongDan) {
+            return;
         }
+
+        File::delete(public_path($this->layDuongDanTuongDoi($duongDan)));
+    }
+
+    private function layDuongDanTuongDoi(string $duongDan): string
+    {
+        return ltrim(parse_url($duongDan, PHP_URL_PATH) ?: $duongDan, '/');
     }
 }

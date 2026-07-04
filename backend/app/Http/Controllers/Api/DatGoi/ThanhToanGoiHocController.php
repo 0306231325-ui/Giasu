@@ -1,0 +1,231 @@
+<?php
+
+namespace App\Http\Controllers\Api\DatGoi;
+
+use App\Http\Controllers\Api\DatLich\DatLichBaseController;
+use App\Models\Giasu;
+use App\Models\GiasuGia;
+use App\Models\GoiHoc;
+use App\Models\DanhGia;
+use App\Models\LichHoc;
+use App\Models\LoaiGoi;
+use App\Models\PhanHoi;
+use App\Models\ThanhToan;
+use App\Models\ThongBao;
+use App\Models\User;
+use App\Models\YeuCauHocBu;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Collection;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Validation\Rule;
+
+class ThanhToanGoiHocController extends DatLichBaseController
+{
+    public function thanhToanGoiHoc(Request $request, int $goiHocId): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->vai_tro !== 'hocvien') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chuc nang thanh toan chi danh cho tai khoan hoc vien.',
+            ], 403);
+        }
+
+        $duLieu = $request->validate([
+            'phuong_thuc' => ['required', Rule::in(['tienmat', 'momo', 'zalopay', 'banking'])],
+            'ma_giaodich' => ['nullable', 'string', 'max:255'],
+            'noi_dung_thanhtoan' => ['nullable', 'string', 'max:1000'],
+            'anh_minh_chung' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+        ], [
+            'anh_minh_chung.required' => 'Vui lòng chọn ảnh minh chứng thanh toán.',
+            'anh_minh_chung.image' => 'Ảnh minh chứng thanh toán không hợp lệ.',
+            'anh_minh_chung.mimes' => 'Ảnh minh chứng chỉ hỗ trợ JPG, JPEG, PNG hoặc WEBP.',
+            'anh_minh_chung.max' => 'Ảnh minh chứng không được lớn hơn 4MB.',
+            'anh_minh_chung.uploaded' => 'Tải ảnh minh chứng thất bại. Vui lòng chọn ảnh nhỏ hơn 2MB hoặc thử ảnh khác.',
+        ]);
+
+        $goiHoc = GoiHoc::query()
+            ->with(['hocVien:id,ho_ten', 'giasu.user:id,ho_ten', 'monHoc:id,ten_mon,lop', 'lichHocs', 'thanhToanMoiNhat'])
+            ->where('hocvien_id', $user->id)
+            ->where('trang_thai', 'cho_thanhtoan')
+            ->find($goiHocId);
+
+        if (! $goiHoc) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Khong tim thay goi hoc dang cho thanh toan.',
+            ], 404);
+        }
+
+        if ($goiHoc->thanhToanMoiNhat?->trang_thai === 'cho_thanhtoan') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ban da gui minh chung thanh toan. Vui long cho admin xac nhan.',
+            ], 422);
+        }
+
+        $duongDanMinhChung = $this->luuAnhMinhChungThanhToan($request);
+        $maGiaoDich = filled($duLieu['ma_giaodich'] ?? null)
+            ? trim($duLieu['ma_giaodich'])
+            : 'GD' . now()->format('YmdHis') . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT);
+
+        $goiHocMoi = DB::transaction(function () use ($goiHoc, $duLieu, $user, $duongDanMinhChung, $maGiaoDich) {
+            ThanhToan::create([
+                'goihoc_id' => $goiHoc->id,
+                'so_tien' => $goiHoc->tong_tien,
+                'phuong_thuc' => $duLieu['phuong_thuc'],
+                'ma_giaodich' => $maGiaoDich,
+                'noi_dung_thanhtoan' => filled($duLieu['noi_dung_thanhtoan'] ?? null)
+                    ? trim($duLieu['noi_dung_thanhtoan'])
+                    : 'Hoc vien gui minh chung thanh toan goi hoc.',
+                'anh_minh_chung' => $duongDanMinhChung,
+                'ngay_thanhtoan' => now(),
+                'trang_thai' => 'cho_thanhtoan',
+            ]);
+
+            User::query()
+                ->where('vai_tro', 'admin')
+                ->get(['id'])
+                ->each(fn (User $admin) => ThongBao::create([
+                    'user_id' => $admin->id,
+                    'tieu_de' => 'Hoc vien gui minh chung thanh toan',
+                    'noi_dung' => "{$user->ho_ten} da gui minh chung thanh toan goi hoc GH" . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . '. Vui long kiem tra va xac nhan.',
+                    'url' => '/admin/quan-ly-dat-goi',
+                    'da_doc' => false,
+                ]));
+
+            return $goiHoc->fresh(['monHoc:id,ten_mon,lop', 'giasu.user:id,ho_ten', 'lichHocs', 'thanhToanMoiNhat']);
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Da gui minh chung thanh toan. Vui long cho admin xac nhan.',
+            'data' => $this->dinhDangGoiHocChoHocVien($goiHocMoi),
+        ]);
+    }
+    public function duyetThanhToanAdmin(Request $request, int $goiHocId): JsonResponse
+    {
+        if ($request->user()?->vai_tro !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ban khong co quyen truy cap.',
+            ], 403);
+        }
+
+        $goiHoc = GoiHoc::query()
+            ->with(['hocVien:id,ho_ten', 'monHoc:id,ten_mon,lop', 'giasu.user:id,ho_ten', 'lichHocs', 'phanHoiMoiNhat', 'thanhToanMoiNhat'])
+            ->where('trang_thai', 'cho_thanhtoan')
+            ->find($goiHocId);
+
+        if (! $goiHoc || ! $goiHoc->thanhToanMoiNhat) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Khong tim thay thanh toan can xac nhan.',
+            ], 404);
+        }
+
+        if ($goiHoc->thanhToanMoiNhat->trang_thai !== 'cho_thanhtoan') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Thanh toan nay khong con o trang thai cho xac nhan.',
+            ], 422);
+        }
+
+        DB::transaction(function () use ($goiHoc) {
+            $goiHoc->thanhToanMoiNhat->update([
+                'trang_thai' => 'da_thanhtoan',
+            ]);
+
+            $goiHoc->update([
+                'trang_thai' => 'danghoc',
+            ]);
+
+            $goiHoc->lichHocs()->update([
+                'trang_thai' => 'da_nhan',
+            ]);
+
+            ThongBao::create([
+                'user_id' => $goiHoc->hocvien_id,
+                'tieu_de' => 'Thanh toan da duoc xac nhan',
+                'noi_dung' => 'Thanh toan goi hoc ' . 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . ' da duoc xac nhan. Lich hoc cua ban da duoc kich hoat.',
+                'url' => '/hoc-vien/lich-hoc',
+                'da_doc' => false,
+            ]);
+
+            if ($goiHoc->giasu?->user_id) {
+                ThongBao::create([
+                    'user_id' => $goiHoc->giasu->user_id,
+                    'tieu_de' => 'Goi hoc da duoc thanh toan',
+                    'noi_dung' => 'Goi hoc ' . 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . ' da duoc xac nhan thanh toan. Ban co the theo doi trong lich day.',
+                    'url' => '/gia-su/quan-ly/lich-day',
+                    'da_doc' => false,
+                ]);
+            }
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Da xac nhan thanh toan va chuyen goi hoc sang dang hoc.',
+            'data' => $this->dinhDangGoiHocChoAdmin($goiHoc->fresh(['hocVien', 'monHoc', 'giasu.user', 'lichHocs', 'phanHoiMoiNhat', 'thanhToanMoiNhat'])),
+        ]);
+    }
+    public function tuChoiThanhToanAdmin(Request $request, int $goiHocId): JsonResponse
+    {
+        if ($request->user()?->vai_tro !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ban khong co quyen truy cap.',
+            ], 403);
+        }
+
+        $duLieu = $request->validate([
+            'ly_do' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $goiHoc = GoiHoc::query()
+            ->with(['hocVien:id,ho_ten', 'monHoc:id,ten_mon,lop', 'giasu.user:id,ho_ten', 'lichHocs', 'phanHoiMoiNhat', 'thanhToanMoiNhat'])
+            ->where('trang_thai', 'cho_thanhtoan')
+            ->find($goiHocId);
+
+        if (! $goiHoc || ! $goiHoc->thanhToanMoiNhat) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Khong tim thay thanh toan can tu choi.',
+            ], 404);
+        }
+
+        if ($goiHoc->thanhToanMoiNhat->trang_thai !== 'cho_thanhtoan') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Thanh toan nay khong con o trang thai cho xac nhan.',
+            ], 422);
+        }
+
+        $lyDo = filled($duLieu['ly_do'] ?? null) ? trim($duLieu['ly_do']) : null;
+
+        DB::transaction(function () use ($goiHoc, $lyDo) {
+            $goiHoc->thanhToanMoiNhat->update([
+                'trang_thai' => 'that_bai',
+            ]);
+
+            ThongBao::create([
+                'user_id' => $goiHoc->hocvien_id,
+                'tieu_de' => 'Thanh toan chua hop le',
+                'noi_dung' => 'Thanh toan goi hoc ' . 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . ' chua duoc chap nhan' . ($lyDo ? ': ' . $lyDo : '. Vui long kiem tra va gui lai minh chung.'),
+                'url' => '/hoc-vien/lich-hoc',
+                'da_doc' => false,
+            ]);
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Da tu choi thanh toan. Goi hoc van o trang thai cho thanh toan.',
+            'data' => $this->dinhDangGoiHocChoAdmin($goiHoc->fresh(['hocVien', 'monHoc', 'giasu.user', 'lichHocs', 'phanHoiMoiNhat', 'thanhToanMoiNhat'])),
+        ]);
+    }
+}

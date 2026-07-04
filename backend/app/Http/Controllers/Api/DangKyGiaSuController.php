@@ -15,7 +15,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class DangKyGiaSuController extends Controller
@@ -195,8 +194,7 @@ class DangKyGiaSuController extends Controller
                 ]);
 
                 foreach ($duLieu['bang_cap'] as $index => $taiLieu) {
-                    $duongDan = $request->file("bang_cap.{$index}.tai_lieu")
-                        ->store("giasu/{$giaSu->id}/bang-cap", 'local');
+                    $duongDan = $this->luuFileBangCap($giaSu, $request->file("bang_cap.{$index}.tai_lieu"));
 
                     $fileDaLuu[] = $duongDan;
 
@@ -238,7 +236,7 @@ class DangKyGiaSuController extends Controller
             }
 
             foreach ($fileDaLuu as $duongDan) {
-                Storage::disk('local')->delete($duongDan);
+                $this->xoaFileBangCap($duongDan);
             }
 
             throw $exception;
@@ -325,10 +323,26 @@ class DangKyGiaSuController extends Controller
         return 'images/avatar-gia-su/' . $tenFile;
     }
 
+    private function luuFileBangCap(Giasu $giaSu, $file): string
+    {
+        $thuMuc = public_path("images/bang-cap-gia-su/{$giaSu->id}");
+
+        if (! File::exists($thuMuc)) {
+            File::makeDirectory($thuMuc, 0755, true);
+        }
+
+        $tenFile = 'bang-cap-' . $giaSu->id . '-' . time() . '-' . bin2hex(random_bytes(4))
+            . '.' . $file->getClientOriginalExtension();
+
+        $file->move($thuMuc, $tenFile);
+
+        return "images/bang-cap-gia-su/{$giaSu->id}/{$tenFile}";
+    }
+
     private function xoaTaiLieuDangKyCu(Giasu $giaSu): void
     {
         foreach ($giaSu->bangCaps as $bangCap) {
-            Storage::disk('local')->delete($bangCap->file_url);
+            $this->xoaFileBangCap($bangCap->file_url);
         }
 
         $giaSu->bangCaps()->delete();
@@ -344,5 +358,16 @@ class DangKyGiaSuController extends Controller
             ->reject(fn (string $duongDan) => $duongDan === $avatarMoi)
             ->filter(fn (string $duongDan) => str_starts_with($duongDan, 'images/avatar-gia-su/'))
             ->each(fn (string $duongDan) => File::delete(public_path($duongDan)));
+    }
+
+    private function xoaFileBangCap(?string $duongDan): void
+    {
+        if (! $duongDan) {
+            return;
+        }
+
+        $duongDanTuongDoi = ltrim(parse_url($duongDan, PHP_URL_PATH) ?: $duongDan, '/');
+
+        File::delete(public_path($duongDanTuongDoi));
     }
 }

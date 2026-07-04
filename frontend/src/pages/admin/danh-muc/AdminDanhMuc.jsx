@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../../../services/api";
 import AdminMonHoc from "../mon-hoc/AdminMonHoc";
 
@@ -122,7 +122,7 @@ function AdminDanhMuc() {
       ) : tab === "bang-gia" ? (
         <BangGia />
       ) : (
-        <DanhMucCrud config={cauHinh[tab]} />
+        <DanhMucCrud key={tab} config={cauHinh[tab]} />
       )}
     </div>
   );
@@ -137,7 +137,7 @@ function DanhMucCrud({ config }) {
   const [loi, setLoi] = useState("");
   const [thongBao, setThongBao] = useState("");
 
-  const taiDanhMuc = async () => {
+  const taiDanhMuc = useCallback(async () => {
     setDangTai(true);
     setLoi("");
 
@@ -151,13 +151,15 @@ function DanhMucCrud({ config }) {
     } finally {
       setDangTai(false);
     }
-  };
+  }, [config.dataKey]);
 
   useEffect(() => {
-    setForm(config.empty);
-    setDangSua(null);
-    taiDanhMuc();
-  }, [config.apiKey]);
+    const timer = window.setTimeout(() => {
+      void taiDanhMuc();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [taiDanhMuc]);
 
   const capNhatForm = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));

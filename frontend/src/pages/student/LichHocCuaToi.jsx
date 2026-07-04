@@ -641,7 +641,7 @@ function LichHocCuaToi() {
                             </section>
 
                             <section className="rounded-lg border border-slate-200 p-4">
-                                <h3 className="text-base font-bold text-slate-950">Xác nhận sau buổi học</h3>
+                                <h3 className="text-base font-bold text-slate-950">Xác nhận buổi học</h3>
 
                                 {(chiTietBuoi.lichHoc.hocVienXacNhan?.trangThai || chiTietBuoi.lichHoc.giaSuXacNhan?.trangThai) && (
                                     <div className="mt-3 grid gap-2 text-sm">
@@ -743,9 +743,9 @@ function LichHocCuaToi() {
                                     </form>
                                 ) : (
                                     <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-500">
-                                        {chiTietBuoi.lichHoc.daQuaGioKetThuc
+                                        {chiTietBuoi.lichHoc.daToiGioBatDau
                                             ? "Buổi học này chưa cần hoặc đã được bạn xác nhận."
-                                            : "Sau khi buổi học kết thúc, bạn có thể xác nhận đã học hoặc báo vấn đề tại đây."}
+                                            : "Khi buổi học bắt đầu, bạn có thể xác nhận đã học hoặc báo vấn đề tại đây."}
                                     </p>
                                 )}
                             </section>

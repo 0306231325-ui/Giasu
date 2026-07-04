@@ -37,10 +37,6 @@ function Footer() {
             </a>
 
             <a href="#" className="hover:text-white transition">
-              Môn Học
-            </a>
-
-            <a href="#" className="hover:text-white transition">
               Liên Hệ
             </a>
 

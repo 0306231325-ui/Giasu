@@ -94,11 +94,11 @@ function AdminMonHoc() {
   }, [capHocLoc, tuKhoa]);
 
   useEffect(() => {
-    const boDem = setTimeout(() => {
-      taiDanhSach();
+    const timer = window.setTimeout(() => {
+      void taiDanhSach();
     }, 0);
 
-    return () => clearTimeout(boDem);
+    return () => window.clearTimeout(timer);
   }, [taiDanhSach]);
 
   const capNhatForm = (field, value) => {

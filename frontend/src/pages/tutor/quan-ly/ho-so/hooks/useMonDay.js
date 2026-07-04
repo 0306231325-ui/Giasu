@@ -15,38 +15,46 @@ export default function useMonDay({ baoLoi, baoThanhCong }) {
     const [locCapHoc, setLocCapHoc] = useState("");
     const [locTrangThai, setLocTrangThai] = useState("");
 
-    const taiDanhSach = useCallback(async () => {
-        const phanHoi = await api.get("/gia-su/ho-so/mon-day");
+    const capNhatDuLieu = useCallback((duLieu) => {
         setDanhSach(
-            (phanHoi.data.data.mon_da_dang_ky || []).map((mon) => ({
+            (duLieu.mon_da_dang_ky || []).map((mon) => ({
                 ...mon,
                 gia: `${Number(mon.gia).toLocaleString("vi-VN")}đ`,
             })),
         );
-        setCoTheThem(phanHoi.data.data.mon_co_the_them || []);
-        setCapHocs(phanHoi.data.data.cap_hoc || []);
+        setCoTheThem(duLieu.mon_co_the_them || []);
+        setCapHocs(duLieu.cap_hoc || []);
     }, []);
+
+    const taiDanhSach = useCallback(async () => {
+        const phanHoi = await api.get("/gia-su/ho-so/mon-day");
+        capNhatDuLieu(phanHoi.data.data || {});
+    }, [capNhatDuLieu]);
 
     useEffect(() => {
         let conHieuLuc = true;
-        api.get("/gia-su/ho-so/mon-day")
-            .then((phanHoi) => {
+
+        const taiDuLieuBanDau = async () => {
+            setDangTai(true);
+            try {
+                const phanHoi = await api.get("/gia-su/ho-so/mon-day");
                 if (!conHieuLuc) return;
-                setDanhSach(
-                    (phanHoi.data.data.mon_da_dang_ky || []).map((mon) => ({
-                        ...mon,
-                        gia: `${Number(mon.gia).toLocaleString("vi-VN")}đ`,
-                    })),
-                );
-                setCoTheThem(phanHoi.data.data.mon_co_the_them || []);
-                setCapHocs(phanHoi.data.data.cap_hoc || []);
-            })
-            .catch((error) => conHieuLuc && baoLoi(error.response?.data?.message || "Không thể tải danh sách môn dạy."))
-            .finally(() => conHieuLuc && setDangTai(false));
+                capNhatDuLieu(phanHoi.data.data || {});
+            } catch (error) {
+                if (conHieuLuc) {
+                    baoLoi(error.response?.data?.message || "Không thể tải danh sách môn dạy.");
+                }
+            } finally {
+                if (conHieuLuc) setDangTai(false);
+            }
+        };
+
+        taiDuLieuBanDau();
+
         return () => {
             conHieuLuc = false;
         };
-    }, [baoLoi, taiDanhSach]);
+    }, [baoLoi, capNhatDuLieu]);
 
     const daLoc = useMemo(() => {
         const tuKhoaChuan = tuKhoa.trim().toLocaleLowerCase("vi");
@@ -126,11 +134,11 @@ export default function useMonDay({ baoLoi, baoThanhCong }) {
             const phanHoi = await api.post("/gia-su/ho-so/mon-day", {
                 mon_hoc_ids: idsDaChon.map(Number),
             });
-            await taiDanhSach();
             setHienForm(false);
             setIdsDaChon([]);
             setCapHocIdsDaChon([]);
             baoThanhCong(phanHoi.data.message);
+            await taiDanhSach();
         } catch (error) {
             baoLoi(error.response?.data?.message || "Không thể thêm môn dạy.");
         } finally {
@@ -142,8 +150,8 @@ export default function useMonDay({ baoLoi, baoThanhCong }) {
         setIdDangXoa(mon.id);
         try {
             const phanHoi = await api.delete(`/gia-su/ho-so/mon-day/${mon.id}`);
-            await taiDanhSach();
             baoThanhCong(phanHoi.data.message);
+            await taiDanhSach();
         } catch (error) {
             baoLoi(error.response?.data?.message || "Không thể xóa môn dạy.");
         } finally {
