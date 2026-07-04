@@ -21,6 +21,7 @@ class GoiHoc extends Model
         'ngay_ketthuc',
         'so_buoi',
         'hoc_dinhky',
+        'kieu_goi',
         'thu',
         'gio_batdau',
         'gio_ketthuc',

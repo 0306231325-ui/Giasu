@@ -14,6 +14,12 @@ class LoaiGoiSeeder extends Seeder
 
         $rows = [
             [
+                'ten_loai_goi' => 'Gói học thử',
+                'so_thang' => 0,
+                'phan_tram_giam' => 0,
+                'mo_ta' => 'Gói dành cho một buổi học thử',
+            ],
+            [
                 'ten_loai_goi' => 'Gói 1 tháng',
                 'so_thang' => 1,
                 'phan_tram_giam' => 0,

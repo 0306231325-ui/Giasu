@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\CapHoc;
+use App\Models\GiasuGia;
 use App\Models\MonHoc;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,6 +25,7 @@ class MonHocController extends Controller
                 ->map(function ($mon) {
                     $mon->giasus_count = DB::table('giasu_gia')
                         ->where('monhoc_id', $mon->id)
+                        ->where('trang_thai', GiasuGia::TRANG_THAI_DA_DUYET)
                         ->distinct('giasu_gia.giasu_id')
                         ->count('giasu_gia.giasu_id');
 

@@ -1,5 +1,5 @@
 import { memo, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import api from "../../../services/api";
 import { layUrlAnhGiaSu } from "./avatarGiaSu";
 
@@ -12,6 +12,48 @@ const dinhDangGia = (giasu) => {
         return `${giaTu.toLocaleString("vi-VN")} - ${giaDen.toLocaleString("vi-VN")} đ/giờ`;
     }
     return `${giaTu.toLocaleString("vi-VN")} đ/giờ`;
+};
+
+const dinhDangKinhNghiem = (mucKinhNghiem) => {
+    if (!mucKinhNghiem) return "";
+
+    const tu = Number(mucKinhNghiem.tu_khoang);
+    const den = Number(mucKinhNghiem.den_khoang);
+
+    if (!Number.isNaN(tu) && !Number.isNaN(den)) return `${tu} - ${den} năm kinh nghiệm`;
+    if (!Number.isNaN(tu)) return `Từ ${tu} năm kinh nghiệm`;
+
+    return "";
+};
+
+const layMonDayHienThi = (giasu) => {
+    const monDay = (giasu?.giasu_gias || [])
+        .map((mucGia) => mucGia.mon_hoc)
+        .filter(Boolean);
+    const danhSach = [];
+    const daCo = new Set();
+
+    monDay.forEach((mon) => {
+        const tenMon = mon.ten_mon || "Môn học";
+        const capHoc = mon.cap_hoc?.ten || "";
+        const key = `${tenMon}|${capHoc}`;
+
+        if (daCo.has(key)) return;
+        daCo.add(key);
+        danhSach.push(capHoc ? `${tenMon} · ${capHoc}` : tenMon);
+    });
+
+    return {
+        hienThi: danhSach.slice(0, 3),
+        soConLai: Math.max(danhSach.length - 3, 0),
+    };
+};
+
+const dinhDangDanhGia = (giasu) => {
+    const soDanhGia = Number(giasu?.danh_gias_count || 0);
+    if (!soDanhGia) return "Chưa có đánh giá";
+
+    return `${Number(giasu.danh_gias_avg_so_sao || 0).toFixed(1)} sao (${soDanhGia})`;
 };
 
 const GiaSuAvatar = memo(({ giasu }) => {
@@ -38,50 +80,85 @@ const GiaSuAvatar = memo(({ giasu }) => {
 
 GiaSuAvatar.displayName = "GiaSuAvatar";
 
-const GiaSuCard = memo(({ giasu }) => (
-    <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0d1854] shadow-lg transition duration-200 hover:-translate-y-1 hover:border-blue-400/50">
-        <div className="relative h-52 overflow-hidden bg-[#111d5e]">
-            <GiaSuAvatar giasu={giasu} />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0d1854]/95 to-transparent" />
-            <div className="absolute right-3 top-3 rounded-full bg-amber-300 px-2.5 py-1 text-sm font-bold text-slate-950">
-                {Number(giasu.danh_gias_avg_so_sao || 0).toFixed(1)} sao
-                <span className="ml-1 text-xs">({giasu.danh_gias_count || 0})</span>
-            </div>
-        </div>
+const GiaSuCard = memo(({ giasu }) => {
+    const kinhNghiem = dinhDangKinhNghiem(giasu.muc_kinh_nghiem);
+    const monDay = layMonDayHienThi(giasu);
 
-        <div className="p-5">
-            <h2 className="truncate text-xl font-bold text-white">
-                {giasu.user?.ho_ten || "Đang cập nhật"}
-            </h2>
-
-            <div className="mt-3 space-y-2 text-sm text-slate-300">
-                <p className="line-clamp-2">{giasu.trinh_do?.ten || giasu.mo_ta || "Chưa cập nhật trình độ"}</p>
-                <p className="font-bold text-blue-300">{dinhDangGia(giasu)}</p>
-                <p className="line-clamp-2">{giasu.dia_chi || "Linh hoạt khu vực học"}</p>
+    return (
+        <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0d1854] shadow-lg transition duration-200 hover:-translate-y-1 hover:border-blue-400/50">
+            <div className="relative h-52 overflow-hidden bg-[#111d5e]">
+                <GiaSuAvatar giasu={giasu} />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0d1854]/95 to-transparent" />
+                <div className="absolute left-3 top-3 rounded-full bg-emerald-300 px-2.5 py-1 text-xs font-bold text-emerald-950">
+                    Đã duyệt
+                </div>
+                <div className="absolute right-3 top-3 rounded-full bg-amber-300 px-2.5 py-1 text-xs font-bold text-slate-950">
+                    {dinhDangDanhGia(giasu)}
+                </div>
             </div>
 
-            <Link
-                to={`/gia-su/${giasu.id}`}
-                className="mt-5 block w-full rounded-xl bg-blue-500 py-2.5 text-center font-semibold text-white transition hover:bg-blue-600"
-            >
-                Xem chi tiết
-            </Link>
+            <div className="flex flex-1 flex-col p-5">
+                <h2 className="truncate text-xl font-bold text-white">
+                    {giasu.user?.ho_ten || "Đang cập nhật"}
+                </h2>
+
+                <div className="mt-3 flex flex-1 flex-col text-sm text-slate-300">
+                    <p className="line-clamp-2 min-h-[2.5rem]">
+                        {[giasu.trinh_do?.ten, kinhNghiem].filter(Boolean).join(" · ") || "Chưa cập nhật chuyên môn"}
+                    </p>
+                    {monDay.hienThi.length > 0 ? (
+                        <div className="mt-2 flex min-h-[4.5rem] flex-wrap content-start gap-2">
+                            {monDay.hienThi.map((mon) => (
+                                <span
+                                    key={mon}
+                                    className="max-w-full truncate rounded-full border border-blue-300/20 bg-blue-300/10 px-2.5 py-1 text-xs font-bold text-blue-100"
+                                    title={mon}
+                                >
+                                    {mon}
+                                </span>
+                            ))}
+                            {monDay.soConLai > 0 && (
+                                <span className="rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-xs font-bold text-slate-200">
+                                    +{monDay.soConLai}
+                                </span>
+                            )}
+                        </div>
+                    ) : (
+                        <p className="mt-2 min-h-[4.5rem] font-semibold text-slate-100">Chưa cập nhật môn dạy</p>
+                    )}
+                    <div className="mt-auto pt-4">
+                        <p className="font-bold text-blue-300">{dinhDangGia(giasu)}</p>
+                        <p className="mt-2 line-clamp-2 min-h-[2.5rem]">{giasu.dia_chi || "Linh hoạt khu vực học"}</p>
+                    </div>
+                </div>
+
+                <Link
+                    to={`/gia-su/${giasu.id}`}
+                    className="mt-4 block w-full rounded-xl bg-blue-500 py-2.5 text-center font-semibold text-white transition hover:bg-blue-600"
+                >
+                    Xem chi tiết
+                </Link>
+            </div>
         </div>
-    </div>
-));
+    );
+});
 
 GiaSuCard.displayName = "GiaSuCard";
 
 function DanhSachGiaSu() {
+    const [searchParams] = useSearchParams();
     const [giaSus, setGiaSus] = useState([]);
     const [loading, setLoading] = useState(true);
+    const monHocId = searchParams.get("monhoc_id") || "";
 
     useEffect(() => {
         let cancelled = false;
 
         const fetchGiaSu = async () => {
             try {
-                const response = await api.get("/gia-su");
+                const response = await api.get("/gia-su", {
+                    params: monHocId ? { monhoc_id: monHocId } : {},
+                });
                 if (!cancelled && response.data.success) {
                     setGiaSus(response.data.data.data || []);
                 }
@@ -97,7 +174,7 @@ function DanhSachGiaSu() {
         return () => {
             cancelled = true;
         };
-    }, []);
+    }, [monHocId]);
 
     if (loading) {
         return (

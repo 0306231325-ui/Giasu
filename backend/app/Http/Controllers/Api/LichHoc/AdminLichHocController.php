@@ -41,7 +41,7 @@ class AdminLichHocController extends DatLichBaseController
 
         $query = LichHoc::query()
             ->with([
-                'goiHoc:id,hocvien_id,giasu_id,monhoc_id,loai_goi_id,ngay_batdau,ngay_ketthuc,so_buoi,hoc_dinhky,tong_tien,trang_thai',
+                'goiHoc:id,hocvien_id,giasu_id,monhoc_id,loai_goi_id,ngay_batdau,ngay_ketthuc,so_buoi,hoc_dinhky,kieu_goi,tong_tien,trang_thai',
                 'goiHoc.hocVien:id,ho_ten,email,sdt',
                 'goiHoc.monHoc:id,ten_mon,lop',
                 'goiHoc.loaiGoi:id,ten_loai_goi,so_thang',

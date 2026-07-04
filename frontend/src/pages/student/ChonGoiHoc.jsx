@@ -133,36 +133,6 @@ const goiHocThu = {
     phuHop: "Trải nghiệm trước",
 };
 
-const goiKhongDinhKy = [
-    {
-        id: "linh-hoat-1",
-        ten: "Buổi học thử",
-        soBuoiMoiThang: 1,
-        soThang: 1,
-        giamGia: 0,
-        moTa: "Một buổi để trao đổi mục tiêu và thử phong cách dạy.",
-        phuHop: "Muốn thử trước",
-    },
-    {
-        id: "linh-hoat-4",
-        ten: "Gói ôn gấp",
-        soBuoiMoiThang: 4,
-        soThang: 1,
-        giamGia: 0,
-        moTa: "Chọn từng buổi linh hoạt khi cần xử lý một chuyên đề hoặc bài kiểm tra gần.",
-        phuHop: "Ôn ngắn hạn",
-    },
-    {
-        id: "linh-hoat-8",
-        ten: "Gói linh hoạt",
-        soBuoiMoiThang: 8,
-        soThang: 1,
-        giamGia: 0,
-        moTa: "Không cố định thứ hằng tuần, học theo lịch rảnh của học viên và gia sư.",
-        phuHop: "Lịch thay đổi",
-    },
-];
-
 const dinhDangGia = (giaSu) => {
     const giaTu = Number(giaSu?.gia_tu || 0);
     const giaDen = Number(giaSu?.gia_den || 0);
@@ -441,9 +411,7 @@ function ChonGoiHoc() {
 
     const danhSachGoi = loaiGoi === "hoc_thu"
         ? [goiHocThu]
-        : loaiGoi === "dinh_ky"
-            ? goiDinhKy
-            : goiKhongDinhKy.filter((goi) => goi.id !== "linh-hoat-1");
+        : goiDinhKy;
     const goiDangChon = danhSachGoi.find((goi) => String(goi.id) === String(goiId));
     const monHocDaChon = monHocsCoTheDat.find((mon) => String(mon.id) === String(form.monhoc_id));
     const mucGiaDangChon = layMucGiaTheoMon(giaSu, form.monhoc_id);
@@ -814,7 +782,7 @@ function ChonGoiHoc() {
             const response = await api.post(`/gia-su/${giaSu.id}/goi-hoc`, {
                 monhoc_id: form.monhoc_id,
                 loai_goi: loaiGoi,
-                loai_goi_id: loaiGoi === "dinh_ky" ? goiDangChon.id : null,
+                loai_goi_id: loaiGoi !== "hoc_thu" ? goiDangChon.id : null,
                 goi_id: goiDangChon.id,
                 ten_goi: goiDangChon.ten,
                 so_thang: goiDangChon.soThang,

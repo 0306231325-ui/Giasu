@@ -160,7 +160,7 @@ class AdminDanhMucController extends Controller
             ]),
             'loai-goi' => $request->validate([
                 'ten_loai_goi' => ['required', 'string', 'max:100'],
-                'so_thang' => ['required', 'integer', 'min:1', 'max:120', Rule::unique('loai_goi', 'so_thang')->ignore($id)],
+                'so_thang' => ['required', 'integer', 'min:0', 'max:120', Rule::unique('loai_goi', 'so_thang')->ignore($id)],
                 'phan_tram_giam' => ['nullable', 'numeric', 'min:0', 'max:100'],
                 'mo_ta' => ['nullable', 'string', 'max:255'],
             ]),

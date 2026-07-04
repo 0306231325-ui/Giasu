@@ -14,6 +14,22 @@ const dinhDangTien = (gia) => {
   return soTien ? `${soTien.toLocaleString("vi-VN")} đ/giờ` : "Chưa cập nhật";
 };
 
+const monMacDinhTheoCap = {
+  "Tiểu học": ["Toán Học", "Tiếng Việt", "Tiếng Anh"],
+  THCS: ["Toán Học", "Ngữ Văn", "Vật Lý", "Hóa Học", "Tiếng Anh"],
+  THPT: ["Toán Học", "Ngữ Văn", "Vật Lý", "Hóa Học", "Sinh Học", "Tiếng Anh"],
+};
+
+const laySoLopTheoCap = (tenCapHoc) => {
+  if (tenCapHoc === "Tiểu học") return [1, 2, 3, 4, 5];
+  if (tenCapHoc === "THCS") return [6, 7, 8, 9];
+  if (tenCapHoc === "THPT") return [10, 11, 12];
+
+  return [];
+};
+
+const SO_DONG_MOI_TRANG = 8;
+
 function AdminMonHoc() {
   const [danhSach, setDanhSach] = useState([]);
   const [capHocs, setCapHocs] = useState([]);
@@ -26,8 +42,33 @@ function AdminMonHoc() {
   const [dangXoaId, setDangXoaId] = useState(null);
   const [loi, setLoi] = useState("");
   const [thongBao, setThongBao] = useState("");
+  const [trangHienTai, setTrangHienTai] = useState(1);
 
   const danhSachLoc = useMemo(() => danhSach, [danhSach]);
+  const tongSoTrang = Math.max(Math.ceil(danhSachLoc.length / SO_DONG_MOI_TRANG), 1);
+  const trangHopLe = Math.min(trangHienTai, tongSoTrang);
+  const danhSachDangHienThi = useMemo(() => {
+    const batDau = (trangHopLe - 1) * SO_DONG_MOI_TRANG;
+
+    return danhSachLoc.slice(batDau, batDau + SO_DONG_MOI_TRANG);
+  }, [danhSachLoc, trangHopLe]);
+  const capHocDangChon = useMemo(
+    () => capHocs.find((capHoc) => String(capHoc.id) === String(form.cap_hoc_id)),
+    [capHocs, form.cap_hoc_id],
+  );
+  const cacLopTheoCap = useMemo(
+    () => laySoLopTheoCap(capHocDangChon?.ten),
+    [capHocDangChon],
+  );
+  const goiYTenMon = useMemo(() => {
+    const tenMonDaCo = danhSach
+      .filter((monHoc) => !form.cap_hoc_id || String(monHoc.cap_hoc_id) === String(form.cap_hoc_id))
+      .map((monHoc) => monHoc.ten_mon)
+      .filter(Boolean);
+    const tenMonMacDinh = monMacDinhTheoCap[capHocDangChon?.ten] || [];
+
+    return [...new Set([...tenMonMacDinh, ...tenMonDaCo])].sort((a, b) => a.localeCompare(b, "vi"));
+  }, [capHocDangChon, danhSach, form.cap_hoc_id]);
 
   const taiDanhSach = useCallback(async () => {
     setDangTai(true);
@@ -61,7 +102,15 @@ function AdminMonHoc() {
   }, [taiDanhSach]);
 
   const capNhatForm = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev) => {
+      const next = { ...prev, [field]: value };
+
+      if (field === "cap_hoc_id") {
+        next.lop = "";
+      }
+
+      return next;
+    });
     setLoi("");
     setThongBao("");
   };
@@ -170,13 +219,19 @@ function AdminMonHoc() {
           <div className="grid gap-3 border-b border-white/10 p-4 md:grid-cols-[minmax(0,1fr)_220px]">
             <input
               value={tuKhoa}
-              onChange={(event) => setTuKhoa(event.target.value)}
+              onChange={(event) => {
+                setTuKhoa(event.target.value);
+                setTrangHienTai(1);
+              }}
               placeholder="Tìm theo tên môn, lớp, mô tả..."
               className="rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-blue-400"
             />
             <select
               value={capHocLoc}
-              onChange={(event) => setCapHocLoc(event.target.value)}
+              onChange={(event) => {
+                setCapHocLoc(event.target.value);
+                setTrangHienTai(1);
+              }}
               className="rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
             >
               <option value="">Tất cả cấp học</option>
@@ -214,7 +269,7 @@ function AdminMonHoc() {
                     </td>
                   </tr>
                 ) : (
-                  danhSachLoc.map((monHoc) => (
+                  danhSachDangHienThi.map((monHoc) => (
                     <tr key={monHoc.id} className="align-top">
                       <td className="px-4 py-3">
                         <div className="font-bold text-white">{monHoc.ten_mon}</div>
@@ -251,6 +306,38 @@ function AdminMonHoc() {
               </tbody>
             </table>
           </div>
+          {danhSachLoc.length > SO_DONG_MOI_TRANG && (
+            <div className="flex flex-col gap-3 border-t border-white/10 px-4 py-3 text-sm text-white/65 sm:flex-row sm:items-center sm:justify-between">
+              <span>
+                Hiển thị {(trangHopLe - 1) * SO_DONG_MOI_TRANG + 1}
+                {" - "}
+                {Math.min(trangHopLe * SO_DONG_MOI_TRANG, danhSachLoc.length)}
+                {" / "}
+                {danhSachLoc.length} môn
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTrangHienTai((trang) => Math.max(trang - 1, 1))}
+                  disabled={trangHopLe === 1}
+                  className="rounded-lg border border-white/10 px-3 py-2 font-bold text-white transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Trước
+                </button>
+                <span className="px-2 font-semibold text-white">
+                  {trangHopLe}/{tongSoTrang}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setTrangHienTai((trang) => Math.min(trang + 1, tongSoTrang))}
+                  disabled={trangHopLe === tongSoTrang}
+                  className="rounded-lg border border-white/10 px-3 py-2 font-bold text-white transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Sau
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         <form onSubmit={luuMonHoc} className="h-fit rounded-2xl border border-white/10 bg-white/[0.03] p-5">
@@ -259,11 +346,18 @@ function AdminMonHoc() {
             <label className="block">
               <span className="mb-2 block text-sm font-semibold text-white/75">Tên môn</span>
               <input
+                list="goi-y-ten-mon"
                 value={form.ten_mon}
                 onChange={(event) => capNhatForm("ten_mon", event.target.value)}
+                placeholder={form.cap_hoc_id ? "Ví dụ: Toán Học" : "Chọn cấp học trước để xem gợi ý"}
                 required
-                className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
+                className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-blue-400"
               />
+              <datalist id="goi-y-ten-mon">
+                {goiYTenMon.map((tenMon) => (
+                  <option key={tenMon} value={tenMon} />
+                ))}
+              </datalist>
             </label>
 
             <label className="block">
@@ -271,6 +365,7 @@ function AdminMonHoc() {
               <select
                 value={form.cap_hoc_id}
                 onChange={(event) => capNhatForm("cap_hoc_id", event.target.value)}
+                required
                 className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
               >
                 <option value="">Chưa chọn</option>
@@ -284,12 +379,22 @@ function AdminMonHoc() {
 
             <label className="block">
               <span className="mb-2 block text-sm font-semibold text-white/75">Lớp</span>
-              <input
+              <select
                 value={form.lop}
                 onChange={(event) => capNhatForm("lop", event.target.value)}
-                placeholder="Ví dụ: 10, 11, 12"
-                className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-blue-400"
-              />
+                disabled={!form.cap_hoc_id}
+                required
+                className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <option value="">
+                  {form.cap_hoc_id ? "Chọn lớp" : "Chọn cấp học trước"}
+                </option>
+                {cacLopTheoCap.map((lop) => (
+                  <option key={lop} value={`Lớp ${lop}`}>
+                    Lớp {lop}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <label className="block">
