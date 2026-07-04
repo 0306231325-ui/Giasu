@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import ModalNhapLyDo from "../../../components/ModalNhapLyDo";
 import api from "../../../services/api";
 import ChiTietXetDuyet from "./ChiTietXetDuyet";
 import DanhSachChoDuyet from "./DanhSachChoDuyet";
 import DanhSachGiaSuAdmin from "./DanhSachGiaSuAdmin";
-import ModalTuChoi from "./ModalTuChoi";
 import YeuCauChuyenMon from "./YeuCauChuyenMon";
 
 function AdminGiaSu() {
@@ -12,7 +12,6 @@ function AdminGiaSu() {
     const [danhSachChoDuyet, setDanhSachChoDuyet] = useState([]);
     const [hoSoDangChon, setHoSoDangChon] = useState(null);
     const [hoSoTuChoi, setHoSoTuChoi] = useState(null);
-    const [lyDoTuChoi, setLyDoTuChoi] = useState("");
     const [heSoGiaDuyet, setHeSoGiaDuyet] = useState("0");
     const [thongKe, setThongKe] = useState({
         choDuyet: 0,
@@ -124,7 +123,6 @@ function AdminGiaSu() {
             if (response.data?.success) {
                 hienThongBao(response.data.message);
                 setHoSoTuChoi(null);
-                setLyDoTuChoi("");
                 await taiHoSoChoDuyet(tuKhoa);
             }
         } catch (error) {
@@ -247,10 +245,7 @@ function AdminGiaSu() {
                         onDoiHeSoGia={(event) => setHeSoGiaDuyet(event.target.value)}
                         dangXuLy={dangXuLy}
                         onDuyet={() => xuLyHoSo(hoSoDangChon, "duyet", "", heSoGiaDuyet)}
-                        onTuChoi={() => {
-                            setLyDoTuChoi("");
-                            setHoSoTuChoi(hoSoDangChon);
-                        }}
+                        onTuChoi={() => setHoSoTuChoi(hoSoDangChon)}
                         onXemTaiLieu={xemTaiLieu}
                     />
                 </div>
@@ -263,13 +258,15 @@ function AdminGiaSu() {
                 />
             )}
 
-            <ModalTuChoi
-                hoSo={hoSoTuChoi}
-                lyDo={lyDoTuChoi}
-                onDoiLyDo={(event) => setLyDoTuChoi(event.target.value)}
+            <ModalNhapLyDo
+                mo={Boolean(hoSoTuChoi)}
+                tieuDe="Từ chối hồ sơ gia sư"
+                moTa={`Nhập lý do từ chối hồ sơ của ${hoSoTuChoi?.hoTen || "gia sư"}. Nội dung này sẽ được gửi cho người đăng ký.`}
+                placeholder="Ví dụ: Hồ sơ minh chứng chưa rõ ràng..."
+                nutXacNhan="Xác nhận từ chối"
                 onDong={() => setHoSoTuChoi(null)}
                 dangXuLy={dangXuLy}
-                onXacNhan={() => xuLyHoSo(hoSoTuChoi, "tu_choi", lyDoTuChoi)}
+                onXacNhan={(lyDo) => xuLyHoSo(hoSoTuChoi, "tu_choi", lyDo)}
             />
         </div>
     );

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import ModalNhapLyDo from "../../../components/ModalNhapLyDo";
 import api from "../../../services/api";
 
 const BO_LOC_TRANG_THAI = [
@@ -132,7 +133,7 @@ function AdminLichHoc() {
   };
 
   const xuLyLichHoc = async (lich, hanhDong, duLieu) => {
-    if (!lich || dangXuLy) return;
+    if (!lich || dangXuLy) return false;
 
     setDangXuLy(true);
     setLoi("");
@@ -148,9 +149,13 @@ function AdminLichHoc() {
         capNhatLichTrongDanhSach(response.data.data);
         setThongBao(response.data.message || "Đã cập nhật buổi học.");
         await taiLichHoc();
+        return true;
       }
+
+      return false;
     } catch (error) {
       setLoi(error.response?.data?.message || "Không xử lý được buổi học.");
+      return false;
     } finally {
       setDangXuLy(false);
     }
@@ -410,7 +415,7 @@ function NhanXacNhanNho({ active, warning, children }) {
 
 function ChiTietLichHoc({ lich, dangXuLy, onXuLy }) {
   const [ghiChuHoanThanh, setGhiChuHoanThanh] = useState("");
-  const [lyDoHuy, setLyDoHuy] = useState("");
+  const [lichCanHuy, setLichCanHuy] = useState(null);
   const [tab, setTab] = useState("tong_quan");
 
   if (!lich) {
@@ -424,6 +429,11 @@ function ChiTietLichHoc({ lich, dangXuLy, onXuLy }) {
   const coTheXuLy = !["hoanthanh", "dahuy"].includes(lich.trangThai);
   const xacNhan = lich.xacNhan || {};
   const coTheHoanThanh = Boolean(lich.coTheAdminXacNhanHoanThanh);
+
+  const xacNhanHuyLich = async (lyDo) => {
+    const thanhCong = await onXuLy(lichCanHuy, "huy", { ly_do: lyDo });
+    if (thanhCong) setLichCanHuy(null);
+  };
 
   return (
     <aside className="h-fit rounded-2xl border border-white/10 bg-white p-5 text-slate-900">
@@ -553,31 +563,20 @@ function ChiTietLichHoc({ lich, dangXuLy, onXuLy }) {
                 </button>
               </form>
 
-              <form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  onXuLy(lich, "huy", { ly_do: lyDoHuy });
-                  setLyDoHuy("");
-                }}
-                className="rounded-xl border border-red-200 bg-red-50 p-3"
-              >
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3">
                 <p className="text-sm font-bold text-red-900">Hủy buổi học</p>
-                <textarea
-                  rows={3}
-                  required
-                  value={lyDoHuy}
-                  onChange={(event) => setLyDoHuy(event.target.value)}
-                  placeholder="Nhập lý do hủy buổi học"
-                  className="mt-3 w-full resize-none rounded-lg border border-red-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-red-400"
-                />
+                <p className="mt-1 text-xs font-semibold leading-5 text-red-700">
+                  Admin cần nhập lý do trước khi hủy để hệ thống lưu lại và thông báo cho người liên quan.
+                </p>
                 <button
-                  type="submit"
+                  type="button"
                   disabled={dangXuLy}
+                  onClick={() => setLichCanHuy(lich)}
                   className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {dangXuLy ? "Đang xử lý..." : "Hủy buổi học"}
+                  Hủy buổi học
                 </button>
-              </form>
+              </div>
             </div>
           ) : (
             <div className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500">
@@ -587,6 +586,17 @@ function ChiTietLichHoc({ lich, dangXuLy, onXuLy }) {
         </KhoiThongTin>
         </div>
       )}
+
+      <ModalNhapLyDo
+        mo={Boolean(lichCanHuy)}
+        tieuDe="Hủy buổi học"
+        moTa={`Nhập lý do hủy buổi học ${lichCanHuy?.maGoi || ""}. Nội dung này sẽ được lưu vào lịch học.`}
+        placeholder="Ví dụ: Gia sư báo bận đột xuất..."
+        nutXacNhan="Xác nhận hủy"
+        dangXuLy={dangXuLy}
+        onDong={() => setLichCanHuy(null)}
+        onXacNhan={xacNhanHuyLich}
+      />
     </aside>
   );
 }

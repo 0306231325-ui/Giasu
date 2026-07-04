@@ -19,26 +19,46 @@ function BangCapChungChi({ duLieu }) {
                         <p className="mt-1 text-xs leading-5 text-slate-500">Thêm file minh chứng để hồ sơ được xác minh đầy đủ hơn.</p>
                     </div>
                 ) : (
-                    <div className="space-y-3">
+                    <div className="divide-y divide-slate-100 rounded-xl border border-slate-200">
                         {duLieu.danhSach.map((taiLieu) => (
-                            <div key={taiLieu.id} className="rounded-2xl border border-slate-200 p-4 transition hover:border-blue-200 hover:bg-blue-50/40">
-                                <div className="flex items-start gap-3">
-                                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600"><IconHoSo ten="document" /></span>
-                                    <div className="min-w-0 flex-1">
+                            <div key={taiLieu.id} className="grid gap-3 px-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                                <div className="min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2">
                                         <p className="truncate text-sm font-bold text-slate-900">{taiLieu.ten_bang}</p>
-                                        <p className="mt-1 text-xs leading-5 text-slate-500">{[taiLieu.chuyen_nganh, taiLieu.truong_don_vi].filter(Boolean).join(" · ") || "Chưa cập nhật chi tiết"}</p>
                                         {taiLieu.trinh_do_giasu_id && (
-                                            <p className="mt-2 inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700">
+                                            <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700">
                                                 {layTenTrinhDo(taiLieu.trinh_do_giasu_id) || taiLieu.ten_trinh_do || "Trình độ xác minh"}
-                                            </p>
+                                            </span>
                                         )}
-                                        <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ${lopTrangThaiBangCap(taiLieu.trang_thai)}`}>{nhanTrangThaiBangCap(taiLieu.trang_thai)}</span>
-                                        {taiLieu.ly_do && <p className="mt-2 text-xs leading-5 text-red-600"><span className="font-bold">Lý do:</span> {taiLieu.ly_do}</p>}
+                                        <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${lopTrangThaiBangCap(taiLieu.trang_thai)}`}>
+                                            {nhanTrangThaiBangCap(taiLieu.trang_thai)}
+                                        </span>
                                     </div>
-                                    <div className="flex shrink-0 gap-1">
-                                        <button type="button" onClick={() => duLieu.xem(taiLieu)} aria-label={`Xem ${taiLieu.ten_bang}`} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-blue-600"><IconHoSo ten="eye" /></button>
-                                        <button type="button" onClick={() => duLieu.xoa(taiLieu)} disabled={duLieu.idDangXoa === taiLieu.id} aria-label={`Xóa ${taiLieu.ten_bang}`} className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"><IconHoSo ten="trash" /></button>
-                                    </div>
+                                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                                        {[taiLieu.chuyen_nganh, taiLieu.truong_don_vi].filter(Boolean).join(" · ") || "Chưa cập nhật chi tiết"}
+                                    </p>
+                                    {taiLieu.ly_do && (
+                                        <p className="mt-1 text-xs leading-5 text-red-600">
+                                            <span className="font-bold">Lý do:</span> {taiLieu.ly_do}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="flex shrink-0 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => duLieu.xem(taiLieu)}
+                                        className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                                    >
+                                        Xem
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => duLieu.xoa(taiLieu)}
+                                        disabled={duLieu.idDangXoa === taiLieu.id}
+                                        className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                                    >
+                                        Xóa
+                                    </button>
                                 </div>
                             </div>
                         ))}

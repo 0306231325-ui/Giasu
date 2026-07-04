@@ -16,13 +16,13 @@ function KhoiNoiDung({
     return (
         <section
             className={[
-                "overflow-hidden rounded-2xl border bg-white text-slate-900 shadow-lg shadow-black/10",
+                "overflow-hidden rounded-2xl border bg-white text-slate-900",
                 noiBat ? "border-blue-200" : "border-slate-200",
             ].join(" ")}
         >
-            <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div className="flex flex-col gap-3 border-b border-slate-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-3">
-                    <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${noiBat ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-600"}`}>
+                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${noiBat ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-600"}`}>
                         <IconHoSo ten={bieuTuong} />
                     </span>
                     <div>
@@ -35,14 +35,14 @@ function KhoiNoiDung({
                         type="button"
                         onClick={onHanhDong}
                         disabled={voHieuHoaHanhDong}
-                        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:self-center"
+                        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:self-center"
                     >
                         <IconHoSo ten={laHanhDongThem ? "plus" : "edit"} />
                         {hanhDong}
                     </button>
                 )}
             </div>
-            <div className="p-5 sm:px-6 sm:py-5">{children}</div>
+            <div className="p-4">{children}</div>
         </section>
     );
 }
