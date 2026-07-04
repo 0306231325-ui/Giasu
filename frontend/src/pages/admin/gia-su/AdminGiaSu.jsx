@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useOutletContext, useSearchParams } from "react-router-dom";
 import ModalNhapLyDo from "../../../components/ModalNhapLyDo";
 import api from "../../../services/api";
 import ChiTietXetDuyet from "./ChiTietXetDuyet";
@@ -7,7 +8,9 @@ import DanhSachGiaSuAdmin from "./DanhSachGiaSuAdmin";
 import YeuCauChuyenMon from "./YeuCauChuyenMon";
 
 function AdminGiaSu() {
-    const [tab, setTab] = useState("xet_duyet");
+    const { demCanXuLy, taiDemCanXuLy } = useOutletContext() ?? {};
+    const [searchParams, setSearchParams] = useSearchParams();
+    const tab = searchParams.get("tab") || "xet_duyet";
     const [tuKhoa, setTuKhoa] = useState("");
     const [danhSachChoDuyet, setDanhSachChoDuyet] = useState([]);
     const [hoSoDangChon, setHoSoDangChon] = useState(null);
@@ -22,6 +25,8 @@ function AdminGiaSu() {
     const [dangXuLy, setDangXuLy] = useState(false);
     const [thongBao, setThongBao] = useState("");
     const boDemThongBao = useRef(null);
+    const soHoSoChoDuyet = demCanXuLy?.giaSuHoSoChoDuyet ?? thongKe.choDuyet;
+    const soYeuCauChuyenMon = demCanXuLy?.giaSuYeuCauChuyenMon ?? 0;
 
     const hienThongBao = useCallback((noiDung) => {
         if (boDemThongBao.current) {
@@ -74,6 +79,15 @@ function AdminGiaSu() {
         }
     }, [hienThongBao, hoSoDangChon?.id]);
 
+    const doiTab = (tabMoi) => {
+        if (tabMoi === "xet_duyet") {
+            setSearchParams({});
+            return;
+        }
+
+        setSearchParams({ tab: tabMoi });
+    };
+
     useEffect(() => {
         return () => {
             if (boDemThongBao.current) {
@@ -124,6 +138,7 @@ function AdminGiaSu() {
                 hienThongBao(response.data.message);
                 setHoSoTuChoi(null);
                 await taiHoSoChoDuyet(tuKhoa);
+                await taiDemCanXuLy?.();
             }
         } catch (error) {
             hienThongBao(error.response?.data?.message || "Không thể xử lý hồ sơ.");
@@ -162,21 +177,21 @@ function AdminGiaSu() {
                         giaTri={thongKe.choDuyet}
                         mau="amber"
                         active={tab === "xet_duyet"}
-                        onClick={() => setTab("xet_duyet")}
+                        onClick={() => doiTab("xet_duyet")}
                     />
                     <ThongKe
                         nhan="Đã duyệt"
                         giaTri={thongKe.daDuyet}
                         mau="emerald"
                         active={tab === "danh_sach"}
-                        onClick={() => setTab("danh_sach")}
+                        onClick={() => doiTab("danh_sach")}
                     />
                     <ThongKe
                         nhan="Từ chối"
                         giaTri={thongKe.tuChoi}
                         mau="red"
                         active={tab === "tu_choi"}
-                        onClick={() => setTab("tu_choi")}
+                        onClick={() => doiTab("tu_choi")}
                     />
                 </div>
             </div>
@@ -191,23 +206,24 @@ function AdminGiaSu() {
                 <div className="flex gap-1 overflow-x-auto rounded-xl border border-white/10 bg-white/5 p-1">
                     <Tab
                         active={tab === "xet_duyet"}
-                        onClick={() => setTab("xet_duyet")}
+                        onClick={() => doiTab("xet_duyet")}
                         label="Xét duyệt hồ sơ"
-                        badge={thongKe.choDuyet}
+                        badge={soHoSoChoDuyet}
                     />
                     <Tab
                         active={tab === "danh_sach"}
-                        onClick={() => setTab("danh_sach")}
+                        onClick={() => doiTab("danh_sach")}
                         label="Danh sách gia sư"
                     />
                     <Tab
                         active={tab === "chuyen_mon"}
-                        onClick={() => setTab("chuyen_mon")}
+                        onClick={() => doiTab("chuyen_mon")}
                         label="Yêu cầu chuyên môn"
+                        badge={soYeuCauChuyenMon}
                     />
                     <Tab
                         active={tab === "tu_choi"}
-                        onClick={() => setTab("tu_choi")}
+                        onClick={() => doiTab("tu_choi")}
                         label="Hồ sơ bị từ chối"
                         badge={thongKe.tuChoi}
                     />
@@ -250,7 +266,7 @@ function AdminGiaSu() {
                     />
                 </div>
             ) : tab === "chuyen_mon" ? (
-                <YeuCauChuyenMon />
+                <YeuCauChuyenMon onThayDoiSoLuong={taiDemCanXuLy} />
             ) : (
                 <DanhSachGiaSuAdmin
                     key={tab}

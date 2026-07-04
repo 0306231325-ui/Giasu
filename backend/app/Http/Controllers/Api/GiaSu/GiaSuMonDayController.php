@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\CapHoc;
 use App\Models\GiasuGia;
 use App\Models\MonHoc;
+use App\Models\ThongBao;
+use App\Models\User;
 use App\Services\GiaSuHoSoService;
 use App\Services\GiaSuMonDayService;
 use App\Services\GiaTinhService;
@@ -104,6 +106,17 @@ class GiaSuMonDayController extends Controller
             }
         });
 
+        $tenMon = $monDaiDien
+            ->pluck('ten_mon')
+            ->unique()
+            ->take(3)
+            ->join(', ');
+
+        $this->thongBaoChoAdmin(
+            'Yêu cầu thêm môn dạy mới',
+            ($giaSu->user?->ho_ten ?? 'Gia sư') . ' vừa gửi yêu cầu thêm môn dạy' . ($tenMon ? ': ' . $tenMon : '.'),
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Đã thêm môn dạy và gửi xét duyệt.',
@@ -176,5 +189,19 @@ class GiaSuMonDayController extends Controller
                 ? 'Không tìm thấy hồ sơ gia sư.'
                 : 'Chỉ tài khoản gia sư mới có thể quản lý môn dạy.',
         ], $laGiaSu ? 404 : 403);
+    }
+
+    private function thongBaoChoAdmin(string $tieuDe, string $noiDung): void
+    {
+        User::query()
+            ->where('vai_tro', 'admin')
+            ->get(['id'])
+            ->each(fn (User $admin) => ThongBao::create([
+                'user_id' => $admin->id,
+                'tieu_de' => $tieuDe,
+                'noi_dung' => $noiDung,
+                'url' => '/admin/gia-su?tab=chuyen_mon',
+                'da_doc' => false,
+            ]));
     }
 }

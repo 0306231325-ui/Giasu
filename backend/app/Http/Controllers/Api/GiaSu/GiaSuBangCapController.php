@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\GiaSu;
 
 use App\Http\Controllers\Controller;
 use App\Models\GiasuBangCap;
+use App\Models\ThongBao;
+use App\Models\User;
 use App\Services\GiaSuFileService;
 use App\Services\GiaSuHoSoService;
 use Illuminate\Http\JsonResponse;
@@ -96,6 +98,11 @@ class GiaSuBangCapController extends Controller
             throw $exception;
         }
 
+        $this->thongBaoChoAdmin(
+            'Yêu cầu bằng cấp mới',
+            ($giaSu->user?->ho_ten ?? 'Gia sư') . ' vừa gửi tài liệu "' . $bangCap->ten_bang . '" để xét duyệt.',
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Đã thêm tài liệu và gửi xét duyệt.',
@@ -170,5 +177,19 @@ class GiaSuBangCapController extends Controller
                 ? 'Không tìm thấy hồ sơ gia sư.'
                 : 'Chỉ tài khoản gia sư mới có thể quản lý tài liệu.',
         ], $laGiaSu ? 404 : 403);
+    }
+
+    private function thongBaoChoAdmin(string $tieuDe, string $noiDung): void
+    {
+        User::query()
+            ->where('vai_tro', 'admin')
+            ->get(['id'])
+            ->each(fn (User $admin) => ThongBao::create([
+                'user_id' => $admin->id,
+                'tieu_de' => $tieuDe,
+                'noi_dung' => $noiDung,
+                'url' => '/admin/gia-su?tab=chuyen_mon',
+                'da_doc' => false,
+            ]));
     }
 }

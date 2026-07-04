@@ -38,7 +38,7 @@ const cauHinhTrangThaiBangCap = {
     tu_choi: "bg-red-50 text-red-700",
 };
 
-function YeuCauChuyenMon() {
+function YeuCauChuyenMon({ onThayDoiSoLuong }) {
     const [trangThaiDangChon, setTrangThaiDangChon] = useState("cho_duyet");
     const [loaiDangChon, setLoaiDangChon] = useState("tat_ca");
     const [tuKhoaNhap, setTuKhoaNhap] = useState("");
@@ -143,6 +143,7 @@ function YeuCauChuyenMon() {
 
             hienThongBao(response.data?.message || "Đã xử lý yêu cầu.");
             await taiDanhSach();
+            await onThayDoiSoLuong?.();
             return true;
         } catch (error) {
             hienThongBao(error.response?.data?.message || "Không thể xử lý yêu cầu.");
