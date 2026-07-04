@@ -61,6 +61,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/{lichHocId}/doi-buoi', [HocVienLichHocController::class, 'yeuCauDoiBuoiHoc']);
         });
 
+        Route::get('/thanh-toan', [HocVienThanhToanController::class, 'lichSuThanhToan']);
         Route::post('/goi-hoc/{goiHocId}/thanh-toan', [HocVienThanhToanController::class, 'thanhToanGoiHoc']);
         Route::patch('/goi-hoc/{goiHocId}/huy', [DatGoiController::class, 'hocVienHuyGoiHoc']);
     });

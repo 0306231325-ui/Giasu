@@ -17,6 +17,37 @@ use Illuminate\Validation\Rule;
 
 class HocVienThanhToanController extends Controller
 {
+    public function lichSuThanhToan(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->vai_tro !== 'hocvien') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chuc nang nay chi danh cho tai khoan hoc vien.',
+            ], 403);
+        }
+
+        $danhSach = ThanhToan::query()
+            ->with([
+                'goiHoc:id,hocvien_id,giasu_id,monhoc_id,loai_goi_id,tong_tien,trang_thai',
+                'goiHoc.giasu:id,user_id',
+                'goiHoc.giasu.user:id,ho_ten',
+                'goiHoc.monHoc:id,ten_mon,lop',
+                'goiHoc.loaiGoi:id,ten_loai_goi',
+            ])
+            ->whereHas('goiHoc', fn ($query) => $query->where('hocvien_id', $user->id))
+            ->orderByDesc(DB::raw('COALESCE(ngay_thanhtoan, created_at)'))
+            ->get()
+            ->map(fn (ThanhToan $thanhToan) => $this->dinhDangLichSuThanhToan($thanhToan))
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => $danhSach,
+        ]);
+    }
+
     public function thanhToanGoiHoc(Request $request, int $goiHocId): JsonResponse
     {
         $user = $request->user();
@@ -201,6 +232,54 @@ class HocVienThanhToanController extends Controller
             'ngayThanhToan' => $thanhToan->ngay_thanhtoan?->format('d/m/Y H:i') ?? '',
             'trangThai' => $thanhToan->trang_thai,
         ];
+    }
+
+    private function dinhDangLichSuThanhToan(ThanhToan $thanhToan): array
+    {
+        $goiHoc = $thanhToan->goiHoc;
+        $monHoc = $goiHoc?->monHoc;
+
+        return [
+            'id' => $thanhToan->id,
+            'maGoi' => $goiHoc ? 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) : 'Chưa cập nhật',
+            'soTien' => (float) $thanhToan->so_tien,
+            'soTienText' => number_format((float) $thanhToan->so_tien, 0, ',', '.') . 'đ',
+            'phuongThuc' => $this->dinhDangPhuongThucThanhToan($thanhToan->phuong_thuc),
+            'maGiaoDich' => $thanhToan->ma_giaodich,
+            'noiDung' => $thanhToan->noi_dung_thanhtoan,
+            'anhMinhChung' => $thanhToan->anh_minh_chung,
+            'ngayThanhToan' => $thanhToan->ngay_thanhtoan?->format('d/m/Y H:i') ?? '',
+            'trangThai' => $thanhToan->trang_thai,
+            'trangThaiText' => $this->tenTrangThaiThanhToan($thanhToan->trang_thai),
+            'goiHoc' => [
+                'monHoc' => $monHoc
+                    ? trim($monHoc->ten_mon . ($monHoc->lop ? ' - ' . $this->dinhDangLop($monHoc->lop) : ''))
+                    : 'Môn học',
+                'loaiGoi' => $goiHoc?->loaiGoi?->ten_loai_goi,
+                'giaSu' => $goiHoc?->giasu?->user?->ho_ten ?? 'Gia sư',
+                'trangThai' => $goiHoc?->trang_thai,
+            ],
+        ];
+    }
+
+    private function dinhDangLop(?string $lop): string
+    {
+        $lop = trim((string) $lop);
+
+        if ($lop === '') {
+            return '';
+        }
+
+        return str_starts_with(mb_strtolower($lop, 'UTF-8'), 'lớp') ? $lop : 'Lớp ' . $lop;
+    }
+
+    private function tenTrangThaiThanhToan(?string $trangThai): string
+    {
+        return [
+            'cho_thanhtoan' => 'Chờ duyệt',
+            'da_thanhtoan' => 'Đã thanh toán',
+            'that_bai' => 'Thất bại',
+        ][$trangThai] ?? 'Chưa cập nhật';
     }
 
     private function dinhDangPhuongThucThanhToan(?string $phuongThuc): string
