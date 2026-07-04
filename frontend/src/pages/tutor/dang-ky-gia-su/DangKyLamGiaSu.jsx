@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
+import { useToast } from "../../../context/ToastContext";
 import api from "../../../services/api";
 import CapHocMonDay from "./components/CapHocMonDay";
 import FormThemHoSo from "./components/FormThemHoSo";
@@ -22,9 +23,9 @@ function DangKyLamGiaSu() {
     const luaChon = useLuaChonGiangDay(danhMuc);
     const { setTrinhDoIdDaChon } = luaChon;
     const hoSo = useHoSoChuyenMon();
+    const toast = useToast();
     const formRef = useRef(null);
     const [dangGuiDon, setDangGuiDon] = useState(false);
-    const [thongBao, setThongBao] = useState(null);
 
     const trinhDoCaoNhatId = useMemo(() => {
         const thuTuTheoId = new Map(
@@ -52,29 +53,18 @@ function DangKyLamGiaSu() {
 
         if (dangGuiDon || !formRef.current) return;
 
-        setThongBao(null);
-
         if (hoSo.danhSach.length === 0) {
-            setThongBao({
-                loai: "loi",
-                noiDung: "Vui lòng thêm ít nhất một bằng cấp hoặc chứng chỉ.",
-            });
+            toast.error("Vui lòng thêm ít nhất một bằng cấp hoặc chứng chỉ.");
             return;
         }
 
         if (luaChon.monHocIdsDaChon.length === 0) {
-            setThongBao({
-                loai: "loi",
-                noiDung: "Vui lòng chọn ít nhất một môn học đăng ký dạy.",
-            });
+            toast.error("Vui lòng chọn ít nhất một môn học đăng ký dạy.");
             return;
         }
 
         if (!trinhDoCaoNhatId) {
-            setThongBao({
-                loai: "loi",
-                noiDung: "Vui lòng chọn trình độ xác minh cho hồ sơ chuyên môn.",
-            });
+            toast.error("Vui lòng chọn trình độ xác minh cho hồ sơ chuyên môn.");
             return;
         }
 
@@ -103,10 +93,7 @@ function DangKyLamGiaSu() {
             });
 
             if (response.data?.success) {
-                setThongBao({
-                    loai: "thanh_cong",
-                    noiDung: response.data.message,
-                });
+                toast.success(response.data.message || "Gửi đơn đăng ký thành công.");
                 if (response.data.data?.user) {
                     updateUser(response.data.data.user);
                 }
@@ -121,10 +108,10 @@ function DangKyLamGiaSu() {
                     ? Object.values(loiValidate).flat()[0]
                     : error.response?.data?.message;
 
-            setThongBao({
-                loai: "loi",
-                noiDung: noiDung || "Không thể gửi đơn đăng ký. Vui lòng kiểm tra lại thông tin.",
-            });
+            toast.error(
+                noiDung ||
+                    "Không thể gửi đơn đăng ký. Vui lòng kiểm tra lại thông tin.",
+            );
         } finally {
             setDangGuiDon(false);
         }
@@ -175,18 +162,6 @@ function DangKyLamGiaSu() {
                     {loiDanhMuc && (
                         <div className="border-b border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700 sm:px-8 lg:px-10">
                             {loiDanhMuc}
-                        </div>
-                    )}
-                    {thongBao && (
-                        <div
-                            className={[
-                                "border-b px-6 py-4 text-sm font-semibold sm:px-8 lg:px-10",
-                                thongBao.loai === "thanh_cong"
-                                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                    : "border-red-200 bg-red-50 text-red-700",
-                            ].join(" ")}
-                        >
-                            {thongBao.noiDung}
                         </div>
                     )}
                     <ThongTinCaNhanDangKy
