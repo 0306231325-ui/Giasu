@@ -1,6 +1,29 @@
+import { useState } from "react";
+import ModalXemTaiLieu from "../../../../components/ModalXemTaiLieu";
 import { TieuDePhan } from "./ThanhPhanChung";
 
 function TrinhDoHoSo({ danhMuc, hoSo }) {
+    const [taiLieuDangXem, setTaiLieuDangXem] = useState(null);
+
+    const moFile = (muc) => {
+        if (!muc.tai_lieu) return;
+
+        setTaiLieuDangXem({
+            urlTrucTiep: URL.createObjectURL(muc.tai_lieu),
+            tenFile: muc.tai_lieu.name,
+            tieuDe: muc.ten_bang,
+            laUrlTam: true,
+        });
+    };
+
+    const dongFile = () => {
+        if (taiLieuDangXem?.laUrlTam) {
+            URL.revokeObjectURL(taiLieuDangXem.urlTrucTiep);
+        }
+
+        setTaiLieuDangXem(null);
+    };
+
     const layTenTrinhDo = (id) =>
         danhMuc.trinh_do.find((muc) => String(muc.id) === String(id))?.ten ||
         "Chưa chọn trình độ";
@@ -16,14 +39,6 @@ function TrinhDoHoSo({ danhMuc, hoSo }) {
             default:
                 return "Chưa phân loại";
         }
-    };
-
-    const moFile = (file) => {
-        if (!file) return;
-
-        const url = URL.createObjectURL(file);
-        window.open(url, "_blank", "noopener,noreferrer");
-        setTimeout(() => URL.revokeObjectURL(url), 60_000);
     };
 
     return (
@@ -68,7 +83,7 @@ function TrinhDoHoSo({ danhMuc, hoSo }) {
                                         </div>
                                         <button
                                             type="button"
-                                            onClick={() => moFile(muc.tai_lieu)}
+                                            onClick={() => moFile(muc)}
                                             className="inline-flex shrink-0 items-center justify-center rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-50"
                                         >
                                             Xem file
@@ -80,6 +95,10 @@ function TrinhDoHoSo({ danhMuc, hoSo }) {
                     )}
                 </div>
             </div>
+            <ModalXemTaiLieu
+                taiLieu={taiLieuDangXem}
+                onDong={dongFile}
+            />
         </div>
     );
 }

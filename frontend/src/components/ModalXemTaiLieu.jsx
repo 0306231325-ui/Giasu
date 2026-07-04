@@ -8,9 +8,12 @@ function ModalXemTaiLieu({ taiLieu, onDong, onLoi }) {
 
     const tenFile = taiLieu?.tenFile || taiLieu?.ten || "Tài liệu minh chứng";
     const laPdf = useMemo(() => tenFile.toLowerCase().endsWith(".pdf"), [tenFile]);
+    const duongDanHienThi = taiLieu?.urlTrucTiep || duongDanTam;
+    const dangTaiHienThi = !taiLieu?.urlTrucTiep && dangTai;
+    const loiHienThi = taiLieu?.urlTrucTiep ? "" : loi;
 
     useEffect(() => {
-        if (!taiLieu?.urlXem) return undefined;
+        if (!taiLieu || taiLieu.urlTrucTiep || !taiLieu.urlXem) return undefined;
 
         let conHieuLuc = true;
         let urlTam = "";
@@ -66,29 +69,29 @@ function ModalXemTaiLieu({ taiLieu, onDong, onLoi }) {
                 </div>
 
                 <div className="min-h-[420px] flex-1 overflow-auto bg-slate-100 p-4">
-                    {dangTai && (
+                    {dangTaiHienThi && (
                         <div className="flex min-h-[420px] items-center justify-center text-sm font-bold text-slate-500">
                             Đang tải tài liệu...
                         </div>
                     )}
 
-                    {!dangTai && loi && (
+                    {!dangTaiHienThi && loiHienThi && (
                         <div className="flex min-h-[420px] items-center justify-center text-center text-sm font-bold text-red-600">
-                            {loi}
+                            {loiHienThi}
                         </div>
                     )}
 
-                    {!dangTai && !loi && duongDanTam && (
+                    {!dangTaiHienThi && !loiHienThi && duongDanHienThi && (
                         laPdf ? (
                             <iframe
                                 title={tenFile}
-                                src={duongDanTam}
+                                src={duongDanHienThi}
                                 className="h-[72vh] w-full rounded-2xl border border-slate-200 bg-white"
                             />
                         ) : (
                             <div className="flex min-h-[420px] items-center justify-center">
                                 <img
-                                    src={duongDanTam}
+                                    src={duongDanHienThi}
                                     alt={tenFile}
                                     className="max-h-[72vh] max-w-full rounded-2xl object-contain shadow"
                                 />
@@ -97,10 +100,10 @@ function ModalXemTaiLieu({ taiLieu, onDong, onLoi }) {
                     )}
                 </div>
 
-                {duongDanTam && (
+                {duongDanHienThi && (
                     <div className="flex justify-end border-t border-slate-200 px-5 py-4">
                         <a
-                            href={duongDanTam}
+                            href={duongDanHienThi}
                             target="_blank"
                             rel="noreferrer"
                             className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white transition hover:bg-blue-500"
