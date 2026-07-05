@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../../../../../services/api";
 
-export default function useMonDay({ baoLoi, baoThanhCong }) {
+export default function useMonDay({
+    baoLoi,
+    baoThanhCong,
+}) {
     const [danhSach, setDanhSach] = useState([]);
     const [coTheThem, setCoTheThem] = useState([]);
     const [capHocs, setCapHocs] = useState([]);
@@ -14,6 +17,7 @@ export default function useMonDay({ baoLoi, baoThanhCong }) {
     const [tuKhoa, setTuKhoa] = useState("");
     const [locCapHoc, setLocCapHoc] = useState("");
     const [locTrangThai, setLocTrangThai] = useState("");
+    const [loi, setLoi] = useState({});
 
     const capNhatDuLieu = useCallback((duLieu) => {
         setDanhSach(
@@ -88,6 +92,21 @@ export default function useMonDay({ baoLoi, baoThanhCong }) {
         () => new Set(coTheThem.map((mon) => String(mon.cap_hoc_id))),
         [coTheThem],
     );
+    const giaDuKienDaChon = useMemo(
+        () => coTheThem
+            .filter((mon) => idsDaChon.includes(String(mon.id)))
+            .map((mon) => ({
+                id: mon.id,
+                tenMon: mon.ten_mon,
+                capHoc: mon.cap_hoc,
+                giaMon: Number(mon.gia_mon || 0),
+                giaCongTrinhDo: Number(mon.gia_cong_trinh_do || 0),
+                giaCongKinhNghiem: Number(mon.gia_cong_kinh_nghiem || 0),
+                giaCongThem: Number(mon.gia_cong_them || 0),
+                tongGia: Number(mon.tong_gia || 0),
+            })),
+        [coTheThem, idsDaChon],
+    );
 
     const chonCapHoc = (id) => {
         const idChuoi = String(id);
@@ -126,10 +145,12 @@ export default function useMonDay({ baoLoi, baoThanhCong }) {
         setHienForm(false);
         setIdsDaChon([]);
         setCapHocIdsDaChon([]);
+        setLoi({});
     };
     const them = async (suKien) => {
         suKien.preventDefault();
         setDangThem(true);
+        setLoi({});
         try {
             const phanHoi = await api.post("/gia-su/ho-so/mon-day", {
                 mon_hoc_ids: idsDaChon.map(Number),
@@ -140,7 +161,12 @@ export default function useMonDay({ baoLoi, baoThanhCong }) {
             baoThanhCong(phanHoi.data.message);
             await taiDanhSach();
         } catch (error) {
-            baoLoi(error.response?.data?.message || "Không thể thêm môn dạy.");
+            if (error.response?.status === 422) {
+                setLoi(error.response.data.errors || {});
+                baoLoi(error.response?.data?.message || "Vui lòng kiểm tra thông tin thêm môn dạy.");
+            } else {
+                baoLoi(error.response?.data?.message || "Không thể thêm môn dạy.");
+            }
         } finally {
             setDangThem(false);
         }
@@ -162,6 +188,8 @@ export default function useMonDay({ baoLoi, baoThanhCong }) {
     return {
         danhSach, coTheThem, capHocs, daLoc, dangTai, hienForm, idsDaChon,
         capHocIdsDaChon, monHocTheoCapDaChon, capHocIdsCoMonDeThem,
+        giaDuKienDaChon,
+        loi,
         dangThem, idDangXoa, tuKhoa, locCapHoc, locTrangThai,
         setTuKhoa, setLocCapHoc, setLocTrangThai, setHienForm,
         chonCapHoc, chonMon, dongForm, them, xoa,

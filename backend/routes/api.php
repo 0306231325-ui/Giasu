@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Admin\AdminGiaSuController;
 use App\Http\Controllers\Api\Admin\AdminHocVienController;
 use App\Http\Controllers\Api\Admin\AdminTrangThaiGiaSuController;
 use App\Http\Controllers\Api\Admin\AdminXetDuyetGiaSuController;
+use App\Http\Controllers\Api\Admin\AdminYeuCauChuyenMonController;
 use App\Http\Controllers\Api\AdminDanhMucController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BaiViet\BaiVietController;
@@ -122,6 +123,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/', [AdminGiaSuController::class, 'danhSachGiaSu']);
             Route::get('/xet-duyet', [AdminXetDuyetGiaSuController::class, 'danhSachHoSoChoDuyet']);
             Route::patch('/xet-duyet/{giaSuId}', [AdminXetDuyetGiaSuController::class, 'xuLyHoSoDangKy']);
+            Route::get('/yeu-cau-chuyen-mon', [AdminYeuCauChuyenMonController::class, 'danhSach']);
+            Route::patch('/yeu-cau-chuyen-mon/{loai}/{id}', [AdminYeuCauChuyenMonController::class, 'xuLy']);
             Route::get('/bang-cap/{bangCapId}/xem', [AdminGiaSuBangCapController::class, 'xemBangCapAdmin']);
             Route::patch('/{giaSuId}/trang-thai', [AdminTrangThaiGiaSuController::class, 'capNhatTrangThaiGiaSu']);
         });

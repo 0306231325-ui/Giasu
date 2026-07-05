@@ -158,21 +158,21 @@ class GiaSuYeuCauDatGoiController extends DatLichBaseController
                 ->get(['id'])
                 ->each(fn (User $admin) => ThongBao::create([
                     'user_id' => $admin->id,
-                    'tieu_de' => $laTuChoi ? 'Gia su tu choi yeu cau' : 'Gia su dong y yeu cau',
-                    'noi_dung' => ($goiHoc->giasu?->user?->ho_ten ?? 'Gia su')
-                        . ($laTuChoi ? ' da tu choi ' : ' da dong y ')
-                        . 'yeu cau ' . 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT)
-                        . ($laTuChoi && $lyDo ? '. Ly do: ' . $lyDo : '.'),
+                    'tieu_de' => $laTuChoi ? 'Gia sư từ chối yêu cầu' : 'Gia sư đồng ý yêu cầu',
+                    'noi_dung' => ($goiHoc->giasu?->user?->ho_ten ?? 'Gia sư')
+                        . ($laTuChoi ? ' đã từ chối ' : ' đã đồng ý ')
+                        . 'yêu cầu ' . 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT)
+                        . ($laTuChoi && $lyDo ? '. Lý do: ' . $lyDo : '.'),
                     'url' => '/admin/quan-ly-dat-goi',
                     'da_doc' => false,
                 ]));
 
             ThongBao::create([
                 'user_id' => $goiHoc->hocvien_id,
-                'tieu_de' => $laTuChoi ? 'Gia su da tu choi yeu cau' : 'Gia su da dong y nhan lop',
+                'tieu_de' => $laTuChoi ? 'Gia sư đã từ chối yêu cầu' : 'Gia sư đã đồng ý nhận lớp',
                 'noi_dung' => $laTuChoi
-                    ? 'Gia su da tu choi yeu cau dat goi cua ban' . ($lyDo ? ': ' . $lyDo : '.')
-                    : 'Gia su da dong y nhan lop. Vui long cho admin xu ly buoc tiep theo.',
+                    ? 'Gia sư đã từ chối yêu cầu đặt gói của bạn' . ($lyDo ? ': ' . $lyDo : '.')
+                    : 'Gia sư đã đồng ý nhận lớp. Vui lòng chờ admin xử lý bước tiếp theo.',
                 'url' => '/hoc-vien/lich-hoc',
                 'da_doc' => false,
             ]);

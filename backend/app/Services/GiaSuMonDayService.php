@@ -53,17 +53,26 @@ class GiaSuMonDayService
             ->with('capHoc:id,ten')
             ->orderBy('cap_hoc_id')
             ->orderBy('ten_mon')
-            ->get(['id', 'ten_mon', 'cap_hoc_id', 'lop'])
+            ->get(['id', 'ten_mon', 'cap_hoc_id', 'lop', 'gia'])
             ->unique(fn (MonHoc $monHoc) => "{$monHoc->cap_hoc_id}|{$monHoc->ten_mon}")
             ->reject(fn (MonHoc $monHoc) => $monDaCoTheoCapVaTen->has(
                 "{$monHoc->cap_hoc_id}|{$monHoc->ten_mon}",
             ))
-            ->map(fn (MonHoc $monHoc) => [
-                'id' => $monHoc->id,
-                'ten_mon' => $monHoc->ten_mon,
-                'cap_hoc_id' => $monHoc->cap_hoc_id,
-                'cap_hoc' => $monHoc->capHoc?->ten,
-            ])
+            ->map(function (MonHoc $monHoc) use ($giaSu) {
+                $giaDuKien = GiaTinhService::tinhGiaGiasu($monHoc->id, $giaSu->id) ?? [];
+
+                return [
+                    'id' => $monHoc->id,
+                    'ten_mon' => $monHoc->ten_mon,
+                    'cap_hoc_id' => $monHoc->cap_hoc_id,
+                    'cap_hoc' => $monHoc->capHoc?->ten,
+                    'gia_mon' => (float) ($giaDuKien['gia_mon'] ?? $monHoc->gia ?? 0),
+                    'gia_cong_trinh_do' => (float) ($giaDuKien['gia_cong_trinh_do'] ?? 0),
+                    'gia_cong_kinh_nghiem' => (float) ($giaDuKien['gia_cong_kinh_nghiem'] ?? 0),
+                    'gia_cong_them' => (float) ($giaDuKien['gia_cong_them'] ?? 0),
+                    'tong_gia' => (float) ($giaDuKien['tong_gia'] ?? $monHoc->gia ?? 0),
+                ];
+            })
             ->values();
     }
 

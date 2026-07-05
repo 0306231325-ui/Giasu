@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import api from "../../../../../services/api";
 import { BANG_CAP_MAC_DINH } from "../constants";
 
@@ -14,6 +14,11 @@ export default function useBangCap({
     const [loi, setLoi] = useState({});
     const [dangThem, setDangThem] = useState(false);
     const [idDangXoa, setIdDangXoa] = useState(null);
+
+    const taiDanhSach = useCallback(async () => {
+        const phanHoi = await api.get("/gia-su/ho-so/bang-cap");
+        setDanhSach(phanHoi.data.data || []);
+    }, []);
 
     useEffect(() => {
         let conHieuLuc = true;
@@ -90,5 +95,5 @@ export default function useBangCap({
         }
     };
 
-    return { danhSach, danhMucTrinhDo, dangTai, hienForm, form, loi, dangThem, idDangXoa, setHienForm, thayDoi, dongForm, them, xem, xoa };
+    return { danhSach, danhMucTrinhDo, dangTai, hienForm, form, loi, dangThem, idDangXoa, setHienForm, thayDoi, dongForm, them, xem, xoa, taiDanhSach };
 }

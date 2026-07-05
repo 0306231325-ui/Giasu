@@ -1,11 +1,16 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import ThongBaoDropdown from "../components/ThongBaoDropdown";
 import { useAuth } from "../context/AuthContext";
+import useAdminDemCanXuLy from "../hooks/useAdminDemCanXuLy";
 
 function AdminLayout() {
   const navigate = useNavigate();
   const { user, logout, loading } = useAuth();
 
   const isAdmin = user?.vai_tro === "admin";
+  const { dem: demCanXuLy, taiSoLuong: taiDemCanXuLy } = useAdminDemCanXuLy({
+    kichHoat: isAdmin,
+  });
   const lamMoiTrangAdmin = () => {
     window.dispatchEvent(new CustomEvent("admin:refresh"));
   };
@@ -40,13 +45,13 @@ function AdminLayout() {
 
         <nav className="p-3 space-y-1">
           <NavItem to="/admin" end label="Trang chủ" />
-          <NavItem to="/admin/hoc-vien" label="Tài khoản học viên" />
-          <NavItem to="/admin/gia-su" label="Tài khoản gia sư" />
-          <NavItem to="/admin/danh-muc" label="Môn học" />
-          <NavItem to="/admin/quan-ly-dat-goi" label="Quản lý đặt gói" />
-          <NavItem to="/admin/lich-hoc" label="Quản lý lịch học" />
+          <NavItem to="/admin/hoc-vien" label="Tài khoản học viên" badge={demCanXuLy.hocVien} />
+          <NavItem to="/admin/gia-su" label="Tài khoản gia sư" badge={demCanXuLy.giaSu} />
+          <NavItem to="/admin/danh-muc" label="Môn học" badge={demCanXuLy.danhMuc} />
+          <NavItem to="/admin/quan-ly-dat-goi" label="Quản lý đặt gói" badge={demCanXuLy.datGoi} />
+          <NavItem to="/admin/lich-hoc" label="Quản lý lịch học" badge={demCanXuLy.lichHoc} />
           <NavItem to="/admin/doanh-thu" label="Tổng doanh thu" />
-          <NavItem to="/admin/bai-viet" label="Bài viết" />
+          <NavItem to="/admin/bai-viet" label="Bài viết" badge={demCanXuLy.baiViet} />
         </nav>
 
         <div className="p-4 border-t border-white/10 mt-auto">
@@ -77,14 +82,20 @@ function AdminLayout() {
             {isAdmin ? "Quản trị hệ thống" : "Chỉ admin mới được dùng trang này"}
           </div>
           {isAdmin && (
-            <button
-              type="button"
-              onClick={lamMoiTrangAdmin}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold text-white/75 transition hover:border-blue-400/50 hover:bg-blue-500/15 hover:text-white"
-            >
-              <span>↻</span>
-              Làm mới
-            </button>
+            <div className="flex items-center gap-3">
+              <ThongBaoDropdown
+                tieuDe="Thông báo admin"
+                moTaRong="Các yêu cầu xét duyệt, đặt gói, thanh toán và lịch học cần xử lý sẽ hiển thị tại đây."
+              />
+              <button
+                type="button"
+                onClick={lamMoiTrangAdmin}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold text-white/75 transition hover:border-blue-400/50 hover:bg-blue-500/15 hover:text-white"
+              >
+                <span>↻</span>
+                Làm mới
+              </button>
+            </div>
           )}
         </header>
 
@@ -97,7 +108,7 @@ function AdminLayout() {
               </div>
             </div>
           ) : (
-            <Outlet />
+            <Outlet context={{ demCanXuLy, taiDemCanXuLy }} />
           )}
         </main>
       </div>
@@ -105,8 +116,9 @@ function AdminLayout() {
   );
 }
 
-function NavItem({ to, end, label }) {
+function NavItem({ to, end, label, badge = 0 }) {
   const labelHienThi = to === "/admin/danh-muc" ? "Danh mục hệ thống" : label;
+  const coBadge = Number(badge || 0) > 0;
 
   return (
     <NavLink
@@ -114,14 +126,19 @@ function NavItem({ to, end, label }) {
       end={end}
       className={({ isActive }) =>
         [
-          "block px-4 py-2.5 rounded-xl text-sm font-semibold transition",
+          "flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition",
           isActive
             ? "bg-blue-600 text-white"
             : "text-white/80 hover:bg-white/5 hover:text-white",
         ].join(" ")
       }
     >
-      {labelHienThi}
+      <span className="min-w-0 truncate">{labelHienThi}</span>
+      {coBadge && (
+        <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-amber-400/20 px-1.5 text-[11px] font-extrabold leading-none text-amber-300">
+          {badge}
+        </span>
+      )}
     </NavLink>
   );
 }

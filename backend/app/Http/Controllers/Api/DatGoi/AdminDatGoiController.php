@@ -80,8 +80,8 @@ class AdminDatGoiController extends DatLichBaseController
 
         ThongBao::create([
             'user_id' => $goiHoc->giasu->user_id,
-            'tieu_de' => 'Co yeu cau dat goi moi',
-            'noi_dung' => ($goiHoc->hocVien?->ho_ten ?? 'Hoc vien') . ' da dat goi hoc va admin da chuyen cho ban xu ly.',
+            'tieu_de' => 'Có yêu cầu đặt gói mới',
+            'noi_dung' => ($goiHoc->hocVien?->ho_ten ?? 'Học viên') . ' đã đặt gói học và admin đã chuyển cho bạn xử lý.',
             'url' => '/gia-su/quan-ly/lich-day',
             'da_doc' => false,
         ]);
@@ -119,8 +119,8 @@ class AdminDatGoiController extends DatLichBaseController
 
         ThongBao::create([
             'user_id' => $goiHoc->hocvien_id,
-            'tieu_de' => 'Yeu cau dat goi da duoc chap nhan',
-            'noi_dung' => 'Gia su da dong y nhan lop. Ban co the tien hanh thanh toan goi hoc.',
+            'tieu_de' => 'Yêu cầu đặt gói đã được chấp nhận',
+            'noi_dung' => 'Gia sư đã đồng ý nhận lớp. Bạn có thể tiến hành thanh toán gói học.',
             'url' => '/hoc-vien/lich-hoc',
             'da_doc' => false,
         ]);
@@ -154,8 +154,8 @@ class AdminDatGoiController extends DatLichBaseController
 
         ThongBao::create([
             'user_id' => $goiHoc->hocvien_id,
-            'tieu_de' => 'Nhac thanh toan goi hoc',
-            'noi_dung' => 'Goi hoc ' . 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . ' dang cho thanh toan. Vui long hoan tat thanh toan de kich hoat lich hoc.',
+            'tieu_de' => 'Nhắc thanh toán gói học',
+            'noi_dung' => 'Gói học ' . 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . ' đang chờ thanh toán. Vui lòng hoàn tất thanh toán để kích hoạt lịch học.',
             'url' => '/hoc-vien/lich-hoc',
             'da_doc' => false,
         ]);
@@ -203,8 +203,8 @@ class AdminDatGoiController extends DatLichBaseController
 
             ThongBao::create([
                 'user_id' => $goiHoc->hocvien_id,
-                'tieu_de' => 'Goi hoc da bi huy',
-                'noi_dung' => 'Yeu cau dat goi cua ban da bi huy' . (filled($duLieu['ly_do'] ?? null) ? ': ' . trim($duLieu['ly_do']) : '.'),
+                'tieu_de' => 'Gói học đã bị hủy',
+                'noi_dung' => 'Yêu cầu đặt gói của bạn đã bị hủy' . (filled($duLieu['ly_do'] ?? null) ? ': ' . trim($duLieu['ly_do']) : '.'),
                 'url' => '/hoc-vien/lich-hoc',
                 'da_doc' => false,
             ]);
@@ -212,9 +212,9 @@ class AdminDatGoiController extends DatLichBaseController
             if ($goiHoc->giasu?->user_id) {
                 ThongBao::create([
                     'user_id' => $goiHoc->giasu->user_id,
-                    'tieu_de' => 'Yeu cau dat goi da bi huy',
-                    'noi_dung' => 'Yeu cau dat goi ' . 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT)
-                        . ' da bi admin huy' . (filled($duLieu['ly_do'] ?? null) ? ': ' . trim($duLieu['ly_do']) : '.'),
+                    'tieu_de' => 'Yêu cầu đặt gói đã bị hủy',
+                    'noi_dung' => 'Yêu cầu đặt gói ' . 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT)
+                        . ' đã bị admin hủy' . (filled($duLieu['ly_do'] ?? null) ? ': ' . trim($duLieu['ly_do']) : '.'),
                     'url' => '/gia-su/quan-ly/lich-day',
                     'da_doc' => false,
                 ]);

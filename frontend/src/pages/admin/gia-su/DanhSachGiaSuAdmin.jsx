@@ -1,8 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../../../services/api";
+import ModalNhapLyDo from "../../../components/ModalNhapLyDo";
+import { useToast } from "../../../context/ToastContext";
 import IconAdminGiaSu from "./IconAdminGiaSu";
 
 function DanhSachGiaSuAdmin({ trangThaiHoSo = "duyet" }) {
+    const toast = useToast();
     const [danhSach, setDanhSach] = useState([]);
     const [danhMucTrinhDo, setDanhMucTrinhDo] = useState([]);
     const [meta, setMeta] = useState(null);
@@ -10,14 +13,12 @@ function DanhSachGiaSuAdmin({ trangThaiHoSo = "duyet" }) {
     const [lanTaiLai, setLanTaiLai] = useState(0);
     const [dangTai, setDangTai] = useState(true);
     const [loi, setLoi] = useState("");
-    const [loiThaoTac, setLoiThaoTac] = useState("");
-    const [thongBao, setThongBao] = useState("");
     const [dangCapNhatId, setDangCapNhatId] = useState(null);
     const [tuKhoa, setTuKhoa] = useState("");
     const [trangThai, setTrangThai] = useState("");
     const [trinhDo, setTrinhDo] = useState("");
     const [giaSuDangXem, setGiaSuDangXem] = useState(null);
-    const boDemAnThongBao = useRef(null);
+    const [giaSuDangKhoa, setGiaSuDangKhoa] = useState(null);
     const laHoSoTuChoi = trangThaiHoSo === "tu_choi";
 
     const thamSoTruyVan = useMemo(
@@ -78,15 +79,6 @@ function DanhSachGiaSuAdmin({ trangThaiHoSo = "duyet" }) {
         };
     }, [lanTaiLai, thamSoTruyVan, trangHienTai]);
 
-    useEffect(
-        () => () => {
-            if (boDemAnThongBao.current) {
-                clearTimeout(boDemAnThongBao.current);
-            }
-        },
-        [],
-    );
-
     useEffect(() => {
         const lamMoi = () => {
             setLanTaiLai((hienTai) => hienTai + 1);
@@ -99,37 +91,28 @@ function DanhSachGiaSuAdmin({ trangThaiHoSo = "duyet" }) {
         };
     }, []);
 
-    const hienThongBaoTamThoi = (noiDung) => {
-        if (boDemAnThongBao.current) {
-            clearTimeout(boDemAnThongBao.current);
-        }
-
-        setThongBao(noiDung);
-        boDemAnThongBao.current = setTimeout(() => {
-            setThongBao("");
-            boDemAnThongBao.current = null;
-        }, 3000);
-    };
-
     const xuLyChuyenTrangThai = async (giaSu) => {
         const trangThaiMoi =
             giaSu.trangThai === "hoatdong" ? "khoa" : "hoatdong";
-        const xacNhan = window.confirm(
-            trangThaiMoi === "khoa"
-                ? `Khóa tài khoản gia sư ${giaSu.hoTen}?`
-                : `Mở khóa tài khoản gia sư ${giaSu.hoTen}?`,
-        );
 
-        if (!xacNhan) return;
+        if (trangThaiMoi === "khoa") {
+            setGiaSuDangKhoa(giaSu);
+            return;
+        }
 
+        await capNhatTrangThaiGiaSu(giaSu, trangThaiMoi);
+    };
+
+    const capNhatTrangThaiGiaSu = async (giaSu, trangThaiMoi, lyDoKhoa = "") => {
         setDangCapNhatId(giaSu.id);
-        setLoiThaoTac("");
-        setThongBao("");
 
         try {
             const response = await api.patch(
                 `/admin/gia-su/${giaSu.id}/trang-thai`,
-                { trang_thai: trangThaiMoi },
+                {
+                    trang_thai: trangThaiMoi,
+                    ...(trangThaiMoi === "khoa" ? { ly_do_khoa: lyDoKhoa } : {}),
+                },
             );
             const giaSuDaCapNhat = response.data?.data;
 
@@ -140,6 +123,7 @@ function DanhSachGiaSuAdmin({ trangThaiHoSo = "duyet" }) {
                             ? {
                                 ...muc,
                                 trangThai: giaSuDaCapNhat.trangThai,
+                                lyDoKhoa: giaSuDaCapNhat.lyDoKhoa,
                             }
                             : muc,
                     ),
@@ -149,14 +133,16 @@ function DanhSachGiaSuAdmin({ trangThaiHoSo = "duyet" }) {
                         ? {
                             ...hienTai,
                             trangThai: giaSuDaCapNhat.trangThai,
+                            lyDoKhoa: giaSuDaCapNhat.lyDoKhoa,
                         }
                         : hienTai,
                 );
-                hienThongBaoTamThoi(response.data.message);
+                toast.success(response.data.message || "Đã cập nhật trạng thái tài khoản gia sư.");
+                setGiaSuDangKhoa(null);
                 setLanTaiLai((hienTai) => hienTai + 1);
             }
         } catch (error) {
-            setLoiThaoTac(
+            toast.error(
                 error.response?.data?.message
                 ?? "Không thể cập nhật trạng thái tài khoản gia sư.",
             );
@@ -245,17 +231,6 @@ function DanhSachGiaSuAdmin({ trangThaiHoSo = "duyet" }) {
                     </BoLoc>
                 </div>
 
-                {thongBao && (
-                    <div className="mt-4 rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm font-semibold text-emerald-200">
-                        {thongBao}
-                    </div>
-                )}
-                {loiThaoTac && (
-                    <div className="mt-4 rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm font-semibold text-red-200">
-                        {loiThaoTac}
-                    </div>
-                )}
-
                 <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-[#0a0f24]">
                     <div className="overflow-x-auto">
                         <table className="min-w-[760px] w-full text-left text-sm">
@@ -338,6 +313,19 @@ function DanhSachGiaSuAdmin({ trangThaiHoSo = "duyet" }) {
                     laHoSoTuChoi={laHoSoTuChoi}
                 />
             )}
+
+            <ModalNhapLyDo
+                mo={Boolean(giaSuDangKhoa)}
+                tieuDe="Khóa tài khoản gia sư"
+                moTa={`Nhập lý do khóa tài khoản ${giaSuDangKhoa?.hoTen || "gia sư"}. Lý do này sẽ được lưu để quản trị viên theo dõi.`}
+                placeholder="Ví dụ: Hồ sơ không còn hợp lệ hoặc vi phạm quy định..."
+                nutXacNhan="Khóa tài khoản"
+                dangXuLy={dangCapNhatId === giaSuDangKhoa?.id}
+                onDong={() => setGiaSuDangKhoa(null)}
+                onXacNhan={(lyDo) =>
+                    capNhatTrangThaiGiaSu(giaSuDangKhoa, "khoa", lyDo)
+                }
+            />
         </>
     );
 }

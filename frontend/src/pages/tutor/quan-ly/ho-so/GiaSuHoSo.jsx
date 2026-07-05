@@ -55,11 +55,14 @@ function GiaSuHoSo() {
         baoThanhCong,
     });
     const chuyenMon = useChuyenMon({ baoLoi, baoThanhCong });
-    const monDay = useMonDay({ baoLoi, baoThanhCong });
     const bangCap = useBangCap({
         baoLoi,
         baoThanhCong,
         danhMucTrinhDo: chuyenMon.danhMuc.trinh_do,
+    });
+    const monDay = useMonDay({
+        baoLoi,
+        baoThanhCong,
     });
 
     const tenGiaSu =
@@ -99,30 +102,25 @@ function GiaSuHoSo() {
 
             <div className="mt-5 space-y-5">
                 <ThongTinCaNhan duLieu={thongTinCaNhan} />
-                <section className="overflow-hidden rounded-3xl border border-blue-400/20 bg-white/95 text-slate-900 shadow-2xl shadow-black/10">
-                    <div className="border-b border-slate-100 bg-gradient-to-r from-blue-50 to-slate-50 px-5 py-5 sm:px-6">
-                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900">
+                    <div className="border-b border-slate-100 px-4 py-4 sm:px-5">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                             <div>
-                                <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-blue-600">
-                                    Khu vực xét duyệt
-                                </p>
-                                <h2 className="mt-2 text-xl font-extrabold text-slate-950">
-                                    Thông tin chuyên môn cần xét duyệt
+                                <h2 className="text-lg font-extrabold text-slate-950">
+                                    Thông tin chuyên môn
                                 </h2>
-                                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-                                    Bao gồm bằng cấp/chứng chỉ và danh mục môn
-                                    dạy. Các thay đổi chuyên môn sẽ được quản
-                                    trị viên kiểm tra trước khi dùng để hiển thị
-                                    hoặc tính giá chính thức.
+                                <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">
+                                    Quản lý bằng cấp/chứng chỉ và danh mục môn dạy.
+                                    Các thay đổi chuyên môn sẽ được admin xét duyệt trước khi áp dụng.
                                 </p>
                             </div>
-                            <span className="inline-flex w-fit rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700">
-                                Cần admin duyệt sau khi chỉnh
+                            <span className="inline-flex w-fit rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700">
+                                Cần admin duyệt
                             </span>
                         </div>
                     </div>
 
-                    <div className="space-y-5 bg-slate-50/70 p-4 sm:p-5">
+                    <div className="space-y-4 bg-slate-50/60 p-4">
                         <BangCapChungChi duLieu={bangCap} />
                         <DanhMucMonDay duLieu={monDay} />
                     </div>

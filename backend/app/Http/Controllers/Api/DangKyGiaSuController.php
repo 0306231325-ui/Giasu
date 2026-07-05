@@ -79,6 +79,8 @@ class DangKyGiaSuController extends Controller
             ], 401);
         }
 
+        $daCoAnhChanDung = filled($user->anh_dai_dien) || filled($user->giasu?->avatar);
+
         $duLieu = $request->validate([
             'ho_ten' => ['required', 'string', 'min:2', 'max:100'],
             'ngay_sinh' => ['required', 'date', 'before:today'],
@@ -90,7 +92,12 @@ class DangKyGiaSuController extends Controller
                 Rule::unique('users', 'email')->ignore($user->id),
             ],
             'dia_chi' => ['required', 'string', 'min:5', 'max:255'],
-            'anh_chan_dung' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'anh_chan_dung' => [
+                $daCoAnhChanDung ? 'nullable' : 'required',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:5120',
+            ],
             'muc_kinh_nghiem_id' => ['required', 'integer', 'exists:muc_kinh_nghiem,id'],
             'gioi_thieu' => ['required', 'string', 'min:10', 'max:2000'],
             'mon_hoc_ids' => ['required', 'array', 'min:1'],

@@ -1,3 +1,5 @@
+import { useState } from "react";
+import ModalXemTaiLieu from "../../../components/ModalXemTaiLieu";
 import IconAdminGiaSu from "../gia-su/IconAdminGiaSu";
 import { TRANG_THAI_GOI } from "./constants";
 import { dinhDangNgay, layHanhDong, layNhanThanhToanPhu } from "./utils";
@@ -81,6 +83,8 @@ function ChiTietYeuCauDatGoi({ yeuCau, onThucHien }) {
 }
 
 function KhoiThanhToan({ yeuCau }) {
+    const [taiLieuDangXem, setTaiLieuDangXem] = useState(null);
+
     if (!["cho_thanh_toan", "da_tao_lich"].includes(yeuCau.trangThai)) {
         return null;
     }
@@ -89,6 +93,15 @@ function KhoiThanhToan({ yeuCau }) {
     const nhanPhu = layNhanThanhToanPhu(yeuCau);
     const anhMinhChung = thanhToan.anhMinhChung || thanhToan.anh_minh_chung;
     const urlMinhChung = taoUrlFile(anhMinhChung);
+    const moAnhMinhChung = () => {
+        if (!urlMinhChung) return;
+
+        setTaiLieuDangXem({
+            urlTrucTiep: urlMinhChung,
+            tenFile: anhMinhChung?.split("/")?.pop() || "minh-chung-thanh-toan.jpg",
+            tieuDe: "Minh chứng thanh toán",
+        });
+    };
 
     return (
         <KhoiThongTin tieuDe="Thanh toán" icon="money">
@@ -112,22 +125,25 @@ function KhoiThanhToan({ yeuCau }) {
                                 Admin kiểm tra ảnh trước khi duyệt hoặc từ chối thanh toán.
                             </p>
                         </div>
-                        <a
-                            href={urlMinhChung}
-                            target="_blank"
-                            rel="noreferrer"
+                        <button
+                            type="button"
+                            onClick={moAnhMinhChung}
                             className="inline-flex justify-center rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100"
                         >
-                            Mở ảnh gốc
-                        </a>
+                            Xem ảnh minh chứng
+                        </button>
                     </div>
-                    <a href={urlMinhChung} target="_blank" rel="noreferrer">
+                    <button
+                        type="button"
+                        onClick={moAnhMinhChung}
+                        className="mt-4 block w-full overflow-hidden rounded-xl border border-slate-200 bg-white"
+                    >
                         <img
                             src={urlMinhChung}
                             alt="Minh chứng thanh toán"
-                            className="mt-4 max-h-[420px] w-full rounded-xl border border-slate-200 bg-white object-contain"
+                            className="max-h-[420px] w-full object-contain"
                         />
-                    </a>
+                    </button>
                 </div>
             )}
 
@@ -136,6 +152,10 @@ function KhoiThanhToan({ yeuCau }) {
                     Khi học viên gửi minh chứng thanh toán, gói sẽ xuất hiện ở tab Xác nhận thanh toán.
                 </div>
             )}
+            <ModalXemTaiLieu
+                taiLieu={taiLieuDangXem}
+                onDong={() => setTaiLieuDangXem(null)}
+            />
         </KhoiThongTin>
     );
 }

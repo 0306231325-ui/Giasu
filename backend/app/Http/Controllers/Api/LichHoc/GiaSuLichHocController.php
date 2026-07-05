@@ -138,11 +138,11 @@ class GiaSuLichHocController extends DatLichBaseController
             ThongBao::create([
                 'user_id' => $lichHoc->goiHoc->hocvien_id,
                 'tieu_de' => $trangThaiXacNhan === 'baovan_de'
-                    ? 'Gia su bao van de buoi hoc'
-                    : 'Gia su da xac nhan buoi hoc',
+                    ? 'Gia sư báo vấn đề buổi học'
+                    : 'Gia sư đã xác nhận buổi học',
                 'noi_dung' => $trangThaiXacNhan === 'baovan_de'
-                    ? "{$user->ho_ten} da bao co van de voi buoi hoc."
-                    : "{$user->ho_ten} da xac nhan da day xong buoi hoc.",
+                    ? "{$user->ho_ten} đã báo có vấn đề với buổi học."
+                    : "{$user->ho_ten} đã xác nhận đã dạy xong buổi học.",
                 'url' => '/hoc-vien/lich-hoc',
                 'da_doc' => false,
             ]);

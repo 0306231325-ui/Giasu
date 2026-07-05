@@ -179,7 +179,7 @@ class AdminLichHocController extends DatLichBaseController
             }
         });
 
-        $this->guiThongBaoXuLyLichHoc($lichHoc->fresh(), 'Buoi hoc da duoc xac nhan hoan thanh');
+        $this->guiThongBaoXuLyLichHoc($lichHoc->fresh(), 'Buổi học đã được xác nhận hoàn thành');
 
         return response()->json([
             'success' => true,
@@ -226,7 +226,7 @@ class AdminLichHocController extends DatLichBaseController
             'ghi_chu' => $this->themDongGhiChu($lichHoc->ghi_chu, 'Admin hủy buổi học', $lyDo),
         ]);
 
-        $this->guiThongBaoXuLyLichHoc($lichHoc->fresh(), 'Buoi hoc da bi huy');
+        $this->guiThongBaoXuLyLichHoc($lichHoc->fresh(), 'Buổi học đã bị hủy');
 
         return response()->json([
             'success' => true,

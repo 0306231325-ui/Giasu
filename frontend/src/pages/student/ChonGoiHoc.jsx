@@ -224,11 +224,11 @@ function ChonGoiHoc() {
         ));
     }, []);
 
-    const khungGioGiaSuRanhDauTien = useCallback((ngay, danhSachLich = lichBanGiaSu) => (
+    const khungGioGiaSuRanhDauTien = useCallback((ngay, danhSachLich) => (
         cacKhungGioBatDau.find((gio) => !slotTrungDanhSachLichBan(danhSachLich, ngay, gio)) || ""
-    ), [lichBanGiaSu, slotTrungDanhSachLichBan]);
+    ), [slotTrungDanhSachLichBan]);
 
-    const dieuChinhBuoiLinhHoatTheoLichBan = useCallback((danhSachBuoi, danhSachLich = lichBanGiaSu) => {
+    const dieuChinhBuoiLinhHoatTheoLichBan = useCallback((danhSachBuoi, danhSachLich) => {
         let daThayDoi = false;
 
         const danhSachMoi = danhSachBuoi.map((buoi, index) => {
@@ -267,7 +267,7 @@ function ChonGoiHoc() {
         });
 
         return daThayDoi ? danhSachMoi : danhSachBuoi;
-    }, [lichBanGiaSu, slotTrungDanhSachLichBan]);
+    }, [slotTrungDanhSachLichBan]);
 
     useEffect(() => {
         let cancelled = false;
@@ -331,24 +331,7 @@ function ChonGoiHoc() {
             try {
                 const response = await api.get(`/gia-su/${id}/lich-ban`);
                 if (!cancelled && response.data.success) {
-                    const lichBanMoi = response.data.data || [];
-                    setLichBanGiaSu(lichBanMoi);
-
-                    if (loaiGoi === "hoc_thu" && slotTrungDanhSachLichBan(lichBanMoi, form.ngay_batdau, form.gio_batdau)) {
-                        const gioBatDau = khungGioGiaSuRanhDauTien(form.ngay_batdau, lichBanMoi);
-
-                        if (gioBatDau && gioBatDau !== form.gio_batdau) {
-                            setForm((prev) => ({
-                                ...prev,
-                                gio_batdau: gioBatDau,
-                                gio_ketthuc: tinhGioKetThuc(gioBatDau),
-                            }));
-                        }
-                    }
-
-                    if (loaiGoi === "khong_dinh_ky") {
-                        setBuoiLinhHoat((prev) => dieuChinhBuoiLinhHoatTheoLichBan(prev, lichBanMoi));
-                    }
+                    setLichBanGiaSu(response.data.data || []);
                 }
             } catch {
                 if (!cancelled) setLichBanGiaSu([]);
@@ -360,15 +343,51 @@ function ChonGoiHoc() {
         return () => {
             cancelled = true;
         };
+    }, [id]);
+
+    useEffect(() => {
+        if (
+            loaiGoi !== "hoc_thu" ||
+            !slotTrungDanhSachLichBan(lichBanGiaSu, form.ngay_batdau, form.gio_batdau)
+        ) {
+            return undefined;
+        }
+
+        const gioBatDau = khungGioGiaSuRanhDauTien(form.ngay_batdau, lichBanGiaSu);
+
+        if (!gioBatDau || gioBatDau === form.gio_batdau) {
+            return undefined;
+        }
+
+        const timer = setTimeout(() => {
+            setForm((prev) => ({
+                ...prev,
+                gio_batdau: gioBatDau,
+                gio_ketthuc: tinhGioKetThuc(gioBatDau),
+            }));
+        }, 0);
+
+        return () => clearTimeout(timer);
     }, [
-        dieuChinhBuoiLinhHoatTheoLichBan,
         form.gio_batdau,
         form.ngay_batdau,
-        id,
         khungGioGiaSuRanhDauTien,
+        lichBanGiaSu,
         loaiGoi,
         slotTrungDanhSachLichBan,
     ]);
+
+    useEffect(() => {
+        if (loaiGoi !== "khong_dinh_ky") return undefined;
+
+        const timer = setTimeout(() => {
+            setBuoiLinhHoat((prev) =>
+                dieuChinhBuoiLinhHoatTheoLichBan(prev, lichBanGiaSu),
+            );
+        }, 0);
+
+        return () => clearTimeout(timer);
+    }, [dieuChinhBuoiLinhHoatTheoLichBan, lichBanGiaSu, loaiGoi]);
 
     const giaSu = useMemo(
         () => giaSus.find((item) => String(item.id) === String(id)),
@@ -451,7 +470,7 @@ function ChonGoiHoc() {
         setThongBao("");
 
         if (loaiGoi === "hoc_thu" && slotTrungLichBan(form.ngay_batdau, GIO_BAT_DAU_MAC_DINH)) {
-            const gioBatDau = khungGioGiaSuRanhDauTien(form.ngay_batdau);
+            const gioBatDau = khungGioGiaSuRanhDauTien(form.ngay_batdau, lichBanGiaSu);
 
             if (gioBatDau && gioBatDau !== GIO_BAT_DAU_MAC_DINH) {
                 setForm((prev) => ({
@@ -466,7 +485,7 @@ function ChonGoiHoc() {
             const soBuoiMoi = tinhTienGoi(mucGiaDangChon, goi).tongBuoi;
             setBuoiLinhHoat((prev) => {
                 const danhSachCanChinh = prev.slice(0, soBuoiMoi);
-                return dieuChinhBuoiLinhHoatTheoLichBan(danhSachCanChinh);
+                return dieuChinhBuoiLinhHoatTheoLichBan(danhSachCanChinh, lichBanGiaSu);
             });
         }
     };
@@ -506,7 +525,7 @@ function ChonGoiHoc() {
 
             if (field === "ngay_batdau" && loaiGoi === "hoc_thu") {
                 const gioBatDau = slotTrungLichBan(value, prev.gio_batdau)
-                    ? khungGioGiaSuRanhDauTien(value)
+                    ? khungGioGiaSuRanhDauTien(value, lichBanGiaSu)
                     : prev.gio_batdau;
 
                 return { ...prev, ngay_batdau: value, gio_batdau: gioBatDau, gio_ketthuc: tinhGioKetThuc(gioBatDau) };

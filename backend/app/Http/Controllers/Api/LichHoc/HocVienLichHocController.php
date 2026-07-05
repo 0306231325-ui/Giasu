@@ -104,8 +104,8 @@ class HocVienLichHocController extends DatLichBaseController
         if ($lichHoc->giasu?->user_id) {
             ThongBao::create([
                 'user_id' => $lichHoc->giasu->user_id,
-                'tieu_de' => 'Hoc vien da danh gia buoi hoc',
-                'noi_dung' => "{$user->ho_ten} da danh gia {$duLieu['so_sao']} sao cho buoi hoc.",
+                'tieu_de' => 'Học viên đã đánh giá buổi học',
+                'noi_dung' => "{$user->ho_ten} đã đánh giá {$duLieu['so_sao']} sao cho buổi học.",
                 'url' => '/gia-su/quan-ly/theo-doi-hoat-dong',
                 'da_doc' => false,
             ]);
@@ -200,11 +200,11 @@ class HocVienLichHocController extends DatLichBaseController
             ThongBao::create([
                 'user_id' => $lichHoc->giasu->user_id,
                 'tieu_de' => $trangThaiXacNhan === 'baovan_de'
-                    ? 'Hoc vien bao van de buoi hoc'
-                    : 'Hoc vien da xac nhan buoi hoc',
+                    ? 'Học viên báo vấn đề buổi học'
+                    : 'Học viên đã xác nhận buổi học',
                 'noi_dung' => $trangThaiXacNhan === 'baovan_de'
-                    ? "{$user->ho_ten} da bao co van de voi buoi hoc."
-                    : "{$user->ho_ten} da xac nhan da hoc xong buoi hoc.",
+                    ? "{$user->ho_ten} đã báo có vấn đề với buổi học."
+                    : "{$user->ho_ten} đã xác nhận đã học xong buổi học.",
                 'url' => '/gia-su/quan-ly/lich-day',
                 'da_doc' => false,
             ]);
@@ -282,8 +282,8 @@ class HocVienLichHocController extends DatLichBaseController
         if ($lichHoc->giasu?->user_id) {
             ThongBao::create([
                 'user_id' => $lichHoc->giasu->user_id,
-                'tieu_de' => 'Hoc vien yeu cau doi buoi hoc',
-                'noi_dung' => "{$user->ho_ten} muon doi buoi hoc sang {$duLieu['ngay_hoc']} {$duLieu['gio_batdau']} - {$duLieu['gio_ketthuc']}.",
+                'tieu_de' => 'Học viên yêu cầu đổi buổi học',
+                'noi_dung' => "{$user->ho_ten} muốn đổi buổi học sang {$duLieu['ngay_hoc']} {$duLieu['gio_batdau']} - {$duLieu['gio_ketthuc']}.",
                 'url' => '/gia-su/quan-ly/lich-day',
                 'da_doc' => false,
             ]);

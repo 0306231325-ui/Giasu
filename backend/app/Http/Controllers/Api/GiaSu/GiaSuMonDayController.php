@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Api\GiaSu;
 use App\Http\Controllers\Controller;
 use App\Models\CapHoc;
 use App\Models\GiasuGia;
+use App\Models\GoiHoc;
 use App\Models\MonHoc;
+use App\Models\ThongBao;
+use App\Models\User;
 use App\Services\GiaSuHoSoService;
 use App\Services\GiaSuMonDayService;
 use App\Services\GiaTinhService;
@@ -58,6 +61,17 @@ class GiaSuMonDayController extends Controller
             'mon_hoc_ids.min' => 'Vui lòng chọn ít nhất một môn học.',
         ]);
 
+        $coHoSoXacMinhDaDuyet = $giaSu->bangCaps()
+            ->where('trang_thai', 'duyet')
+            ->exists();
+
+        if (! $coHoSoXacMinhDaDuyet) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn cần có ít nhất một bằng cấp hoặc chứng chỉ đã được xác minh trước khi thêm môn dạy.',
+            ], 422);
+        }
+
         $monDaiDien = MonHoc::query()
             ->whereIn('id', $duLieu['mon_hoc_ids'])
             ->get(['id', 'cap_hoc_id', 'ten_mon']);
@@ -92,6 +106,17 @@ class GiaSuMonDayController extends Controller
                 }
             }
         });
+
+        $tenMon = $monDaiDien
+            ->pluck('ten_mon')
+            ->unique()
+            ->take(3)
+            ->join(', ');
+
+        $this->thongBaoChoAdmin(
+            'Yêu cầu thêm môn dạy mới',
+            ($giaSu->user?->ho_ten ?? 'Gia sư') . ' vừa gửi yêu cầu thêm môn dạy' . ($tenMon ? ': ' . $tenMon : '.'),
+        );
 
         return response()->json([
             'success' => true,
@@ -132,6 +157,20 @@ class GiaSuMonDayController extends Controller
             })
             ->get();
 
+        $monHocIds = $cacMucCungMon->pluck('monhoc_id')->all();
+        $coGoiDangXuLy = GoiHoc::query()
+            ->where('giasu_id', $giaSu->id)
+            ->whereIn('monhoc_id', $monHocIds)
+            ->whereIn('trang_thai', ['cho_xacnhan', 'cho_thanhtoan', 'danghoc'])
+            ->exists();
+
+        if ($coGoiDangXuLy) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Môn học này đang có gói học hoặc lịch học đang xử lý, không thể ngừng dạy.',
+            ], 422);
+        }
+
         $coMonDaDuyet = $cacMucCungMon->contains(
             fn (GiasuGia $muc) => $muc->trang_thai === GiasuGia::TRANG_THAI_DA_DUYET,
         );
@@ -165,5 +204,19 @@ class GiaSuMonDayController extends Controller
                 ? 'Không tìm thấy hồ sơ gia sư.'
                 : 'Chỉ tài khoản gia sư mới có thể quản lý môn dạy.',
         ], $laGiaSu ? 404 : 403);
+    }
+
+    private function thongBaoChoAdmin(string $tieuDe, string $noiDung): void
+    {
+        User::query()
+            ->where('vai_tro', 'admin')
+            ->get(['id'])
+            ->each(fn (User $admin) => ThongBao::create([
+                'user_id' => $admin->id,
+                'tieu_de' => $tieuDe,
+                'noi_dung' => $noiDung,
+                'url' => '/admin/gia-su?tab=chuyen_mon',
+                'da_doc' => false,
+            ]));
     }
 }
