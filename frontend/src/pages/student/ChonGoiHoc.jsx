@@ -174,6 +174,16 @@ const tinhTienGoi = (mucGia, goi) => {
         };
     }
 
+    if (goi.id === goiHocThu.id) {
+        return {
+            donGia: 0,
+            tongBuoi: 1,
+            tongTruocGiam: 0,
+            tienGiam: 0,
+            tongSauGiam: 0,
+        };
+    }
+
     const donGia = Number(mucGia?.tong_gia || 0);
     const tongBuoi = goi.soBuoiMoiThang * goi.soThang;
     const tongTruocGiam = donGia * tongBuoi * 1.5;
@@ -1308,7 +1318,9 @@ function ChonGoiHoc() {
                             <span className="text-slate-400">Trước giảm</span>
                             <div className="flex flex-col text-right">
                                 <span className="font-semibold">
-                                    {tienGoi.tongTruocGiam
+                                    {loaiGoi === "hoc_thu"
+                                        ? "0 đ"
+                                        : tienGoi.tongTruocGiam
                                         ? `${tienGoi.tongTruocGiam.toLocaleString("vi-VN")} đ`
                                         : "Chờ báo giá"}
                                 </span>
@@ -1342,9 +1354,14 @@ function ChonGoiHoc() {
                                 Tạm tính
                             </div>
                             <div className="mt-2 text-2xl font-extrabold text-blue-300">
-                                {tamTinh ? `${tamTinh.toLocaleString("vi-VN")} đ` : "Chờ báo giá"}
+                                {loaiGoi === "hoc_thu" ? "0 đ" : tamTinh ? `${tamTinh.toLocaleString("vi-VN")} đ` : "Chờ báo giá"}
                             </div>
-                            {tienGoi.donGia > 0 && (
+                            {loaiGoi === "hoc_thu" && (
+                                <div className="mt-3 rounded-xl border border-blue-300/20 bg-blue-400/10 p-3 text-xs font-semibold text-blue-100">
+                                    Buổi học thử miễn phí, môn học chỉ dùng để xác định nội dung học.
+                                </div>
+                            )}
+                            {loaiGoi !== "hoc_thu" && tienGoi.donGia > 0 && (
                                 <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/30 p-3 text-xs text-slate-300">
                                     <div className="mb-2 font-semibold text-slate-200">Cách tính đơn giá/giờ</div>
                                     <div className="space-y-1.5">

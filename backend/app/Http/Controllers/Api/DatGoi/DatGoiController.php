@@ -182,8 +182,9 @@ class DatGoiController extends DatLichBaseController
 
         $this->kiemTraTrungLichDatGoi($user->id, $giaSu->id, $lichHocNhap);
 
-        $giamGia = (float) ($duLieu['giam_gia'] ?? 0);
-        $donGia = (float) $mucGia->tong_gia;
+        $laHocThu = $duLieu['loai_goi'] === 'hoc_thu';
+        $giamGia = $laHocThu ? 0 : (float) ($duLieu['giam_gia'] ?? 0);
+        $donGia = $laHocThu ? 0 : (float) $mucGia->tong_gia;
         $tongTruocGiam = collect($lichHocNhap)->sum(fn (array $lichHoc) => $donGia * $lichHoc['so_gio']);
         $tongTien = round($tongTruocGiam * (100 - $giamGia) / 100);
         $heSoGiam = $tongTruocGiam > 0 ? $tongTien / $tongTruocGiam : 1;

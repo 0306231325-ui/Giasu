@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+﻿import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import ThongBaoDropdown from "../components/ThongBaoDropdown";
 import { useAuth } from "../context/AuthContext";
 import useAdminDemCanXuLy from "../hooks/useAdminDemCanXuLy";
@@ -50,7 +50,6 @@ function AdminLayout() {
           <NavItem to="/admin/danh-muc" label="Môn học" badge={demCanXuLy.danhMuc} />
           <NavItem to="/admin/quan-ly-dat-goi" label="Quản lý đặt gói" badge={demCanXuLy.datGoi} />
           <NavItem to="/admin/lich-hoc" label="Quản lý lịch học" badge={demCanXuLy.lichHoc} />
-          <NavItem to="/admin/doanh-thu" label="Tổng doanh thu" />
           <NavItem to="/admin/bai-viet" label="Bài viết" badge={demCanXuLy.baiViet} />
         </nav>
 
@@ -144,3 +143,4 @@ function NavItem({ to, end, label, badge = 0 }) {
 }
 
 export default AdminLayout;
+

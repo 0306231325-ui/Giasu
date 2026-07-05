@@ -29,6 +29,17 @@ class DatLichBaseController extends Controller
     protected const DAU_GIASU_XACNHAN = 'Gia su xac nhan hoan thanh';
     protected const DAU_HOCVIEN_BAO_VAN_DE = 'Hoc vien bao van de';
     protected const DAU_GIASU_BAO_VAN_DE = 'Gia su bao van de';
+    protected const MUI_GIO_LICH_HOC = 'Asia/Ho_Chi_Minh';
+
+    protected function bayGioLichHoc(): Carbon
+    {
+        return Carbon::now(self::MUI_GIO_LICH_HOC);
+    }
+
+    protected function thoiDiemLichHoc(LichHoc $lichHoc, string $cotGio): Carbon
+    {
+        return Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->{$cotGio}, self::MUI_GIO_LICH_HOC);
+    }
 
     protected function taoLichHocTuYeuCau(array $duLieu): array
     {
@@ -403,8 +414,9 @@ class DatLichBaseController extends Controller
     {
         $goiHoc = $lichHoc->goiHoc;
         $ngayHoc = Carbon::parse($lichHoc->ngay_hoc);
-        $daToiGioBatDau = now()->gte(Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_batdau));
-        $daQuaGioKetThuc = now()->gte(Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_ketthuc));
+        $bayGio = $this->bayGioLichHoc();
+        $daToiGioBatDau = $bayGio->gte($this->thoiDiemLichHoc($lichHoc, 'gio_batdau'));
+        $daQuaGioKetThuc = $bayGio->gte($this->thoiDiemLichHoc($lichHoc, 'gio_ketthuc'));
         $xacNhan = $this->thongTinXacNhanLichHoc($lichHoc);
         $trangThai = match ($lichHoc->trang_thai) {
             'cho_xacnhan' => 'cho_xac_nhan',
@@ -737,8 +749,9 @@ class DatLichBaseController extends Controller
     protected function dinhDangLichHoc(LichHoc $lichHoc): array
     {
         $ngayHoc = Carbon::parse($lichHoc->ngay_hoc);
-        $daToiGioBatDau = now()->gte(Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_batdau));
-        $daQuaGioKetThuc = now()->gte(Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_ketthuc));
+        $bayGio = $this->bayGioLichHoc();
+        $daToiGioBatDau = $bayGio->gte($this->thoiDiemLichHoc($lichHoc, 'gio_batdau'));
+        $daQuaGioKetThuc = $bayGio->gte($this->thoiDiemLichHoc($lichHoc, 'gio_ketthuc'));
         $yeuCauHocBuMoiNhat = $lichHoc->relationLoaded('yeuCauHocBus')
             ? $lichHoc->yeuCauHocBus->sortByDesc('created_at')->first()
             : null;

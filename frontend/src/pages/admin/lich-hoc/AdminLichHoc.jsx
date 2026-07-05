@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import ModalNhapLyDo from "../../../components/ModalNhapLyDo";
 import api from "../../../services/api";
 
@@ -100,6 +100,17 @@ function AdminLichHoc() {
     window.addEventListener("admin:refresh", lamMoi);
     return () => window.removeEventListener("admin:refresh", lamMoi);
   }, [taiLichHoc]);
+
+  useEffect(() => {
+    if (!loi && !thongBao) return undefined;
+
+    const timer = window.setTimeout(() => {
+      setLoi("");
+      setThongBao("");
+    }, 3000);
+
+    return () => window.clearTimeout(timer);
+  }, [loi, thongBao]);
 
   const capNhatBoLoc = (field, value) => {
     setBoLoc((prev) => ({ ...prev, [field]: value }));
@@ -432,7 +443,6 @@ function NhanXacNhanNho({ active, warning, children }) {
 }
 
 function ChiTietLichHoc({ lich, dangXuLy, onXuLy }) {
-  const [ghiChuHoanThanh, setGhiChuHoanThanh] = useState("");
   const [lichCanHuy, setLichCanHuy] = useState(null);
   const [tab, setTab] = useState("tong_quan");
 
@@ -554,24 +564,15 @@ function ChiTietLichHoc({ lich, dangXuLy, onXuLy }) {
                 onSubmit={(event) => {
                   event.preventDefault();
                   if (!coTheHoanThanh) return;
-                  onXuLy(lich, "hoan-thanh", { ghi_chu: ghiChuHoanThanh });
-                  setGhiChuHoanThanh("");
+                  onXuLy(lich, "hoan-thanh", {});
                 }}
                 className="rounded-xl border border-emerald-200 bg-emerald-50 p-3"
               >
-                <p className="text-sm font-bold text-emerald-900">Xác nhận hoàn thành</p>
                 {!coTheHoanThanh && (
                   <p className="mt-2 rounded-lg bg-white/70 px-3 py-2 text-xs font-semibold leading-5 text-emerald-800">
                     Can hoc vien va gia su cung xac nhan hoan thanh, dong thoi khong co bao van de.
                   </p>
                 )}
-                <textarea
-                  rows={3}
-                  value={ghiChuHoanThanh}
-                  onChange={(event) => setGhiChuHoanThanh(event.target.value)}
-                  placeholder="Ghi chú xử lý nếu có"
-                  className="mt-3 w-full resize-none rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
-                />
                 <button
                   type="submit"
                   disabled={dangXuLy || !coTheHoanThanh}
@@ -680,3 +681,4 @@ function dinhDangTien(value) {
 }
 
 export default AdminLichHoc;
+

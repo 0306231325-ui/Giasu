@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
@@ -769,7 +769,7 @@ function LichHocCuaToi() {
 
                                 {chiTietBuoi.lichHoc.coTheXacNhanHoanThanh ? (
                                     <form onSubmit={guiXacNhanBuoiHoc} className="mt-4 space-y-3">
-                                        <div className="grid gap-2 sm:grid-cols-2">
+                                        <div className="grid gap-2">
                                             <label className={[
                                                 "cursor-pointer rounded-lg border px-3 py-3 transition",
                                                 formXacNhanBuoi.trang_thai === "daxacnhan"
@@ -791,40 +791,7 @@ function LichHocCuaToi() {
                                                 <span className="block text-sm font-bold">Đã học xong</span>
                                                 <span className="mt-1 block text-xs">Buổi học diễn ra bình thường.</span>
                                             </label>
-                                            <label className={[
-                                                "cursor-pointer rounded-lg border px-3 py-3 transition",
-                                                formXacNhanBuoi.trang_thai === "baovan_de"
-                                                    ? "border-red-300 bg-red-50 text-red-800"
-                                                    : "border-slate-200 bg-white text-slate-600 hover:border-red-200",
-                                            ].join(" ")}>
-                                                <input
-                                                    type="radio"
-                                                    name="xac_nhan_buoi_hoc"
-                                                    value="baovan_de"
-                                                    checked={formXacNhanBuoi.trang_thai === "baovan_de"}
-                                                    onChange={(event) => setFormXacNhanBuoi((hienTai) => ({
-                                                        ...hienTai,
-                                                        trang_thai: event.target.value,
-                                                    }))}
-                                                    className="sr-only"
-                                                />
-                                                <span className="block text-sm font-bold">Có vấn đề</span>
-                                                <span className="mt-1 block text-xs">Gia sư vắng, học thiếu giờ hoặc lỗi khác.</span>
-                                            </label>
                                         </div>
-
-                                        {formXacNhanBuoi.trang_thai === "baovan_de" && (
-                                            <textarea
-                                                rows={3}
-                                                value={formXacNhanBuoi.ghi_chu}
-                                                onChange={(event) => setFormXacNhanBuoi((hienTai) => ({
-                                                    ...hienTai,
-                                                    ghi_chu: event.target.value,
-                                                }))}
-                                                placeholder="Mô tả vấn đề để admin/gia sư kiểm tra"
-                                                className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-red-300 focus:bg-white"
-                                            />
-                                        )}
 
                                         <button
                                             type="submit"
@@ -838,7 +805,7 @@ function LichHocCuaToi() {
                                     <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-500">
                                         {chiTietBuoi.lichHoc.daToiGioBatDau
                                             ? "Buổi học này chưa cần hoặc đã được bạn xác nhận."
-                                            : "Khi buổi học bắt đầu, bạn có thể xác nhận đã học hoặc báo vấn đề tại đây."}
+                                            : "Khi buổi học bắt đầu, bạn có thể xác nhận đã học tại đây."}
                                     </p>
                                 )}
                             </section>
@@ -1200,3 +1167,4 @@ function nhanTrangThaiXacNhan(trangThai) {
 }
 
 export default LichHocCuaToi;
+
