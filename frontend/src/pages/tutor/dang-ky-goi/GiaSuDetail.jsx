@@ -28,22 +28,6 @@ const dinhDangKinhNghiem = (mucKinhNghiem) => {
     return "";
 };
 
-const dinhDangCapLop = (capHoc, lop) => {
-    if (!capHoc && !lop) return "";
-    if (!lop) return capHoc;
-
-    const lopText = String(lop).trim();
-    const lopDaCoNhan = lopText.toLowerCase().startsWith("lớp");
-
-    if (!capHoc) return lopDaCoNhan ? lopText : `Lớp ${lopText}`;
-    return `${capHoc} - ${lopDaCoNhan ? lopText : `lớp ${lopText}`}`;
-};
-
-const laySoLop = (lop) => {
-    const ketQua = String(lop || "").match(/\d+/);
-    return ketQua ? Number(ketQua[0]) : 999;
-};
-
 function StatBox({ label, value, tone = "default" }) {
     const toneClass = tone === "warm" ? "text-amber-200" : tone === "blue" ? "text-blue-200" : "text-white";
 
@@ -146,21 +130,19 @@ function GiaSuDetail() {
     const tenMonDay = layDanhSachRieng(monDay.map((mucGia) => mucGia.mon_hoc?.ten_mon)).sort((a, b) => (
         a.localeCompare(b, "vi")
     ));
-    const capLopDay = layDanhSachRieng(
+    const capDay = layDanhSachRieng(
         monDay
             .map((mucGia) => {
                 const monHoc = mucGia.mon_hoc;
 
                 return {
-                    label: dinhDangCapLop(monHoc?.cap_hoc?.ten, monHoc?.lop),
+                    label: monHoc?.cap_hoc?.ten,
                     capThuTu: Number(monHoc?.cap_hoc?.thu_tu ?? monHoc?.cap_hoc_id ?? 999),
-                    lopThuTu: laySoLop(monHoc?.lop),
                 };
             })
             .filter((item) => item.label)
             .sort((a, b) => (
                 a.capThuTu - b.capThuTu
-                || a.lopThuTu - b.lopThuTu
                 || a.label.localeCompare(b.label, "vi")
             ))
             .map((item) => item.label),
@@ -302,7 +284,7 @@ function GiaSuDetail() {
 
                         <div className="mt-6 grid gap-4 lg:grid-cols-2">
                             <TagList label="Môn dạy" items={tenMonDay} icon="✦" />
-                            <TagList label="Cấp/lớp phù hợp" items={capLopDay} tone="emerald" icon="✓" />
+                            <TagList label="Cấp phù hợp" items={capDay} tone="emerald" icon="✓" />
                         </div>
 
                         <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-5">
