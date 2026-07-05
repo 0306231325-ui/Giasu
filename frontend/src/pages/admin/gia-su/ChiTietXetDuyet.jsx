@@ -31,11 +31,6 @@ function ChiTietXetDuyet({
                             <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700">
                                 Chờ duyệt
                             </span>
-                            {hoSo.laHoSoGuiLai && (
-                                <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
-                                    Gửi lại sau khi bị từ chối
-                                </span>
-                            )}
                         </div>
                         <p className="mt-1 text-xs text-slate-500">
                             Gửi hồ sơ lúc {hoSo.ngayGui}
@@ -83,7 +78,11 @@ function ChiTietXetDuyet({
                             <button
                                 type="button"
                                 disabled={!avatarUrl}
-                                onClick={() => window.open(avatarUrl, "_blank", "noopener,noreferrer")}
+                                onClick={() => onXemTaiLieu?.({
+                                    tieuDe: `Ảnh chân dung - ${hoSo.hoTen}`,
+                                    tenFile: `Ảnh chân dung ${hoSo.hoTen}`,
+                                    urlTrucTiep: avatarUrl,
+                                })}
                                 className="mt-3 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:text-slate-400"
                             >
                                 Xem ảnh chân dung

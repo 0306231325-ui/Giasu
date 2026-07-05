@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useOutletContext, useSearchParams } from "react-router-dom";
+import ModalXemTaiLieu from "../../../components/ModalXemTaiLieu";
 import ModalNhapLyDo from "../../../components/ModalNhapLyDo";
 import api from "../../../services/api";
 import ChiTietXetDuyet from "./ChiTietXetDuyet";
@@ -24,6 +25,7 @@ function AdminGiaSu() {
     const [dangTai, setDangTai] = useState(false);
     const [dangXuLy, setDangXuLy] = useState(false);
     const [thongBao, setThongBao] = useState("");
+    const [taiLieuDangXem, setTaiLieuDangXem] = useState(null);
     const boDemThongBao = useRef(null);
     const soHoSoChoDuyet = demCanXuLy?.giaSuHoSoChoDuyet ?? thongKe.choDuyet;
     const soYeuCauChuyenMon = demCanXuLy?.giaSuYeuCauChuyenMon ?? 0;
@@ -147,19 +149,18 @@ function AdminGiaSu() {
         }
     };
 
-    const xemTaiLieu = async (taiLieu) => {
-        if (!taiLieu?.urlXem) return;
-
-        try {
-            const response = await api.get(taiLieu.urlXem, {
-                responseType: "blob",
-            });
-            const duongDanTam = URL.createObjectURL(response.data);
-            window.open(duongDanTam, "_blank", "noopener,noreferrer");
-            setTimeout(() => URL.revokeObjectURL(duongDanTam), 60_000);
-        } catch (error) {
-            hienThongBao(error.response?.data?.message || "Không thể mở file tài liệu.");
+    const xemTaiLieu = (taiLieu) => {
+        if (!taiLieu?.urlXem && !taiLieu?.urlTrucTiep) {
+            hienThongBao("Không có tài liệu để xem.");
+            return;
         }
+
+        setTaiLieuDangXem({
+            tieuDe: taiLieu.tieuDe || taiLieu.ten || taiLieu.tenFile || "Tài liệu minh chứng",
+            tenFile: taiLieu.tenFile || taiLieu.ten || taiLieu.tieuDe || "Tài liệu minh chứng",
+            urlXem: taiLieu.urlXem,
+            urlTrucTiep: taiLieu.urlTrucTiep,
+        });
     };
 
     return (
@@ -260,6 +261,12 @@ function AdminGiaSu() {
                 onDong={() => setHoSoTuChoi(null)}
                 dangXuLy={dangXuLy}
                 onXacNhan={(lyDo) => xuLyHoSo(hoSoTuChoi, "tu_choi", lyDo)}
+            />
+
+            <ModalXemTaiLieu
+                taiLieu={taiLieuDangXem}
+                onDong={() => setTaiLieuDangXem(null)}
+                onLoi={hienThongBao}
             />
         </div>
     );
