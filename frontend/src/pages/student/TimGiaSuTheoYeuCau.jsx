@@ -3,14 +3,6 @@ import { Link } from "react-router-dom";
 import api from "../../services/api";
 import { layUrlAnhGiaSu } from "../tutor/dang-ky-goi/avatarGiaSu";
 
-const mucTieuHoc = [
-    "Mất gốc cần học lại",
-    "Theo sát chương trình trên lớp",
-    "Ôn thi học kỳ",
-    "Ôn thi chuyển cấp",
-    "Luyện thi tốt nghiệp",
-    "Nâng cao điểm số",
-];
 
 function taoQuery(yeuCau) {
     const params = {};
@@ -31,11 +23,7 @@ function TimGiaSuTheoYeuCau() {
         cap_hoc_id: "",
         lop: "",
         ten_mon: "",
-        muc_tieu: "",
-        hinh_thuc: "",
         ngan_sach: "",
-        thoi_gian: "",
-        ghi_chu: "",
     });
 
     const danhSachCapHoc = useMemo(() => {
@@ -217,36 +205,7 @@ function TimGiaSuTheoYeuCau() {
                                 </label>
                             </div>
 
-                            <label className="block">
-                                <span className="mb-2 block text-sm font-semibold text-slate-200">Mục tiêu</span>
-                                <select
-                                    value={yeuCau.muc_tieu}
-                                    onChange={(event) => capNhat("muc_tieu", event.target.value)}
-                                    className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
-                                >
-                                    <option value="">Chưa chọn mục tiêu</option>
-                                    {mucTieuHoc.map((mucTieu) => (
-                                        <option key={mucTieu} value={mucTieu}>
-                                            {mucTieu}
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
-
                             <div className="grid gap-4 sm:grid-cols-2">
-                                <label className="block">
-                                    <span className="mb-2 block text-sm font-semibold text-slate-200">Hình thức</span>
-                                    <select
-                                        value={yeuCau.hinh_thuc}
-                                        onChange={(event) => capNhat("hinh_thuc", event.target.value)}
-                                        className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
-                                    >
-                                        <option value="">Linh hoạt</option>
-                                        <option value="online">Online</option>
-                                        <option value="offline">Tại nhà</option>
-                                    </select>
-                                </label>
-
                                 <label className="block">
                                     <span className="mb-2 block text-sm font-semibold text-slate-200">Ngân sách/giờ</span>
                                     <input
@@ -259,27 +218,6 @@ function TimGiaSuTheoYeuCau() {
                                     />
                                 </label>
                             </div>
-
-                            <label className="block">
-                                <span className="mb-2 block text-sm font-semibold text-slate-200">Thời gian rảnh</span>
-                                <input
-                                    value={yeuCau.thoi_gian}
-                                    onChange={(event) => capNhat("thoi_gian", event.target.value)}
-                                    placeholder="Ví dụ: tối thứ 2, 4, 6"
-                                    className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-blue-400"
-                                />
-                            </label>
-
-                            <label className="block">
-                                <span className="mb-2 block text-sm font-semibold text-slate-200">Ghi chú thêm</span>
-                                <textarea
-                                    rows={4}
-                                    value={yeuCau.ghi_chu}
-                                    onChange={(event) => capNhat("ghi_chu", event.target.value)}
-                                    placeholder="Nói rõ tình trạng học, mong muốn, khu vực..."
-                                    className="w-full resize-none rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-blue-400"
-                                />
-                            </label>
 
                             <button
                                 type="submit"

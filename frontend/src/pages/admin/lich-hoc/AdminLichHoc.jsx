@@ -17,7 +17,7 @@ const MAU_TRANG_THAI = {
   dahuy: "border-red-300/30 bg-red-500/10 text-red-100",
 };
 
-const SO_BUOI_MOI_TRANG = 10;
+const SO_BUOI_MOI_TRANG = 8;
 
 const dinhDangNgayInput = (date) => {
   const nam = date.getFullYear();
@@ -267,81 +267,87 @@ function AdminLichHoc() {
           <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
             <div>
               <h2 className="text-lg font-extrabold">Danh sách buổi học</h2>
-              <p className="mt-1 text-sm text-white/45">Hiển thị 10 buổi mỗi trang, chọn một dòng để xem đủ chi tiết.</p>
+              <p className="mt-1 text-sm text-white/45">Sắp theo ngày giờ, phân trang để danh sách không quá dài.</p>
             </div>
             <div className="text-sm font-semibold text-white/55">
               {danhSach.length} buổi
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="bg-white/[0.04] text-xs uppercase text-white/50">
-                <tr>
-                  <th className="px-4 py-3">Buổi học</th>
-                  <th className="px-4 py-3">Người tham gia</th>
-                  <th className="px-4 py-3">Trạng thái</th>
-                  <th className="px-4 py-3 text-right">Gói học</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/10">
-                {dangTai ? (
-                  <tr>
-                    <td colSpan={4} className="px-4 py-10 text-center text-white/50">Đang tải lịch học...</td>
-                  </tr>
-                ) : danhSach.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-4 py-10 text-center text-white/50">Chưa có buổi học phù hợp.</td>
-                  </tr>
-                ) : (
-                  danhSachDangHienThi.map((lich) => (
-                    <tr
+          <div className="p-4">
+            {dangTai ? (
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-10 text-center text-sm text-white/50">
+                Đang tải lịch học...
+              </div>
+            ) : danhSach.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-10 text-center text-sm text-white/50">
+                Chưa có buổi học phù hợp.
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025]">
+                <div className="divide-y divide-white/10">
+                  {danhSachDangHienThi.map((lich) => (
+                    <button
                       key={lich.id}
+                      type="button"
                       onClick={() => setLichDangChonId(lich.id)}
                       className={[
-                        "cursor-pointer transition hover:bg-white/[0.04]",
-                        lichDangChon?.id === lich.id ? "bg-blue-500/10" : "",
+                        "grid w-full gap-3 px-4 py-3 text-left transition lg:grid-cols-[132px_96px_minmax(0,1fr)_132px]",
+                        lichDangChon?.id === lich.id
+                          ? "bg-blue-500/15"
+                          : "hover:bg-white/[0.045]",
                       ].join(" ")}
                     >
-                      <td className="px-4 py-3">
-                        <div className="font-bold text-white">{lich.monHoc?.tenHienThi || "Chưa cập nhật"}</div>
-                        <div className="mt-1 text-xs font-semibold text-blue-200">
-                          {lich.ngayHocText} · {lich.khungGio}
+                      <div className="min-w-0">
+                        <div className="text-sm font-extrabold text-blue-100">{lich.ngayHocText || "Chưa có ngày"}</div>
+                        <div className="mt-1 text-xs font-semibold text-white/45">{lich.thuText || ""}</div>
+                      </div>
+
+                      <div className="flex items-center gap-2 lg:block">
+                        <div className="w-[82px] rounded-lg border border-blue-300/20 bg-[#07122f] px-2.5 py-1.5 text-center lg:w-full">
+                          <div className="text-sm font-extrabold text-white">{lich.gioBatDau}</div>
+                          <div className="text-[11px] font-bold text-blue-200">{lich.gioKetThuc}</div>
                         </div>
-                        <div className="mt-1 text-xs text-white/45">
-                          {lich.thuText} · {lich.hinhThucHocText || "Chưa cập nhật"}
+                        <div className="text-xs font-semibold text-white/45 lg:mt-1.5 lg:text-center">
+                          {lich.hinhThucHocText || "Chưa cập nhật"}
                         </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="font-semibold text-white/85">
-                          HV: {lich.hocVien?.hoTen || "Chưa cập nhật"}
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="truncate font-extrabold text-white">
+                            {lich.monHoc?.tenHienThi || "Chưa cập nhật"}
+                          </div>
+                          <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-bold text-white/55">
+                            {lich.maGoi}
+                          </span>
                         </div>
-                        <div className="mt-1 text-xs text-white/55">
-                          GS: {lich.giaSu?.hoTen || "Chưa cập nhật"}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="space-y-2">
-                          <TrangThaiBadge lich={lich} />
-                          <div className="flex flex-wrap gap-1.5">
-                            <NhanXacNhanNho active={lich.xacNhan?.hocVienDaXacNhan} warning={lich.xacNhan?.hocVienBaoVanDe}>
-                              HV
-                            </NhanXacNhanNho>
-                            <NhanXacNhanNho active={lich.xacNhan?.giaSuDaXacNhan} warning={lich.xacNhan?.giaSuBaoVanDe}>
-                              GS
-                            </NhanXacNhanNho>
+                        <div className="mt-1.5 grid gap-1 text-xs md:grid-cols-2">
+                          <div className="truncate text-white/70">
+                            <span className="font-bold text-white/85">HV:</span> {lich.hocVien?.hoTen || "Chưa cập nhật"}
+                          </div>
+                          <div className="truncate text-white/55">
+                            <span className="font-bold text-white/70">GS:</span> {lich.giaSu?.hoTen || "Chưa cập nhật"}
                           </div>
                         </div>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="font-semibold text-white/75">{lich.maGoi}</div>
-                        <div className="mt-1 text-xs text-white/45">{lich.loaiBuoiText}</div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 lg:flex-col lg:items-end lg:justify-center">
+                        <TrangThaiBadge lich={lich} />
+                        <div className="flex flex-wrap justify-end gap-1.5">
+                          <NhanXacNhanNho active={lich.xacNhan?.hocVienDaXacNhan} warning={lich.xacNhan?.hocVienBaoVanDe}>
+                            HV
+                          </NhanXacNhanNho>
+                          <NhanXacNhanNho active={lich.xacNhan?.giaSuDaXacNhan} warning={lich.xacNhan?.giaSuBaoVanDe}>
+                            GS
+                          </NhanXacNhanNho>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           {danhSach.length > SO_BUOI_MOI_TRANG && (
             <div className="flex flex-col gap-3 border-t border-white/10 px-5 py-4 text-sm text-white/60 sm:flex-row sm:items-center sm:justify-between">
@@ -352,7 +358,7 @@ function AdminLichHoc() {
                 {" / "}
                 {danhSach.length} buổi
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setTrangHienTai((trang) => Math.max(trang - 1, 1))}
@@ -361,9 +367,21 @@ function AdminLichHoc() {
                 >
                   Trước
                 </button>
-                <span className="px-2 font-semibold text-white">
-                  {trangHopLe}/{tongSoTrang}
-                </span>
+                {Array.from({ length: tongSoTrang }, (_, index) => index + 1).map((trang) => (
+                  <button
+                    key={trang}
+                    type="button"
+                    onClick={() => setTrangHienTai(trang)}
+                    className={[
+                      "h-9 min-w-9 rounded-lg border px-3 text-sm font-bold transition",
+                      trangHopLe === trang
+                        ? "border-blue-400/50 bg-blue-600 text-white"
+                        : "border-white/10 text-white/65 hover:bg-white/5 hover:text-white",
+                    ].join(" ")}
+                  >
+                    {trang}
+                  </button>
+                ))}
                 <button
                   type="button"
                   onClick={() => setTrangHienTai((trang) => Math.min(trang + 1, tongSoTrang))}

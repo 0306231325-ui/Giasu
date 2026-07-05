@@ -561,7 +561,7 @@ class DatLichBaseController extends Controller
                 'ten' => $monHoc?->ten_mon,
                 'lop' => $monHoc?->lop,
                 'tenHienThi' => $monHoc
-                    ? trim($monHoc->ten_mon . ($monHoc->lop ? ' - Lớp ' . $monHoc->lop : ''))
+                    ? trim($monHoc->ten_mon . ($monHoc->lop ? ' - ' . $this->dinhDangLop($monHoc->lop) : ''))
                     : null,
             ],
             'goiHoc' => [
@@ -581,6 +581,17 @@ class DatLichBaseController extends Controller
                 'ngayDanhGia' => optional($lichHoc->danhGia->created_at)->format('d/m/Y H:i'),
             ] : null,
         ];
+    }
+
+    protected function dinhDangLop(?string $lop): string
+    {
+        $lop = trim((string) $lop);
+
+        if ($lop === '') {
+            return '';
+        }
+
+        return str_starts_with(mb_strtolower($lop, 'UTF-8'), 'lớp') ? $lop : 'Lớp ' . $lop;
     }
 
     protected function dinhDangPhanHoi(PhanHoi $phanHoi): array

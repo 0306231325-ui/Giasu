@@ -80,9 +80,21 @@ class AdminLichHocController extends DatLichBaseController
             $query->where('trang_thai', $trangThai);
         }
 
+        if ($trangThai) {
+            $query
+                ->orderBy('ngay_hoc')
+                ->orderBy('gio_batdau');
+        } else {
+            $query
+                ->orderByRaw("CASE WHEN trang_thai IN ('cho_xacnhan', 'da_nhan') THEN 0 ELSE 1 END")
+                ->orderByRaw("CASE WHEN trang_thai IN ('cho_xacnhan', 'da_nhan') THEN ngay_hoc END ASC")
+                ->orderByRaw("CASE WHEN trang_thai IN ('cho_xacnhan', 'da_nhan') THEN gio_batdau END ASC")
+                ->orderByRaw("CASE WHEN trang_thai NOT IN ('cho_xacnhan', 'da_nhan') THEN ngay_hoc END DESC")
+                ->orderByRaw("CASE WHEN trang_thai NOT IN ('cho_xacnhan', 'da_nhan') THEN gio_batdau END DESC")
+                ->orderByRaw("CASE trang_thai WHEN 'cho_xacnhan' THEN 1 WHEN 'da_nhan' THEN 2 WHEN 'hoanthanh' THEN 3 WHEN 'dahuy' THEN 4 ELSE 5 END");
+        }
+
         $danhSach = $query
-            ->orderByDesc('ngay_hoc')
-            ->orderByDesc('gio_batdau')
             ->limit(300)
             ->get()
             ->map(fn (LichHoc $lichHoc) => $this->dinhDangLichHocAdmin($lichHoc))

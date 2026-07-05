@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
@@ -35,6 +35,21 @@ const trangThaiBuoi = {
     },
     hoan_thanh: trangThaiGoi.hoan_thanh,
     da_huy: trangThaiGoi.da_huy,
+};
+
+const trangThaiThanhToan = {
+    cho_thanhtoan: {
+        ten: "Chờ duyệt",
+        lop: "border-amber-200 bg-amber-50 text-amber-700",
+    },
+    da_thanhtoan: {
+        ten: "Đã thanh toán",
+        lop: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    },
+    that_bai: {
+        ten: "Thất bại",
+        lop: "border-red-200 bg-red-50 text-red-700",
+    },
 };
 
 function dinhDangNgay(ngay) {
@@ -106,6 +121,14 @@ const taoDanhSachKhungGio = () => {
 const cacKhungGio = taoDanhSachKhungGio();
 
 const taoMaGiaoDich = (maGoi) => `GD${Date.now()}${String(maGoi || "").replace(/\D/g, "").slice(-6)}`;
+const API_ORIGIN = (import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api").replace(/\/api\/?$/, "");
+
+function layUrlMinhChung(path) {
+    if (!path) return "";
+    if (/^https?:\/\//i.test(path)) return path;
+
+    return `${API_ORIGIN}/${String(path).replace(/^\/+/, "")}`;
+}
 
 function NhanTrangThai({ trangThai, loai = "goi" }) {
     const cauHinh = loai === "buoi"
@@ -119,11 +142,23 @@ function NhanTrangThai({ trangThai, loai = "goi" }) {
     );
 }
 
+function NhanTrangThaiThanhToan({ trangThai }) {
+    const cauHinh = trangThaiThanhToan[trangThai] || trangThaiThanhToan.cho_thanhtoan;
+
+    return (
+        <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${cauHinh.lop}`}>
+            {cauHinh.ten}
+        </span>
+    );
+}
+
 function LichHocCuaToi() {
     const navigate = useNavigate();
     const { user, loading: authLoading, isAuthenticated } = useAuth();
+    const [manHinh, setManHinh] = useState("goi_hoc");
     const [tab, setTab] = useState("tat_ca");
     const [danhSachGoi, setDanhSachGoi] = useState([]);
+    const [lichSuThanhToan, setLichSuThanhToan] = useState([]);
     const [goiDangMo, setGoiDangMo] = useState(null);
     const [dangTai, setDangTai] = useState(false);
     const [dangThanhToan, setDangThanhToan] = useState(false);
@@ -157,6 +192,13 @@ function LichHocCuaToi() {
 
     const laHocVien = user?.vai_tro === "hocvien";
 
+    const taiLichSuThanhToan = useCallback(async () => {
+        const response = await api.get("/hoc-vien/thanh-toan");
+        if (response.data.success) {
+            setLichSuThanhToan(response.data.data || []);
+        }
+    }, []);
+
     const danhSachDaLoc = useMemo(() => {
         if (tab === "tat_ca") return danhSachGoi;
         return danhSachGoi.filter((goiHoc) => goiHoc.trangThai === tab);
@@ -174,6 +216,19 @@ function LichHocCuaToi() {
         [danhSachGoi],
     );
 
+    const thongKeThanhToan = useMemo(
+        () => ({
+            tat_ca: lichSuThanhToan.length,
+            da_thanhtoan: lichSuThanhToan.filter((item) => item.trangThai === "da_thanhtoan").length,
+            cho_thanhtoan: lichSuThanhToan.filter((item) => item.trangThai === "cho_thanhtoan").length,
+            that_bai: lichSuThanhToan.filter((item) => item.trangThai === "that_bai").length,
+            tongDaThanhToan: lichSuThanhToan
+                .filter((item) => item.trangThai === "da_thanhtoan")
+                .reduce((tong, item) => tong + Number(item.soTien || 0), 0),
+        }),
+        [lichSuThanhToan],
+    );
+
     useEffect(() => {
         if (authLoading || !isAuthenticated || !laHocVien) return;
 
@@ -181,10 +236,19 @@ function LichHocCuaToi() {
         const boDem = setTimeout(() => {
             setDangTai(true);
 
-            api.get("/hoc-vien/lich-hoc")
-                .then((response) => {
-                    if (!cancelled && response.data.success) {
-                        setDanhSachGoi(response.data.data || []);
+            Promise.all([
+                api.get("/hoc-vien/lich-hoc"),
+                api.get("/hoc-vien/thanh-toan"),
+            ])
+                .then(([lichHocResponse, thanhToanResponse]) => {
+                    if (cancelled) return;
+
+                    if (lichHocResponse.data.success) {
+                        setDanhSachGoi(lichHocResponse.data.data || []);
+                    }
+
+                    if (thanhToanResponse.data.success) {
+                        setLichSuThanhToan(thanhToanResponse.data.data || []);
                     }
                 })
                 .catch((error) => {
@@ -293,8 +357,10 @@ function LichHocCuaToi() {
                 setDanhSachGoi((hienTai) =>
                     hienTai.map((item) => (item.id === goiMoi.id ? goiMoi : item)),
                 );
+                await taiLichSuThanhToan();
                 setGoiThanhToan(null);
                 setTab("cho_thanhtoan");
+                setManHinh("thanh_toan");
                 setThongBao(response.data.message || "Thanh toán thành công.");
             }
         } catch (error) {
@@ -468,39 +534,59 @@ function LichHocCuaToi() {
                     </div>
                 )}
 
-                <div className="mt-8 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
-                    {Object.entries(thongKe).map(([key, value]) => (
+                <div className="mt-8 grid gap-2 rounded-lg border border-slate-200 bg-white p-2 shadow-sm sm:grid-cols-2">
+                    {[
+                        { key: "goi_hoc", label: "Gói học" },
+                        { key: "thanh_toan", label: "Lịch sử thanh toán" },
+                    ].map((item) => (
                         <button
-                            key={key}
+                            key={item.key}
                             type="button"
-                            onClick={() => setTab(key)}
-                            className={`rounded-lg border bg-white p-4 text-left shadow-sm transition ${
-                                tab === key ? "border-sky-400 ring-4 ring-sky-100" : "border-slate-200 hover:border-sky-200"
+                            onClick={() => setManHinh(item.key)}
+                            className={`rounded-md px-4 py-3 text-sm font-bold transition ${
+                                manHinh === item.key ? "bg-sky-600 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
                             }`}
                         >
-                            <div className="text-2xl font-bold">{value}</div>
-                            <div className="mt-1 text-sm font-semibold text-slate-500">{trangThaiGoi[key].ten}</div>
+                            {item.label}
                         </button>
                     ))}
                 </div>
 
-                <section className="mt-8 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-                    <div className="border-b border-slate-100 px-5 py-4">
-                        <h2 className="text-lg font-bold">Danh sách gói học</h2>
+                {manHinh === "goi_hoc" ? (
+                    <>
+                    <div className="mt-8 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+                        {Object.entries(thongKe).map(([key, value]) => (
+                            <button
+                                key={key}
+                                type="button"
+                                onClick={() => setTab(key)}
+                                className={`rounded-lg border bg-white p-4 text-left shadow-sm transition ${
+                                    tab === key ? "border-sky-400 ring-4 ring-sky-100" : "border-slate-200 hover:border-sky-200"
+                                }`}
+                            >
+                                <div className="text-2xl font-bold">{value}</div>
+                                <div className="mt-1 text-sm font-semibold text-slate-500">{trangThaiGoi[key].ten}</div>
+                            </button>
+                        ))}
                     </div>
 
-                    {danhSachDaLoc.length === 0 ? (
-                        <div className="px-5 py-12 text-center">
-                            <p className="text-base font-bold text-slate-900">Chưa có gói học phù hợp</p>
-                            <p className="mt-2 text-sm text-slate-500">Bạn có thể đặt gói mới hoặc chọn trạng thái khác.</p>
+                    <section className="mt-8 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                        <div className="border-b border-slate-100 px-5 py-4">
+                            <h2 className="text-lg font-bold">Danh sách gói học</h2>
                         </div>
-                    ) : (
-                        <div className="divide-y divide-slate-100">
-                            {danhSachDaLoc.map((goiHoc) => {
-                                const dangMo = goiDangMo === goiHoc.id;
 
-                                return (
-                                    <article key={goiHoc.id} className="px-5 py-5">
+                        {danhSachDaLoc.length === 0 ? (
+                            <div className="px-5 py-12 text-center">
+                                <p className="text-base font-bold text-slate-900">Chưa có gói học phù hợp</p>
+                                <p className="mt-2 text-sm text-slate-500">Bạn có thể đặt gói mới hoặc chọn trạng thái khác.</p>
+                            </div>
+                        ) : (
+                            <div className="divide-y divide-slate-100">
+                                {danhSachDaLoc.map((goiHoc) => {
+                                    const dangMo = goiDangMo === goiHoc.id;
+
+                                    return (
+                                        <article key={goiHoc.id} className="px-5 py-5">
                                         <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr_auto] lg:items-center">
                                             <div>
                                                 <div className="flex flex-wrap items-center gap-3">
@@ -589,12 +675,19 @@ function LichHocCuaToi() {
                                                 </div>
                                             </div>
                                         )}
-                                    </article>
-                                );
-                            })}
-                        </div>
-                    )}
-                </section>
+                                        </article>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </section>
+                    </>
+                ) : (
+                    <LichSuThanhToan
+                        danhSach={lichSuThanhToan}
+                        thongKe={thongKeThanhToan}
+                    />
+                )}
             </div>
 
             {chiTietBuoi && (
@@ -987,6 +1080,98 @@ function LichHocCuaToi() {
                 </div>
             )}
         </div>
+    );
+}
+
+function LichSuThanhToan({ danhSach, thongKe }) {
+    return (
+        <div className="mt-8 space-y-6">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <TheThanhToan tieuDe="Tất cả giao dịch" giaTri={thongKe.tat_ca} moTa="Toàn bộ lịch sử gửi thanh toán" />
+                <TheThanhToan tieuDe="Đã thanh toán" giaTri={thongKe.da_thanhtoan} moTa={dinhDangTien(thongKe.tongDaThanhToan)} noiBat />
+                <TheThanhToan tieuDe="Chờ duyệt" giaTri={thongKe.cho_thanhtoan} moTa="Admin đang kiểm tra minh chứng" />
+                <TheThanhToan tieuDe="Thất bại" giaTri={thongKe.that_bai} moTa="Cần gửi lại nếu gói còn chờ thanh toán" />
+            </div>
+
+            <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                <div className="border-b border-slate-100 px-5 py-4">
+                    <h2 className="text-lg font-bold">Lịch sử thanh toán</h2>
+                    <p className="mt-1 text-sm text-slate-500">Theo dõi các giao dịch đã gửi và trạng thái xét duyệt của admin.</p>
+                </div>
+
+                {danhSach.length === 0 ? (
+                    <div className="px-5 py-12 text-center">
+                        <p className="text-base font-bold text-slate-900">Chưa có giao dịch thanh toán</p>
+                        <p className="mt-2 text-sm text-slate-500">Khi bạn gửi minh chứng thanh toán, giao dịch sẽ hiển thị tại đây.</p>
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full text-left text-sm">
+                            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                                <tr>
+                                    <th className="px-5 py-3">Gói học</th>
+                                    <th className="px-5 py-3">Thanh toán</th>
+                                    <th className="px-5 py-3">Trạng thái</th>
+                                    <th className="px-5 py-3">Minh chứng</th>
+                                    <th className="px-5 py-3 text-right">Số tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {danhSach.map((item) => (
+                                    <tr key={item.id} className="align-top hover:bg-slate-50/70">
+                                        <td className="px-5 py-4">
+                                            <div className="font-bold text-slate-950">{item.maGoi}</div>
+                                            <div className="mt-1 text-sm font-semibold text-slate-700">{item.goiHoc?.monHoc || "Môn học"}</div>
+                                            <div className="mt-1 text-xs text-slate-500">Gia sư {item.goiHoc?.giaSu || "Chưa cập nhật"}</div>
+                                        </td>
+                                        <td className="px-5 py-4">
+                                            <div className="font-semibold text-slate-800">{item.phuongThuc}</div>
+                                            <div className="mt-1 text-xs text-slate-500">{item.ngayThanhToan || "Chưa có ngày"}</div>
+                                            <div className="mt-1 text-xs text-slate-500">Mã GD: {item.maGiaoDich || "Chưa cập nhật"}</div>
+                                            {item.noiDung && (
+                                                <div className="mt-2 max-w-xs rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                                                    {item.noiDung}
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td className="px-5 py-4">
+                                            <NhanTrangThaiThanhToan trangThai={item.trangThai} />
+                                        </td>
+                                        <td className="px-5 py-4">
+                                            {item.anhMinhChung ? (
+                                                <a
+                                                    href={layUrlMinhChung(item.anhMinhChung)}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="inline-flex rounded-lg border border-sky-200 px-3 py-2 text-xs font-bold text-sky-700 transition hover:bg-sky-50"
+                                                >
+                                                    Xem ảnh
+                                                </a>
+                                            ) : (
+                                                <span className="text-xs font-semibold text-slate-400">Không có</span>
+                                            )}
+                                        </td>
+                                        <td className="px-5 py-4 text-right text-base font-extrabold text-slate-950">
+                                            {item.soTienText || dinhDangTien(item.soTien)}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </section>
+        </div>
+    );
+}
+
+function TheThanhToan({ tieuDe, giaTri, moTa, noiBat }) {
+    return (
+        <section className={`rounded-lg border p-4 shadow-sm ${noiBat ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-white"}`}>
+            <div className={`text-sm font-bold ${noiBat ? "text-emerald-700" : "text-slate-500"}`}>{tieuDe}</div>
+            <div className="mt-3 text-2xl font-bold text-slate-950">{giaTri}</div>
+            <div className={`mt-1 text-xs font-semibold ${noiBat ? "text-emerald-700" : "text-slate-400"}`}>{moTa}</div>
+        </section>
     );
 }
 

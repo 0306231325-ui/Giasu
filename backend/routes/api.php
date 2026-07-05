@@ -1,5 +1,6 @@
 <?php
 use App\Http\Controllers\Api\Admin\AdminBaiVietController;
+use App\Http\Controllers\Api\Admin\AdminDoanhThuController;
 use App\Http\Controllers\Api\Admin\AdminGiaSuBangCapController;
 use App\Http\Controllers\Api\Admin\AdminGiaSuController;
 use App\Http\Controllers\Api\Admin\AdminHocVienController;
@@ -61,6 +62,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/{lichHocId}/doi-buoi', [HocVienLichHocController::class, 'yeuCauDoiBuoiHoc']);
         });
 
+        Route::get('/thanh-toan', [HocVienThanhToanController::class, 'lichSuThanhToan']);
         Route::post('/goi-hoc/{goiHocId}/thanh-toan', [HocVienThanhToanController::class, 'thanhToanGoiHoc']);
         Route::patch('/goi-hoc/{goiHocId}/huy', [DatGoiController::class, 'hocVienHuyGoiHoc']);
     });
@@ -99,6 +101,8 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::prefix('admin')->group(function () {
+        Route::get('/doanh-thu', [AdminDoanhThuController::class, 'tongQuan']);
+
         Route::prefix('dat-goi')->group(function () {
             Route::get('/', [AdminDatGoiController::class, 'danhSachDatGoiAdmin']);
             Route::patch('/{goiHocId}/gui-gia-su', [AdminDatGoiController::class, 'guiGoiChoGiaSu']);
