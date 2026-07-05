@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+﻿import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import ThongBaoDropdown from "../components/ThongBaoDropdown";
 import { useAuth } from "../context/AuthContext";
 import useAdminDemCanXuLy from "../hooks/useAdminDemCanXuLy";
@@ -144,3 +144,4 @@ function NavItem({ to, end, label, badge = 0 }) {
 }
 
 export default AdminLayout;
+

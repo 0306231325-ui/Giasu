@@ -22,19 +22,21 @@ function layThongDiepLoi(loi) {
     return Array.isArray(loi) ? loi[0] : loi;
 }
 
-function truongTuHoSo(duLieu) {
+function truongTuHoSo(duLieu, userMacDinh = {}) {
+    const hocVien = duLieu?.hocvien || userMacDinh?.hocvien || {};
+
     return {
-        ho_ten: duLieu?.ho_ten || "",
-        ngay_sinh: duLieu?.ngay_sinh || "",
-        email: duLieu?.email || "",
-        sdt: duLieu?.sdt || "",
-        lop: duLieu?.hocvien?.lop || "",
-        truong_hoc: duLieu?.hocvien?.truong_hoc || "",
-        dia_chi: duLieu?.hocvien?.dia_chi || "",
-        ten_phu_huynh: duLieu?.hocvien?.ten_phu_huynh || "",
-        sdt_phu_huynh: duLieu?.hocvien?.sdt_phu_huynh || "",
-        muc_tieu_hoc_tap: duLieu?.hocvien?.muc_tieu_hoc_tap || "",
-        anh_dai_dien: duLieu?.anh_dai_dien || "",
+        ho_ten: duLieu?.ho_ten || userMacDinh?.ho_ten || "",
+        ngay_sinh: duLieu?.ngay_sinh || userMacDinh?.ngay_sinh || "",
+        email: duLieu?.email || userMacDinh?.email || "",
+        sdt: duLieu?.sdt || userMacDinh?.sdt || "",
+        lop: hocVien?.lop || "",
+        truong_hoc: hocVien?.truong_hoc || "",
+        dia_chi: hocVien?.dia_chi || duLieu?.dia_chi || userMacDinh?.dia_chi || "",
+        ten_phu_huynh: hocVien?.ten_phu_huynh || "",
+        sdt_phu_huynh: hocVien?.sdt_phu_huynh || "",
+        muc_tieu_hoc_tap: hocVien?.muc_tieu_hoc_tap || "",
+        anh_dai_dien: duLieu?.anh_dai_dien || userMacDinh?.anh_dai_dien || "",
     };
 }
 
@@ -120,6 +122,20 @@ function HoSoHocVien() {
     }, [form.ho_ten, user?.ho_ten]);
 
     useEffect(() => {
+        if (!laHocVien || !user) return;
+
+        setForm((hienTai) => ({
+            ...hienTai,
+            ho_ten: hienTai.ho_ten || user.ho_ten || "",
+            ngay_sinh: hienTai.ngay_sinh || user.ngay_sinh || "",
+            email: hienTai.email || user.email || "",
+            sdt: hienTai.sdt || user.sdt || "",
+            dia_chi: hienTai.dia_chi || user.dia_chi || "",
+            anh_dai_dien: hienTai.anh_dai_dien || user.anh_dai_dien || "",
+        }));
+    }, [laHocVien, user]);
+
+    useEffect(() => {
         if (dangKiemTraDangNhap) return;
 
         if (!isAuthenticated) {
@@ -134,7 +150,7 @@ function HoSoHocVien() {
         api.get("/hoc-vien/ho-so")
             .then((phanHoi) => {
                 if (phanHoi.data.success) {
-                    setForm(truongTuHoSo(phanHoi.data.data));
+                    setForm(truongTuHoSo(phanHoi.data.data, user));
                 }
             })
             .catch((error) => {
@@ -221,7 +237,14 @@ function HoSoHocVien() {
                 email: duLieuMoi.email,
                 sdt: duLieuMoi.sdt,
                 dia_chi: duLieuMoi.dia_chi,
-                hocvien: duLieuMoi.hocvien,
+                hocvien: {
+                    lop: duLieuMoi.lop,
+                    truong_hoc: duLieuMoi.truong_hoc,
+                    dia_chi: duLieuMoi.dia_chi,
+                    ten_phu_huynh: duLieuMoi.ten_phu_huynh,
+                    sdt_phu_huynh: duLieuMoi.sdt_phu_huynh,
+                    muc_tieu_hoc_tap: duLieuMoi.muc_tieu_hoc_tap,
+                },
                 anh_dai_dien: duLieuMoi.anh_dai_dien,
             });
             setThongBao({

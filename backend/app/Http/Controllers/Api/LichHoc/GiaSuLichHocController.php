@@ -109,8 +109,8 @@ class GiaSuLichHocController extends DatLichBaseController
             ], 422);
         }
 
-        $thoiDiemBatDau = Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_batdau);
-        if (now()->lt($thoiDiemBatDau)) {
+        $thoiDiemBatDau = $this->thoiDiemLichHoc($lichHoc, 'gio_batdau');
+        if ($this->bayGioLichHoc()->lt($thoiDiemBatDau)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Chi co the xac nhan khi buoi hoc da bat dau.',
