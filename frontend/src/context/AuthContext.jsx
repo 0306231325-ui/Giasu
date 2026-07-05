@@ -29,6 +29,20 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    const xuLyMatPhienDangNhap = () => {
+      clearAuth();
+      setUser(null);
+      setLoading(false);
+    };
+
+    window.addEventListener('auth:unauthorized', xuLyMatPhienDangNhap);
+
+    return () => {
+      window.removeEventListener('auth:unauthorized', xuLyMatPhienDangNhap);
+    };
+  }, []);
+
   const login = (token, userData) => {
     setAuth(token, userData);
     setUser(userData);

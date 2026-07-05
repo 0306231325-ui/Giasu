@@ -20,8 +20,24 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const coTokenDangLuu = Boolean(getToken());
+
+    if (error.response?.status === 401 && coTokenDangLuu) {
+      const messageBackend = error.response?.data?.message;
+      const messageHienThi =
+        !messageBackend || messageBackend === 'Unauthenticated.'
+          ? 'Tài khoản đã bị khóa hoặc phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
+          : messageBackend;
+
       clearAuth();
+
+      window.dispatchEvent(
+        new CustomEvent('auth:unauthorized', {
+          detail: {
+            message: messageHienThi,
+          },
+        })
+      );
     }
     return Promise.reject(error);
   }
