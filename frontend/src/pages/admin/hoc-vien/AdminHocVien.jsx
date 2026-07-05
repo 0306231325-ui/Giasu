@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../../../services/api";
+import ModalNhapLyDo from "../../../components/ModalNhapLyDo";
+import { useToast } from "../../../context/ToastContext";
 import BangHocVien from "./BangHocVien";
 import BoLocHocVien from "./BoLocHocVien";
 import PhanTrangHocVien from "./PhanTrangHocVien";
@@ -7,6 +9,7 @@ import PhanTrangHocVien from "./PhanTrangHocVien";
 const SO_TAI_KHOAN_MOI_TRANG = 10;
 
 function AdminHocVien() {
+  const toast = useToast();
   const [danhSachHocVien, setDanhSachHocVien] = useState([]);
   const [meta, setMeta] = useState(null);
   const [tuKhoa, setTuKhoa] = useState("");
@@ -15,8 +18,7 @@ function AdminHocVien() {
   const [dangTai, setDangTai] = useState(true);
   const [loi, setLoi] = useState("");
   const [dangCapNhatId, setDangCapNhatId] = useState(null);
-  const [thongBao, setThongBao] = useState("");
-  const boDemAnThongBao = useRef(null);
+  const [hocVienDangKhoa, setHocVienDangKhoa] = useState(null);
 
   const thamSoTruyVan = useMemo(
     () => ({
@@ -65,15 +67,6 @@ function AdminHocVien() {
     };
   }, [thamSoTruyVan]);
 
-  useEffect(
-    () => () => {
-      if (boDemAnThongBao.current) {
-        clearTimeout(boDemAnThongBao.current);
-      }
-    },
-    []
-  );
-
   const xuLyDoiTuKhoa = (event) => {
     setTuKhoa(event.target.value);
     setTrangHienTai(1);
@@ -86,57 +79,43 @@ function AdminHocVien() {
 
   const xuLyChuyenTrangThai = async (hocVien) => {
     const trangThaiMoi = hocVien.trang_thai === "hoatdong" ? "khoa" : "hoatdong";
-    const xacNhan = window.confirm(
-      trangThaiMoi === "khoa"
-        ? `Khóa tài khoản học viên ${hocVien.ho_ten}?`
-        : `Mở khóa tài khoản học viên ${hocVien.ho_ten}?`
-    );
 
-    if (!xacNhan) return;
+    if (trangThaiMoi === "khoa") {
+      setHocVienDangKhoa(hocVien);
+      return;
+    }
 
+    await capNhatTrangThaiHocVien(hocVien, trangThaiMoi);
+  };
+
+  const capNhatTrangThaiHocVien = async (hocVien, trangThaiMoi, lyDoKhoa = "") => {
     setDangCapNhatId(hocVien.id);
     setLoi("");
-    anThongBao();
 
     try {
       const response = await api.patch(
         `/admin/hoc-vien/${hocVien.id}/trang-thai`,
-        { trang_thai: trangThaiMoi }
+        {
+          trang_thai: trangThaiMoi,
+          ...(trangThaiMoi === "khoa" ? { ly_do_khoa: lyDoKhoa } : {}),
+        }
       );
 
       if (response.data.success) {
         const hocVienDaCapNhat = response.data.data;
 
         capNhatDanhSachSauKhiDoiTrangThai(hocVienDaCapNhat);
-        hienThongBaoTamThoi(response.data.message);
+        toast.success(response.data.message || "Đã cập nhật trạng thái tài khoản học viên.");
+        setHocVienDangKhoa(null);
       }
     } catch (err) {
-      setLoi(
+      toast.error(
         err.response?.data?.message ||
           "Không cập nhật được trạng thái tài khoản học viên."
       );
     } finally {
       setDangCapNhatId(null);
     }
-  };
-
-  const anThongBao = () => {
-    if (boDemAnThongBao.current) {
-      clearTimeout(boDemAnThongBao.current);
-      boDemAnThongBao.current = null;
-    }
-
-    setThongBao("");
-  };
-
-  const hienThongBaoTamThoi = (noiDung) => {
-    anThongBao();
-    setThongBao(noiDung);
-
-    boDemAnThongBao.current = setTimeout(() => {
-      setThongBao("");
-      boDemAnThongBao.current = null;
-    }, 3000);
   };
 
   const capNhatDanhSachSauKhiDoiTrangThai = (hocVienDaCapNhat) => {
@@ -194,7 +173,6 @@ function AdminHocVien() {
         danhSachHocVien={danhSachHocVien}
         dangTai={dangTai}
         loi={loi}
-        thongBao={thongBao}
         dangCapNhatId={dangCapNhatId}
         xuLyChuyenTrangThai={xuLyChuyenTrangThai}
       />
@@ -204,6 +182,19 @@ function AdminHocVien() {
         trangHienTai={trangHienTai}
         dangTai={dangTai}
         chuyenTrang={setTrangHienTai}
+      />
+
+      <ModalNhapLyDo
+        mo={Boolean(hocVienDangKhoa)}
+        tieuDe="Khóa tài khoản học viên"
+        moTa={`Nhập lý do khóa tài khoản ${hocVienDangKhoa?.ho_ten || "học viên"}. Lý do này sẽ được lưu để quản trị viên theo dõi.`}
+        placeholder="Ví dụ: Tài khoản vi phạm quy định sử dụng..."
+        nutXacNhan="Khóa tài khoản"
+        dangXuLy={dangCapNhatId === hocVienDangKhoa?.id}
+        onDong={() => setHocVienDangKhoa(null)}
+        onXacNhan={(lyDo) =>
+          capNhatTrangThaiHocVien(hocVienDangKhoa, "khoa", lyDo)
+        }
       />
     </div>
   );

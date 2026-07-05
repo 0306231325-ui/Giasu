@@ -58,6 +58,11 @@ class AdminHocVienController extends Controller
 
         $duLieu = $request->validate([
             'trang_thai' => ['required', 'in:hoatdong,khoa'],
+            'ly_do_khoa' => ['required_if:trang_thai,khoa', 'nullable', 'string', 'min:3', 'max:1000'],
+        ], [
+            'ly_do_khoa.required_if' => 'Vui lòng nhập lý do khóa tài khoản.',
+            'ly_do_khoa.min' => 'Lý do khóa tài khoản phải có ít nhất 3 ký tự.',
+            'ly_do_khoa.max' => 'Lý do khóa tài khoản không được vượt quá 1000 ký tự.',
         ]);
 
         $hocVien = User::query()
@@ -73,6 +78,9 @@ class AdminHocVienController extends Controller
         }
 
         $hocVien->trang_thai = $duLieu['trang_thai'];
+        $hocVien->ly_do_khoa = $hocVien->trang_thai === 'khoa'
+            ? trim((string) $duLieu['ly_do_khoa'])
+            : null;
         $hocVien->save();
 
         if ($hocVien->trang_thai === 'khoa') {

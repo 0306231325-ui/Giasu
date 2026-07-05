@@ -21,6 +21,11 @@ class AdminTrangThaiGiaSuController extends Controller
 
         $duLieu = $request->validate([
             'trang_thai' => ['required', 'in:hoatdong,khoa'],
+            'ly_do_khoa' => ['required_if:trang_thai,khoa', 'nullable', 'string', 'min:3', 'max:1000'],
+        ], [
+            'ly_do_khoa.required_if' => 'Vui lòng nhập lý do khóa tài khoản.',
+            'ly_do_khoa.min' => 'Lý do khóa tài khoản phải có ít nhất 3 ký tự.',
+            'ly_do_khoa.max' => 'Lý do khóa tài khoản không được vượt quá 1000 ký tự.',
         ]);
 
         $giaSu = Giasu::query()
@@ -45,6 +50,9 @@ class AdminTrangThaiGiaSuController extends Controller
         }
 
         $giaSu->user->trang_thai = $duLieu['trang_thai'];
+        $giaSu->user->ly_do_khoa = $giaSu->user->trang_thai === 'khoa'
+            ? trim((string) $duLieu['ly_do_khoa'])
+            : null;
         $giaSu->user->save();
 
         if ($giaSu->user->trang_thai === 'khoa') {
@@ -61,6 +69,7 @@ class AdminTrangThaiGiaSuController extends Controller
             'data' => [
                 'id' => $giaSu->id,
                 'trangThai' => $giaSu->user->trang_thai,
+                'lyDoKhoa' => $giaSu->user->ly_do_khoa,
             ],
         ]);
     }

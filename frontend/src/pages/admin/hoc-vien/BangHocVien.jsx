@@ -4,18 +4,11 @@ function BangHocVien({
   danhSachHocVien,
   dangTai,
   loi,
-  thongBao,
   dangCapNhatId,
   xuLyChuyenTrangThai,
 }) {
   return (
     <div className="mt-5 overflow-hidden rounded-lg border border-white/10 bg-[#0a0f24]">
-      {thongBao ? (
-        <div className="border-b border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
-          {thongBao}
-        </div>
-      ) : null}
-
       {loi ? (
         <div className="p-5 text-sm text-red-200">{loi}</div>
       ) : (
