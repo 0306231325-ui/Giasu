@@ -22,6 +22,7 @@ class User extends Authenticatable
         'vai_tro',
         'anh_dai_dien',
         'trang_thai',
+        'ly_do_khoa',
     ];
 
     protected $hidden = [
