@@ -164,35 +164,12 @@ function AdminGiaSu() {
 
     return (
         <div className="mx-auto max-w-[1500px]">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+            <div>
                 <div>
                     <div className="text-2xl font-extrabold">Quản lý gia sư</div>
                     <p className="mt-2 text-sm text-white/60">
                         Xét duyệt hồ sơ đăng ký và quản lý gia sư trên hệ thống.
                     </p>
-                </div>
-                <div className="grid grid-cols-3 gap-2 sm:flex">
-                    <ThongKe
-                        nhan="Chờ duyệt"
-                        giaTri={thongKe.choDuyet}
-                        mau="amber"
-                        active={tab === "xet_duyet"}
-                        onClick={() => doiTab("xet_duyet")}
-                    />
-                    <ThongKe
-                        nhan="Đã duyệt"
-                        giaTri={thongKe.daDuyet}
-                        mau="emerald"
-                        active={tab === "danh_sach"}
-                        onClick={() => doiTab("danh_sach")}
-                    />
-                    <ThongKe
-                        nhan="Từ chối"
-                        giaTri={thongKe.tuChoi}
-                        mau="red"
-                        active={tab === "tu_choi"}
-                        onClick={() => doiTab("tu_choi")}
-                    />
                 </div>
             </div>
 
@@ -306,28 +283,6 @@ function Tab({ active, onClick, label, badge }) {
                     {badge}
                 </span>
             )}
-        </button>
-    );
-}
-
-function ThongKe({ nhan, giaTri, mau, active, onClick }) {
-    const lopMau = {
-        amber: "border-amber-400/20 bg-amber-400/10 text-amber-300",
-        emerald: "border-emerald-400/20 bg-emerald-400/10 text-emerald-300",
-        red: "border-red-400/20 bg-red-400/10 text-red-300",
-    }[mau];
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            className={[
-                "min-w-32 rounded-xl border px-4 py-2 text-center transition hover:scale-[1.02]",
-                lopMau,
-                active ? "ring-2 ring-white/20" : "",
-            ].join(" ")}
-        >
-            <p className="text-lg font-extrabold">{giaTri}</p>
-            <p className="whitespace-nowrap text-[11px] font-semibold opacity-75">{nhan}</p>
         </button>
     );
 }

@@ -114,6 +114,9 @@ class AdminYeuCauChuyenMonController extends Controller
     {
         $bangCap = GiasuBangCap::query()
             ->with(['giasu.user:id,ho_ten,email', 'trinhDo:id,ten,thu_tu'])
+            ->whereHas('giasu', function ($query) {
+                $query->where('trang_thai_ho_so', 'duyet');
+            })
             ->latest()
             ->get()
             ->map(fn (GiasuBangCap $bangCap) => $this->dinhDangBangCap($bangCap));
@@ -124,6 +127,9 @@ class AdminYeuCauChuyenMonController extends Controller
                 'giasu.bangCaps.trinhDo:id,ten,thu_tu',
                 'monHoc.capHoc:id,ten',
             ])
+            ->whereHas('giasu', function ($query) {
+                $query->where('trang_thai_ho_so', 'duyet');
+            })
             ->where('trang_thai', '!=', GiasuGia::TRANG_THAI_NGUNG_DAY)
             ->latest()
             ->get()
