@@ -110,15 +110,22 @@ const ngayHomNay = () => {
 
 const taoDanhSachKhungGio = () => {
     const danhSach = [];
-    for (let h = 7; h <= 21; h++) {
+    for (let h = 7; h <= 20; h++) {
         danhSach.push(`${String(h).padStart(2, "0")}:00`);
-        if (h < 21) {
-            danhSach.push(`${String(h).padStart(2, "0")}:30`);
-        }
+        danhSach.push(`${String(h).padStart(2, "0")}:30`);
     }
     return danhSach;
 };
 const cacKhungGio = taoDanhSachKhungGio();
+
+const congPhutVaoGio = (gio, soPhut) => {
+    const [gioBatDau, phutBatDau] = String(gio || "00:00").split(":").map(Number);
+    const tongPhut = gioBatDau * 60 + phutBatDau + soPhut;
+    const gioKetThuc = Math.floor(tongPhut / 60);
+    const phutKetThuc = tongPhut % 60;
+
+    return `${String(gioKetThuc).padStart(2, "0")}:${String(phutKetThuc).padStart(2, "0")}`;
+};
 
 const taoMaGiaoDich = (maGoi) => `GD${Date.now()}${String(maGoi || "").replace(/\D/g, "").slice(-6)}`;
 const API_ORIGIN = (import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api").replace(/\/api\/?$/, "");
@@ -303,18 +310,6 @@ function LichHocCuaToi() {
         }
     };
 
-    /*
-
-        setDanhSachGoi((hienTai) =>
-            hienTai.map((item) =>
-                item.id === goiHoc.id ? { ...item, trangThai: "da_huy", coTheHuy: false } : item,
-            ),
-        );
-        setThongBao("Đã ghi nhận yêu cầu hủy gói học.");
-    };
-
-    */
-
     const moThanhToan = (goiHoc) => {
         setGoiThanhToan(goiHoc);
         setFormThanhToan({
@@ -396,7 +391,7 @@ function LichHocCuaToi() {
         setFormDoiBuoi({
             ngay_hoc: lichHoc.ngayHoc || ngayHomNay(),
             gio_batdau: lichHoc.gioBatDau || "18:00",
-            gio_ketthuc: lichHoc.gioKetThuc || "19:30",
+            gio_ketthuc: congPhutVaoGio(lichHoc.gioBatDau || "18:00", 90),
             ly_do: "",
         });
         setFormXacNhanBuoi({
@@ -417,7 +412,10 @@ function LichHocCuaToi() {
             const response = await api.post(`/hoc-vien/lich-hoc/${chiTietBuoi.lichHoc.id}/danh-gia`, formDanhGia);
 
             if (response.data.success) {
-                capNhatBuoiHoc(chiTietBuoi.lichHoc.id, { danhGia: response.data.data });
+                capNhatBuoiHoc(chiTietBuoi.lichHoc.id, {
+                    danhGia: response.data.data,
+                    coTheDanhGia: false,
+                });
                 setThongBao(response.data.message || "Đã lưu đánh giá.");
             }
         } catch (error) {
@@ -436,7 +434,11 @@ function LichHocCuaToi() {
         setThongBao("");
 
         try {
-            const response = await api.post(`/hoc-vien/lich-hoc/${chiTietBuoi.lichHoc.id}/doi-buoi`, formDoiBuoi);
+            const duLieuDoiBuoi = {
+                ...formDoiBuoi,
+                gio_ketthuc: congPhutVaoGio(formDoiBuoi.gio_batdau, 90),
+            };
+            const response = await api.post(`/hoc-vien/lich-hoc/${chiTietBuoi.lichHoc.id}/doi-buoi`, duLieuDoiBuoi);
 
             if (response.data.success) {
                 capNhatBuoiHoc(chiTietBuoi.lichHoc.id, {
@@ -862,7 +864,9 @@ function LichHocCuaToi() {
                                     </button>
                                     {!chiTietBuoi.lichHoc.coTheDanhGia && (
                                         <p className="text-xs font-semibold text-slate-500">
-                                            Chỉ có thể đánh giá sau khi buổi học hoàn thành.
+                                            {chiTietBuoi.lichHoc.danhGia
+                                                ? "Buổi học này đã được đánh giá. Mỗi buổi chỉ đánh giá một lần."
+                                                : "Chỉ có thể đánh giá sau khi buổi học hoàn thành."}
                                         </p>
                                     )}
                                 </form>
@@ -897,7 +901,14 @@ function LichHocCuaToi() {
                                         <span className="mb-2 block text-sm font-semibold text-slate-700">Giờ bắt đầu</span>
                                         <select
                                             value={formDoiBuoi.gio_batdau}
-                                            onChange={(event) => setFormDoiBuoi((hienTai) => ({ ...hienTai, gio_batdau: event.target.value }))}
+                                            onChange={(event) => {
+                                                const gioBatDau = event.target.value;
+                                                setFormDoiBuoi((hienTai) => ({
+                                                    ...hienTai,
+                                                    gio_batdau: gioBatDau,
+                                                    gio_ketthuc: congPhutVaoGio(gioBatDau, 90),
+                                                }));
+                                            }}
                                             disabled={!chiTietBuoi.lichHoc.coTheDoiBuoi}
                                             className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                                         >
@@ -908,16 +919,13 @@ function LichHocCuaToi() {
                                     </label>
                                     <label className="block">
                                         <span className="mb-2 block text-sm font-semibold text-slate-700">Giờ kết thúc</span>
-                                        <select
+                                        <input
+                                            type="text"
                                             value={formDoiBuoi.gio_ketthuc}
-                                            onChange={(event) => setFormDoiBuoi((hienTai) => ({ ...hienTai, gio_ketthuc: event.target.value }))}
-                                            disabled={!chiTietBuoi.lichHoc.coTheDoiBuoi}
-                                            className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
-                                        >
-                                            {cacKhungGio.map((gio) => (
-                                                <option key={gio} value={gio}>{gio}</option>
-                                            ))}
-                                        </select>
+                                            readOnly
+                                            className="h-11 w-full rounded-lg border border-slate-200 bg-slate-100 px-3 text-sm font-semibold text-slate-600 outline-none"
+                                        />
+                                        <p className="mt-1 text-xs text-slate-500">Tự tính 1 giờ 30 phút từ giờ bắt đầu.</p>
                                     </label>
                                     <label className="block md:col-span-3">
                                         <span className="mb-2 block text-sm font-semibold text-slate-700">Lý do đổi buổi</span>
@@ -1153,9 +1161,12 @@ function ThongTinBuoi({ label, value }) {
 
 function nhanTrangThaiYeuCau(trangThai) {
     return {
-        cho_duyet: "Chờ duyệt",
-        da_duyet: "Đã duyệt",
-        tu_choi: "Từ chối",
+        cho_duyet: "Chờ admin xử lý",
+        cho_gia_su_xac_nhan: "Chờ gia sư xác nhận",
+        giasu_dong_y: "Gia sư đã đồng ý",
+        giasu_tu_choi: "Gia sư từ chối",
+        da_duyet: "Đã duyệt đổi buổi",
+        tu_choi: "Đã từ chối",
     }[trangThai] || "Chưa cập nhật";
 }
 

@@ -13,6 +13,21 @@ function useYeuCauDatGoi() {
     const [dangTai, setDangTai] = useState(false);
     const boDemThongBao = useRef(null);
 
+    const layViTriCuon = () => ({
+        left: window.scrollX,
+        top: window.scrollY,
+    });
+
+    const khoiPhucViTriCuon = useCallback((viTriCuon) => {
+        window.requestAnimationFrame(() => {
+            window.scrollTo({
+                left: viTriCuon.left,
+                top: viTriCuon.top,
+                behavior: "auto",
+            });
+        });
+    }, []);
+
     const anThongBao = useCallback(() => {
         if (boDemThongBao.current) {
             clearTimeout(boDemThongBao.current);
@@ -182,6 +197,8 @@ function useYeuCauDatGoi() {
         if (!yeuCau || !hanhDong) return;
 
         if (hanhDong === "gui_gia_su") {
+            const viTriCuon = layViTriCuon();
+
             try {
                 const response = await api.patch(`/admin/dat-goi/${yeuCau.id}/gui-gia-su`);
                 capNhatYeuCau(yeuCau.id, response.data.data);
@@ -191,6 +208,8 @@ function useYeuCauDatGoi() {
             } catch (error) {
                 console.error("Không thể gửi yêu cầu cho gia sư:", error);
                 hienThongBao(error.response?.data?.message || "Không thể gửi yêu cầu cho gia sư.");
+            } finally {
+                khoiPhucViTriCuon(viTriCuon);
             }
             return;
         }

@@ -795,9 +795,9 @@ class DatLichBaseController extends Controller
                 'thoiGian' => null,
                 'ghiChu' => $xacNhan['giaSuBaoVanDe'] ? $lichHoc->ghi_chu : null,
             ],
-            'coTheDanhGia' => $lichHoc->trang_thai === 'hoanthanh',
+            'coTheDanhGia' => $lichHoc->trang_thai === 'hoanthanh' && ! $lichHoc->danhGia,
             'coTheDoiBuoi' => in_array($lichHoc->trang_thai, ['cho_xacnhan', 'da_nhan'], true)
-                && ! ($yeuCauHocBuMoiNhat?->trang_thai === 'cho_duyet'),
+                && ! in_array($yeuCauHocBuMoiNhat?->trang_thai, $this->trangThaiYeuCauDoiBuoiDangXuLy(), true),
             'danhGia' => $lichHoc->danhGia ? $this->dinhDangDanhGia($lichHoc->danhGia) : null,
             'yeuCauDoiBuoi' => $yeuCauHocBuMoiNhat ? $this->dinhDangYeuCauHocBu($yeuCauHocBuMoiNhat) : null,
         ];
@@ -815,16 +815,70 @@ class DatLichBaseController extends Controller
 
     protected function dinhDangYeuCauHocBu(YeuCauHocBu $yeuCau): array
     {
+        $lichHocGoc = $yeuCau->lichHocGoc;
+        $goiHoc = $lichHocGoc?->goiHoc;
+
         return [
             'id' => $yeuCau->id,
+            'maYeuCau' => 'YCD' . str_pad((string) $yeuCau->id, 6, '0', STR_PAD_LEFT),
+            'lichHocId' => $lichHocGoc?->id,
+            'maLichHoc' => $lichHocGoc ? 'LH' . str_pad((string) $lichHocGoc->id, 6, '0', STR_PAD_LEFT) : null,
+            'maGoi' => $goiHoc ? 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) : null,
+            'hocVien' => [
+                'id' => $goiHoc?->hocVien?->id,
+                'hoTen' => $goiHoc?->hocVien?->ho_ten ?? $yeuCau->nguoiYeuCau?->ho_ten,
+                'email' => $goiHoc?->hocVien?->email,
+                'sdt' => $goiHoc?->hocVien?->sdt,
+            ],
+            'giaSu' => [
+                'id' => $yeuCau->giasu?->id,
+                'hoTen' => $yeuCau->giasu?->user?->ho_ten,
+                'email' => $yeuCau->giasu?->user?->email,
+                'sdt' => $yeuCau->giasu?->user?->sdt,
+            ],
+            'monHoc' => [
+                'ten' => $goiHoc?->monHoc?->ten_mon,
+                'lop' => $goiHoc?->monHoc?->lop,
+                'tenHienThi' => trim(($goiHoc?->monHoc?->ten_mon ?? 'Mon hoc') . ' - ' . ($goiHoc?->monHoc?->lop ?? '')),
+            ],
+            'lichCu' => $lichHocGoc ? [
+                'ngayHoc' => Carbon::parse($lichHocGoc->ngay_hoc)->toDateString(),
+                'ngayHocText' => Carbon::parse($lichHocGoc->ngay_hoc)->format('d/m/Y'),
+                'gioBatDau' => substr((string) $lichHocGoc->gio_batdau, 0, 5),
+                'gioKetThuc' => substr((string) $lichHocGoc->gio_ketthuc, 0, 5),
+                'khungGio' => substr((string) $lichHocGoc->gio_batdau, 0, 5) . ' - ' . substr((string) $lichHocGoc->gio_ketthuc, 0, 5),
+            ] : null,
             'ngayHoc' => $yeuCau->ngay_hoc ? Carbon::parse($yeuCau->ngay_hoc)->toDateString() : null,
+            'ngayHocText' => $yeuCau->ngay_hoc ? Carbon::parse($yeuCau->ngay_hoc)->format('d/m/Y') : null,
             'gioBatDau' => substr((string) $yeuCau->gio_batdau, 0, 5),
             'gioKetThuc' => substr((string) $yeuCau->gio_ketthuc, 0, 5),
+            'khungGio' => substr((string) $yeuCau->gio_batdau, 0, 5) . ' - ' . substr((string) $yeuCau->gio_ketthuc, 0, 5),
             'lyDo' => $yeuCau->ly_do,
             'trangThai' => $yeuCau->trang_thai,
+            'trangThaiText' => $this->tenTrangThaiYeuCauHocBu($yeuCau->trang_thai),
+            'lyDoGiaSu' => $yeuCau->ly_do_gia_su,
+            'ghiChuAdmin' => $yeuCau->ghi_chu_admin,
             'ngayYeuCau' => $yeuCau->ngay_yeu_cau?->format('d/m/Y H:i') ?? '',
             'ngayXuLy' => $yeuCau->ngay_xu_ly?->format('d/m/Y H:i') ?? null,
+            'giaSuPhanHoiLuc' => $yeuCau->gia_su_phan_hoi_luc?->format('d/m/Y H:i') ?? null,
         ];
+    }
+
+    protected function trangThaiYeuCauDoiBuoiDangXuLy(): array
+    {
+        return ['cho_duyet', 'cho_gia_su_xac_nhan', 'giasu_dong_y'];
+    }
+
+    protected function tenTrangThaiYeuCauHocBu(?string $trangThai): string
+    {
+        return [
+            'cho_duyet' => 'Cho admin xu ly',
+            'cho_gia_su_xac_nhan' => 'Cho gia su xac nhan',
+            'giasu_dong_y' => 'Gia su dong y',
+            'giasu_tu_choi' => 'Gia su tu choi',
+            'da_duyet' => 'Da duyet doi buoi',
+            'tu_choi' => 'Da tu choi',
+        ][$trangThai] ?? 'Chua cap nhat';
     }
 
     protected function tenTrangThaiLichHoc(?string $trangThai): string

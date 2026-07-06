@@ -1,6 +1,7 @@
 import TabDanhSachLichHoc from "./components/TabDanhSachLichHoc";
 import TabLichTuan from "./components/TabLichTuan";
 import TabYeuCauDatGiaSu from "./components/TabYeuCauDatGiaSu";
+import TabYeuCauDoiBuoi from "./components/TabYeuCauDoiBuoi";
 import useQuanLyLichDay from "./hooks/useQuanLyLichDay";
 
 function GiaSuLichDay() {
@@ -9,12 +10,15 @@ function GiaSuLichDay() {
         setTab,
         danhSachLichHoc,
         danhSachYeuCau,
+        danhSachYeuCauDoiBuoi,
         dangTai,
         dangXuLyId,
         thongBao,
         soYeuCauChoPhanHoi,
+        soYeuCauDoiBuoiChoPhanHoi,
         xacNhanBuoiHoc,
         phanHoiYeuCau,
+        phanHoiYeuCauDoiBuoi,
     } = useQuanLyLichDay();
 
     return (
@@ -35,7 +39,7 @@ function GiaSuLichDay() {
                 </div>
             )}
 
-            <div className="mt-6 grid gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 lg:grid-cols-3">
+            <div className="mt-6 grid gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 lg:grid-cols-4">
                 <NutTab
                     dangChon={tab === "lich_hoc"}
                     onClick={() => setTab("lich_hoc")}
@@ -58,6 +62,14 @@ function GiaSuLichDay() {
                     soLuong={soYeuCauChoPhanHoi}
                     canChuY={soYeuCauChoPhanHoi > 0}
                 />
+                <NutTab
+                    dangChon={tab === "doi_buoi"}
+                    onClick={() => setTab("doi_buoi")}
+                    tieuDe="Yêu cầu đổi buổi"
+                    moTa="Admin gửi để bạn xác nhận"
+                    soLuong={soYeuCauDoiBuoiChoPhanHoi}
+                    canChuY={soYeuCauDoiBuoiChoPhanHoi > 0}
+                />
             </div>
 
             {dangTai ? (
@@ -76,12 +88,19 @@ function GiaSuLichDay() {
                     dangXuLyId={dangXuLyId}
                     onXacNhan={xacNhanBuoiHoc}
                 />
-            ) : (
+            ) : tab === "yeu_cau" ? (
                 <TabYeuCauDatGiaSu
                     danhSach={danhSachYeuCau}
                     dangXuLyId={dangXuLyId}
                     onDongY={(yeuCau) => phanHoiYeuCau(yeuCau, "dong_y")}
                     onTuChoi={(yeuCau, lyDo) => phanHoiYeuCau(yeuCau, "tu_choi", lyDo)}
+                />
+            ) : (
+                <TabYeuCauDoiBuoi
+                    danhSach={danhSachYeuCauDoiBuoi}
+                    dangXuLyId={dangXuLyId}
+                    onDongY={(yeuCau) => phanHoiYeuCauDoiBuoi(yeuCau, "dong_y")}
+                    onTuChoi={(yeuCau, lyDo) => phanHoiYeuCauDoiBuoi(yeuCau, "tu_choi", lyDo)}
                 />
             )}
         </div>

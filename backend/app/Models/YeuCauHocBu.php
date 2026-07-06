@@ -24,12 +24,16 @@ class YeuCauHocBu extends Model
         'trang_thai',
         'nguoi_duyet_id',
         'ngay_xu_ly',
+        'gia_su_phan_hoi_luc',
+        'ly_do_gia_su',
+        'ghi_chu_admin',
     ];
 
     protected $casts = [
         'ngay_yeu_cau' => 'datetime',
         'ngay_hoc' => 'date',
         'ngay_xu_ly' => 'datetime',
+        'gia_su_phan_hoi_luc' => 'datetime',
     ];
 
     public function lichHocGoc(): BelongsTo

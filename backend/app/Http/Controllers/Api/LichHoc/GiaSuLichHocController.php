@@ -160,4 +160,106 @@ class GiaSuLichHocController extends DatLichBaseController
             ])),
         ]);
     }
+
+    public function danhSachYeuCauDoiBuoiGiaSu(Request $request): JsonResponse
+    {
+        $giaSu = $this->layGiaSuDangNhap($request);
+
+        if (! $giaSu) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Khu vuc nay chi danh cho tai khoan gia su.',
+            ], 403);
+        }
+
+        $danhSach = YeuCauHocBu::query()
+            ->with($this->quanHeYeuCauDoiBuoi())
+            ->where('giasu_id', $giaSu->id)
+            ->whereIn('trang_thai', ['cho_gia_su_xac_nhan', 'giasu_dong_y', 'giasu_tu_choi', 'da_duyet', 'tu_choi'])
+            ->orderByRaw("CASE trang_thai WHEN 'cho_gia_su_xac_nhan' THEN 1 ELSE 2 END")
+            ->latest()
+            ->limit(100)
+            ->get()
+            ->map(fn (YeuCauHocBu $yeuCau) => $this->dinhDangYeuCauHocBu($yeuCau))
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => $danhSach,
+        ]);
+    }
+
+    public function phanHoiYeuCauDoiBuoiGiaSu(Request $request, int $yeuCauId): JsonResponse
+    {
+        $giaSu = $this->layGiaSuDangNhap($request);
+
+        if (! $giaSu) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Khu vuc nay chi danh cho tai khoan gia su.',
+            ], 403);
+        }
+
+        $duLieu = $request->validate([
+            'phan_hoi' => ['required', Rule::in(['dong_y', 'tu_choi'])],
+            'ly_do' => ['required_if:phan_hoi,tu_choi', 'nullable', 'string', 'max:1000'],
+        ]);
+
+        $yeuCau = YeuCauHocBu::query()
+            ->with($this->quanHeYeuCauDoiBuoi())
+            ->where('giasu_id', $giaSu->id)
+            ->find($yeuCauId);
+
+        if (! $yeuCau) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Khong tim thay yeu cau doi buoi.',
+            ], 404);
+        }
+
+        if ($yeuCau->trang_thai !== 'cho_gia_su_xac_nhan') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Yeu cau nay khong con cho phan hoi.',
+            ], 422);
+        }
+
+        $yeuCau->update([
+            'trang_thai' => $duLieu['phan_hoi'] === 'dong_y' ? 'giasu_dong_y' : 'giasu_tu_choi',
+            'ly_do_gia_su' => filled($duLieu['ly_do'] ?? null) ? trim($duLieu['ly_do']) : null,
+            'gia_su_phan_hoi_luc' => now(),
+        ]);
+
+        User::query()->where('vai_tro', 'admin')->each(function (User $admin) use ($duLieu, $yeuCau) {
+            ThongBao::create([
+                'user_id' => $admin->id,
+                'tieu_de' => $duLieu['phan_hoi'] === 'dong_y'
+                    ? 'Gia su dong y doi buoi'
+                    : 'Gia su tu choi doi buoi',
+                'noi_dung' => 'Gia su da phan hoi yeu cau doi buoi, admin can chot xu ly.',
+                'url' => '/admin/lich-hoc',
+                'da_doc' => false,
+            ]);
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => $duLieu['phan_hoi'] === 'dong_y'
+                ? 'Da dong y yeu cau doi buoi. Admin se duyet de cap nhat lich.'
+                : 'Da tu choi yeu cau doi buoi. Admin se xu ly tiep.',
+            'data' => $this->dinhDangYeuCauHocBu($yeuCau->fresh($this->quanHeYeuCauDoiBuoi())),
+        ]);
+    }
+
+    private function quanHeYeuCauDoiBuoi(): array
+    {
+        return [
+            'lichHocGoc',
+            'lichHocGoc.goiHoc.hocVien:id,ho_ten,email,sdt',
+            'lichHocGoc.goiHoc.monHoc:id,ten_mon,lop',
+            'giasu:id,user_id',
+            'giasu.user:id,ho_ten,email,sdt',
+            'nguoiYeuCau:id,ho_ten,email,sdt',
+        ];
+    }
 }

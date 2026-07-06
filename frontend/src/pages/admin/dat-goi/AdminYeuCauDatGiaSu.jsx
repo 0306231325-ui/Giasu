@@ -87,7 +87,7 @@ function AdminYeuCauDatGiaSu() {
             </div>
 
             {thongBao && (
-                <div className="mt-4 rounded-2xl border border-blue-400/30 bg-blue-500/10 px-4 py-3 text-sm font-semibold text-blue-100">
+                <div className="fixed right-6 top-6 z-50 max-w-md rounded-2xl border border-blue-300/40 bg-[#0b1748] px-5 py-4 text-sm font-semibold text-blue-50 shadow-2xl shadow-slate-950/40">
                     {thongBao}
                 </div>
             )}
