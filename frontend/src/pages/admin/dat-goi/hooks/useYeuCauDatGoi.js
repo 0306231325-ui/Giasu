@@ -293,13 +293,16 @@ function useYeuCauDatGoi() {
         }
 
         if (hanhDong === "huy_yeu_cau") {
-            setHopThoaiXacNhan({
+            const laGoiChoThanhToan = yeuCau.trangThai === "cho_thanh_toan";
+            setHopThoaiLyDo({
                 yeuCau,
                 hanhDong,
-                tieuDe: "Hủy yêu cầu đặt gói",
-                moTa: `Bạn muốn hủy yêu cầu ${yeuCau.ma}? Yêu cầu sẽ được chuyển sang trạng thái đã hủy.`,
-                nutXacNhan: "Hủy yêu cầu",
-                bienThe: "danger",
+                tieuDe: laGoiChoThanhToan ? "Hủy gói chờ thanh toán" : "Hủy yêu cầu đặt gói",
+                moTa: `Nhập lý do hủy ${laGoiChoThanhToan ? "gói chờ thanh toán" : "yêu cầu"} ${yeuCau.ma}. Lý do này sẽ được gửi cho học viên và gia sư.`,
+                placeholder: laGoiChoThanhToan
+                    ? "Ví dụ: Học viên không thanh toán đúng hạn, cần hủy gói..."
+                    : "Ví dụ: Lịch học không phù hợp, thông tin đặt gói chưa hợp lệ...",
+                nutXacNhan: laGoiChoThanhToan ? "Hủy gói" : "Hủy yêu cầu",
             });
             return;
         }

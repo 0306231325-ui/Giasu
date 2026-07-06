@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
+import ModalXacNhan from "./ModalXacNhan";
 
 function ThongBaoDropdown({
     tieuDe = "Thông báo",
@@ -12,6 +13,7 @@ function ThongBaoDropdown({
     const [dangMo, setDangMo] = useState(false);
     const [dangTai, setDangTai] = useState(false);
     const [dangXoaTatCa, setDangXoaTatCa] = useState(false);
+    const [moXacNhanXoaTatCa, setMoXacNhanXoaTatCa] = useState(false);
     const [danhSach, setDanhSach] = useState([]);
     const [soLuongChuaDoc, setSoLuongChuaDoc] = useState(0);
     const hopThongBaoRef = useRef(null);
@@ -89,17 +91,22 @@ function ThongBaoDropdown({
         }
     };
 
-    const xoaTatCaThongBao = async (event) => {
+    const moHopThoaiXoaTatCa = (event) => {
         event.stopPropagation();
 
         if (dangXoaTatCa || danhSach.length === 0) {
             return;
         }
 
+        setMoXacNhanXoaTatCa(true);
+    };
+
+    const xoaTatCaThongBao = async () => {
         const danhSachCu = danhSach;
         const soLuongChuaDocCu = soLuongChuaDoc;
 
         setDangXoaTatCa(true);
+        setMoXacNhanXoaTatCa(false);
         setDanhSach([]);
         setSoLuongChuaDoc(0);
 
@@ -169,7 +176,7 @@ function ThongBaoDropdown({
                                 {danhSach.length > 0 && (
                                     <button
                                         type="button"
-                                        onClick={xoaTatCaThongBao}
+                                        onClick={moHopThoaiXoaTatCa}
                                         disabled={dangXoaTatCa}
                                         className="rounded-full px-3 py-1 text-xs font-semibold text-white/45 transition hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
@@ -258,6 +265,17 @@ function ThongBaoDropdown({
                     )}
                 </div>
             )}
+
+            <ModalXacNhan
+                mo={moXacNhanXoaTatCa}
+                tieuDe="Xoá hết thông báo"
+                moTa="Bạn có chắc muốn xoá toàn bộ thông báo hiện có? Thao tác này không thể hoàn tác."
+                nutXacNhan="Xoá hết"
+                bienThe="danger"
+                dangXuLy={dangXoaTatCa}
+                onDong={() => setMoXacNhanXoaTatCa(false)}
+                onXacNhan={xoaTatCaThongBao}
+            />
         </div>
     );
 }
