@@ -37,10 +37,18 @@ function useQuanLyLichDay() {
             taiDuLieu();
         }, 0);
 
+        const lamMoi = () => {
+            taiDuLieu();
+            toast.success("Đã làm mới dữ liệu lịch dạy.");
+        };
+
+        window.addEventListener("giasu:refresh", lamMoi);
+
         return () => {
             clearTimeout(boDemTaiLanDau);
+            window.removeEventListener("giasu:refresh", lamMoi);
         };
-    }, [taiDuLieu]);
+    }, [taiDuLieu, toast]);
 
     const soYeuCauChoPhanHoi = useMemo(
         () =>
@@ -158,10 +166,10 @@ function useQuanLyLichDay() {
                 );
 
                 capNhatYeuCauDoiBuoi(response.data.data);
-                hienThongBao(response.data.message || "Đã ghi nhận phản hồi đổi buổi.");
+                toast.success(response.data.message || "Đã ghi nhận phản hồi đổi buổi.");
             } catch (error) {
-                console.error("Khong the phan hoi yeu cau doi buoi:", error);
-                hienThongBao(
+                console.error("Không thể phản hồi yêu cầu đổi buổi:", error);
+                toast.error(
                     error.response?.data?.message ||
                         "Không thể phản hồi yêu cầu đổi buổi.",
                 );
@@ -169,7 +177,7 @@ function useQuanLyLichDay() {
                 setDangXuLyId(null);
             }
         },
-        [capNhatYeuCauDoiBuoi, dangXuLyId, hienThongBao],
+        [capNhatYeuCauDoiBuoi, dangXuLyId, toast],
     );
 
     return {

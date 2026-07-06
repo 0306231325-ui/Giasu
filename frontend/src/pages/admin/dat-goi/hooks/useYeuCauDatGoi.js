@@ -11,6 +11,9 @@ function useYeuCauDatGoi() {
     const [tuKhoa, setTuKhoa] = useState("");
     const [yeuCauDangChonId, setYeuCauDangChonId] = useState(null);
     const [dangTai, setDangTai] = useState(false);
+    const [dangXuLyHanhDong, setDangXuLyHanhDong] = useState(false);
+    const [hopThoaiXacNhan, setHopThoaiXacNhan] = useState(null);
+    const [hopThoaiLyDo, setHopThoaiLyDo] = useState(null);
 
     const hienToast = useCallback((noiDung, loai = "info") => {
         if (!noiDung) return;
@@ -163,8 +166,9 @@ function useYeuCauDatGoi() {
         );
     };
 
-    const xuLyHanhDong = async (yeuCau, hanhDong) => {
+    const thucThiHanhDong = async (yeuCau, hanhDong, tuyChon = {}) => {
         if (!yeuCau || !hanhDong) return;
+        setDangXuLyHanhDong(true);
 
         if (hanhDong === "gui_gia_su") {
             const viTriCuon = layViTriCuon();
@@ -180,21 +184,7 @@ function useYeuCauDatGoi() {
                 hienToast(error.response?.data?.message || "Không thể gửi yêu cầu cho gia sư.", "error");
             } finally {
                 khoiPhucViTriCuon(viTriCuon);
-            }
-            return;
-        }
-
-        if (hanhDong === "cho_thanh_toan") {
-            try {
-                const response = await api.patch(`/admin/dat-goi/${yeuCau.id}/cho-thanh-toan`);
-                const yeuCauMoi = response.data.data;
-                capNhatYeuCau(yeuCau.id, yeuCauMoi);
-                setBoLocTrangThai(yeuCauMoi?.trangThai === "da_tao_lich" ? "danh_sach_goi_hoc" : "cho_thanh_toan");
-                setYeuCauDangChonId(yeuCau.id);
-                hienToast(response.data.message || `Đã chuyển ${yeuCau.ma} sang trạng thái chờ học viên thanh toán.`, "success");
-            } catch (error) {
-                console.error("Không thể chuyển sang chờ thanh toán:", error);
-                hienToast(error.response?.data?.message || "Không thể chuyển sang chờ thanh toán.", "error");
+                setDangXuLyHanhDong(false);
             }
             return;
         }
@@ -208,14 +198,13 @@ function useYeuCauDatGoi() {
             } catch (error) {
                 console.error("Không thể nhắc học viên thanh toán:", error);
                 hienToast(error.response?.data?.message || "Không thể nhắc học viên thanh toán.", "error");
+            } finally {
+                setDangXuLyHanhDong(false);
             }
             return;
         }
 
         if (hanhDong === "duyet_thanh_toan") {
-            const dongY = window.confirm(`Xác nhận thanh toán cho gói ${yeuCau.ma}?`);
-            if (!dongY) return;
-
             try {
                 const response = await api.patch(`/admin/dat-goi/${yeuCau.id}/duyet-thanh-toan`);
                 capNhatYeuCau(yeuCau.id, response.data.data);
@@ -225,17 +214,16 @@ function useYeuCauDatGoi() {
             } catch (error) {
                 console.error("Không thể duyệt thanh toán:", error);
                 hienToast(error.response?.data?.message || "Không thể duyệt thanh toán.", "error");
+            } finally {
+                setDangXuLyHanhDong(false);
             }
             return;
         }
 
         if (hanhDong === "tu_choi_thanh_toan") {
-            const lyDo = window.prompt(`Nhập lý do từ chối thanh toán cho ${yeuCau.ma}:`);
-            if (lyDo === null) return;
-
             try {
                 const response = await api.patch(`/admin/dat-goi/${yeuCau.id}/tu-choi-thanh-toan`, {
-                    ly_do: lyDo.trim(),
+                    ly_do: tuyChon.lyDo?.trim() || "",
                 });
                 capNhatYeuCau(yeuCau.id, response.data.data);
                 setBoLocTrangThai("cho_thanh_toan");
@@ -244,22 +232,22 @@ function useYeuCauDatGoi() {
             } catch (error) {
                 console.error("Không thể từ chối thanh toán:", error);
                 hienToast(error.response?.data?.message || "Không thể từ chối thanh toán.", "error");
+            } finally {
+                setDangXuLyHanhDong(false);
             }
             return;
         }
 
         if (hanhDong === "xem_thanh_toan") {
             hienToast("Phần thông tin thanh toán sẽ nối sau khi có dữ liệu thanh toán.", "info");
+            setDangXuLyHanhDong(false);
             return;
         }
 
         if (hanhDong === "huy_yeu_cau") {
-            const dongY = window.confirm(`Bạn muốn hủy yêu cầu ${yeuCau.ma}?`);
-            if (!dongY) return;
-
             try {
                 const response = await api.patch(`/admin/dat-goi/${yeuCau.id}/huy`, {
-                    ly_do: "Admin hủy yêu cầu đặt gói.",
+                    ly_do: tuyChon.lyDo?.trim() || "Admin hủy yêu cầu đặt gói.",
                 });
                 capNhatYeuCau(yeuCau.id, response.data.data);
                 setBoLocTrangThai("da_huy");
@@ -268,20 +256,98 @@ function useYeuCauDatGoi() {
             } catch (error) {
                 console.error("Không thể hủy yêu cầu đặt gói:", error);
                 hienToast(error.response?.data?.message || "Không thể hủy yêu cầu đặt gói.", "error");
+            } finally {
+                setDangXuLyHanhDong(false);
             }
+            return;
         }
+
+        setDangXuLyHanhDong(false);
+    };
+
+    const xuLyHanhDong = (yeuCau, hanhDong) => {
+        if (!yeuCau || !hanhDong || dangXuLyHanhDong) return;
+
+        if (hanhDong === "duyet_thanh_toan") {
+            setHopThoaiXacNhan({
+                yeuCau,
+                hanhDong,
+                tieuDe: "Xác nhận thanh toán",
+                moTa: `Xác nhận thanh toán cho gói ${yeuCau.ma}? Sau khi duyệt, hệ thống sẽ chuyển gói sang danh sách gói học.`,
+                nutXacNhan: "Duyệt thanh toán",
+                bienThe: "primary",
+            });
+            return;
+        }
+
+        if (hanhDong === "tu_choi_thanh_toan") {
+            setHopThoaiLyDo({
+                yeuCau,
+                hanhDong,
+                tieuDe: "Từ chối thanh toán",
+                moTa: `Nhập lý do từ chối thanh toán cho gói ${yeuCau.ma}.`,
+                placeholder: "Ví dụ: Minh chứng không rõ, sai số tiền, sai mã giao dịch...",
+                nutXacNhan: "Từ chối thanh toán",
+            });
+            return;
+        }
+
+        if (hanhDong === "huy_yeu_cau") {
+            setHopThoaiXacNhan({
+                yeuCau,
+                hanhDong,
+                tieuDe: "Hủy yêu cầu đặt gói",
+                moTa: `Bạn muốn hủy yêu cầu ${yeuCau.ma}? Yêu cầu sẽ được chuyển sang trạng thái đã hủy.`,
+                nutXacNhan: "Hủy yêu cầu",
+                bienThe: "danger",
+            });
+            return;
+        }
+
+        thucThiHanhDong(yeuCau, hanhDong);
+    };
+
+    const dongHopThoaiXacNhan = () => {
+        if (dangXuLyHanhDong) return;
+        setHopThoaiXacNhan(null);
+    };
+
+    const xacNhanHopThoai = async () => {
+        if (!hopThoaiXacNhan) return;
+        const { yeuCau, hanhDong } = hopThoaiXacNhan;
+        setHopThoaiXacNhan(null);
+        await thucThiHanhDong(yeuCau, hanhDong);
+    };
+
+    const dongHopThoaiLyDo = () => {
+        if (dangXuLyHanhDong) return;
+        setHopThoaiLyDo(null);
+    };
+
+    const xacNhanHopThoaiLyDo = async (lyDo) => {
+        if (!hopThoaiLyDo) return;
+        const { yeuCau, hanhDong } = hopThoaiLyDo;
+        setHopThoaiLyDo(null);
+        await thucThiHanhDong(yeuCau, hanhDong, { lyDo });
     };
 
     return {
         boLocTrangThai,
         dangTai,
+        dangXuLyHanhDong,
         danhSachDaLoc,
+        hopThoaiLyDo,
+        hopThoaiXacNhan,
         tuKhoa,
         yeuCauDangChon,
+        dongHopThoaiLyDo,
+        dongHopThoaiXacNhan,
         demTheoTrangThai,
         doiTrangThai,
         setTuKhoa,
         setYeuCauDangChonId,
+        xacNhanHopThoai,
+        xacNhanHopThoaiLyDo,
         xuLyHanhDong,
     };
 }

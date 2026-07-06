@@ -1,3 +1,5 @@
+import ModalNhapLyDo from "../../../components/ModalNhapLyDo";
+import ModalXacNhan from "../../../components/ModalXacNhan";
 import BoLocDatGoi from "./BoLocDatGoi";
 import ChiTietYeuCauDatGoi from "./ChiTietYeuCauDatGoi";
 import { BO_LOC_TRANG_THAI } from "./constants";
@@ -31,13 +33,20 @@ function AdminYeuCauDatGiaSu() {
     const {
         boLocTrangThai,
         dangTai,
+        dangXuLyHanhDong,
         danhSachDaLoc,
+        hopThoaiLyDo,
+        hopThoaiXacNhan,
         tuKhoa,
         yeuCauDangChon,
+        dongHopThoaiLyDo,
+        dongHopThoaiXacNhan,
         demTheoTrangThai,
         doiTrangThai,
         setTuKhoa,
         setYeuCauDangChonId,
+        xacNhanHopThoai,
+        xacNhanHopThoaiLyDo,
         xuLyHanhDong,
     } = useYeuCauDatGoi();
     const thongTinDanhSach = MO_TA_DANH_SACH[boLocTrangThai] ?? MO_TA_DANH_SACH.cho_xu_ly;
@@ -127,6 +136,28 @@ function AdminYeuCauDatGiaSu() {
                     )}
                 </section>
             </div>
+
+            <ModalXacNhan
+                mo={Boolean(hopThoaiXacNhan)}
+                tieuDe={hopThoaiXacNhan?.tieuDe}
+                moTa={hopThoaiXacNhan?.moTa}
+                nutXacNhan={hopThoaiXacNhan?.nutXacNhan}
+                bienThe={hopThoaiXacNhan?.bienThe}
+                dangXuLy={dangXuLyHanhDong}
+                onDong={dongHopThoaiXacNhan}
+                onXacNhan={xacNhanHopThoai}
+            />
+
+            <ModalNhapLyDo
+                mo={Boolean(hopThoaiLyDo)}
+                tieuDe={hopThoaiLyDo?.tieuDe}
+                moTa={hopThoaiLyDo?.moTa}
+                placeholder={hopThoaiLyDo?.placeholder}
+                nutXacNhan={hopThoaiLyDo?.nutXacNhan}
+                dangXuLy={dangXuLyHanhDong}
+                onDong={dongHopThoaiLyDo}
+                onXacNhan={xacNhanHopThoaiLyDo}
+            />
         </div>
     );
 }

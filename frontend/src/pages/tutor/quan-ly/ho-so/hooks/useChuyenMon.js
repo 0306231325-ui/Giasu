@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import api from "../../../../../services/api";
 import { CHUYEN_MON_MAC_DINH } from "../constants";
 
@@ -11,28 +11,36 @@ export default function useChuyenMon({ baoLoi, baoThanhCong }) {
     const [dangLuu, setDangLuu] = useState(false);
     const [loi, setLoi] = useState({});
 
-    useEffect(() => {
-        let conHieuLuc = true;
-        api.get("/gia-su/ho-so/chuyen-mon")
-            .then((phanHoi) => {
-                if (!conHieuLuc) return;
-                const duLieu = {
-                    ...CHUYEN_MON_MAC_DINH,
-                    ...phanHoi.data.data.thong_tin,
-                };
-                setChuyenMon(duLieu);
-                setBanNhap(duLieu);
-                setDanhMuc({
-                    trinh_do: phanHoi.data.data.trinh_do || [],
-                    muc_kinh_nghiem: phanHoi.data.data.muc_kinh_nghiem || [],
-                });
-            })
-            .catch((error) => conHieuLuc && baoLoi(error.response?.data?.message || "Không thể tải thông tin chuyên môn."))
-            .finally(() => conHieuLuc && setDangTai(false));
-        return () => {
-            conHieuLuc = false;
-        };
+    const taiChuyenMon = useCallback(async () => {
+        setDangTai(true);
+        try {
+            const phanHoi = await api.get("/gia-su/ho-so/chuyen-mon");
+            const duLieu = {
+                ...CHUYEN_MON_MAC_DINH,
+                ...phanHoi.data.data.thong_tin,
+            };
+            setChuyenMon(duLieu);
+            setBanNhap(duLieu);
+            setDanhMuc({
+                trinh_do: phanHoi.data.data.trinh_do || [],
+                muc_kinh_nghiem: phanHoi.data.data.muc_kinh_nghiem || [],
+            });
+        } catch (error) {
+            baoLoi(error.response?.data?.message || "Không thể tải thông tin chuyên môn.");
+        } finally {
+            setDangTai(false);
+        }
     }, [baoLoi]);
+
+    useEffect(() => {
+        const boDemTaiLanDau = setTimeout(() => {
+            taiChuyenMon();
+        }, 0);
+
+        return () => {
+            clearTimeout(boDemTaiLanDau);
+        };
+    }, [taiChuyenMon]);
 
     const batDauSua = () => {
         setBanNhap(chuyenMon);
@@ -72,5 +80,5 @@ export default function useChuyenMon({ baoLoi, baoThanhCong }) {
         }
     };
 
-    return { chuyenMon, banNhap, danhMuc, dangTai, dangSua, dangLuu, loi, batDauSua, huySua, thayDoi, luu };
+    return { chuyenMon, banNhap, danhMuc, dangTai, dangSua, dangLuu, loi, batDauSua, huySua, thayDoi, luu, taiChuyenMon };
 }

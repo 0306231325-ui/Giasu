@@ -64,8 +64,8 @@ function useAdminDemCanXuLy({ kichHoat = true } = {}) {
           : [];
 
       const soDatGoiCanXuLy = danhSachDatGoi.filter((yeuCau) => {
+        if (yeuCau.trangThai === "cho_xu_ly") return true;
         if (yeuCau.trangThai === "cho_xacnhan") return true;
-        if (yeuCau.trangThai === "giasu_dong_y") return true;
         if (yeuCau.trangThai === "cho_thanhtoan") {
           return coThongTinChoXacNhanThanhToan(yeuCau);
         }

@@ -139,17 +139,6 @@ function KhoiThanhToan({ yeuCau }) {
                             Xem ảnh minh chứng
                         </button>
                     </div>
-                    <button
-                        type="button"
-                        onClick={moAnhMinhChung}
-                        className="mt-4 block w-full overflow-hidden rounded-xl border border-slate-200 bg-white"
-                    >
-                        <img
-                            src={urlMinhChung}
-                            alt="Minh chứng thanh toán"
-                            className="max-h-[420px] w-full object-contain"
-                        />
-                    </button>
                 </div>
             )}
 
@@ -175,6 +164,7 @@ function taoUrlFile(duongDan) {
 
 function DanhSachBuoiHoc({ yeuCau }) {
     const danhSach = yeuCau.lichHoc || [];
+    const laHocThu = yeuCau.kieuGoi === "hoc_thu";
 
     if (danhSach.length === 0) {
         return (
@@ -189,10 +179,16 @@ function DanhSachBuoiHoc({ yeuCau }) {
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <p className="text-sm font-extrabold text-slate-900">
-                        {yeuCau.hocDinhKy ? "Lịch học định kỳ" : "Các buổi học không định kỳ"}
+                        {laHocThu
+                            ? "Buổi học thử"
+                            : yeuCau.hocDinhKy
+                                ? "Lịch học định kỳ"
+                                : "Các buổi học không định kỳ"}
                     </p>
                     <p className="mt-1 text-xs font-semibold text-slate-500">
-                        {yeuCau.hocDinhKy
+                        {laHocThu
+                            ? "Buổi học thử do học viên chọn khi gửi yêu cầu."
+                            : yeuCau.hocDinhKy
                             ? "Hệ thống tóm tắt theo thứ và khung giờ học."
                             : "Hiển thị từng buổi học viên đã chọn khi đặt gói."}
                     </p>

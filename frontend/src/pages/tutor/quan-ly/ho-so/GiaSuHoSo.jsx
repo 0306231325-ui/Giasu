@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useAuth } from "../../../../context/AuthContext";
 import { useToast } from "../../../../context/ToastContext";
 import BangCapChungChi from "./components/BangCapChungChi";
@@ -50,6 +50,32 @@ function GiaSuHoSo() {
 
     const tenGiaSu =
         thongTinCaNhan.thongTin.ho_ten || user?.ho_ten || "Gia sư";
+    const { taiThongTin } = thongTinCaNhan;
+    const { taiChuyenMon } = chuyenMon;
+    const { taiDanhSach: taiDanhSachBangCap } = bangCap;
+    const { taiDanhSach: taiDanhSachMonDay } = monDay;
+
+    useEffect(() => {
+        const lamMoi = async () => {
+            try {
+                await Promise.all([
+                    taiThongTin(),
+                    taiChuyenMon(),
+                    taiDanhSachBangCap(),
+                    taiDanhSachMonDay(),
+                ]);
+                baoThanhCong("Đã làm mới dữ liệu hồ sơ gia sư.");
+            } catch {
+                baoLoi("Không thể làm mới đầy đủ dữ liệu hồ sơ.");
+            }
+        };
+
+        window.addEventListener("giasu:refresh", lamMoi);
+
+        return () => {
+            window.removeEventListener("giasu:refresh", lamMoi);
+        };
+    }, [baoLoi, baoThanhCong, taiChuyenMon, taiDanhSachBangCap, taiDanhSachMonDay, taiThongTin]);
 
     return (
         <div className="mx-auto max-w-6xl pb-10">

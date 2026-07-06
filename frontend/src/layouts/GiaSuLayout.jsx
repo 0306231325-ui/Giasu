@@ -1,11 +1,15 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import RefreshButton from "../components/RefreshButton";
 import ThongBaoDropdown from "../components/ThongBaoDropdown";
 
 function GiaSuLayout() {
     const navigate = useNavigate();
     const { user, logout, loading } = useAuth();
     const laGiaSu = user?.vai_tro === "giasu";
+    const lamMoiTrangGiaSu = () => {
+        window.dispatchEvent(new CustomEvent("giasu:refresh"));
+    };
 
     if (loading) {
         return (
@@ -73,10 +77,13 @@ function GiaSuLayout() {
                             : "Chỉ tài khoản gia sư mới được dùng khu vực này"}
                     </div>
                     {laGiaSu && (
-                        <ThongBaoDropdown
-                            tieuDe="Thông báo gia sư"
-                            moTaRong="Các cập nhật về yêu cầu đặt gia sư, lịch dạy, hồ sơ xét duyệt và thu nhập sẽ hiển thị tại đây."
-                        />
+                        <div className="flex items-center gap-3">
+                            <ThongBaoDropdown
+                                tieuDe="Thông báo gia sư"
+                                moTaRong="Các cập nhật về yêu cầu đặt gia sư, lịch dạy, hồ sơ xét duyệt và thu nhập sẽ hiển thị tại đây."
+                            />
+                            <RefreshButton onClick={lamMoiTrangGiaSu} />
+                        </div>
                     )}
                 </header>
 

@@ -1,4 +1,5 @@
 ﻿import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import RefreshButton from "../components/RefreshButton";
 import ThongBaoDropdown from "../components/ThongBaoDropdown";
 import { useAuth } from "../context/AuthContext";
 import useAdminDemCanXuLy from "../hooks/useAdminDemCanXuLy";
@@ -88,14 +89,7 @@ function AdminLayout() {
                 tieuDe="Thông báo admin"
                 moTaRong="Các yêu cầu xét duyệt, đặt gói, thanh toán và lịch học cần xử lý sẽ hiển thị tại đây."
               />
-              <button
-                type="button"
-                onClick={lamMoiTrangAdmin}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold text-white/75 transition hover:border-blue-400/50 hover:bg-blue-500/15 hover:text-white"
-              >
-                <span>↻</span>
-                Làm mới
-              </button>
+              <RefreshButton onClick={lamMoiTrangAdmin} />
             </div>
           )}
         </header>

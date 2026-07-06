@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import api from "../../../../../services/api";
 import { THONG_TIN_CA_NHAN_MAC_DINH } from "../constants";
 
@@ -10,29 +10,32 @@ export default function useThongTinCaNhan({ updateUser, baoLoi, baoThanhCong }) 
     const [dangChinhSua, setDangChinhSua] = useState(false);
     const [loi, setLoi] = useState({});
 
+    const taiThongTin = useCallback(async () => {
+        setDangTai(true);
+        try {
+            const phanHoi = await api.get("/gia-su/ho-so/ca-nhan");
+            const duLieu = {
+                ...THONG_TIN_CA_NHAN_MAC_DINH,
+                ...phanHoi.data.data,
+            };
+            setThongTin(duLieu);
+            setBanNhap(duLieu);
+        } catch (error) {
+            baoLoi(error.response?.data?.message || "Không thể tải thông tin cá nhân.");
+        } finally {
+            setDangTai(false);
+        }
+    }, [baoLoi]);
+
     useEffect(() => {
-        let conHieuLuc = true;
-        api.get("/gia-su/ho-so/ca-nhan")
-            .then((phanHoi) => {
-                if (!conHieuLuc) return;
-                const duLieu = {
-                    ...THONG_TIN_CA_NHAN_MAC_DINH,
-                    ...phanHoi.data.data,
-                };
-                setThongTin(duLieu);
-                setBanNhap(duLieu);
-            })
-            .catch((error) => {
-                if (conHieuLuc) {
-                    baoLoi(error.response?.data?.message || "Không thể tải thông tin cá nhân.");
-                }
-            })
-            .finally(() => conHieuLuc && setDangTai(false));
+        const boDemTaiLanDau = setTimeout(() => {
+            taiThongTin();
+        }, 0);
 
         return () => {
-            conHieuLuc = false;
+            clearTimeout(boDemTaiLanDau);
         };
-    }, [baoLoi]);
+    }, [taiThongTin]);
 
     const batDauSua = () => {
         setBanNhap(thongTin);
@@ -94,5 +97,6 @@ export default function useThongTinCaNhan({ updateUser, baoLoi, baoThanhCong }) 
         huySua,
         thayDoi,
         luu,
+        taiThongTin,
     };
 }

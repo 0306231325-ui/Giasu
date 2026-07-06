@@ -1,15 +1,12 @@
 import IconAdminGiaSu from "../gia-su/IconAdminGiaSu";
 
 function BoLocDatGoi({
-    boLocTrangThai,
-    boLocPhanHoi,
     tuKhoa,
     soKetQua,
     onDoiTuKhoa,
-    onDoiPhanHoi,
 }) {
     return (
-        <div className="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 lg:grid-cols-[minmax(0,1fr)_240px_140px]">
+        <div className="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 lg:grid-cols-[minmax(0,1fr)_140px]">
             <label className="block">
                 <span className="text-xs font-bold uppercase tracking-wide text-white/45">
                     Tìm kiếm
@@ -26,22 +23,6 @@ function BoLocDatGoi({
                         className="w-full rounded-xl border border-white/10 bg-[#0a0f24] py-2.5 pl-10 pr-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-blue-400"
                     />
                 </div>
-            </label>
-
-            <label className={boLocTrangThai === "da_phan_hoi" ? "block" : "block opacity-50"}>
-                <span className="text-xs font-bold uppercase tracking-wide text-white/45">
-                    Kết quả phản hồi
-                </span>
-                <select
-                    value={boLocPhanHoi}
-                    disabled={boLocTrangThai !== "da_phan_hoi"}
-                    onChange={(event) => onDoiPhanHoi(event.target.value)}
-                    className="mt-1.5 w-full rounded-xl border border-white/10 bg-[#0a0f24] px-3 py-2.5 text-sm text-white outline-none focus:border-blue-400 disabled:cursor-not-allowed"
-                >
-                    <option value="">Tất cả phản hồi</option>
-                    <option value="dong_y">Đồng ý</option>
-                    <option value="tu_choi">Từ chối</option>
-                </select>
             </label>
 
             <div className="rounded-xl border border-white/10 bg-[#0a0f24] px-4 py-3">

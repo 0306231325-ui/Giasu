@@ -192,6 +192,6 @@ export default function useMonDay({
         loi,
         dangThem, idDangXoa, tuKhoa, locCapHoc, locTrangThai,
         setTuKhoa, setLocCapHoc, setLocTrangThai, setHienForm,
-        chonCapHoc, chonMon, dongForm, them, xoa,
+        chonCapHoc, chonMon, dongForm, them, xoa, taiDanhSach,
     };
 }
