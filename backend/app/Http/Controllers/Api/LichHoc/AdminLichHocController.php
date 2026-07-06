@@ -39,6 +39,7 @@ class AdminLichHocController extends DatLichBaseController
         $tuNgay = $request->query('tu_ngay');
         $denNgay = $request->query('den_ngay');
         $tuKhoa = trim((string) $request->query('q', ''));
+        $trangThaiGoiDaDuyet = ['cho_thanhtoan', 'danghoc', 'hoanthanh'];
 
         $query = LichHoc::query()
             ->with([
@@ -50,6 +51,7 @@ class AdminLichHocController extends DatLichBaseController
                 'giasu.user:id,ho_ten,email,sdt',
                 'danhGia:id,lichhoc_id,so_sao,noi_dung,created_at',
             ])
+            ->whereHas('goiHoc', fn ($goiQuery) => $goiQuery->whereIn('trang_thai', $trangThaiGoiDaDuyet))
             ->when($tuNgay, fn ($lichQuery) => $lichQuery->whereDate('ngay_hoc', '>=', $tuNgay))
             ->when($denNgay, fn ($lichQuery) => $lichQuery->whereDate('ngay_hoc', '<=', $denNgay))
             ->when($tuKhoa !== '', function ($lichQuery) use ($tuKhoa) {
@@ -248,5 +250,262 @@ class AdminLichHocController extends DatLichBaseController
             'message' => 'Da huy buoi hoc.',
             'data' => $this->dinhDangLichHocAdmin($this->taiLichHocAdmin($lichHocId)),
         ]);
+    }
+
+    public function danhSachYeuCauDoiBuoiAdmin(Request $request): JsonResponse
+    {
+        if ($request->user()?->vai_tro !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ban khong co quyen truy cap.',
+            ], 403);
+        }
+
+        $trangThai = $request->query('trang_thai');
+
+        $danhSach = YeuCauHocBu::query()
+            ->with($this->quanHeYeuCauDoiBuoi())
+            ->when($trangThai, fn ($query) => $query->where('trang_thai', $trangThai))
+            ->orderByRaw("CASE trang_thai WHEN 'cho_duyet' THEN 1 WHEN 'giasu_dong_y' THEN 2 WHEN 'cho_gia_su_xac_nhan' THEN 3 WHEN 'giasu_tu_choi' THEN 4 ELSE 5 END")
+            ->latest()
+            ->limit(100)
+            ->get()
+            ->map(fn (YeuCauHocBu $yeuCau) => $this->dinhDangYeuCauHocBu($yeuCau))
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => $danhSach,
+        ]);
+    }
+
+    public function guiYeuCauDoiBuoiChoGiaSu(Request $request, int $yeuCauId): JsonResponse
+    {
+        if ($request->user()?->vai_tro !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ban khong co quyen truy cap.',
+            ], 403);
+        }
+
+        $yeuCau = $this->taiYeuCauDoiBuoi($yeuCauId);
+        if (! $yeuCau) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Khong tim thay yeu cau doi buoi.',
+            ], 404);
+        }
+
+        if ($yeuCau->trang_thai !== 'cho_duyet') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Yeu cau nay khong o trang thai cho gui gia su.',
+            ], 422);
+        }
+
+        $loiTrungLich = $this->kiemTraTrungLichDoiBuoi($yeuCau);
+        if ($loiTrungLich) {
+            return response()->json([
+                'success' => false,
+                'message' => $loiTrungLich,
+            ], 422);
+        }
+
+        $yeuCau->update([
+            'trang_thai' => 'cho_gia_su_xac_nhan',
+            'nguoi_duyet_id' => $request->user()->id,
+        ]);
+
+        if ($yeuCau->giasu?->user_id) {
+            ThongBao::create([
+                'user_id' => $yeuCau->giasu->user_id,
+                'tieu_de' => 'Yeu cau doi buoi can phan hoi',
+                'noi_dung' => 'Admin da gui yeu cau doi buoi hoc cho ban xac nhan.',
+                'url' => '/gia-su/quan-ly/lich-day',
+                'da_doc' => false,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Da gui yeu cau doi buoi cho gia su.',
+            'data' => $this->dinhDangYeuCauHocBu($this->taiYeuCauDoiBuoi($yeuCauId)),
+        ]);
+    }
+
+    public function duyetYeuCauDoiBuoi(Request $request, int $yeuCauId): JsonResponse
+    {
+        if ($request->user()?->vai_tro !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ban khong co quyen truy cap.',
+            ], 403);
+        }
+
+        $yeuCau = $this->taiYeuCauDoiBuoi($yeuCauId);
+        if (! $yeuCau || ! $yeuCau->lichHocGoc) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Khong tim thay yeu cau doi buoi.',
+            ], 404);
+        }
+
+        if ($yeuCau->trang_thai !== 'giasu_dong_y') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Can gia su dong y truoc khi admin duyet doi buoi.',
+            ], 422);
+        }
+
+        $loiTrungLich = $this->kiemTraTrungLichDoiBuoi($yeuCau);
+        if ($loiTrungLich) {
+            return response()->json([
+                'success' => false,
+                'message' => $loiTrungLich,
+            ], 422);
+        }
+
+        DB::transaction(function () use ($request, $yeuCau) {
+            $yeuCau->lichHocGoc->update([
+                'ngay_hoc' => $yeuCau->ngay_hoc,
+                'gio_batdau' => $yeuCau->gio_batdau,
+                'gio_ketthuc' => $yeuCau->gio_ketthuc,
+                'ghi_chu' => $this->themDongGhiChu(
+                    $yeuCau->lichHocGoc->ghi_chu,
+                    'Admin duyet doi buoi',
+                    'Chuyen sang ' . Carbon::parse($yeuCau->ngay_hoc)->format('d/m/Y') . ' ' . substr((string) $yeuCau->gio_batdau, 0, 5) . ' - ' . substr((string) $yeuCau->gio_ketthuc, 0, 5),
+                ),
+            ]);
+
+            $yeuCau->update([
+                'trang_thai' => 'da_duyet',
+                'nguoi_duyet_id' => $request->user()->id,
+                'ngay_xu_ly' => now(),
+            ]);
+        });
+
+        $this->guiThongBaoYeuCauDoiBuoi($yeuCau->fresh($this->quanHeYeuCauDoiBuoi()), 'Yeu cau doi buoi da duoc duyet');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Da duyet va cap nhat buoi hoc.',
+            'data' => $this->dinhDangYeuCauHocBu($this->taiYeuCauDoiBuoi($yeuCauId)),
+        ]);
+    }
+
+    public function tuChoiYeuCauDoiBuoi(Request $request, int $yeuCauId): JsonResponse
+    {
+        if ($request->user()?->vai_tro !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ban khong co quyen truy cap.',
+            ], 403);
+        }
+
+        $yeuCau = $this->taiYeuCauDoiBuoi($yeuCauId);
+        if (! $yeuCau) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Khong tim thay yeu cau doi buoi.',
+            ], 404);
+        }
+
+        if (in_array($yeuCau->trang_thai, ['da_duyet', 'tu_choi'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Yeu cau nay da duoc xu ly.',
+            ], 422);
+        }
+
+        $yeuCau->update([
+            'trang_thai' => 'tu_choi',
+            'nguoi_duyet_id' => $request->user()->id,
+            'ngay_xu_ly' => now(),
+        ]);
+
+        $this->guiThongBaoYeuCauDoiBuoi($yeuCau->fresh($this->quanHeYeuCauDoiBuoi()), 'Yeu cau doi buoi da bi tu choi');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Da tu choi yeu cau doi buoi.',
+            'data' => $this->dinhDangYeuCauHocBu($this->taiYeuCauDoiBuoi($yeuCauId)),
+        ]);
+    }
+
+    private function taiYeuCauDoiBuoi(int $yeuCauId): ?YeuCauHocBu
+    {
+        return YeuCauHocBu::query()
+            ->with($this->quanHeYeuCauDoiBuoi())
+            ->find($yeuCauId);
+    }
+
+    private function quanHeYeuCauDoiBuoi(): array
+    {
+        return [
+            'lichHocGoc',
+            'lichHocGoc.goiHoc.hocVien:id,ho_ten,email,sdt',
+            'lichHocGoc.goiHoc.monHoc:id,ten_mon,lop',
+            'giasu:id,user_id',
+            'giasu.user:id,ho_ten,email,sdt',
+            'nguoiYeuCau:id,ho_ten,email,sdt',
+        ];
+    }
+
+    private function kiemTraTrungLichDoiBuoi(YeuCauHocBu $yeuCau): ?string
+    {
+        $lichHocGoc = $yeuCau->lichHocGoc;
+        if (! $lichHocGoc) {
+            return 'Khong tim thay buoi hoc goc.';
+        }
+
+        $trungGiaSu = LichHoc::query()
+            ->where('id', '<>', $lichHocGoc->id)
+            ->where('giasu_id', $yeuCau->giasu_id)
+            ->where('trang_thai', '<>', 'dahuy')
+            ->whereDate('ngay_hoc', $yeuCau->ngay_hoc)
+            ->where('gio_batdau', '<', $yeuCau->gio_ketthuc)
+            ->where('gio_ketthuc', '>', $yeuCau->gio_batdau)
+            ->exists();
+
+        if ($trungGiaSu) {
+            return 'Gia su da co lich trung khung gio moi.';
+        }
+
+        $hocVienId = $lichHocGoc->goiHoc?->hocvien_id;
+        if (! $hocVienId) {
+            return null;
+        }
+
+        $trungHocVien = LichHoc::query()
+            ->where('id', '<>', $lichHocGoc->id)
+            ->where('trang_thai', '<>', 'dahuy')
+            ->whereHas('goiHoc', fn ($query) => $query->where('hocvien_id', $hocVienId))
+            ->whereDate('ngay_hoc', $yeuCau->ngay_hoc)
+            ->where('gio_batdau', '<', $yeuCau->gio_ketthuc)
+            ->where('gio_ketthuc', '>', $yeuCau->gio_batdau)
+            ->exists();
+
+        return $trungHocVien ? 'Hoc vien da co lich trung khung gio moi.' : null;
+    }
+
+    private function guiThongBaoYeuCauDoiBuoi(YeuCauHocBu $yeuCau, string $tieuDe): void
+    {
+        $noiDung = "{$tieuDe}: " . Carbon::parse($yeuCau->ngay_hoc)->format('d/m/Y')
+            . ' ' . substr((string) $yeuCau->gio_batdau, 0, 5)
+            . ' - ' . substr((string) $yeuCau->gio_ketthuc, 0, 5) . '.';
+
+        foreach ([$yeuCau->lichHocGoc?->goiHoc?->hocvien_id, $yeuCau->giasu?->user_id] as $userId) {
+            if (! $userId) {
+                continue;
+            }
+
+            ThongBao::create([
+                'user_id' => $userId,
+                'tieu_de' => $tieuDe,
+                'noi_dung' => $noiDung,
+                'url' => $userId === $yeuCau->giasu?->user_id ? '/gia-su/quan-ly/lich-day' : '/hoc-vien/lich-hoc',
+                'da_doc' => false,
+            ]);
+        }
     }
 }

@@ -21,6 +21,13 @@ const dinhDangNgay = (date) => {
     return `${yyyy}-${mm}-${dd}`;
 };
 
+const bayGioVietNam = () => {
+    const vnTimeString = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+    return new Date(vnTimeString.replace(" ", "T"));
+};
+
+const ngayHomNay = () => dinhDangNgay(bayGioVietNam());
+
 const cacThu = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"];
 
 const thuSangSo = {
@@ -123,6 +130,20 @@ const cachNhauDungThoiLuong = (gioBatDau, gioKetThuc) => {
     return phutKetThuc - phutBatDau === THOI_LUONG_BUOI_PHUT;
 };
 
+const laThoiDiemHocTuongLai = (ngayHoc, gioBatDau) => {
+    if (!ngayHoc || !gioBatDau) return false;
+
+    const homNay = ngayHomNay();
+    if (ngayHoc > homNay) return true;
+    if (ngayHoc < homNay) return false;
+
+    const bayGio = bayGioVietNam();
+    const phutHienTai = bayGio.getHours() * 60 + bayGio.getMinutes();
+    const phutBatDau = thoiGianSangPhut(gioBatDau);
+
+    return phutBatDau !== null && phutBatDau > phutHienTai;
+};
+
 const goiHocThu = {
     id: "hoc-thu",
     ten: "Buổi học thử",
@@ -198,6 +219,62 @@ const tinhTienGoi = (mucGia, goi) => {
     };
 };
 
+function ToastThongBao({ message, type = "error", onClose }) {
+    if (!message) return null;
+
+    const laThanhCong = type === "success";
+    const mau = laThanhCong
+        ? {
+            border: "border-emerald-300/35",
+            text: "text-emerald-50",
+            iconBg: "bg-emerald-400/15",
+            iconText: "text-emerald-300",
+            close: "text-emerald-100/70 hover:bg-white/10 hover:text-white",
+        }
+        : {
+            border: "border-rose-300/35",
+            text: "text-rose-50",
+            iconBg: "bg-rose-400/15",
+            iconText: "text-rose-300",
+            close: "text-rose-100/70 hover:bg-white/10 hover:text-white",
+        };
+
+    return (
+        <div className="pointer-events-none fixed right-4 top-4 z-50 w-[calc(100%-2rem)] max-w-sm animate-[toast-slide-in_220ms_ease-out] sm:right-6 sm:top-6">
+            <style>
+                {"@keyframes toast-slide-in{from{opacity:0;transform:translateX(110%)}to{opacity:1;transform:translateX(0)}}"}
+            </style>
+            <div className={`pointer-events-auto flex items-start gap-3 rounded-2xl border ${mau.border} bg-[#0d1854]/95 px-4 py-3 text-sm ${mau.text} shadow-2xl shadow-slate-950/40 backdrop-blur`}>
+                <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${mau.iconBg} ${mau.iconText}`}>
+                    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        {laThanhCong ? (
+                            <path d="m8.5 12.5 2.2 2.2 4.8-5.1" strokeLinecap="round" strokeLinejoin="round" />
+                        ) : (
+                            <>
+                                <path d="m15 9-6 6" strokeLinecap="round" />
+                                <path d="m9 9 6 6" strokeLinecap="round" />
+                            </>
+                        )}
+                    </svg>
+                </span>
+                <div className="min-w-0 flex-1 leading-6">{message}</div>
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className={`-mr-1 rounded-full p-1 transition ${mau.close}`}
+                    aria-label="Đóng thông báo"
+                >
+                    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="m18 6-12 12" strokeLinecap="round" />
+                        <path d="m6 6 12 12" strokeLinecap="round" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    );
+}
+
 function ChonGoiHoc() {
     const { id } = useParams();
     const { user, isAuthenticated } = useAuth();
@@ -211,7 +288,8 @@ function ChonGoiHoc() {
     const [loaiGoi, setLoaiGoi] = useState("dinh_ky");
     const [goiId, setGoiId] = useState("");
     const [thuHoc, setThuHoc] = useState(["Thứ 2", "Thứ 5"]);
-    const [thongBao, setThongBao] = useState("");
+    const [thongBao, setThongBaoRaw] = useState("");
+    const [loaiThongBao, setLoaiThongBao] = useState("error");
     const [form, setForm] = useState({
         monhoc_id: "",
         ngay_batdau: ngayMai(),
@@ -223,6 +301,17 @@ function ChonGoiHoc() {
     const [buoiLinhHoat, setBuoiLinhHoat] = useState([
         { ngay: ngayMai(), gio_batdau: GIO_BAT_DAU_MAC_DINH, gio_ketthuc: GIO_KET_THUC_MAC_DINH },
     ]);
+    const setThongBao = useCallback((message, type = "error") => {
+        if (message) setLoaiThongBao(type);
+        setThongBaoRaw(message);
+    }, []);
+
+    useEffect(() => {
+        if (!thongBao) return undefined;
+
+        const timer = window.setTimeout(() => setThongBao(""), 4200);
+        return () => window.clearTimeout(timer);
+    }, [setThongBao, thongBao]);
 
     const slotTrungDanhSachLichBan = useCallback((danhSachLich, ngay, gioBatDau) => {
         const gioKetThuc = tinhGioKetThuc(gioBatDau);
@@ -437,6 +526,17 @@ function ChonGoiHoc() {
                 .filter(Boolean),
         );
     }, [goiHocCuaToi]);
+    const daDangKyHocThu = useMemo(
+        () => {
+            const trangThaiHocThuDangMo = new Set(["cho_xacnhan", "cho_thanhtoan", "dang_hoc", "hoan_thanh"]);
+
+            return goiHocCuaToi.some((goiHoc) => (
+                goiHoc.kieuGoi === "hoc_thu"
+                && trangThaiHocThuDangMo.has(goiHoc.trangThai)
+            ));
+        },
+        [goiHocCuaToi],
+    );
 
     const danhSachGoi = loaiGoi === "hoc_thu"
         ? [goiHocThu]
@@ -474,13 +574,23 @@ function ChonGoiHoc() {
         );
     };
 
+    const khungGioHocThuHopLeDauTien = (ngayHoc) => (
+        cacKhungGioBatDau.find((gio) => (
+            laThoiDiemHocTuongLai(ngayHoc, gio)
+            && !slotTrungLichBan(ngayHoc, gio)
+        )) || ""
+    );
+
     const chonGoi = (goi) => {
         setGoiId(goi.id);
         datKhungGioMacDinh();
         setThongBao("");
 
-        if (loaiGoi === "hoc_thu" && slotTrungLichBan(form.ngay_batdau, GIO_BAT_DAU_MAC_DINH)) {
-            const gioBatDau = khungGioGiaSuRanhDauTien(form.ngay_batdau, lichBanGiaSu);
+        if (loaiGoi === "hoc_thu" && (
+            !laThoiDiemHocTuongLai(form.ngay_batdau, GIO_BAT_DAU_MAC_DINH)
+            || slotTrungLichBan(form.ngay_batdau, GIO_BAT_DAU_MAC_DINH)
+        )) {
+            const gioBatDau = khungGioHocThuHopLeDauTien(form.ngay_batdau);
 
             if (gioBatDau && gioBatDau !== GIO_BAT_DAU_MAC_DINH) {
                 setForm((prev) => ({
@@ -509,7 +619,7 @@ function ChonGoiHoc() {
         }, 0);
 
         return () => clearTimeout(timer);
-    }, [form.monhoc_id, monHocDaDatIds]);
+    }, [form.monhoc_id, monHocDaDatIds, setThongBao]);
 
     useEffect(() => {
         if (loaiGoi !== "dinh_ky") return;
@@ -534,11 +644,23 @@ function ChonGoiHoc() {
             }
 
             if (field === "ngay_batdau" && loaiGoi === "hoc_thu") {
-                const gioBatDau = slotTrungLichBan(value, prev.gio_batdau)
-                    ? khungGioGiaSuRanhDauTien(value, lichBanGiaSu)
+                const ngayHoc = value < ngayHomNay() ? ngayHomNay() : value;
+                const gioBatDau = (
+                    !laThoiDiemHocTuongLai(ngayHoc, prev.gio_batdau)
+                    || slotTrungLichBan(ngayHoc, prev.gio_batdau)
+                )
+                    ? khungGioHocThuHopLeDauTien(ngayHoc)
                     : prev.gio_batdau;
 
-                return { ...prev, ngay_batdau: value, gio_batdau: gioBatDau, gio_ketthuc: tinhGioKetThuc(gioBatDau) };
+                return { ...prev, ngay_batdau: ngayHoc, gio_batdau: gioBatDau, gio_ketthuc: tinhGioKetThuc(gioBatDau) };
+            }
+
+            if (field === "hinh_thuc_hoc") {
+                return {
+                    ...prev,
+                    hinh_thuc_hoc: value,
+                    dia_chi_hoc: value === "offline" ? prev.dia_chi_hoc : "",
+                };
             }
 
             return { ...prev, [field]: value };
@@ -702,6 +824,11 @@ function ChonGoiHoc() {
             return;
         }
 
+        if (loaiGoi === "hoc_thu" && daDangKyHocThu) {
+            setThongBao("Bạn đã đăng ký gói học thử trước đó. Vui lòng chọn gói định kỳ hoặc không định kỳ.");
+            return;
+        }
+
         if (!form.monhoc_id) {
             setThongBao("Vui lòng chọn môn học.");
             return;
@@ -770,6 +897,11 @@ function ChonGoiHoc() {
             return;
         }
 
+        if (loaiGoi === "hoc_thu" && !laThoiDiemHocTuongLai(form.ngay_batdau, form.gio_batdau)) {
+            setThongBao("Vui lòng chọn ngày và giờ học thử chưa diễn ra.");
+            return;
+        }
+
         if (loaiGoi === "hoc_thu" && slotTrungLichBan(form.ngay_batdau, form.gio_batdau)) {
             setThongBao("Khung giờ học thử này đã có lịch. Vui lòng chọn khung giờ khác.");
             return;
@@ -823,7 +955,7 @@ function ChonGoiHoc() {
                 thu_hoc: loaiGoi === "dinh_ky" ? thuHoc.map((thu) => thuSangSo[thu]).filter(Boolean) : [],
                 buoi_linh_hoat: loaiGoi === "khong_dinh_ky" ? buoiLinhHoatGui : [],
                 hinh_thuc_hoc: form.hinh_thuc_hoc,
-                dia_chi_hoc: form.dia_chi_hoc,
+                dia_chi_hoc: form.hinh_thuc_hoc === "offline" ? form.dia_chi_hoc.trim() : "",
             });
 
             if (response.data.success) {
@@ -833,11 +965,16 @@ function ChonGoiHoc() {
                     {
                         id: response.data.data?.id || `moi-${Date.now()}`,
                         monHocId: form.monhoc_id,
+                        kieuGoi: loaiGoi,
                         trangThai: "cho_xacnhan",
                     },
                 ]);
+                if (loaiGoi === "hoc_thu") {
+                    setLoaiGoi("dinh_ky");
+                    setGoiId("");
+                }
                 setForm((prev) => ({ ...prev, monhoc_id: "" }));
-                setThongBao(`${response.data.message}${maGoi ? ` Mã gói học: ${maGoi}.` : ""}`);
+                setThongBao(`${response.data.message}${maGoi ? ` Mã gói học: ${maGoi}.` : ""}`, "success");
             }
         } catch (error) {
             console.error("Không thể gửi yêu cầu đặt lịch:", error);
@@ -875,7 +1012,9 @@ function ChonGoiHoc() {
     }
 
     return (
-        <div className="min-h-screen bg-[#07122f] text-white">
+        <>
+            <ToastThongBao message={thongBao} type={loaiThongBao} onClose={() => setThongBao("")} />
+            <div className="min-h-screen bg-[#07122f] text-white">
             <section className="border-b border-white/10 bg-[#09173a]">
                 <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-8 lg:flex-row lg:items-end lg:justify-between">
                     <div>
@@ -944,17 +1083,19 @@ function ChonGoiHoc() {
                             </label>
                         </div>
 
-                        <div className="mt-5 grid grid-cols-3 gap-2 rounded-2xl bg-[#07122f] p-2">
-                            <button
-                                type="button"
-                                onClick={() => doiLoaiGoi("hoc_thu")}
-                                className={[
-                                    "rounded-xl px-4 py-3 text-sm font-bold transition",
-                                    loaiGoi === "hoc_thu" ? "bg-blue-500 text-white" : "text-slate-300 hover:bg-white/5",
-                                ].join(" ")}
-                            >
-                                Học thử
-                            </button>
+                        <div className={`mt-5 grid ${daDangKyHocThu ? "grid-cols-2" : "grid-cols-3"} gap-2 rounded-2xl bg-[#07122f] p-2`}>
+                            {!daDangKyHocThu && (
+                                <button
+                                    type="button"
+                                    onClick={() => doiLoaiGoi("hoc_thu")}
+                                    className={[
+                                        "rounded-xl px-4 py-3 text-sm font-bold transition",
+                                        loaiGoi === "hoc_thu" ? "bg-blue-500 text-white" : "text-slate-300 hover:bg-white/5",
+                                    ].join(" ")}
+                                >
+                                    Học thử
+                                </button>
+                            )}
                             <button
                                 type="button"
                                 onClick={() => doiLoaiGoi("dinh_ky")}
@@ -1148,6 +1289,7 @@ function ChonGoiHoc() {
                                     <input
                                         type="date"
                                         value={form.ngay_batdau}
+                                        min={ngayHomNay()}
                                         onChange={(event) => capNhatForm("ngay_batdau", event.target.value)}
                                         className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400 md:w-64"
                                     />
@@ -1166,11 +1308,12 @@ function ChonGoiHoc() {
                                                 className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
                                             >
                                                 {cacKhungGioBatDau.map((gio) => {
-                                                    const biKhoa = slotTrungLichBan(form.ngay_batdau, gio);
+                                                    const daQuaGio = !laThoiDiemHocTuongLai(form.ngay_batdau, gio);
+                                                    const biKhoa = daQuaGio || slotTrungLichBan(form.ngay_batdau, gio);
 
                                                     return (
                                                         <option key={gio} value={gio} disabled={biKhoa}>
-                                                            {gio}{biKhoa ? " - trùng lịch gia sư" : ""}
+                                                            {gio}{daQuaGio ? " - đã qua giờ" : slotTrungLichBan(form.ngay_batdau, gio) ? " - trùng lịch gia sư" : ""}
                                                         </option>
                                                     );
                                                 })}
@@ -1267,12 +1410,6 @@ function ChonGoiHoc() {
                     )}
 
                     <section className="rounded-2xl border border-white/10 bg-[#0d1854] p-5 shadow-xl">
-                        {thongBao && (
-                            <div className="rounded-xl border border-blue-300/30 bg-blue-400/10 px-4 py-3 text-sm text-blue-100">
-                                {thongBao}
-                            </div>
-                        )}
-
                         <button
                             type="submit"
                             disabled={dangGui}
@@ -1356,11 +1493,6 @@ function ChonGoiHoc() {
                             <div className="mt-2 text-2xl font-extrabold text-blue-300">
                                 {loaiGoi === "hoc_thu" ? "0 đ" : tamTinh ? `${tamTinh.toLocaleString("vi-VN")} đ` : "Chờ báo giá"}
                             </div>
-                            {loaiGoi === "hoc_thu" && (
-                                <div className="mt-3 rounded-xl border border-blue-300/20 bg-blue-400/10 p-3 text-xs font-semibold text-blue-100">
-                                    Buổi học thử miễn phí, môn học chỉ dùng để xác định nội dung học.
-                                </div>
-                            )}
                             {loaiGoi !== "hoc_thu" && tienGoi.donGia > 0 && (
                                 <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/30 p-3 text-xs text-slate-300">
                                     <div className="mb-2 font-semibold text-slate-200">Cách tính đơn giá/giờ</div>
@@ -1392,7 +1524,8 @@ function ChonGoiHoc() {
                     </div>
                 </aside>
             </main>
-        </div>
+            </div>
+        </>
     );
 }
 

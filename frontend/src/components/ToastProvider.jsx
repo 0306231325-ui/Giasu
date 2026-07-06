@@ -9,12 +9,12 @@ import { ToastContext } from "../context/ToastContext";
 
 const kieuToast = {
     success: {
-        icon: "✓",
+        icon: "check",
         wrapper: "border-emerald-200 bg-emerald-50 text-emerald-900",
         iconClass: "bg-emerald-500 text-white",
     },
     error: {
-        icon: "!",
+        icon: "x",
         wrapper: "border-red-200 bg-red-50 text-red-900",
         iconClass: "bg-red-500 text-white",
     },
@@ -29,6 +29,27 @@ const kieuToast = {
         iconClass: "bg-blue-500 text-white",
     },
 };
+
+function ToastIcon({ ten }) {
+    if (ten === "check") {
+        return (
+            <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="3">
+                <path d="m5 12 4 4L19 6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+        );
+    }
+
+    if (ten === "x") {
+        return (
+            <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="3">
+                <path d="m6 6 12 12" strokeLinecap="round" />
+                <path d="m18 6-12 12" strokeLinecap="round" />
+            </svg>
+        );
+    }
+
+    return ten;
+}
 
 function ToastItem({ toast, onClose }) {
     const kieu = kieuToast[toast.type] || kieuToast.info;
@@ -47,7 +68,7 @@ function ToastItem({ toast, onClose }) {
                     kieu.iconClass,
                 ].join(" ")}
             >
-                {kieu.icon}
+                <ToastIcon ten={kieu.icon} />
             </span>
             <div className="min-w-0 flex-1">
                 {toast.title && (
@@ -65,9 +86,9 @@ function ToastItem({ toast, onClose }) {
                 type="button"
                 onClick={() => onClose(toast.id)}
                 className="rounded-full px-2 text-lg font-bold leading-none opacity-60 transition hover:opacity-100"
-                aria-label="Đóng thông báo"
+                aria-label="Dong thong bao"
             >
-                ×
+                x
             </button>
         </div>
     );

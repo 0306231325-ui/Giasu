@@ -36,6 +36,7 @@ const congNgay = (date, soNgay) => {
 
 function AdminLichHoc() {
   const [danhSach, setDanhSach] = useState([]);
+  const [danhSachYeuCauDoiBuoi, setDanhSachYeuCauDoiBuoi] = useState([]);
   const [thongKe, setThongKe] = useState({});
   const [dangTai, setDangTai] = useState(true);
   const [dangXuLy, setDangXuLy] = useState(false);
@@ -68,14 +69,22 @@ function AdminLichHoc() {
     setLoi("");
 
     try {
-      const response = await api.get("/admin/lich-hoc", { params: boLoc });
-      if (response.data.success) {
-        const nextDanhSach = response.data.data?.danh_sach || [];
+      const [lichHocResponse, yeuCauResponse] = await Promise.all([
+        api.get("/admin/lich-hoc", { params: boLoc }),
+        api.get("/admin/lich-hoc/yeu-cau-doi-buoi"),
+      ]);
+
+      if (lichHocResponse.data.success) {
+        const nextDanhSach = lichHocResponse.data.data?.danh_sach || [];
         setDanhSach(nextDanhSach);
-        setThongKe(response.data.data?.thong_ke || {});
+        setThongKe(lichHocResponse.data.data?.thong_ke || {});
         setLichDangChonId((currentId) => (
           nextDanhSach.some((lich) => lich.id === currentId) ? currentId : nextDanhSach[0]?.id || null
         ));
+      }
+
+      if (yeuCauResponse.data.success) {
+        setDanhSachYeuCauDoiBuoi(yeuCauResponse.data.data || []);
       }
     } catch (error) {
       setLoi(error.response?.data?.message || "Không tải được danh sách lịch học.");
@@ -167,6 +176,37 @@ function AdminLichHoc() {
     } catch (error) {
       setLoi(error.response?.data?.message || "Không xử lý được buổi học.");
       return false;
+    } finally {
+      setDangXuLy(false);
+    }
+  };
+
+  const xuLyYeuCauDoiBuoi = async (yeuCau, hanhDong, duLieu = {}) => {
+    if (!yeuCau || dangXuLy) return;
+
+    setDangXuLy(true);
+    setLoi("");
+    setThongBao("");
+
+    const endpoint = {
+      gui_gia_su: `/admin/lich-hoc/yeu-cau-doi-buoi/${yeuCau.id}/gui-gia-su`,
+      duyet: `/admin/lich-hoc/yeu-cau-doi-buoi/${yeuCau.id}/duyet`,
+      tu_choi: `/admin/lich-hoc/yeu-cau-doi-buoi/${yeuCau.id}/tu-choi`,
+    }[hanhDong];
+
+    try {
+      const response = await api.patch(endpoint, duLieu);
+      if (response.data.success) {
+        setDanhSachYeuCauDoiBuoi((hienTai) =>
+          hienTai.map((item) => (item.id === yeuCau.id ? response.data.data : item)),
+        );
+        setThongBao(response.data.message || "Đã xử lý yêu cầu đổi buổi.");
+        if (hanhDong === "duyet") {
+          await taiLichHoc();
+        }
+      }
+    } catch (error) {
+      setLoi(error.response?.data?.message || "Không xử lý được yêu cầu đổi buổi.");
     } finally {
       setDangXuLy(false);
     }
@@ -272,6 +312,17 @@ function AdminLichHoc() {
           {thongBao}
         </div>
       )}
+
+      <YeuCauDoiBuoiAdmin
+        danhSach={danhSachYeuCauDoiBuoi}
+        dangXuLy={dangXuLy}
+        onGuiGiaSu={(yeuCau) => xuLyYeuCauDoiBuoi(yeuCau, "gui_gia_su")}
+        onDuyet={(yeuCau) => xuLyYeuCauDoiBuoi(yeuCau, "duyet")}
+        onTuChoi={(yeuCau) => {
+          const lyDo = window.prompt("Nhập lý do từ chối yêu cầu đổi buổi (có thể bỏ trống):") || "";
+          xuLyYeuCauDoiBuoi(yeuCau, "tu_choi", { ly_do: lyDo.trim() });
+        }}
+      />
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
         <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#0a0f24]">
@@ -410,6 +461,123 @@ function AdminLichHoc() {
       </div>
     </div>
   );
+}
+
+function YeuCauDoiBuoiAdmin({ danhSach, dangXuLy, onGuiGiaSu, onDuyet, onTuChoi }) {
+  const danhSachCanXuLy = danhSach.filter((yeuCau) =>
+    ["cho_duyet", "cho_gia_su_xac_nhan", "giasu_dong_y", "giasu_tu_choi"].includes(yeuCau.trangThai),
+  );
+
+  if (danhSachCanXuLy.length === 0) return null;
+
+  return (
+    <section className="mt-5 overflow-hidden rounded-2xl border border-cyan-300/20 bg-cyan-300/10">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-cyan-200/10 px-5 py-4">
+        <div>
+          <h2 className="text-lg font-extrabold text-white">Yêu cầu đổi buổi</h2>
+          <p className="mt-1 text-sm text-cyan-100/65">Admin gửi sang gia sư phản hồi, rồi mới duyệt cập nhật lịch.</p>
+        </div>
+        <span className="rounded-full bg-cyan-200/15 px-3 py-1 text-xs font-extrabold text-cyan-100">
+          {danhSachCanXuLy.length} yêu cầu
+        </span>
+      </div>
+
+      <div className="grid gap-3 p-4 lg:grid-cols-2">
+        {danhSachCanXuLy.map((yeuCau) => (
+          <article key={yeuCau.id} className="rounded-2xl border border-white/10 bg-[#08142f] p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-cyan-200">{yeuCau.maYeuCau}</p>
+                <h3 className="mt-2 text-base font-extrabold text-white">{yeuCau.monHoc?.tenHienThi || "Buổi học"}</h3>
+                <p className="mt-1 text-sm text-white/55">
+                  {yeuCau.hocVien?.hoTen || "Học viên"} · {yeuCau.giaSu?.hoTen || "Gia sư"}
+                </p>
+              </div>
+              <span className={`rounded-full px-3 py-1 text-xs font-bold ${mauYeuCauDoiBuoi(yeuCau.trangThai)}`}>
+                {yeuCau.trangThaiText}
+              </span>
+            </div>
+
+            <div className="mt-4 text-sm">
+              <div className="rounded-xl bg-white/5 p-3">
+                <div className="text-xs font-bold uppercase text-white/35">Lịch đề xuất</div>
+                <div className="mt-1 font-bold text-white">{yeuCau.ngayHocText}</div>
+                <div className="text-white/55">{yeuCau.khungGio}</div>
+              </div>
+            </div>
+
+            <p className="mt-3 rounded-xl bg-white/5 p-3 text-sm leading-6 text-white/65">
+              {yeuCau.lyDo || "Không có lý do."}
+            </p>
+
+            <div className="mt-4 flex flex-wrap justify-end gap-2">
+              {yeuCau.trangThai === "cho_duyet" && (
+                <>
+                  <button
+                    type="button"
+                    disabled={dangXuLy}
+                    onClick={() => onTuChoi(yeuCau)}
+                    className="rounded-xl bg-red-500/15 px-4 py-2 text-xs font-bold text-red-100 hover:bg-red-500/25 disabled:opacity-60"
+                  >
+                    Từ chối
+                  </button>
+                  <button
+                    type="button"
+                    disabled={dangXuLy}
+                    onClick={() => onGuiGiaSu(yeuCau)}
+                    className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-60"
+                  >
+                    Gửi gia sư
+                  </button>
+                </>
+              )}
+
+              {yeuCau.trangThai === "giasu_dong_y" && (
+                <>
+                  <button
+                    type="button"
+                    disabled={dangXuLy}
+                    onClick={() => onTuChoi(yeuCau)}
+                    className="rounded-xl bg-red-500/15 px-4 py-2 text-xs font-bold text-red-100 hover:bg-red-500/25 disabled:opacity-60"
+                  >
+                    Từ chối
+                  </button>
+                  <button
+                    type="button"
+                    disabled={dangXuLy}
+                    onClick={() => onDuyet(yeuCau)}
+                    className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
+                  >
+                    Duyệt đổi buổi
+                  </button>
+                </>
+              )}
+
+              {yeuCau.trangThai === "giasu_tu_choi" && (
+                <button
+                  type="button"
+                  disabled={dangXuLy}
+                  onClick={() => onTuChoi(yeuCau)}
+                  className="rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-60"
+                >
+                  Chốt từ chối
+                </button>
+              )}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function mauYeuCauDoiBuoi(trangThai) {
+  return {
+    cho_duyet: "bg-amber-300/15 text-amber-100",
+    cho_gia_su_xac_nhan: "bg-blue-300/15 text-blue-100",
+    giasu_dong_y: "bg-emerald-300/15 text-emerald-100",
+    giasu_tu_choi: "bg-red-300/15 text-red-100",
+  }[trangThai] || "bg-white/10 text-white/60";
 }
 
 function TrangThaiBadge({ lich }) {

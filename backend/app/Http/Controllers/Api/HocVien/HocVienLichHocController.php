@@ -8,6 +8,7 @@ use App\Models\GoiHoc;
 use App\Models\LichHoc;
 use App\Models\ThanhToan;
 use App\Models\ThongBao;
+use App\Models\User;
 use App\Models\YeuCauHocBu;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -100,14 +101,19 @@ class HocVienLichHocController extends Controller
             ], 422);
         }
 
-        $danhGia = DanhGia::query()->updateOrCreate(
-            ['lichhoc_id' => $lichHoc->id],
-            [
-                'user_id' => $user->id,
-                'so_sao' => $duLieu['so_sao'],
-                'noi_dung' => filled($duLieu['noi_dung'] ?? null) ? trim($duLieu['noi_dung']) : null,
-            ],
-        );
+        if ($lichHoc->danhGia) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Buoi hoc nay da duoc danh gia. Moi buoi hoc chi duoc danh gia mot lan.',
+            ], 422);
+        }
+
+        $danhGia = DanhGia::query()->create([
+            'lichhoc_id' => $lichHoc->id,
+            'user_id' => $user->id,
+            'so_sao' => $duLieu['so_sao'],
+            'noi_dung' => filled($duLieu['noi_dung'] ?? null) ? trim($duLieu['noi_dung']) : null,
+        ]);
 
         if ($lichHoc->giasu?->user_id) {
             ThongBao::create([
@@ -157,14 +163,27 @@ class HocVienLichHocController extends Controller
             ], 404);
         }
 
-        $yeuCauDangCho = $lichHoc->yeuCauHocBus()
-            ->where('trang_thai', 'cho_duyet')
-            ->exists();
-
-        if ($yeuCauDangCho) {
+        if ($this->bayGioLichHoc()->gte($this->thoiDiemLichHoc($lichHoc, 'gio_batdau'))) {
             return response()->json([
                 'success' => false,
-                'message' => 'Buoi hoc nay dang co yeu cau doi lich cho duyet.',
+                'message' => 'Buoi hoc da den gio hoac da qua gio, khong the yeu cau doi lich.',
+            ], 422);
+        }
+
+        if ($lichHoc->yeuCauHocBus()->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Moi buoi hoc chi duoc yeu cau doi lich mot lan.',
+            ], 422);
+        }
+
+        $duLieu['gio_ketthuc'] = $this->gioKetThucDoiBuoi($duLieu['gio_batdau']);
+
+        $loiTrungLich = $this->kiemTraTrungLichDoiBuoi($lichHoc, $duLieu);
+        if ($loiTrungLich) {
+            return response()->json([
+                'success' => false,
+                'message' => $loiTrungLich,
             ], 422);
         }
 
@@ -180,15 +199,15 @@ class HocVienLichHocController extends Controller
             'trang_thai' => 'cho_duyet',
         ]);
 
-        if ($lichHoc->giasu?->user_id) {
+        User::query()->where('vai_tro', 'admin')->each(function (User $admin) use ($duLieu, $user) {
             ThongBao::create([
-                'user_id' => $lichHoc->giasu->user_id,
+                'user_id' => $admin->id,
                 'tieu_de' => 'Học viên yêu cầu đổi buổi học',
                 'noi_dung' => "{$user->ho_ten} muốn đổi buổi học sang {$duLieu['ngay_hoc']} {$duLieu['gio_batdau']} - {$duLieu['gio_ketthuc']}.",
-                'url' => '/gia-su/quan-ly/lich-day',
+                'url' => '/admin/lich-hoc',
                 'da_doc' => false,
             ]);
-        }
+        });
 
         return response()->json([
             'success' => true,
@@ -215,14 +234,15 @@ class HocVienLichHocController extends Controller
             'mon' => $goiHoc->monHoc?->ten_mon ?? 'Mon hoc',
             'lop' => $goiHoc->monHoc?->lop,
             'loaiGoi' => $this->nhanLoaiGoi($goiHoc),
+            'kieuGoi' => $this->kieuGoiHoc($goiHoc),
             'hocDinhKy' => $this->laGoiDinhKy($goiHoc),
             'giaSu' => $goiHoc->giasu?->user?->ho_ten ?? 'Gia su',
             'ngayBatDau' => $goiHoc->ngay_batdau,
             'ngayKetThuc' => $ngayKetThuc,
             'soBuoi' => $goiHoc->so_buoi,
             'soBuoiDaLenLich' => $goiHoc->lichHocs->count(),
-            'hinhThuc' => $goiHoc->hinh_thuc_hoc === 'online' ? 'Online' : 'Tai nha',
-            'diaDiem' => $goiHoc->dia_chi_hoc ?: ($goiHoc->hinh_thuc_hoc === 'online' ? 'Online' : 'Chua cap nhat'),
+            'hinhThuc' => $goiHoc->hinh_thuc_hoc === 'online' ? 'Online' : 'Tại nhà',
+            'diaDiem' => $goiHoc->dia_chi_hoc ?: ($goiHoc->hinh_thuc_hoc === 'online' ? 'Online' : 'Chưa cập nhật'),
             'tongTien' => (float) $goiHoc->tong_tien,
             'trangThai' => $trangThai,
             'coTheHuy' => $goiHoc->trang_thai === 'cho_xacnhan',
@@ -296,6 +316,10 @@ class HocVienLichHocController extends Controller
         ][$lichHoc->trang_thai] ?? $lichHoc->trang_thai;
         $xacNhan = $this->thongTinXacNhanLichHoc($lichHoc);
 
+        if ($lichHoc->trang_thai === 'da_nhan' && $daQuaGioKetThuc) {
+            $trangThai = 'cho_xacnhan';
+        }
+
         return [
             'id' => $lichHoc->id,
             'ma' => 'LH' . str_pad((string) $lichHoc->id, 6, '0', STR_PAD_LEFT),
@@ -305,10 +329,10 @@ class HocVienLichHocController extends Controller
             'thu' => $this->tenThu($ngayHoc->isoWeekday()),
             'gioBatDau' => substr((string) $lichHoc->gio_batdau, 0, 5),
             'gioKetThuc' => substr((string) $lichHoc->gio_ketthuc, 0, 5),
-            'hinhThuc' => $lichHoc->hinh_thuc_hoc === 'online' ? 'Online' : 'Tai nha',
-            'diaDiem' => $lichHoc->dia_chi_hoc ?: ($lichHoc->hinh_thuc_hoc === 'online' ? 'Online' : 'Chua cap nhat'),
+            'hinhThuc' => $lichHoc->hinh_thuc_hoc === 'online' ? 'Online' : 'Tại nhà',
+            'diaDiem' => $lichHoc->dia_chi_hoc ?: ($lichHoc->hinh_thuc_hoc === 'online' ? 'Online' : 'Chưa cập nhật'),
             'trangThai' => $trangThai,
-            'loaiBuoi' => $lichHoc->loai_buoi === 'hoc_bu' ? 'Hoc bu' : 'Hoc thuong',
+            'loaiBuoi' => $lichHoc->loai_buoi === 'hoc_bu' ? 'Học bù' : 'Học thường',
             'ghiChu' => $lichHoc->ghi_chu,
             'lyDoHuy' => $lichHoc->lydo_huy,
             'daToiGioBatDau' => $daToiGioBatDau,
@@ -328,9 +352,10 @@ class HocVienLichHocController extends Controller
                 'thoiGian' => null,
                 'ghiChu' => $xacNhan['giaSuBaoVanDe'] ? $lichHoc->ghi_chu : null,
             ],
-            'coTheDanhGia' => $lichHoc->trang_thai === 'hoanthanh',
+            'coTheDanhGia' => $lichHoc->trang_thai === 'hoanthanh' && ! $lichHoc->danhGia,
             'coTheDoiBuoi' => in_array($lichHoc->trang_thai, ['cho_xacnhan', 'da_nhan'], true)
-                && ! ($yeuCauHocBuMoiNhat?->trang_thai === 'cho_duyet'),
+                && ! $daToiGioBatDau
+                && ! $yeuCauHocBuMoiNhat,
             'danhGia' => $lichHoc->danhGia ? $this->dinhDangDanhGia($lichHoc->danhGia) : null,
             'yeuCauDoiBuoi' => $yeuCauHocBuMoiNhat ? $this->dinhDangYeuCauHocBu($yeuCauHocBuMoiNhat) : null,
         ];
@@ -371,13 +396,72 @@ class HocVienLichHocController extends Controller
         return [
             'id' => $yeuCau->id,
             'ngayHoc' => $yeuCau->ngay_hoc?->toDateString(),
+            'ngayHocText' => $yeuCau->ngay_hoc?->format('d/m/Y'),
             'gioBatDau' => substr((string) $yeuCau->gio_batdau, 0, 5),
             'gioKetThuc' => substr((string) $yeuCau->gio_ketthuc, 0, 5),
+            'khungGio' => substr((string) $yeuCau->gio_batdau, 0, 5) . ' - ' . substr((string) $yeuCau->gio_ketthuc, 0, 5),
             'lyDo' => $yeuCau->ly_do,
             'trangThai' => $yeuCau->trang_thai,
+            'trangThaiText' => $this->tenTrangThaiYeuCauHocBu($yeuCau->trang_thai),
             'ngayYeuCau' => $yeuCau->ngay_yeu_cau?->format('d/m/Y H:i') ?? '',
             'ngayXuLy' => $yeuCau->ngay_xu_ly?->format('d/m/Y H:i') ?? null,
         ];
+    }
+
+    private function trangThaiYeuCauDoiBuoiDangXuLy(): array
+    {
+        return ['cho_duyet', 'cho_gia_su_xac_nhan', 'giasu_dong_y'];
+    }
+
+    private function gioKetThucDoiBuoi(string $gioBatDau): string
+    {
+        return Carbon::createFromFormat('H:i', $gioBatDau)
+            ->addMinutes(90)
+            ->format('H:i');
+    }
+
+    private function kiemTraTrungLichDoiBuoi(LichHoc $lichHoc, array $duLieu): ?string
+    {
+        $trungGiaSu = LichHoc::query()
+            ->where('id', '<>', $lichHoc->id)
+            ->where('giasu_id', $lichHoc->giasu_id)
+            ->where('trang_thai', '<>', 'dahuy')
+            ->whereDate('ngay_hoc', $duLieu['ngay_hoc'])
+            ->where('gio_batdau', '<', $duLieu['gio_ketthuc'])
+            ->where('gio_ketthuc', '>', $duLieu['gio_batdau'])
+            ->exists();
+
+        if ($trungGiaSu) {
+            return 'Khung gio moi bi trung lich cua gia su.';
+        }
+
+        $hocVienId = $lichHoc->goiHoc?->hocvien_id;
+        if (! $hocVienId) {
+            return null;
+        }
+
+        $trungHocVien = LichHoc::query()
+            ->where('id', '<>', $lichHoc->id)
+            ->where('trang_thai', '<>', 'dahuy')
+            ->whereHas('goiHoc', fn ($query) => $query->where('hocvien_id', $hocVienId))
+            ->whereDate('ngay_hoc', $duLieu['ngay_hoc'])
+            ->where('gio_batdau', '<', $duLieu['gio_ketthuc'])
+            ->where('gio_ketthuc', '>', $duLieu['gio_batdau'])
+            ->exists();
+
+        return $trungHocVien ? 'Khung gio moi bi trung lich cua hoc vien.' : null;
+    }
+
+    private function tenTrangThaiYeuCauHocBu(?string $trangThai): string
+    {
+        return [
+            'cho_duyet' => 'Chờ admin xử lý',
+            'cho_gia_su_xac_nhan' => 'Chờ gia sư xác nhận',
+            'giasu_dong_y' => 'Gia sư đồng ý',
+            'giasu_tu_choi' => 'Gia sư từ chối',
+            'da_duyet' => 'Đã duyệt đổi buổi',
+            'tu_choi' => 'Đã từ chối',
+        ][$trangThai] ?? 'Chưa cập nhật';
     }
 
     private function dinhDangThanhToan(ThanhToan $thanhToan): array

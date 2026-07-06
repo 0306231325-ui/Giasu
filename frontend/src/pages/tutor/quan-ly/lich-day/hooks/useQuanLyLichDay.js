@@ -7,6 +7,7 @@ function useQuanLyLichDay() {
     const [tab, setTab] = useState("lich_hoc");
     const [danhSachLichHoc, setDanhSachLichHoc] = useState([]);
     const [danhSachYeuCau, setDanhSachYeuCau] = useState([]);
+    const [danhSachYeuCauDoiBuoi, setDanhSachYeuCauDoiBuoi] = useState([]);
     const [dangTai, setDangTai] = useState(false);
     const [dangXuLyId, setDangXuLyId] = useState(null);
 
@@ -14,13 +15,15 @@ function useQuanLyLichDay() {
         setDangTai(true);
 
         try {
-            const [lichHocResponse, yeuCauResponse] = await Promise.all([
+            const [lichHocResponse, yeuCauResponse, yeuCauDoiBuoiResponse] = await Promise.all([
                 api.get("/gia-su/lich-day"),
                 api.get("/gia-su/yeu-cau-dat-goi"),
+                api.get("/gia-su/yeu-cau-doi-buoi"),
             ]);
 
             setDanhSachLichHoc(lichHocResponse.data.data || []);
             setDanhSachYeuCau(yeuCauResponse.data.data || []);
+            setDanhSachYeuCauDoiBuoi(yeuCauDoiBuoiResponse.data.data || []);
         } catch (error) {
             console.error("Không thể tải lịch dạy gia sư:", error);
             toast.error(error.response?.data?.message || "Không thể tải dữ liệu lịch dạy.");
@@ -47,8 +50,24 @@ function useQuanLyLichDay() {
         [danhSachYeuCau],
     );
 
+    const soYeuCauDoiBuoiChoPhanHoi = useMemo(
+        () =>
+            danhSachYeuCauDoiBuoi.filter(
+                (yeuCau) => yeuCau.trangThai === "cho_gia_su_xac_nhan",
+            ).length,
+        [danhSachYeuCauDoiBuoi],
+    );
+
     const capNhatYeuCau = useCallback((yeuCauMoi) => {
         setDanhSachYeuCau((hienTai) =>
+            hienTai.map((yeuCau) =>
+                yeuCau.id === yeuCauMoi.id ? yeuCauMoi : yeuCau,
+            ),
+        );
+    }, []);
+
+    const capNhatYeuCauDoiBuoi = useCallback((yeuCauMoi) => {
+        setDanhSachYeuCauDoiBuoi((hienTai) =>
             hienTai.map((yeuCau) =>
                 yeuCau.id === yeuCauMoi.id ? yeuCauMoi : yeuCau,
             ),
@@ -123,16 +142,49 @@ function useQuanLyLichDay() {
         [capNhatYeuCau, dangXuLyId, taiDuLieu, toast],
     );
 
+    const phanHoiYeuCauDoiBuoi = useCallback(
+        async (yeuCau, ketQua, lyDo = "") => {
+            if (!yeuCau || dangXuLyId) return;
+
+            setDangXuLyId(`doi-buoi-${yeuCau.id}`);
+
+            try {
+                const response = await api.patch(
+                    `/gia-su/yeu-cau-doi-buoi/${yeuCau.id}/phan-hoi`,
+                    {
+                        phan_hoi: ketQua,
+                        ly_do: lyDo,
+                    },
+                );
+
+                capNhatYeuCauDoiBuoi(response.data.data);
+                hienThongBao(response.data.message || "Đã ghi nhận phản hồi đổi buổi.");
+            } catch (error) {
+                console.error("Khong the phan hoi yeu cau doi buoi:", error);
+                hienThongBao(
+                    error.response?.data?.message ||
+                        "Không thể phản hồi yêu cầu đổi buổi.",
+                );
+            } finally {
+                setDangXuLyId(null);
+            }
+        },
+        [capNhatYeuCauDoiBuoi, dangXuLyId, hienThongBao],
+    );
+
     return {
         tab,
         setTab,
         danhSachLichHoc,
         danhSachYeuCau,
+        danhSachYeuCauDoiBuoi,
         dangTai,
         dangXuLyId,
         soYeuCauChoPhanHoi,
+        soYeuCauDoiBuoiChoPhanHoi,
         xacNhanBuoiHoc,
         phanHoiYeuCau,
+        phanHoiYeuCauDoiBuoi,
     };
 }
 

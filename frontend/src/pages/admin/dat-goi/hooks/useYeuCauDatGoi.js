@@ -18,6 +18,21 @@ function useYeuCauDatGoi() {
         hien(noiDung);
     }, [toast]);
 
+    const layViTriCuon = () => ({
+        left: window.scrollX,
+        top: window.scrollY,
+    });
+
+    const khoiPhucViTriCuon = useCallback((viTriCuon) => {
+        window.requestAnimationFrame(() => {
+            window.scrollTo({
+                left: viTriCuon.left,
+                top: viTriCuon.top,
+                behavior: "auto",
+            });
+        });
+    }, []);
+
     const taiDanhSach = useCallback(async ({ lamMoiBoLoc = false } = {}) => {
         setDangTai(true);
 
@@ -152,6 +167,8 @@ function useYeuCauDatGoi() {
         if (!yeuCau || !hanhDong) return;
 
         if (hanhDong === "gui_gia_su") {
+            const viTriCuon = layViTriCuon();
+
             try {
                 const response = await api.patch(`/admin/dat-goi/${yeuCau.id}/gui-gia-su`);
                 capNhatYeuCau(yeuCau.id, response.data.data);
@@ -161,6 +178,23 @@ function useYeuCauDatGoi() {
             } catch (error) {
                 console.error("Không thể gửi yêu cầu cho gia sư:", error);
                 hienToast(error.response?.data?.message || "Không thể gửi yêu cầu cho gia sư.", "error");
+            } finally {
+                khoiPhucViTriCuon(viTriCuon);
+            }
+            return;
+        }
+
+        if (hanhDong === "cho_thanh_toan") {
+            try {
+                const response = await api.patch(`/admin/dat-goi/${yeuCau.id}/cho-thanh-toan`);
+                const yeuCauMoi = response.data.data;
+                capNhatYeuCau(yeuCau.id, yeuCauMoi);
+                setBoLocTrangThai(yeuCauMoi?.trangThai === "da_tao_lich" ? "danh_sach_goi_hoc" : "cho_thanh_toan");
+                setYeuCauDangChonId(yeuCau.id);
+                hienToast(response.data.message || `Đã chuyển ${yeuCau.ma} sang trạng thái chờ học viên thanh toán.`, "success");
+            } catch (error) {
+                console.error("Không thể chuyển sang chờ thanh toán:", error);
+                hienToast(error.response?.data?.message || "Không thể chuyển sang chờ thanh toán.", "error");
             }
             return;
         }
