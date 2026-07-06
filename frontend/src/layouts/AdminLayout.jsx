@@ -51,6 +51,7 @@ function AdminLayout() {
           <NavItem to="/admin/danh-muc" label="Môn học" badge={demCanXuLy.danhMuc} />
           <NavItem to="/admin/quan-ly-dat-goi" label="Quản lý đặt gói" badge={demCanXuLy.datGoi} />
           <NavItem to="/admin/lich-hoc" label="Quản lý lịch học" badge={demCanXuLy.lichHoc} />
+          <NavItem to="/admin/nhat-ky" label="Nhật ký hệ thống" />
           <NavItem to="/admin/bai-viet" label="Bài viết" badge={demCanXuLy.baiViet} />
         </nav>
 
