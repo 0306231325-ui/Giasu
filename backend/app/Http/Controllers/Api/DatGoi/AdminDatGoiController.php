@@ -119,6 +119,12 @@ class AdminDatGoiController extends DatLichBaseController
             'trang_thai' => $laHocThu ? 'danghoc' : 'cho_thanhtoan',
         ]);
 
+        if ($laHocThu) {
+            $goiHoc->lichHocs()->update([
+                'trang_thai' => 'da_nhan',
+            ]);
+        }
+
         ThongBao::create([
             'user_id' => $goiHoc->hocvien_id,
             'tieu_de' => 'Yêu cầu đặt gói đã được chấp nhận',

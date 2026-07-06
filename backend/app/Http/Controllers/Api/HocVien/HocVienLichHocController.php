@@ -308,17 +308,17 @@ class HocVienLichHocController extends Controller
         $yeuCauHocBuMoiNhat = $lichHoc->relationLoaded('yeuCauHocBus')
             ? $lichHoc->yeuCauHocBus->sortByDesc('created_at')->first()
             : null;
+        $trangThaiGoc = $lichHoc->trang_thai;
+        if ($trangThaiGoc === 'cho_xacnhan' && in_array($lichHoc->goiHoc?->trang_thai, ['danghoc', 'hoanthanh'], true)) {
+            $trangThaiGoc = 'da_nhan';
+        }
         $trangThai = [
             'cho_xacnhan' => 'cho_xacnhan',
             'da_nhan' => 'da_nhan',
             'hoanthanh' => 'hoan_thanh',
             'dahuy' => 'da_huy',
-        ][$lichHoc->trang_thai] ?? $lichHoc->trang_thai;
+        ][$trangThaiGoc] ?? $trangThaiGoc;
         $xacNhan = $this->thongTinXacNhanLichHoc($lichHoc);
-
-        if ($lichHoc->trang_thai === 'da_nhan' && $daQuaGioKetThuc) {
-            $trangThai = 'cho_xacnhan';
-        }
 
         return [
             'id' => $lichHoc->id,
@@ -338,7 +338,7 @@ class HocVienLichHocController extends Controller
             'daToiGioBatDau' => $daToiGioBatDau,
             'daQuaGioKetThuc' => $daQuaGioKetThuc,
             'coTheXacNhanHoanThanh' => $daToiGioBatDau
-                && $lichHoc->trang_thai === 'da_nhan'
+                && $trangThaiGoc === 'da_nhan'
                 && ! $xacNhan['hocVienDaXacNhan']
                 && ! $xacNhan['hocVienBaoVanDe'],
             'xacNhan' => $xacNhan,
@@ -353,7 +353,7 @@ class HocVienLichHocController extends Controller
                 'ghiChu' => $xacNhan['giaSuBaoVanDe'] ? $lichHoc->ghi_chu : null,
             ],
             'coTheDanhGia' => $lichHoc->trang_thai === 'hoanthanh' && ! $lichHoc->danhGia,
-            'coTheDoiBuoi' => in_array($lichHoc->trang_thai, ['cho_xacnhan', 'da_nhan'], true)
+            'coTheDoiBuoi' => in_array($trangThaiGoc, ['cho_xacnhan', 'da_nhan'], true)
                 && ! $daToiGioBatDau
                 && ! $yeuCauHocBuMoiNhat,
             'danhGia' => $lichHoc->danhGia ? $this->dinhDangDanhGia($lichHoc->danhGia) : null,
