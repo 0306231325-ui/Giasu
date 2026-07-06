@@ -113,8 +113,10 @@ class AdminDatGoiController extends DatLichBaseController
             ], 422);
         }
 
+        $laHocThu = $this->laGoiHocThu($goiHoc);
+
         $goiHoc->update([
-            'trang_thai' => 'cho_thanhtoan',
+            'trang_thai' => $laHocThu ? 'danghoc' : 'cho_thanhtoan',
         ]);
 
         ThongBao::create([
@@ -125,9 +127,20 @@ class AdminDatGoiController extends DatLichBaseController
             'da_doc' => false,
         ]);
 
+        if ($laHocThu) {
+            ThongBao::query()
+                ->where('user_id', $goiHoc->hocvien_id)
+                ->latest()
+                ->first()
+                ?->update([
+                    'tieu_de' => 'Goi hoc thu da duoc duyet',
+                    'noi_dung' => 'Gia su da dong y va admin da duyet goi hoc thu. Lich hoc cua ban da duoc kich hoat.',
+                ]);
+        }
+
         return response()->json([
             'success' => true,
-            'message' => 'Da chuyen goi hoc sang cho thanh toan.',
+            'message' => $laHocThu ? 'Da duyet goi hoc thu va kich hoat lich hoc.' : 'Da chuyen goi hoc sang cho thanh toan.',
             'data' => $this->dinhDangGoiHocChoAdmin($goiHoc->fresh(['hocVien', 'monHoc', 'giasu.user', 'lichHocs', 'phanHoiMoiNhat', 'thanhToanMoiNhat'])),
         ]);
     }

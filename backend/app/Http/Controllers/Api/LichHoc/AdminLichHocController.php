@@ -38,6 +38,7 @@ class AdminLichHocController extends DatLichBaseController
         $tuNgay = $request->query('tu_ngay');
         $denNgay = $request->query('den_ngay');
         $tuKhoa = trim((string) $request->query('q', ''));
+        $trangThaiGoiDaDuyet = ['cho_thanhtoan', 'danghoc', 'hoanthanh'];
 
         $query = LichHoc::query()
             ->with([
@@ -49,6 +50,7 @@ class AdminLichHocController extends DatLichBaseController
                 'giasu.user:id,ho_ten,email,sdt',
                 'danhGia:id,lichhoc_id,so_sao,noi_dung,created_at',
             ])
+            ->whereHas('goiHoc', fn ($goiQuery) => $goiQuery->whereIn('trang_thai', $trangThaiGoiDaDuyet))
             ->when($tuNgay, fn ($lichQuery) => $lichQuery->whereDate('ngay_hoc', '>=', $tuNgay))
             ->when($denNgay, fn ($lichQuery) => $lichQuery->whereDate('ngay_hoc', '<=', $denNgay))
             ->when($tuKhoa !== '', function ($lichQuery) use ($tuKhoa) {
@@ -364,7 +366,6 @@ class AdminLichHocController extends DatLichBaseController
                 'trang_thai' => 'da_duyet',
                 'nguoi_duyet_id' => $request->user()->id,
                 'ngay_xu_ly' => now(),
-                'ghi_chu_admin' => $request->input('ghi_chu'),
             ]);
         });
 
@@ -386,10 +387,6 @@ class AdminLichHocController extends DatLichBaseController
             ], 403);
         }
 
-        $duLieu = $request->validate([
-            'ly_do' => ['nullable', 'string', 'max:1000'],
-        ]);
-
         $yeuCau = $this->taiYeuCauDoiBuoi($yeuCauId);
         if (! $yeuCau) {
             return response()->json([
@@ -409,7 +406,6 @@ class AdminLichHocController extends DatLichBaseController
             'trang_thai' => 'tu_choi',
             'nguoi_duyet_id' => $request->user()->id,
             'ngay_xu_ly' => now(),
-            'ghi_chu_admin' => filled($duLieu['ly_do'] ?? null) ? trim($duLieu['ly_do']) : null,
         ]);
 
         $this->guiThongBaoYeuCauDoiBuoi($yeuCau->fresh($this->quanHeYeuCauDoiBuoi()), 'Yeu cau doi buoi da bi tu choi');

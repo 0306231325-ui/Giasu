@@ -127,6 +127,21 @@ class DatGoiController extends DatLichBaseController
             ], 422);
         }
 
+        if ($duLieu['loai_goi'] === 'hoc_thu') {
+            $daDangKyHocThu = GoiHoc::query()
+                ->where('hocvien_id', $user->id)
+                ->where('kieu_goi', 'hoc_thu')
+                ->whereIn('trang_thai', ['cho_xacnhan', 'cho_thanhtoan', 'danghoc', 'hoanthanh'])
+                ->exists();
+
+            if ($daDangKyHocThu) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ban dang co goi hoc thu dang xu ly hoac da duoc chap nhan.',
+                ], 422);
+            }
+        }
+
         $loaiGoi = null;
         if (in_array($duLieu['loai_goi'], ['dinh_ky', 'khong_dinh_ky'], true)) {
             $loaiGoi = LoaiGoi::query()->find($duLieu['loai_goi_id']);
@@ -172,6 +187,7 @@ class DatGoiController extends DatLichBaseController
         $this->kiemTraGoiHocTrung($user->id, $giaSu->id, (int) $duLieu['monhoc_id']);
 
         $lichHocNhap = $this->taoLichHocTuYeuCau($duLieu);
+        $this->kiemTraLichHocTrongTuongLai($lichHocNhap);
 
         if (count($lichHocNhap) !== (int) $duLieu['so_buoi']) {
             return response()->json([
@@ -196,6 +212,9 @@ class DatGoiController extends DatLichBaseController
                     ->addDays(max(((int) $duLieu['so_thang']) * 30, 1) - 1)
                     ->toDateString()
                 : collect($lichHocNhap)->max('ngay_hoc');
+            $diaChiHoc = $duLieu['hinh_thuc_hoc'] === 'offline' && filled($duLieu['dia_chi_hoc'] ?? null)
+                ? trim($duLieu['dia_chi_hoc'])
+                : null;
 
             $goiHoc = GoiHoc::create([
                 'hocvien_id' => $user->id,
@@ -211,7 +230,7 @@ class DatGoiController extends DatLichBaseController
                 'thu' => $duLieu['loai_goi'] === 'dinh_ky' ? ($duLieu['thu_hoc'][0] ?? null) : null,
                 'gio_batdau' => in_array($duLieu['loai_goi'], ['hoc_thu', 'dinh_ky'], true) ? $duLieu['gio_batdau'] : null,
                 'gio_ketthuc' => in_array($duLieu['loai_goi'], ['hoc_thu', 'dinh_ky'], true) ? $duLieu['gio_ketthuc'] : null,
-                'dia_chi_hoc' => filled($duLieu['dia_chi_hoc'] ?? null) ? trim($duLieu['dia_chi_hoc']) : null,
+                'dia_chi_hoc' => $diaChiHoc,
                 'hinh_thuc_hoc' => $duLieu['hinh_thuc_hoc'],
                 'don_gia_theogio' => $donGia,
                 'tong_tien' => $tongTien,
@@ -229,7 +248,7 @@ class DatGoiController extends DatLichBaseController
                     'ngay_hoc' => $lichHoc['ngay_hoc'],
                     'gio_batdau' => $lichHoc['gio_batdau'],
                     'gio_ketthuc' => $lichHoc['gio_ketthuc'],
-                    'dia_chi_hoc' => filled($duLieu['dia_chi_hoc'] ?? null) ? trim($duLieu['dia_chi_hoc']) : null,
+                    'dia_chi_hoc' => $diaChiHoc,
                     'hinh_thuc_hoc' => $duLieu['hinh_thuc_hoc'],
                     'tien_hoc' => $tienHoc,
                     'phi_hoahong' => $phiHoaHong,

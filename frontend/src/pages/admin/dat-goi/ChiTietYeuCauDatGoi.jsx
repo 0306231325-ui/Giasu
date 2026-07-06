@@ -7,6 +7,8 @@ import { dinhDangNgay, layHanhDong, layNhanThanhToanPhu } from "./utils";
 const API_ORIGIN = (import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api").replace(/\/api\/?$/, "");
 
 function ChiTietYeuCauDatGoi({ yeuCau, onThucHien }) {
+    const hanhDongTiepTheo = layHanhDong(yeuCau);
+
     return (
         <div>
             <div className="border-b border-slate-200 px-6 py-5">
@@ -62,10 +64,10 @@ function ChiTietYeuCauDatGoi({ yeuCau, onThucHien }) {
                 <KhoiPhanHoi yeuCau={yeuCau} />
                 <KhoiThanhToan yeuCau={yeuCau} />
 
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <div className={`rounded-2xl border border-slate-200 bg-slate-50 p-5 ${hanhDongTiepTheo.length === 0 ? "hidden" : ""}`}>
                     <h3 className="text-base font-extrabold">Hành động tiếp theo</h3>
                     <div className="mt-4 flex flex-wrap gap-3">
-                        {layHanhDong(yeuCau).map((hanhDong) => (
+                        {hanhDongTiepTheo.map((hanhDong) => (
                             <button
                                 key={hanhDong.label}
                                 type="button"
@@ -84,6 +86,10 @@ function ChiTietYeuCauDatGoi({ yeuCau, onThucHien }) {
 
 function KhoiThanhToan({ yeuCau }) {
     const [taiLieuDangXem, setTaiLieuDangXem] = useState(null);
+
+    if (yeuCau.kieuGoi === "hoc_thu") {
+        return null;
+    }
 
     if (!["cho_thanh_toan", "da_tao_lich"].includes(yeuCau.trangThai)) {
         return null;

@@ -109,8 +109,7 @@ function TheYeuCauDoiBuoi({ yeuCau, dangXuLy, onDongY, onTuChoi }) {
                 </div>
 
                 <div className="grid gap-3 text-sm text-white/55 sm:grid-cols-2 lg:grid-cols-1">
-                    <DongLich tieuDe="Lịch cũ" ngay={yeuCau.lichCu?.ngayHocText} gio={yeuCau.lichCu?.khungGio} />
-                    <DongLich tieuDe="Lịch mới" ngay={yeuCau.ngayHocText} gio={yeuCau.khungGio} />
+                    <DongLich ngay={yeuCau.ngayHocText} gio={yeuCau.khungGio} />
                 </div>
 
                 {dangCho && (
@@ -135,21 +134,18 @@ function TheYeuCauDoiBuoi({ yeuCau, dangXuLy, onDongY, onTuChoi }) {
                 )}
             </div>
 
-            {yeuCau.lyDoGiaSu && (
-                <div className="border-t border-red-400/15 bg-red-400/5 px-5 py-3 text-sm text-red-200">
-                    <span className="font-bold">Lý do từ chối:</span> {yeuCau.lyDoGiaSu}
-                </div>
-            )}
         </article>
     );
 }
 
-function DongLich({ tieuDe, ngay, gio }) {
+function DongLich({ ngay, gio }) {
+    if (!ngay && !gio) return null;
+
     return (
         <div className="rounded-xl bg-white/5 p-3">
             <div className="flex items-center gap-2 text-xs font-bold uppercase text-white/35">
                 <IconLichDay ten="calendar" className="h-4 w-4" />
-                {tieuDe}
+                Lịch đề xuất
             </div>
             <div className="mt-2 font-bold text-white">{ngay || "Chưa rõ"}</div>
             <div>{gio || ""}</div>

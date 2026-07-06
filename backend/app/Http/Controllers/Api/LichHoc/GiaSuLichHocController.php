@@ -202,7 +202,6 @@ class GiaSuLichHocController extends DatLichBaseController
 
         $duLieu = $request->validate([
             'phan_hoi' => ['required', Rule::in(['dong_y', 'tu_choi'])],
-            'ly_do' => ['required_if:phan_hoi,tu_choi', 'nullable', 'string', 'max:1000'],
         ]);
 
         $yeuCau = YeuCauHocBu::query()
@@ -226,8 +225,6 @@ class GiaSuLichHocController extends DatLichBaseController
 
         $yeuCau->update([
             'trang_thai' => $duLieu['phan_hoi'] === 'dong_y' ? 'giasu_dong_y' : 'giasu_tu_choi',
-            'ly_do_gia_su' => filled($duLieu['ly_do'] ?? null) ? trim($duLieu['ly_do']) : null,
-            'gia_su_phan_hoi_luc' => now(),
         ]);
 
         User::query()->where('vai_tro', 'admin')->each(function (User $admin) use ($duLieu, $yeuCau) {

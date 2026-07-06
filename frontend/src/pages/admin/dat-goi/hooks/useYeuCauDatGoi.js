@@ -217,8 +217,9 @@ function useYeuCauDatGoi() {
         if (hanhDong === "cho_thanh_toan") {
             try {
                 const response = await api.patch(`/admin/dat-goi/${yeuCau.id}/cho-thanh-toan`);
-                capNhatYeuCau(yeuCau.id, response.data.data);
-                setBoLocTrangThai("cho_thanh_toan");
+                const yeuCauMoi = response.data.data;
+                capNhatYeuCau(yeuCau.id, yeuCauMoi);
+                setBoLocTrangThai(yeuCauMoi?.trangThai === "da_tao_lich" ? "danh_sach_goi_hoc" : "cho_thanh_toan");
                 setYeuCauDangChonId(yeuCau.id);
                 hienThongBao(response.data.message || `Đã chuyển ${yeuCau.ma} sang trạng thái chờ học viên thanh toán.`);
             } catch (error) {

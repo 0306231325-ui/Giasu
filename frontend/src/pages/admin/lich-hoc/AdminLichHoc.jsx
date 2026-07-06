@@ -498,14 +498,9 @@ function YeuCauDoiBuoiAdmin({ danhSach, dangXuLy, onGuiGiaSu, onDuyet, onTuChoi 
               </span>
             </div>
 
-            <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+            <div className="mt-4 text-sm">
               <div className="rounded-xl bg-white/5 p-3">
-                <div className="text-xs font-bold uppercase text-white/35">Lịch cũ</div>
-                <div className="mt-1 font-bold text-white">{yeuCau.lichCu?.ngayHocText || "Chưa rõ"}</div>
-                <div className="text-white/55">{yeuCau.lichCu?.khungGio || ""}</div>
-              </div>
-              <div className="rounded-xl bg-white/5 p-3">
-                <div className="text-xs font-bold uppercase text-white/35">Lịch mới</div>
+                <div className="text-xs font-bold uppercase text-white/35">Lịch đề xuất</div>
                 <div className="mt-1 font-bold text-white">{yeuCau.ngayHocText}</div>
                 <div className="text-white/55">{yeuCau.khungGio}</div>
               </div>
@@ -514,12 +509,6 @@ function YeuCauDoiBuoiAdmin({ danhSach, dangXuLy, onGuiGiaSu, onDuyet, onTuChoi 
             <p className="mt-3 rounded-xl bg-white/5 p-3 text-sm leading-6 text-white/65">
               {yeuCau.lyDo || "Không có lý do."}
             </p>
-
-            {yeuCau.lyDoGiaSu && (
-              <p className="mt-3 rounded-xl bg-red-400/10 p-3 text-sm leading-6 text-red-100">
-                Gia sư từ chối: {yeuCau.lyDoGiaSu}
-              </p>
-            )}
 
             <div className="mt-4 flex flex-wrap justify-end gap-2">
               {yeuCau.trangThai === "cho_duyet" && (
