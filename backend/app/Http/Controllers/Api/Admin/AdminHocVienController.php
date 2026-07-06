@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\NhatKyHeThongService;
 use Illuminate\Http\Request;
 
 class AdminHocVienController extends Controller
@@ -83,9 +84,20 @@ class AdminHocVienController extends Controller
             : null;
         $hocVien->save();
 
+        $laKhoaTaiKhoan = $hocVien->trang_thai === 'khoa';
+
+        NhatKyHeThongService::ghi(
+            $request->user(),
+            $laKhoaTaiKhoan ? 'khoa_tai_khoan' : 'mo_khoa_tai_khoan',
+            $hocVien->id,
+            $laKhoaTaiKhoan
+                ? "Admin khóa tài khoản học viên {$hocVien->ho_ten}. Lý do: {$hocVien->ly_do_khoa}"
+                : "Admin mở khóa tài khoản học viên {$hocVien->ho_ten}."
+        );
+
         return response()->json([
             'success' => true,
-            'message' => $hocVien->trang_thai === 'khoa'
+            'message' => $laKhoaTaiKhoan
                 ? 'Đã khóa tài khoản học viên.'
                 : 'Đã mở khóa tài khoản học viên.',
             'data' => $hocVien->fresh('hocvien'),

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\BaiViet;
 use App\Services\BaiVietService;
+use App\Services\NhatKyHeThongService;
 use Illuminate\Http\Request;
 
 class AdminBaiVietController extends Controller
@@ -143,6 +144,13 @@ class AdminBaiVietController extends Controller
             'trang_thai' => $duLieu['trang_thai'],
         ]);
 
+        NhatKyHeThongService::ghi(
+            $request->user(),
+            'tao_bai_viet',
+            $baiViet->id,
+            "Admin tạo bài viết {$baiViet->tieu_de}."
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Tạo bài viết thành công.',
@@ -195,6 +203,13 @@ class AdminBaiVietController extends Controller
         ]);
         $baiViet->save();
 
+        NhatKyHeThongService::ghi(
+            $request->user(),
+            'sua_bai_viet',
+            $baiViet->id,
+            "Admin cập nhật bài viết {$baiViet->tieu_de}."
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Cập nhật bài viết thành công.',
@@ -224,6 +239,13 @@ class AdminBaiVietController extends Controller
         $baiViet->save();
         $baiViet->delete();
 
+        NhatKyHeThongService::ghi(
+            $request->user(),
+            'xoa_bai_viet',
+            $baiViet->id,
+            "Admin đưa bài viết {$baiViet->tieu_de} vào thùng rác."
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Đã đưa bài viết vào thùng rác.',
@@ -252,6 +274,13 @@ class AdminBaiVietController extends Controller
         $baiViet->deleted_by_id = null;
         $baiViet->save();
 
+        NhatKyHeThongService::ghi(
+            $request->user(),
+            'sua_bai_viet',
+            $baiViet->id,
+            "Admin khôi phục bài viết {$baiViet->tieu_de}."
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Khôi phục bài viết thành công.',
@@ -278,7 +307,15 @@ class AdminBaiVietController extends Controller
         }
 
         $this->baiVietService->xoaAnhBaiVietCu($baiViet->anh_bia);
+        $tieuDeBaiViet = $baiViet->tieu_de;
         $baiViet->forceDelete();
+
+        NhatKyHeThongService::ghi(
+            $request->user(),
+            'xoa_bai_viet',
+            $baiVietId,
+            "Admin xóa vĩnh viễn bài viết {$tieuDeBaiViet}."
+        );
 
         return response()->json([
             'success' => true,

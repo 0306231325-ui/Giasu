@@ -14,6 +14,7 @@ use App\Models\ThanhToan;
 use App\Models\ThongBao;
 use App\Models\User;
 use App\Models\YeuCauHocBu;
+use App\Services\NhatKyHeThongService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -102,6 +103,13 @@ class ThanhToanGoiHocController extends DatLichBaseController
             return $goiHoc->fresh(['monHoc:id,ten_mon,lop', 'giasu.user:id,ho_ten', 'lichHocs', 'thanhToanMoiNhat']);
         });
 
+        NhatKyHeThongService::ghi(
+            $user,
+            'gui_minh_chung_thanh_toan',
+            $goiHoc->id,
+            "{$user->ho_ten} gửi minh chứng thanh toán cho gói GH" . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . "."
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Da gui minh chung thanh toan. Vui long cho admin xac nhan.',
@@ -168,6 +176,13 @@ class ThanhToanGoiHocController extends DatLichBaseController
             }
         });
 
+        NhatKyHeThongService::ghi(
+            $request->user(),
+            'duyet_thanh_toan',
+            $goiHoc->id,
+            "Admin xác nhận thanh toán gói GH" . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . "."
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Da xac nhan thanh toan va chuyen goi hoc sang dang hoc.',
@@ -221,6 +236,13 @@ class ThanhToanGoiHocController extends DatLichBaseController
                 'da_doc' => false,
             ]);
         });
+
+        NhatKyHeThongService::ghi(
+            $request->user(),
+            'tu_choi_thanh_toan',
+            $goiHoc->id,
+            "Admin từ chối thanh toán gói GH" . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . ($lyDo ? ". Lý do: {$lyDo}" : ".")
+        );
 
         return response()->json([
             'success' => true,

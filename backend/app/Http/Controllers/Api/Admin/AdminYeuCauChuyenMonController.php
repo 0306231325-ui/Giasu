@@ -9,6 +9,7 @@ use App\Models\GiasuGia;
 use App\Models\ThongBao;
 use App\Services\AdminXetDuyetGiaSuService;
 use App\Services\GiaTinhService;
+use App\Services\NhatKyHeThongService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -287,6 +288,15 @@ class AdminYeuCauChuyenMonController extends Controller
             $this->taoThongBao($bangCap->giasu, 'Yêu cầu bằng cấp bị từ chối', "Tài liệu chuyên môn của bạn bị từ chối. Lý do: {$lyDo}");
         });
 
+        NhatKyHeThongService::ghi(
+            $request->user(),
+            $duLieu['hanh_dong'] === 'duyet' ? 'duyet_yeu_cau_chuyen_mon' : 'tu_choi_yeu_cau_chuyen_mon',
+            $bangCap->id,
+            $duLieu['hanh_dong'] === 'duyet'
+                ? "Admin duyệt yêu cầu bằng cấp/chứng chỉ {$bangCap->ten_bang_cap} của gia sư {$bangCap->giasu?->user?->ho_ten}."
+                : "Admin từ chối yêu cầu bằng cấp/chứng chỉ {$bangCap->ten_bang_cap} của gia sư {$bangCap->giasu?->user?->ho_ten}. Lý do: " . trim((string) $duLieu['ly_do'])
+        );
+
         return response()->json([
             'success' => true,
             'message' => $duLieu['hanh_dong'] === 'duyet'
@@ -344,6 +354,15 @@ class AdminYeuCauChuyenMonController extends Controller
 
             $this->taoThongBao($mucGia->giasu, 'Môn dạy bị từ chối', "Yêu cầu bổ sung môn dạy của bạn bị từ chối. Lý do: {$lyDo}");
         });
+
+        NhatKyHeThongService::ghi(
+            $request->user(),
+            $duLieu['hanh_dong'] === 'duyet' ? 'duyet_yeu_cau_chuyen_mon' : 'tu_choi_yeu_cau_chuyen_mon',
+            $mucGia->id,
+            $duLieu['hanh_dong'] === 'duyet'
+                ? "Admin duyệt yêu cầu thêm môn {$mucGia->monHoc->ten_mon} của gia sư {$mucGia->giasu?->user?->ho_ten}."
+                : "Admin từ chối yêu cầu thêm môn {$mucGia->monHoc->ten_mon} của gia sư {$mucGia->giasu?->user?->ho_ten}. Lý do: " . trim((string) $duLieu['ly_do'])
+        );
 
         return response()->json([
             'success' => true,

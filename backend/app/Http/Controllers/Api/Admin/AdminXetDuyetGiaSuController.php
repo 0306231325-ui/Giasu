@@ -8,6 +8,7 @@ use App\Models\GiasuGia;
 use App\Models\ThongBao;
 use App\Services\AdminXetDuyetGiaSuService;
 use App\Services\GiaTinhService;
+use App\Services\NhatKyHeThongService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -189,6 +190,15 @@ class AdminXetDuyetGiaSuController extends Controller
                 'da_doc' => false,
             ]);
         });
+
+        NhatKyHeThongService::ghi(
+            $request->user(),
+            $duLieu['hanh_dong'] === 'duyet' ? 'duyet_ho_so_gia_su' : 'tu_choi_ho_so_gia_su',
+            $giaSu->id,
+            $duLieu['hanh_dong'] === 'duyet'
+                ? "Admin duyệt hồ sơ gia sư {$giaSu->user->ho_ten}."
+                : "Admin từ chối hồ sơ gia sư {$giaSu->user->ho_ten}. Lý do: " . trim((string) $duLieu['ly_do'])
+        );
 
         return response()->json([
             'success' => true,

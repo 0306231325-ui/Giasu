@@ -14,6 +14,7 @@ use App\Models\ThanhToan;
 use App\Models\ThongBao;
 use App\Models\User;
 use App\Models\YeuCauHocBu;
+use App\Services\NhatKyHeThongService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -177,6 +178,15 @@ class GiaSuYeuCauDatGoiController extends DatLichBaseController
                 'da_doc' => false,
             ]);
         });
+
+        NhatKyHeThongService::ghi(
+            $request->user(),
+            $laTuChoi ? 'gia_su_tu_choi' : 'gia_su_dong_y',
+            $goiHoc->id,
+            $laTuChoi
+                ? ($request->user()->ho_ten . " từ chối yêu cầu đặt gói GH" . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . ($lyDo ? ". Lý do: {$lyDo}" : "."))
+                : ($request->user()->ho_ten . " đồng ý nhận yêu cầu đặt gói GH" . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . ".")
+        );
 
         $goiHocMoi = $goiHoc->fresh(['hocVien:id,ho_ten,email,sdt', 'monHoc:id,ten_mon,lop', 'lichHocs', 'phanHoiMoiNhat']);
 

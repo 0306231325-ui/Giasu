@@ -14,6 +14,7 @@ use App\Models\ThanhToan;
 use App\Models\ThongBao;
 use App\Models\User;
 use App\Models\YeuCauHocBu;
+use App\Services\NhatKyHeThongService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -210,6 +211,15 @@ class HocVienLichHocController extends DatLichBaseController
             ]);
         }
 
+        NhatKyHeThongService::ghi(
+            $user,
+            'xac_nhan_hoan_thanh_buoi_hoc',
+            $lichHoc->id,
+            $trangThaiXacNhan === 'baovan_de'
+                ? "{$user->ho_ten} báo vấn đề buổi học LH" . str_pad((string) $lichHoc->id, 6, '0', STR_PAD_LEFT) . "."
+                : "{$user->ho_ten} xác nhận hoàn thành buổi học LH" . str_pad((string) $lichHoc->id, 6, '0', STR_PAD_LEFT) . "."
+        );
+
         $lichHoc->refresh()->load([
             'goiHoc.monHoc',
             'giasu.user',
@@ -288,6 +298,13 @@ class HocVienLichHocController extends DatLichBaseController
                 'da_doc' => false,
             ]);
         }
+
+        NhatKyHeThongService::ghi(
+            $user,
+            'yeu_cau_doi_buoi',
+            $lichHoc->id,
+            "{$user->ho_ten} gửi yêu cầu đổi buổi học LH" . str_pad((string) $lichHoc->id, 6, '0', STR_PAD_LEFT) . "."
+        );
 
         return response()->json([
             'success' => true,

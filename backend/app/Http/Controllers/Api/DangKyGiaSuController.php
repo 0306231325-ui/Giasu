@@ -11,6 +11,7 @@ use App\Models\MonHoc;
 use App\Models\MucKinhNghiem;
 use App\Models\TrinhDoGiasu;
 use App\Services\GiaTinhService;
+use App\Services\NhatKyHeThongService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -252,6 +253,13 @@ class DangKyGiaSuController extends Controller
         if ($avatarMoi) {
             $this->xoaAnhChanDungCu($anhCuCanXoa, $avatarMoi);
         }
+
+        NhatKyHeThongService::ghi(
+            $user,
+            'gui_don_dang_ky_gia_su',
+            $giaSu->id,
+            "{$user->ho_ten} gửi đơn đăng ký làm gia sư.",
+        );
 
         return response()->json([
             'success' => true,

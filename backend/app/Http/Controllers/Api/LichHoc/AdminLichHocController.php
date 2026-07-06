@@ -14,6 +14,7 @@ use App\Models\ThanhToan;
 use App\Models\ThongBao;
 use App\Models\User;
 use App\Models\YeuCauHocBu;
+use App\Services\NhatKyHeThongService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -181,6 +182,13 @@ class AdminLichHocController extends DatLichBaseController
 
         $this->guiThongBaoXuLyLichHoc($lichHoc->fresh(), 'Buổi học đã được xác nhận hoàn thành');
 
+        NhatKyHeThongService::ghi(
+            $request->user(),
+            'xac_nhan_hoan_thanh_buoi_hoc',
+            $lichHoc->id,
+            "Admin xác nhận hoàn thành buổi học LH" . str_pad((string) $lichHoc->id, 6, '0', STR_PAD_LEFT) . "."
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Da xac nhan hoan thanh buoi hoc.',
@@ -227,6 +235,13 @@ class AdminLichHocController extends DatLichBaseController
         ]);
 
         $this->guiThongBaoXuLyLichHoc($lichHoc->fresh(), 'Buổi học đã bị hủy');
+
+        NhatKyHeThongService::ghi(
+            $request->user(),
+            'huy_buoi_hoc',
+            $lichHoc->id,
+            "Admin hủy buổi học LH" . str_pad((string) $lichHoc->id, 6, '0', STR_PAD_LEFT) . ". Lý do: {$lyDo}"
+        );
 
         return response()->json([
             'success' => true,

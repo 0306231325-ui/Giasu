@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Giasu;
 use App\Models\GiasuGia;
+use App\Services\NhatKyHeThongService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -57,9 +58,20 @@ class AdminTrangThaiGiaSuController extends Controller
 
         $giaSu->setRelation('user', $giaSu->user->fresh());
 
+        $laKhoaTaiKhoan = $giaSu->user->trang_thai === 'khoa';
+
+        NhatKyHeThongService::ghi(
+            $request->user(),
+            $laKhoaTaiKhoan ? 'khoa_tai_khoan' : 'mo_khoa_tai_khoan',
+            $giaSu->user->id,
+            $laKhoaTaiKhoan
+                ? "Admin khóa tài khoản gia sư {$giaSu->user->ho_ten}. Lý do: {$giaSu->user->ly_do_khoa}"
+                : "Admin mở khóa tài khoản gia sư {$giaSu->user->ho_ten}."
+        );
+
         return response()->json([
             'success' => true,
-            'message' => $giaSu->user->trang_thai === 'khoa'
+            'message' => $laKhoaTaiKhoan
                 ? 'Đã khóa tài khoản gia sư.'
                 : 'Đã mở khóa tài khoản gia sư.',
             'data' => [

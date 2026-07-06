@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\Admin\AdminDoanhThuController;
 use App\Http\Controllers\Api\Admin\AdminGiaSuBangCapController;
 use App\Http\Controllers\Api\Admin\AdminGiaSuController;
 use App\Http\Controllers\Api\Admin\AdminHocVienController;
+use App\Http\Controllers\Api\Admin\AdminNhatKyHeThongController;
 use App\Http\Controllers\Api\Admin\AdminTrangThaiGiaSuController;
 use App\Http\Controllers\Api\Admin\AdminXetDuyetGiaSuController;
 use App\Http\Controllers\Api\Admin\AdminYeuCauChuyenMonController;
@@ -103,6 +104,7 @@ Route::middleware(['auth:sanctum', 'tai_khoan.hoat_dong'])->group(function () {
 
     Route::prefix('admin')->group(function () {
         Route::get('/doanh-thu', [AdminDoanhThuController::class, 'tongQuan']);
+        Route::get('/nhat-ky', [AdminNhatKyHeThongController::class, 'index']);
 
         Route::prefix('dat-goi')->group(function () {
             Route::get('/', [AdminDatGoiController::class, 'danhSachDatGoiAdmin']);

@@ -14,6 +14,7 @@ use App\Models\ThanhToan;
 use App\Models\ThongBao;
 use App\Models\User;
 use App\Models\YeuCauHocBu;
+use App\Services\NhatKyHeThongService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -252,6 +253,13 @@ class DatGoiController extends DatLichBaseController
             return $goiHoc->load(['monHoc:id,ten_mon,lop', 'giasu.user:id,ho_ten', 'lichHocs']);
         });
 
+        NhatKyHeThongService::ghi(
+            $user,
+            'dat_goi_hoc',
+            $goiHoc->id,
+            "{$user->ho_ten} gửi yêu cầu đặt gói GH" . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . "."
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Da tao goi hoc va lich hoc. Vui long cho gia su xac nhan.',
@@ -314,6 +322,13 @@ class DatGoiController extends DatLichBaseController
 
             return $goiHoc->fresh(['hocVien:id,ho_ten', 'giasu.user:id,ho_ten', 'monHoc:id,ten_mon,lop', 'lichHocs', 'thanhToanMoiNhat']);
         });
+
+        NhatKyHeThongService::ghi(
+            $user,
+            'huy_goi_hoc',
+            $goiHoc->id,
+            "{$user->ho_ten} hủy yêu cầu đặt gói GH" . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . "."
+        );
 
         return response()->json([
             'success' => true,

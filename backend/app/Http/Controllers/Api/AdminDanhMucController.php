@@ -7,6 +7,7 @@ use App\Models\CapHoc;
 use App\Models\LoaiGoi;
 use App\Models\MucKinhNghiem;
 use App\Models\TrinhDoGiasu;
+use App\Services\NhatKyHeThongService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -87,6 +88,13 @@ class AdminDanhMucController extends Controller
         $duLieu = $this->chuanHoaDuLieu($loai, $this->validateDanhMuc($request, $loai));
         $model = $this->modelClass($loai)::create($duLieu);
 
+        NhatKyHeThongService::ghi(
+            $request->user(),
+            'them_danh_muc',
+            $model->id,
+            'Admin thêm danh mục ' . $this->tenDanhMuc($loai) . '.'
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Da them danh muc.',
@@ -111,6 +119,13 @@ class AdminDanhMucController extends Controller
         }
 
         $model->update($this->chuanHoaDuLieu($loai, $this->validateDanhMuc($request, $loai, $id)));
+
+        NhatKyHeThongService::ghi(
+            $request->user(),
+            'sua_danh_muc',
+            $model->id,
+            'Admin cập nhật danh mục ' . $this->tenDanhMuc($loai) . '.'
+        );
 
         return response()->json([
             'success' => true,
@@ -143,6 +158,13 @@ class AdminDanhMucController extends Controller
         }
 
         $model->delete();
+
+        NhatKyHeThongService::ghi(
+            $request->user(),
+            'xoa_danh_muc',
+            $id,
+            'Admin xóa danh mục ' . $this->tenDanhMuc($loai) . '.'
+        );
 
         return response()->json([
             'success' => true,
@@ -243,5 +265,16 @@ class AdminDanhMucController extends Controller
             'success' => false,
             'message' => 'Ban khong co quyen truy cap.',
         ], 403);
+    }
+
+    private function tenDanhMuc(string $loai): string
+    {
+        return match ($loai) {
+            'cap-hoc' => 'cấp học',
+            'loai-goi' => 'loại gói',
+            'trinh-do-gia-su' => 'trình độ gia sư',
+            'muc-kinh-nghiem' => 'mức kinh nghiệm',
+            default => 'hệ thống',
+        };
     }
 }
