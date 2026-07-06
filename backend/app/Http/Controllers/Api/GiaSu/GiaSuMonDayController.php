@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\GiaSuHoSoService;
 use App\Services\GiaSuMonDayService;
 use App\Services\GiaTinhService;
+use App\Services\NhatKyHeThongService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -116,6 +117,13 @@ class GiaSuMonDayController extends Controller
         $this->thongBaoChoAdmin(
             'Yêu cầu thêm môn dạy mới',
             ($giaSu->user?->ho_ten ?? 'Gia sư') . ' vừa gửi yêu cầu thêm môn dạy' . ($tenMon ? ': ' . $tenMon : '.'),
+        );
+
+        NhatKyHeThongService::ghi(
+            $request->user(),
+            'them_mon_day_gia_su',
+            $giaSu->id,
+            ($giaSu->user?->ho_ten ?? 'Gia sư') . ' gửi yêu cầu thêm môn dạy' . ($tenMon ? ': ' . $tenMon : '.'),
         );
 
         return response()->json([

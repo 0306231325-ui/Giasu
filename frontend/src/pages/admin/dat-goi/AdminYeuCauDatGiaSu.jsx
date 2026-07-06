@@ -9,13 +9,9 @@ const MO_TA_DANH_SACH = {
         tieuDe: "Danh sách yêu cầu",
         moTa: "Các yêu cầu đặt gói đang chờ admin xử lý hoặc gửi cho gia sư.",
     },
-    da_phan_hoi: {
-        tieuDe: "Gia sư đã phản hồi",
-        moTa: "Các gói học đã được gia sư đồng ý hoặc từ chối.",
-    },
     cho_thanh_toan: {
         tieuDe: "Chờ thanh toán",
-        moTa: "Các gói đang chờ học viên gửi thông tin thanh toán.",
+        moTa: "Các gói gia sư đã đồng ý và đang chờ học viên thanh toán.",
     },
     xac_nhan_thanh_toan: {
         tieuDe: "Xác nhận thanh toán",
@@ -33,16 +29,13 @@ const MO_TA_DANH_SACH = {
 
 function AdminYeuCauDatGiaSu() {
     const {
-        boLocPhanHoi,
         boLocTrangThai,
         dangTai,
         danhSachDaLoc,
-        thongBao,
         tuKhoa,
         yeuCauDangChon,
         demTheoTrangThai,
         doiTrangThai,
-        setBoLocPhanHoi,
         setTuKhoa,
         setYeuCauDangChonId,
         xuLyHanhDong,
@@ -86,19 +79,10 @@ function AdminYeuCauDatGiaSu() {
                 ))}
             </div>
 
-            {thongBao && (
-                <div className="mt-4 rounded-2xl border border-blue-400/30 bg-blue-500/10 px-4 py-3 text-sm font-semibold text-blue-100">
-                    {thongBao}
-                </div>
-            )}
-
             <BoLocDatGoi
-                boLocTrangThai={boLocTrangThai}
-                boLocPhanHoi={boLocPhanHoi}
                 tuKhoa={tuKhoa}
                 soKetQua={danhSachDaLoc.length}
                 onDoiTuKhoa={setTuKhoa}
-                onDoiPhanHoi={setBoLocPhanHoi}
             />
 
             <div className="mt-5 grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">

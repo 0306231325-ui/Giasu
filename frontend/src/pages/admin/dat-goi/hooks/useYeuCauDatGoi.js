@@ -1,36 +1,22 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useToast } from "../../../../context/ToastContext";
 import api from "../../../../services/api";
 import { TRANG_THAI_MAC_DINH } from "../constants";
 import { coThongTinChoXacNhanThanhToan } from "../utils";
 
 function useYeuCauDatGoi() {
+    const toast = useToast();
     const [danhSachYeuCau, setDanhSachYeuCau] = useState([]);
     const [boLocTrangThai, setBoLocTrangThai] = useState(TRANG_THAI_MAC_DINH);
-    const [boLocPhanHoi, setBoLocPhanHoi] = useState("");
     const [tuKhoa, setTuKhoa] = useState("");
     const [yeuCauDangChonId, setYeuCauDangChonId] = useState(null);
-    const [thongBao, setThongBao] = useState("");
     const [dangTai, setDangTai] = useState(false);
-    const boDemThongBao = useRef(null);
 
-    const anThongBao = useCallback(() => {
-        if (boDemThongBao.current) {
-            clearTimeout(boDemThongBao.current);
-            boDemThongBao.current = null;
-        }
-
-        setThongBao("");
-    }, []);
-
-    const hienThongBao = useCallback((noiDung) => {
-        anThongBao();
-        setThongBao(noiDung);
-
-        boDemThongBao.current = setTimeout(() => {
-            setThongBao("");
-            boDemThongBao.current = null;
-        }, 3000);
-    }, [anThongBao]);
+    const hienToast = useCallback((noiDung, loai = "info") => {
+        if (!noiDung) return;
+        const hien = toast[loai] ?? toast.info;
+        hien(noiDung);
+    }, [toast]);
 
     const taiDanhSach = useCallback(async ({ lamMoiBoLoc = false } = {}) => {
         setDangTai(true);
@@ -48,21 +34,20 @@ function useYeuCauDatGoi() {
 
             if (lamMoiBoLoc) {
                 setBoLocTrangThai(TRANG_THAI_MAC_DINH);
-                setBoLocPhanHoi("");
                 setTuKhoa("");
             }
         } catch (error) {
             console.error("Không thể tải danh sách đặt gói:", error);
-            hienThongBao(error.response?.data?.message || "Không thể tải danh sách đặt gói.");
+            hienToast(error.response?.data?.message || "Không thể tải danh sách đặt gói.", "error");
         } finally {
             setDangTai(false);
         }
-    }, [hienThongBao]);
+    }, [hienToast]);
 
     useEffect(() => {
         const lamMoi = () => {
             taiDanhSach({ lamMoiBoLoc: true });
-            hienThongBao("Đã làm mới dữ liệu đặt gói.");
+            hienToast("Đã làm mới dữ liệu đặt gói.", "success");
         };
 
         window.addEventListener("admin:refresh", lamMoi);
@@ -73,9 +58,8 @@ function useYeuCauDatGoi() {
         return () => {
             window.removeEventListener("admin:refresh", lamMoi);
             clearTimeout(boDemTaiLanDau);
-            anThongBao();
         };
-    }, [anThongBao, hienThongBao, taiDanhSach]);
+    }, [hienToast, taiDanhSach]);
 
     const danhSachDaLoc = useMemo(() => {
         const tuKhoaChuanHoa = tuKhoa.trim().toLowerCase();
@@ -100,14 +84,7 @@ function useYeuCauDatGoi() {
             const khopTrangThai =
                 laBoLocDacBiet
                     ? khopNhomThanhToan
-                    : yeuCau.trangThai === boLocTrangThai ||
-                        (boLocTrangThai === "da_phan_hoi" &&
-                            ["giasu_dong_y", "giasu_tu_choi"].includes(yeuCau.trangThai));
-
-            const khopPhanHoi =
-                boLocTrangThai !== "da_phan_hoi" ||
-                !boLocPhanHoi ||
-                yeuCau.phanHoi?.ketQua === boLocPhanHoi;
+                    : yeuCau.trangThai === boLocTrangThai;
 
             const noiDungTimKiem = [
                 yeuCau.ma,
@@ -122,9 +99,9 @@ function useYeuCauDatGoi() {
             const khopTuKhoa =
                 !tuKhoaChuanHoa || noiDungTimKiem.includes(tuKhoaChuanHoa);
 
-            return khopTrangThai && khopPhanHoi && khopTuKhoa;
+            return khopTrangThai && khopTuKhoa;
         });
-    }, [boLocPhanHoi, boLocTrangThai, danhSachYeuCau, tuKhoa]);
+    }, [boLocTrangThai, danhSachYeuCau, tuKhoa]);
 
     const yeuCauDangChon =
         danhSachDaLoc.find((yeuCau) => yeuCau.id === yeuCauDangChonId) ??
@@ -132,12 +109,6 @@ function useYeuCauDatGoi() {
         null;
 
     const demTheoTrangThai = (trangThai) => {
-        if (trangThai === "da_phan_hoi") {
-            return danhSachYeuCau.filter((yeuCau) =>
-                ["giasu_dong_y", "giasu_tu_choi"].includes(yeuCau.trangThai),
-            ).length;
-        }
-
         if (trangThai === "cho_thanh_toan") {
             return danhSachYeuCau.filter((yeuCau) =>
                 yeuCau.trangThai === "cho_thanh_toan" &&
@@ -161,7 +132,6 @@ function useYeuCauDatGoi() {
 
     const doiTrangThai = (trangThai) => {
         setBoLocTrangThai(trangThai);
-        setBoLocPhanHoi("");
         setYeuCauDangChonId(null);
     };
 
@@ -187,24 +157,10 @@ function useYeuCauDatGoi() {
                 capNhatYeuCau(yeuCau.id, response.data.data);
                 setBoLocTrangThai("cho_xu_ly");
                 setYeuCauDangChonId(yeuCau.id);
-                hienThongBao(response.data.message || `Đã gửi/nhắc yêu cầu ${yeuCau.ma} cho gia sư ${yeuCau.giaSu}.`);
+                hienToast(response.data.message || `Đã gửi/nhắc yêu cầu ${yeuCau.ma} cho gia sư ${yeuCau.giaSu}.`, "success");
             } catch (error) {
                 console.error("Không thể gửi yêu cầu cho gia sư:", error);
-                hienThongBao(error.response?.data?.message || "Không thể gửi yêu cầu cho gia sư.");
-            }
-            return;
-        }
-
-        if (hanhDong === "cho_thanh_toan") {
-            try {
-                const response = await api.patch(`/admin/dat-goi/${yeuCau.id}/cho-thanh-toan`);
-                capNhatYeuCau(yeuCau.id, response.data.data);
-                setBoLocTrangThai("cho_thanh_toan");
-                setYeuCauDangChonId(yeuCau.id);
-                hienThongBao(response.data.message || `Đã chuyển ${yeuCau.ma} sang trạng thái chờ học viên thanh toán.`);
-            } catch (error) {
-                console.error("Không thể chuyển sang chờ thanh toán:", error);
-                hienThongBao(error.response?.data?.message || "Không thể chuyển sang chờ thanh toán.");
+                hienToast(error.response?.data?.message || "Không thể gửi yêu cầu cho gia sư.", "error");
             }
             return;
         }
@@ -214,10 +170,10 @@ function useYeuCauDatGoi() {
                 const response = await api.patch(`/admin/dat-goi/${yeuCau.id}/nhac-thanh-toan`);
                 capNhatYeuCau(yeuCau.id, response.data.data);
                 setYeuCauDangChonId(yeuCau.id);
-                hienThongBao(response.data.message || `Đã gửi nhắc thanh toán cho học viên ${yeuCau.hocVien}.`);
+                hienToast(response.data.message || `Đã gửi nhắc thanh toán cho học viên ${yeuCau.hocVien}.`, "success");
             } catch (error) {
                 console.error("Không thể nhắc học viên thanh toán:", error);
-                hienThongBao(error.response?.data?.message || "Không thể nhắc học viên thanh toán.");
+                hienToast(error.response?.data?.message || "Không thể nhắc học viên thanh toán.", "error");
             }
             return;
         }
@@ -231,10 +187,10 @@ function useYeuCauDatGoi() {
                 capNhatYeuCau(yeuCau.id, response.data.data);
                 setBoLocTrangThai("danh_sach_goi_hoc");
                 setYeuCauDangChonId(yeuCau.id);
-                hienThongBao(response.data.message || `Đã xác nhận thanh toán cho ${yeuCau.ma}.`);
+                hienToast(response.data.message || `Đã xác nhận thanh toán cho ${yeuCau.ma}.`, "success");
             } catch (error) {
                 console.error("Không thể duyệt thanh toán:", error);
-                hienThongBao(error.response?.data?.message || "Không thể duyệt thanh toán.");
+                hienToast(error.response?.data?.message || "Không thể duyệt thanh toán.", "error");
             }
             return;
         }
@@ -250,16 +206,16 @@ function useYeuCauDatGoi() {
                 capNhatYeuCau(yeuCau.id, response.data.data);
                 setBoLocTrangThai("cho_thanh_toan");
                 setYeuCauDangChonId(yeuCau.id);
-                hienThongBao(response.data.message || `Đã từ chối thanh toán của ${yeuCau.ma}.`);
+                hienToast(response.data.message || `Đã từ chối thanh toán của ${yeuCau.ma}.`, "success");
             } catch (error) {
                 console.error("Không thể từ chối thanh toán:", error);
-                hienThongBao(error.response?.data?.message || "Không thể từ chối thanh toán.");
+                hienToast(error.response?.data?.message || "Không thể từ chối thanh toán.", "error");
             }
             return;
         }
 
         if (hanhDong === "xem_thanh_toan") {
-            hienThongBao("Phần thông tin thanh toán sẽ nối sau khi có dữ liệu thanh toán.");
+            hienToast("Phần thông tin thanh toán sẽ nối sau khi có dữ liệu thanh toán.", "info");
             return;
         }
 
@@ -274,25 +230,22 @@ function useYeuCauDatGoi() {
                 capNhatYeuCau(yeuCau.id, response.data.data);
                 setBoLocTrangThai("da_huy");
                 setYeuCauDangChonId(yeuCau.id);
-                hienThongBao(response.data.message || `Đã hủy yêu cầu ${yeuCau.ma}.`);
+                hienToast(response.data.message || `Đã hủy yêu cầu ${yeuCau.ma}.`, "success");
             } catch (error) {
                 console.error("Không thể hủy yêu cầu đặt gói:", error);
-                hienThongBao(error.response?.data?.message || "Không thể hủy yêu cầu đặt gói.");
+                hienToast(error.response?.data?.message || "Không thể hủy yêu cầu đặt gói.", "error");
             }
         }
     };
 
     return {
-        boLocPhanHoi,
         boLocTrangThai,
         dangTai,
         danhSachDaLoc,
-        thongBao,
         tuKhoa,
         yeuCauDangChon,
         demTheoTrangThai,
         doiTrangThai,
-        setBoLocPhanHoi,
         setTuKhoa,
         setYeuCauDangChonId,
         xuLyHanhDong,

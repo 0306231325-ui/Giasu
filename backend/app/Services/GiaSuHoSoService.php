@@ -27,6 +27,8 @@ class GiaSuHoSoService
             ->selectRaw('COALESCE(AVG(danhgia.so_sao), 0) as trung_binh')
             ->first();
 
+        $avatar = $giaSu->avatar ?: $user->anh_dai_dien;
+
         return [
             'ho_ten' => $user->ho_ten,
             'ngay_sinh' => $user->ngay_sinh?->format('Y-m-d'),
@@ -34,11 +36,24 @@ class GiaSuHoSoService
             'email' => $user->email,
             'dia_chi' => $giaSu->dia_chi,
             'mo_ta' => $giaSu->mo_ta,
-            'avatar' => $giaSu->avatar,
-            'avatar_url' => $giaSu->avatar ? url($giaSu->avatar) : null,
+            'avatar' => $avatar,
+            'avatar_url' => $this->taoUrlAnh($avatar),
             'diem_danh_gia' => round((float) $thongKeDanhGia->trung_binh, 1),
             'so_luong_danh_gia' => (int) $thongKeDanhGia->so_luong,
         ];
+    }
+
+    private function taoUrlAnh(?string $duongDan): ?string
+    {
+        if (! $duongDan) {
+            return null;
+        }
+
+        if (preg_match('/^https?:\/\//i', $duongDan)) {
+            return $duongDan;
+        }
+
+        return url(ltrim($duongDan, '/'));
     }
 
     public function dinhDangChuyenMon(Giasu $giaSu): array

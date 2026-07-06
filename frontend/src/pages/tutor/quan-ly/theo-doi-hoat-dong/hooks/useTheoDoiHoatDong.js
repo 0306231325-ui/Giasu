@@ -1,20 +1,20 @@
 import { useEffect, useState } from "react";
+import { useToast } from "../../../../../context/ToastContext";
 import api from "../../../../../services/api";
 import { duLieuRong } from "../constants";
 
 function useTheoDoiHoatDong() {
+    const toast = useToast();
     const [boLocDanhGia, setBoLocDanhGia] = useState("");
     const [boLocThoiGian, setBoLocThoiGian] = useState("tat_ca");
     const [duLieu, setDuLieu] = useState(duLieuRong);
     const [dangTai, setDangTai] = useState(false);
-    const [loi, setLoi] = useState("");
 
     useEffect(() => {
         let daHuy = false;
 
         const taiTheoDoiHoatDong = async () => {
             setDangTai(true);
-            setLoi("");
 
             try {
                 const response = await api.get("/gia-su/theo-doi-hoat-dong", {
@@ -30,7 +30,7 @@ function useTheoDoiHoatDong() {
             } catch (error) {
                 if (!daHuy) {
                     setDuLieu(duLieuRong);
-                    setLoi(error.response?.data?.message || "Không thể tải dữ liệu theo dõi hoạt động.");
+                    toast.error(error.response?.data?.message || "Không thể tải dữ liệu theo dõi hoạt động.");
                 }
             } finally {
                 if (!daHuy) {
@@ -44,7 +44,7 @@ function useTheoDoiHoatDong() {
         return () => {
             daHuy = true;
         };
-    }, [boLocDanhGia, boLocThoiGian]);
+    }, [boLocDanhGia, boLocThoiGian, toast]);
 
     return {
         boLocDanhGia,
@@ -53,7 +53,6 @@ function useTheoDoiHoatDong() {
         setBoLocThoiGian,
         dangTai,
         duLieu,
-        loi,
     };
 }
 

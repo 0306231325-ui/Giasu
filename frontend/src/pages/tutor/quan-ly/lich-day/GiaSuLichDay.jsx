@@ -11,7 +11,6 @@ function GiaSuLichDay() {
         danhSachYeuCau,
         dangTai,
         dangXuLyId,
-        thongBao,
         soYeuCauChoPhanHoi,
         xacNhanBuoiHoc,
         phanHoiYeuCau,
@@ -28,12 +27,6 @@ function GiaSuLichDay() {
                     quản lý những buổi học đã được xác nhận.
                 </p>
             </div>
-
-            {thongBao && (
-                <div className="mt-4 rounded-2xl border border-blue-400/30 bg-blue-500/10 px-4 py-3 text-sm font-semibold text-blue-100">
-                    {thongBao}
-                </div>
-            )}
 
             <div className="mt-6 grid gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 lg:grid-cols-3">
                 <NutTab

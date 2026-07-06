@@ -13,7 +13,6 @@ function GiaSuTheoDoiHoatDong() {
         setBoLocThoiGian,
         dangTai,
         duLieu,
-        loi,
     } = useTheoDoiHoatDong();
 
     const tongQuan = duLieu.tongQuan || duLieuRong.tongQuan;
@@ -40,12 +39,6 @@ function GiaSuTheoDoiHoatDong() {
             </div>
 
             <CumThongKe tongQuan={tongQuan} dangTai={dangTai} />
-
-            {loi && (
-                <div className="mt-5 rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-100">
-                    {loi}
-                </div>
-            )}
 
             <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
                 <BangDanhGia

@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
+import { useToast } from "../../../../../context/ToastContext";
 import api from "../../../../../services/api";
 import { cauHinhBoLoc, duLieuRong, giaTriMacDinh } from "../constants";
 
 function useThuNhapGiaSu() {
+    const toast = useToast();
     const [boLoc, setBoLoc] = useState("thang");
     const [giaTriBoLoc, setGiaTriBoLoc] = useState(giaTriMacDinh.thang);
     const [duLieu, setDuLieu] = useState(duLieuRong);
     const [dangTai, setDangTai] = useState(false);
-    const [loi, setLoi] = useState("");
     const [chiTietDangXem, setChiTietDangXem] = useState(null);
 
     const cauHinh = cauHinhBoLoc[boLoc];
@@ -22,7 +23,6 @@ function useThuNhapGiaSu() {
 
         const taiThuNhap = async () => {
             setDangTai(true);
-            setLoi("");
 
             try {
                 const response = await api.get("/gia-su/thu-nhap", {
@@ -39,7 +39,7 @@ function useThuNhapGiaSu() {
                 if (!daHuy) {
                     console.error("Không thể tải thu nhập gia sư:", error);
                     setDuLieu(duLieuRong);
-                    setLoi(error.response?.data?.message || "Không thể tải dữ liệu thu nhập.");
+                    toast.error(error.response?.data?.message || "Không thể tải dữ liệu thu nhập.");
                 }
             } finally {
                 if (!daHuy) {
@@ -53,7 +53,7 @@ function useThuNhapGiaSu() {
         return () => {
             daHuy = true;
         };
-    }, [boLoc, giaTriBoLoc]);
+    }, [boLoc, giaTriBoLoc, toast]);
 
     return {
         boLoc,
@@ -63,7 +63,6 @@ function useThuNhapGiaSu() {
         doiBoLoc,
         duLieu,
         giaTriBoLoc,
-        loi,
         setChiTietDangXem,
         setGiaTriBoLoc,
     };

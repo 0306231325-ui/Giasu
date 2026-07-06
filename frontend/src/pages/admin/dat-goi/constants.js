@@ -1,6 +1,5 @@
 export const BO_LOC_TRANG_THAI = [
     { value: "cho_xu_ly", label: "Chờ xử lý" },
-    { value: "da_phan_hoi", label: "Đã phản hồi" },
     { value: "cho_thanh_toan", label: "Chờ thanh toán" },
     { value: "xac_nhan_thanh_toan", label: "Xác nhận thanh toán" },
     { value: "danh_sach_goi_hoc", label: "Danh sách gói học" },

@@ -1,6 +1,15 @@
 import { useState } from "react";
 import api from "../../../../../services/api";
 
+const API_ORIGIN = (import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api").replace(/\/api\/?$/, "");
+
+function taoUrlAnh(duongDan) {
+    if (!duongDan) return "";
+    if (/^https?:\/\//i.test(duongDan)) return duongDan;
+
+    return `${API_ORIGIN}/${String(duongDan).replace(/^\/+/, "")}`;
+}
+
 export default function useAvatarGiaSu({
     avatarBanDau,
     updateUser,
@@ -9,7 +18,7 @@ export default function useAvatarGiaSu({
 }) {
     const [avatarMoi, setAvatarMoi] = useState("");
     const [dangTaiLen, setDangTaiLen] = useState(false);
-    const avatarUrl = avatarMoi || avatarBanDau || "";
+    const avatarUrl = taoUrlAnh(avatarMoi || avatarBanDau);
 
     const doiAvatar = async (file) => {
         if (!file) return;

@@ -64,7 +64,7 @@ class AdminDatGoiController extends DatLichBaseController
         }
 
         $goiHoc = GoiHoc::query()
-            ->with(['hocVien:id,ho_ten', 'giasu.user:id,ho_ten'])
+            ->with(['hocVien:id,ho_ten', 'monHoc:id,ten_mon,lop', 'giasu.user:id,ho_ten'])
             ->where('trang_thai', 'cho_xacnhan')
             ->find($goiHocId);
 
@@ -75,17 +75,30 @@ class AdminDatGoiController extends DatLichBaseController
             ], 404);
         }
 
-        $goiHoc->update([
-            'gui_giasu_luc' => now(),
-        ]);
+        if (! $goiHoc->giasu->user_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy tài khoản người dùng của gia sư.',
+            ], 422);
+        }
 
-        ThongBao::create([
-            'user_id' => $goiHoc->giasu->user_id,
-            'tieu_de' => 'Có yêu cầu đặt gói mới',
-            'noi_dung' => ($goiHoc->hocVien?->ho_ten ?? 'Học viên') . ' đã đặt gói học và admin đã chuyển cho bạn xử lý.',
-            'url' => '/gia-su/quan-ly/lich-day',
-            'da_doc' => false,
-        ]);
+        DB::transaction(function () use ($goiHoc) {
+            $goiHoc->update([
+                'gui_giasu_luc' => now(),
+            ]);
+
+            $maGoi = 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT);
+            $hocVien = $goiHoc->hocVien?->ho_ten ?? 'Học viên';
+            $monHoc = $goiHoc->monHoc?->ten_mon ? ' môn ' . $goiHoc->monHoc->ten_mon : '';
+
+            ThongBao::create([
+                'user_id' => $goiHoc->giasu->user_id,
+                'tieu_de' => 'Có yêu cầu đặt gói mới',
+                'noi_dung' => "Admin đã gửi yêu cầu {$maGoi}{$monHoc} của {$hocVien} cho bạn. Vui lòng vào lịch dạy để đồng ý hoặc từ chối.",
+                'url' => '/gia-su/quan-ly/lich-day',
+                'da_doc' => false,
+            ]);
+        });
 
         NhatKyHeThongService::ghi(
             $request->user(),
@@ -96,7 +109,7 @@ class AdminDatGoiController extends DatLichBaseController
 
         return response()->json([
             'success' => true,
-            'message' => 'Da gui yeu cau dat goi cho gia su.',
+            'message' => 'Đã gửi thông báo yêu cầu đặt gói cho gia sư.',
             'data' => $this->dinhDangGoiHocChoAdmin($goiHoc->fresh(['hocVien', 'monHoc', 'giasu.user', 'lichHocs', 'phanHoiMoiNhat', 'thanhToanMoiNhat'])),
         ]);
     }

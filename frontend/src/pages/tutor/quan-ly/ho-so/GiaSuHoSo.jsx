@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback } from "react";
 import { useAuth } from "../../../../context/AuthContext";
+import { useToast } from "../../../../context/ToastContext";
 import BangCapChungChi from "./components/BangCapChungChi";
 import DanhMucMonDay from "./components/DanhMucMonDay";
 import ThongTinCaNhan from "./components/ThongTinCaNhan";
@@ -12,36 +13,15 @@ import useThongTinCaNhan from "./hooks/useThongTinCaNhan";
 
 function GiaSuHoSo() {
     const { user, updateUser } = useAuth();
-    const [thongBao, setThongBao] = useState(null);
-    const boDemAnThongBao = useRef(null);
+    const toast = useToast();
 
     const baoLoi = useCallback((noiDung) => {
-        if (boDemAnThongBao.current) {
-            clearTimeout(boDemAnThongBao.current);
-            boDemAnThongBao.current = null;
-        }
-        setThongBao({ loai: "loi", noiDung });
-    }, []);
+        toast.error(noiDung || "Có lỗi xảy ra. Vui lòng thử lại.");
+    }, [toast]);
+
     const baoThanhCong = useCallback((noiDung) => {
-        if (boDemAnThongBao.current) {
-            clearTimeout(boDemAnThongBao.current);
-        }
-
-        setThongBao({ loai: "thanh_cong", noiDung });
-        boDemAnThongBao.current = setTimeout(() => {
-            setThongBao(null);
-            boDemAnThongBao.current = null;
-        }, 3000);
-    }, []);
-
-    useEffect(
-        () => () => {
-            if (boDemAnThongBao.current) {
-                clearTimeout(boDemAnThongBao.current);
-            }
-        },
-        [],
-    );
+        toast.success(noiDung || "Thao tác thành công.");
+    }, [toast]);
 
     const thongTinCaNhan = useThongTinCaNhan({
         updateUser,
@@ -49,7 +29,10 @@ function GiaSuHoSo() {
         baoThanhCong,
     });
     const avatar = useAvatarGiaSu({
-        avatarBanDau: thongTinCaNhan.thongTin.avatar_url,
+        avatarBanDau:
+            thongTinCaNhan.thongTin.avatar_url
+            || thongTinCaNhan.thongTin.avatar
+            || user?.anh_dai_dien,
         updateUser,
         baoLoi,
         baoThanhCong,
@@ -79,20 +62,6 @@ function GiaSuHoSo() {
                     sơ xác minh của bạn.
                 </p>
             </div>
-
-            {thongBao && (
-                <div
-                    role="status"
-                    className={[
-                        "mt-5 rounded-2xl border px-4 py-3 text-sm font-semibold",
-                        thongBao.loai === "thanh_cong"
-                            ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200"
-                            : "border-red-400/30 bg-red-400/10 text-red-200",
-                    ].join(" ")}
-                >
-                    {thongBao.noiDung}
-                </div>
-            )}
 
             <ThongTinDauTrang
                 tenGiaSu={tenGiaSu}

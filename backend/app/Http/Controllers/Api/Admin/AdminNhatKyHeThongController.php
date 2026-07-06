@@ -15,6 +15,8 @@ class AdminNhatKyHeThongController extends Controller
         'tai_khoan' => ['khoa_tai_khoan', 'mo_khoa_tai_khoan'],
         'ho_so' => [
             'gui_don_dang_ky_gia_su',
+            'them_bang_cap_gia_su',
+            'them_mon_day_gia_su',
             'duyet_ho_so_gia_su',
             'tu_choi_ho_so_gia_su',
             'duyet_yeu_cau_chuyen_mon',

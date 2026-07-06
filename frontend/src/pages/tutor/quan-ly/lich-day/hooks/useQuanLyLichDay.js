@@ -1,26 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useToast } from "../../../../../context/ToastContext";
 import api from "../../../../../services/api";
 
 function useQuanLyLichDay() {
+    const toast = useToast();
     const [tab, setTab] = useState("lich_hoc");
     const [danhSachLichHoc, setDanhSachLichHoc] = useState([]);
     const [danhSachYeuCau, setDanhSachYeuCau] = useState([]);
     const [dangTai, setDangTai] = useState(false);
     const [dangXuLyId, setDangXuLyId] = useState(null);
-    const [thongBao, setThongBao] = useState("");
-    const boDemThongBao = useRef(null);
-
-    const hienThongBao = useCallback((noiDung) => {
-        if (boDemThongBao.current) {
-            clearTimeout(boDemThongBao.current);
-        }
-
-        setThongBao(noiDung);
-        boDemThongBao.current = setTimeout(() => {
-            setThongBao("");
-            boDemThongBao.current = null;
-        }, 3000);
-    }, []);
 
     const taiDuLieu = useCallback(async () => {
         setDangTai(true);
@@ -35,11 +23,11 @@ function useQuanLyLichDay() {
             setDanhSachYeuCau(yeuCauResponse.data.data || []);
         } catch (error) {
             console.error("Không thể tải lịch dạy gia sư:", error);
-            hienThongBao(error.response?.data?.message || "Không thể tải dữ liệu lịch dạy.");
+            toast.error(error.response?.data?.message || "Không thể tải dữ liệu lịch dạy.");
         } finally {
             setDangTai(false);
         }
-    }, [hienThongBao]);
+    }, [toast]);
 
     useEffect(() => {
         const boDemTaiLanDau = setTimeout(() => {
@@ -48,9 +36,6 @@ function useQuanLyLichDay() {
 
         return () => {
             clearTimeout(boDemTaiLanDau);
-            if (boDemThongBao.current) {
-                clearTimeout(boDemThongBao.current);
-            }
         };
     }, [taiDuLieu]);
 
@@ -91,17 +76,17 @@ function useQuanLyLichDay() {
                 );
 
                 capNhatLichHoc(response.data.data);
-                hienThongBao(response.data.message || "Đã ghi nhận xác nhận buổi học.");
+                toast.success(response.data.message || "Đã ghi nhận xác nhận buổi học.");
                 return true;
             } catch (error) {
                 console.error("Không thể xác nhận buổi học:", error);
-                hienThongBao(error.response?.data?.message || "Không thể xác nhận buổi học.");
+                toast.error(error.response?.data?.message || "Không thể xác nhận buổi học.");
                 return false;
             } finally {
                 setDangXuLyId(null);
             }
         },
-        [capNhatLichHoc, dangXuLyId, hienThongBao],
+        [capNhatLichHoc, dangXuLyId, toast],
     );
 
     const phanHoiYeuCau = useCallback(
@@ -120,14 +105,14 @@ function useQuanLyLichDay() {
                 );
 
                 capNhatYeuCau(response.data.data);
-                hienThongBao(response.data.message || "Đã ghi nhận phản hồi của bạn.");
+                toast.success(response.data.message || "Đã ghi nhận phản hồi của bạn.");
 
                 if (ketQua === "dong_y") {
                     taiDuLieu();
                 }
             } catch (error) {
                 console.error("Không thể phản hồi yêu cầu đặt gói:", error);
-                hienThongBao(
+                toast.error(
                     error.response?.data?.message ||
                         "Không thể phản hồi yêu cầu đặt gói.",
                 );
@@ -135,7 +120,7 @@ function useQuanLyLichDay() {
                 setDangXuLyId(null);
             }
         },
-        [capNhatYeuCau, dangXuLyId, hienThongBao, taiDuLieu],
+        [capNhatYeuCau, dangXuLyId, taiDuLieu, toast],
     );
 
     return {
@@ -145,7 +130,6 @@ function useQuanLyLichDay() {
         danhSachYeuCau,
         dangTai,
         dangXuLyId,
-        thongBao,
         soYeuCauChoPhanHoi,
         xacNhanBuoiHoc,
         phanHoiYeuCau,

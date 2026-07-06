@@ -152,6 +152,10 @@ class GiaSuYeuCauDatGoiController extends DatLichBaseController
                     'trang_thai' => 'dahuy',
                     'lydo_huy' => $lyDo,
                 ]);
+            } else {
+                $goiHoc->update([
+                    'trang_thai' => 'cho_thanhtoan',
+                ]);
             }
 
             User::query()
@@ -173,7 +177,7 @@ class GiaSuYeuCauDatGoiController extends DatLichBaseController
                 'tieu_de' => $laTuChoi ? 'Gia sư đã từ chối yêu cầu' : 'Gia sư đã đồng ý nhận lớp',
                 'noi_dung' => $laTuChoi
                     ? 'Gia sư đã từ chối yêu cầu đặt gói của bạn' . ($lyDo ? ': ' . $lyDo : '.')
-                    : 'Gia sư đã đồng ý nhận lớp. Vui lòng chờ admin xử lý bước tiếp theo.',
+                    : 'Gia sư đã đồng ý nhận lớp. Bạn có thể tiến hành thanh toán gói học.',
                 'url' => '/hoc-vien/lich-hoc',
                 'da_doc' => false,
             ]);
@@ -192,7 +196,7 @@ class GiaSuYeuCauDatGoiController extends DatLichBaseController
 
         return response()->json([
             'success' => true,
-            'message' => $laTuChoi ? 'Da tu choi yeu cau dat goi.' : 'Da dong y nhan lop.',
+            'message' => $laTuChoi ? 'Đã từ chối yêu cầu đặt gói.' : 'Đã đồng ý nhận lớp. Gói học đã chuyển sang chờ thanh toán.',
             'data' => $this->dinhDangYeuCauChoGiaSu($goiHocMoi),
         ]);
     }

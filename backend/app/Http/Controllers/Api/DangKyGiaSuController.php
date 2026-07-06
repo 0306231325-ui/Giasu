@@ -9,7 +9,9 @@ use App\Models\GiasuBangCap;
 use App\Models\GiasuGia;
 use App\Models\MonHoc;
 use App\Models\MucKinhNghiem;
+use App\Models\ThongBao;
 use App\Models\TrinhDoGiasu;
+use App\Models\User;
 use App\Services\GiaTinhService;
 use App\Services\NhatKyHeThongService;
 use Illuminate\Http\JsonResponse;
@@ -261,6 +263,11 @@ class DangKyGiaSuController extends Controller
             "{$user->ho_ten} gửi đơn đăng ký làm gia sư.",
         );
 
+        $this->thongBaoChoAdmin(
+            'Có hồ sơ đăng ký gia sư mới',
+            "{$user->ho_ten} vừa gửi hồ sơ đăng ký làm gia sư. Vui lòng kiểm tra và xét duyệt.",
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Đã gửi đơn đăng ký gia sư. Vui lòng chờ quản trị viên xét duyệt.',
@@ -384,5 +391,19 @@ class DangKyGiaSuController extends Controller
         $duongDanTuongDoi = ltrim(parse_url($duongDan, PHP_URL_PATH) ?: $duongDan, '/');
 
         File::delete(public_path($duongDanTuongDoi));
+    }
+
+    private function thongBaoChoAdmin(string $tieuDe, string $noiDung): void
+    {
+        User::query()
+            ->where('vai_tro', 'admin')
+            ->get(['id'])
+            ->each(fn (User $admin) => ThongBao::create([
+                'user_id' => $admin->id,
+                'tieu_de' => $tieuDe,
+                'noi_dung' => $noiDung,
+                'url' => '/admin/gia-su?tab=xet_duyet',
+                'da_doc' => false,
+            ]));
     }
 }

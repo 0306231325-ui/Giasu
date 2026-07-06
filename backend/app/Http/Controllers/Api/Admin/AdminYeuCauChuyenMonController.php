@@ -174,7 +174,6 @@ class AdminYeuCauChuyenMonController extends Controller
                 ['Trình độ xác minh', $bangCap->trinhDo?->ten ?? 'Chưa cập nhật'],
                 ['Chuyên ngành', $bangCap->chuyen_nganh ?: 'Chưa cập nhật'],
                 ['Trường/đơn vị cấp', $bangCap->truong_don_vi ?: 'Chưa cập nhật'],
-                ['File minh chứng', basename((string) $bangCap->file_url) ?: 'Chưa có file'],
             ],
             'anhHuong' => $trangThai === 'cho_duyet'
                 ? [
@@ -232,6 +231,7 @@ class AdminYeuCauChuyenMonController extends Controller
         }
 
         return $giaSu->bangCaps
+            ->where('trang_thai', 'duyet')
             ->sortByDesc(fn (GiasuBangCap $bangCap) => optional($bangCap->created_at)->timestamp ?? 0)
             ->map(fn (GiasuBangCap $bangCap) => [
                 'id' => $bangCap->id,

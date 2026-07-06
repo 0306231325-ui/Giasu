@@ -8,6 +8,7 @@ use App\Models\ThongBao;
 use App\Models\User;
 use App\Services\GiaSuFileService;
 use App\Services\GiaSuHoSoService;
+use App\Services\NhatKyHeThongService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -101,6 +102,13 @@ class GiaSuBangCapController extends Controller
         $this->thongBaoChoAdmin(
             'Yêu cầu bằng cấp mới',
             ($giaSu->user?->ho_ten ?? 'Gia sư') . ' vừa gửi tài liệu "' . $bangCap->ten_bang . '" để xét duyệt.',
+        );
+
+        NhatKyHeThongService::ghi(
+            $request->user(),
+            'them_bang_cap_gia_su',
+            $bangCap->id,
+            ($giaSu->user?->ho_ten ?? 'Gia sư') . ' thêm bằng cấp/chứng chỉ "' . $bangCap->ten_bang . '" và gửi xét duyệt.',
         );
 
         return response()->json([
