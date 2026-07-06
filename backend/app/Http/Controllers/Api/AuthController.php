@@ -26,9 +26,16 @@ class AuthController extends Controller
         }
 
         if ($user->trang_thai === 'khoa') {
+            $lyDo = trim((string) $user->ly_do_khoa);
+            $noiDungLyDo = $lyDo !== '' ? " Lý do: {$lyDo}" : '';
+
             return response()->json([
                 'success' => false,
-                'message' => 'Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.',
+                'code' => 'TAI_KHOAN_BI_KHOA',
+                'message' => "Tài khoản của bạn đã bị khóa.{$noiDungLyDo}",
+                'data' => [
+                    'lyDoKhoa' => $lyDo ?: null,
+                ],
             ], 403);
         }
 
@@ -115,6 +122,7 @@ class AuthController extends Controller
                 : $user->hocvien?->dia_chi,
             'vai_tro' => $user->vai_tro,
             'trang_thai' => $user->trang_thai,
+            'ly_do_khoa' => $user->ly_do_khoa,
             'anh_dai_dien' => $user->anh_dai_dien,
         ];
     }

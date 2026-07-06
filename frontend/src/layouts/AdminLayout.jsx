@@ -13,6 +13,7 @@ function AdminLayout() {
   });
   const lamMoiTrangAdmin = () => {
     window.dispatchEvent(new CustomEvent("admin:refresh"));
+    taiDemCanXuLy?.();
   };
 
   if (loading) {
@@ -50,7 +51,6 @@ function AdminLayout() {
           <NavItem to="/admin/danh-muc" label="Môn học" badge={demCanXuLy.danhMuc} />
           <NavItem to="/admin/quan-ly-dat-goi" label="Quản lý đặt gói" badge={demCanXuLy.datGoi} />
           <NavItem to="/admin/lich-hoc" label="Quản lý lịch học" badge={demCanXuLy.lichHoc} />
-          <NavItem to="/admin/doanh-thu" label="Tổng doanh thu" badge={demCanXuLy.doanhThu} />
           <NavItem to="/admin/bai-viet" label="Bài viết" badge={demCanXuLy.baiViet} />
         </nav>
 
@@ -144,4 +144,3 @@ function NavItem({ to, end, label, badge = 0 }) {
 }
 
 export default AdminLayout;
-

@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 class AdminHocVienController extends Controller
 {
-    private const SO_TAI_KHOAN_MOI_TRANG = 10;
+    private const SO_TAI_KHOAN_MOI_TRANG = 5;
 
     public function danhSachHocVien(Request $request)
     {
@@ -82,10 +82,6 @@ class AdminHocVienController extends Controller
             ? trim((string) $duLieu['ly_do_khoa'])
             : null;
         $hocVien->save();
-
-        if ($hocVien->trang_thai === 'khoa') {
-            $hocVien->tokens()->delete();
-        }
 
         return response()->json([
             'success' => true,

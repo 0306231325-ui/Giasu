@@ -11,6 +11,10 @@ const CAC_THU = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7
 function TabLichTuan({ danhSach, dangXuLyId, onXacNhan }) {
     const [ngayTrongTuan, setNgayTrongTuan] = useState(() => new Date());
     const [lichDangXem, setLichDangXem] = useState(null);
+    const lichDangXemMoiNhat = useMemo(
+        () => danhSach.find((lichHoc) => lichHoc.id === lichDangXem?.id) || lichDangXem,
+        [danhSach, lichDangXem],
+    );
 
     const ngayDauTuan = useMemo(
         () => layNgayDauTuan(ngayTrongTuan),
@@ -175,7 +179,7 @@ function TabLichTuan({ danhSach, dangXuLyId, onXacNhan }) {
 
             {lichDangXem && (
                 <ModalChiTietLichHoc
-                    lichHoc={lichDangXem}
+                    lichHoc={lichDangXemMoiNhat}
                     dangXuLy={dangXuLyId === `lich-${lichDangXem.id}`}
                     onXacNhan={onXacNhan}
                     onDong={() => setLichDangXem(null)}

@@ -11,6 +11,7 @@ function ThongBaoDropdown({
     const { updateUser } = useAuth();
     const [dangMo, setDangMo] = useState(false);
     const [dangTai, setDangTai] = useState(false);
+    const [dangXoaTatCa, setDangXoaTatCa] = useState(false);
     const [danhSach, setDanhSach] = useState([]);
     const [soLuongChuaDoc, setSoLuongChuaDoc] = useState(0);
     const hopThongBaoRef = useRef(null);
@@ -88,6 +89,30 @@ function ThongBaoDropdown({
         }
     };
 
+    const xoaTatCaThongBao = async (event) => {
+        event.stopPropagation();
+
+        if (dangXoaTatCa || danhSach.length === 0) {
+            return;
+        }
+
+        const danhSachCu = danhSach;
+        const soLuongChuaDocCu = soLuongChuaDoc;
+
+        setDangXoaTatCa(true);
+        setDanhSach([]);
+        setSoLuongChuaDoc(0);
+
+        try {
+            await api.delete("/thong-bao");
+        } catch {
+            setDanhSach(danhSachCu);
+            setSoLuongChuaDoc(soLuongChuaDocCu);
+        } finally {
+            setDangXoaTatCa(false);
+        }
+    };
+
     const xoaThongBao = async (event, thongBao) => {
         event.stopPropagation();
 
@@ -140,9 +165,21 @@ function ThongBaoDropdown({
                     <div className="border-b border-white/10 px-5 py-4">
                         <div className="flex items-center justify-between gap-3">
                             <h3 className="text-base font-bold">{tieuDe}</h3>
-                            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/70">
-                                {soLuongChuaDoc} mới
-                            </span>
+                            <div className="flex items-center gap-2">
+                                {danhSach.length > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={xoaTatCaThongBao}
+                                        disabled={dangXoaTatCa}
+                                        className="rounded-full px-3 py-1 text-xs font-semibold text-white/45 transition hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        {dangXoaTatCa ? "Đang xoá..." : "Xoá hết"}
+                                    </button>
+                                )}
+                                <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/70">
+                                    {soLuongChuaDoc} mới
+                                </span>
+                            </div>
                         </div>
                     </div>
 

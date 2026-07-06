@@ -468,7 +468,14 @@ function LichHocCuaToi() {
             );
 
             if (response.data.success) {
-                capNhatBuoiHoc(chiTietBuoi.lichHoc.id, response.data.data);
+                capNhatBuoiHoc(chiTietBuoi.lichHoc.id, {
+                    ...response.data.data,
+                    coTheXacNhanHoanThanh: false,
+                    hocVienXacNhan: {
+                        ...(response.data.data?.hocVienXacNhan || {}),
+                        trangThai: formXacNhanBuoi.trang_thai,
+                    },
+                });
                 setFormXacNhanBuoi({ trang_thai: "daxacnhan", ghi_chu: "" });
                 setThongBao(response.data.message || "Đã xác nhận buổi học.");
             }
@@ -1167,4 +1174,3 @@ function nhanTrangThaiXacNhan(trangThai) {
 }
 
 export default LichHocCuaToi;
-

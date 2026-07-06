@@ -22,8 +22,27 @@ api.interceptors.response.use(
   (error) => {
     const coTokenDangLuu = Boolean(getToken());
 
+    const messageBackend = error.response?.data?.message;
+    const laTaiKhoanBiKhoa =
+      error.response?.status === 403 &&
+      error.response?.data?.code === 'TAI_KHOAN_BI_KHOA' &&
+      coTokenDangLuu;
+
+    if (laTaiKhoanBiKhoa) {
+      clearAuth();
+
+      window.dispatchEvent(
+        new CustomEvent('auth:unauthorized', {
+          detail: {
+            message:
+              messageBackend ||
+              'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.',
+          },
+        })
+      );
+    }
+
     if (error.response?.status === 401 && coTokenDangLuu) {
-      const messageBackend = error.response?.data?.message;
       const messageHienThi =
         !messageBackend || messageBackend === 'Unauthenticated.'
           ? 'Tài khoản đã bị khóa hoặc phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'

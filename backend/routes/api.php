@@ -36,13 +36,14 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'tai_khoan.hoat_dong'])->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::prefix('thong-bao')->group(function () {
         Route::get('/', [ThongBaoController::class, 'index']);
         Route::patch('/{thongBaoId}/da-doc', [ThongBaoController::class, 'danhDauDaDoc']);
+        Route::delete('/', [ThongBaoController::class, 'xoaTatCa']);
         Route::delete('/{thongBaoId}', [ThongBaoController::class, 'xoa']);
     });
 

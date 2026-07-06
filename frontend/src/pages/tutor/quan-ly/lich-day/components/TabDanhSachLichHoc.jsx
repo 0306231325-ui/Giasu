@@ -7,6 +7,10 @@ function TabDanhSachLichHoc({ danhSach, dangXuLyId, onXacNhan }) {
     const [tuKhoa, setTuKhoa] = useState("");
     const [trangThai, setTrangThai] = useState("");
     const [lichDangXem, setLichDangXem] = useState(null);
+    const lichDangXemMoiNhat = useMemo(
+        () => danhSach.find((lichHoc) => lichHoc.id === lichDangXem?.id) || lichDangXem,
+        [danhSach, lichDangXem],
+    );
 
     const danhSachDaLoc = useMemo(() => {
         const tuKhoaChuan = tuKhoa.trim().toLocaleLowerCase("vi");
@@ -115,7 +119,7 @@ function TabDanhSachLichHoc({ danhSach, dangXuLyId, onXacNhan }) {
 
             {lichDangXem && (
                 <ModalChiTietLichHoc
-                    lichHoc={lichDangXem}
+                    lichHoc={lichDangXemMoiNhat}
                     dangXuLy={dangXuLyId === `lich-${lichDangXem.id}`}
                     onXacNhan={onXacNhan}
                     onDong={() => setLichDangXem(null)}

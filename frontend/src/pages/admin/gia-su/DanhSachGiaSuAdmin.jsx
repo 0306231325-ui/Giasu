@@ -340,15 +340,10 @@ function HangGiaSu({
     return (
         <tr className="align-middle transition hover:bg-white/[0.03]">
             <td className="px-4 py-4">
-                <div className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-xs font-extrabold">
-                        {layChuCaiDau(giaSu.hoTen)}
-                    </span>
-                    <div>
-                        <p className="font-bold text-white">{giaSu.hoTen}</p>
-                        <p className="mt-1 text-xs text-white/45">{giaSu.email}</p>
-                        <p className="text-xs text-white/45">{giaSu.sdt}</p>
-                    </div>
+                <div>
+                    <p className="font-bold text-white">{giaSu.hoTen}</p>
+                    <p className="mt-1 text-xs text-white/45">{giaSu.email}</p>
+                    <p className="text-xs text-white/45">{giaSu.sdt}</p>
                 </div>
             </td>
             <td className="px-4 py-4">
@@ -596,8 +591,4 @@ function taoDanhSachTrang(trangHienTai, trangCuoi) {
         return [trang];
     });
 }
-function layChuCaiDau(hoTen) {
-    return hoTen.trim().split(/\s+/).slice(-2).map((tu) => tu.charAt(0).toUpperCase()).join("");
-}
-
 export default DanhSachGiaSuAdmin;

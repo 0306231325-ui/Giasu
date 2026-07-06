@@ -80,7 +80,7 @@ function useQuanLyLichDay() {
 
     const xacNhanBuoiHoc = useCallback(
         async (lichHoc, payload) => {
-            if (!lichHoc || dangXuLyId) return;
+            if (!lichHoc || dangXuLyId) return false;
 
             setDangXuLyId(`lich-${lichHoc.id}`);
 
@@ -92,9 +92,11 @@ function useQuanLyLichDay() {
 
                 capNhatLichHoc(response.data.data);
                 hienThongBao(response.data.message || "Đã ghi nhận xác nhận buổi học.");
+                return true;
             } catch (error) {
                 console.error("Không thể xác nhận buổi học:", error);
                 hienThongBao(error.response?.data?.message || "Không thể xác nhận buổi học.");
+                return false;
             } finally {
                 setDangXuLyId(null);
             }

@@ -55,10 +55,6 @@ class AdminTrangThaiGiaSuController extends Controller
             : null;
         $giaSu->user->save();
 
-        if ($giaSu->user->trang_thai === 'khoa') {
-            $giaSu->user->tokens()->delete();
-        }
-
         $giaSu->setRelation('user', $giaSu->user->fresh());
 
         return response()->json([

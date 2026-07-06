@@ -106,6 +106,18 @@ function YeuCauChuyenMon({ onThayDoiSoLuong }) {
     }, [taiDanhSach]);
 
     useEffect(() => {
+        const lamMoi = () => {
+            taiDanhSach();
+        };
+
+        window.addEventListener("admin:refresh", lamMoi);
+
+        return () => {
+            window.removeEventListener("admin:refresh", lamMoi);
+        };
+    }, [taiDanhSach]);
+
+    useEffect(() => {
         return () => {
             if (boDemThongBao.current) {
                 clearTimeout(boDemThongBao.current);

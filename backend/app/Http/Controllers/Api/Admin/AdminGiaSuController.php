@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 
 class AdminGiaSuController extends Controller
 {
-    private const SO_GIA_SU_MOI_TRANG = 10;
+    private const SO_GIA_SU_MOI_TRANG = 5;
 
     public function __construct(
         private readonly AdminGiaSuService $adminGiaSuService,

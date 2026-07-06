@@ -4,12 +4,13 @@ import { trangThaiLichHoc } from "../constants";
 
 function ModalChiTietLichHoc({ lichHoc, dangXuLy = false, onXacNhan, onDong }) {
     const [dangMoFormDoiBuoi, setDangMoFormDoiBuoi] = useState(false);
+    const [daBamXacNhan, setDaBamXacNhan] = useState(false);
     const trangThai = trangThaiLichHoc[lichHoc.trangThai];
     const daHoanThanh = lichHoc.trangThai === "hoan_thanh";
     const daHuy = lichHoc.trangThai === "da_huy";
     const xacNhan = lichHoc.xacNhan || {};
     const giaSuDaGui = xacNhan.giaSuDaXacNhan || xacNhan.giaSuBaoVanDe;
-    const coTheXacNhan = lichHoc.coTheXacNhanHoanThanh && !dangXuLy && !giaSuDaGui;
+    const coTheXacNhan = lichHoc.coTheXacNhanHoanThanh && !dangXuLy && !giaSuDaGui && !daBamXacNhan;
 
     return (
         <LopModal onDong={onDong}>
@@ -159,7 +160,14 @@ function ModalChiTietLichHoc({ lichHoc, dangXuLy = false, onXacNhan, onDong }) {
                             <button
                                 type="button"
                                 disabled={!coTheXacNhan}
-                                onClick={() => onXacNhan?.(lichHoc, { trang_thai: "daxacnhan" })}
+                                onClick={async () => {
+                                    if (!coTheXacNhan) return;
+                                    setDaBamXacNhan(true);
+                                    const thanhCong = await onXacNhan?.(lichHoc, { trang_thai: "daxacnhan" });
+                                    if (thanhCong === false) {
+                                        setDaBamXacNhan(false);
+                                    }
+                                }}
                                 className={[
                                     "inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-extrabold transition",
                                     !coTheXacNhan

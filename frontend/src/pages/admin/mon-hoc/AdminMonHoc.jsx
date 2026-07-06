@@ -101,6 +101,18 @@ function AdminMonHoc() {
     return () => window.clearTimeout(timer);
   }, [taiDanhSach]);
 
+  useEffect(() => {
+    const lamMoi = () => {
+      void taiDanhSach();
+    };
+
+    window.addEventListener("admin:refresh", lamMoi);
+
+    return () => {
+      window.removeEventListener("admin:refresh", lamMoi);
+    };
+  }, [taiDanhSach]);
+
   const capNhatForm = (field, value) => {
     setForm((prev) => {
       const next = { ...prev, [field]: value };

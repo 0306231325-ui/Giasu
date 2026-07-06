@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DanhSachBaiViet from "./DanhSachBaiViet";
 import FormChinhSuaBaiViet from "./FormChinhSuaBaiViet";
@@ -28,6 +28,23 @@ function AdminBaiViet() {
   const thungRac = useThungRacBaiViet({
     taiLaiDanhSach: danhSach.taiLaiDanhSach,
   });
+
+  useEffect(() => {
+    const lamMoi = () => {
+      if (tabDangMo === "thung_rac") {
+        thungRac.taiLaiThungRac();
+        return;
+      }
+
+      danhSach.taiLaiDanhSach();
+    };
+
+    window.addEventListener("admin:refresh", lamMoi);
+
+    return () => {
+      window.removeEventListener("admin:refresh", lamMoi);
+    };
+  }, [danhSach, tabDangMo, thungRac]);
 
   const xoaBaiViet = async (baiViet) => {
     const daXoa = await danhSach.xoaBaiViet(baiViet);

@@ -6,7 +6,7 @@ import BangHocVien from "./BangHocVien";
 import BoLocHocVien from "./BoLocHocVien";
 import PhanTrangHocVien from "./PhanTrangHocVien";
 
-const SO_TAI_KHOAN_MOI_TRANG = 10;
+const SO_TAI_KHOAN_MOI_TRANG = 5;
 
 function AdminHocVien() {
   const toast = useToast();
@@ -15,6 +15,7 @@ function AdminHocVien() {
   const [tuKhoa, setTuKhoa] = useState("");
   const [trangThai, setTrangThai] = useState("");
   const [trangHienTai, setTrangHienTai] = useState(1);
+  const [lanTaiLai, setLanTaiLai] = useState(0);
   const [dangTai, setDangTai] = useState(true);
   const [loi, setLoi] = useState("");
   const [dangCapNhatId, setDangCapNhatId] = useState(null);
@@ -65,7 +66,19 @@ function AdminHocVien() {
     return () => {
       daHuy = true;
     };
-  }, [thamSoTruyVan]);
+  }, [lanTaiLai, thamSoTruyVan]);
+
+  useEffect(() => {
+    const lamMoi = () => {
+      setLanTaiLai((lan) => lan + 1);
+    };
+
+    window.addEventListener("admin:refresh", lamMoi);
+
+    return () => {
+      window.removeEventListener("admin:refresh", lamMoi);
+    };
+  }, []);
 
   const xuLyDoiTuKhoa = (event) => {
     setTuKhoa(event.target.value);

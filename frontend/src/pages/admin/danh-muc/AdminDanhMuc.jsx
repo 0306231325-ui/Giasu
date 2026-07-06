@@ -158,6 +158,18 @@ function DanhMucCrud({ config }) {
     return () => window.clearTimeout(timer);
   }, [taiDanhMuc]);
 
+  useEffect(() => {
+    const lamMoi = () => {
+      void taiDanhMuc();
+    };
+
+    window.addEventListener("admin:refresh", lamMoi);
+
+    return () => {
+      window.removeEventListener("admin:refresh", lamMoi);
+    };
+  }, [taiDanhMuc]);
+
   const capNhatForm = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     setLoi("");
