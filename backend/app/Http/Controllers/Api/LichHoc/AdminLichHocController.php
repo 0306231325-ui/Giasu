@@ -73,14 +73,14 @@ class AdminLichHocController extends DatLichBaseController
 
         $thongKe = [
             'tat_ca' => (clone $query)->count(),
-            'cho_xacnhan' => (clone $query)->where('trang_thai', 'cho_xacnhan')->count(),
-            'da_nhan' => (clone $query)->where('trang_thai', 'da_nhan')->count(),
+            'cho_xacnhan' => $this->demLichHocTheoTrangThaiHieuLuc(clone $query, 'cho_xacnhan'),
+            'da_nhan' => $this->demLichHocTheoTrangThaiHieuLuc(clone $query, 'da_nhan'),
             'hoanthanh' => (clone $query)->where('trang_thai', 'hoanthanh')->count(),
             'dahuy' => (clone $query)->where('trang_thai', 'dahuy')->count(),
         ];
 
         if ($trangThai) {
-            $query->where('trang_thai', $trangThai);
+            $this->locLichHocTheoTrangThaiHieuLuc($query, $trangThai);
         }
 
         if ($trangThai) {
@@ -111,6 +111,41 @@ class AdminLichHocController extends DatLichBaseController
             ],
         ]);
     }
+
+    private function demLichHocTheoTrangThaiHieuLuc(Builder $query, string $trangThai): int
+    {
+        $this->locLichHocTheoTrangThaiHieuLuc($query, $trangThai);
+
+        return $query->count();
+    }
+
+    private function locLichHocTheoTrangThaiHieuLuc(Builder $query, string $trangThai): void
+    {
+        if ($trangThai === 'da_nhan') {
+            $query->where(function ($subQuery) {
+                $subQuery
+                    ->where('trang_thai', 'da_nhan')
+                    ->orWhere(function ($activeQuery) {
+                        $activeQuery
+                            ->where('trang_thai', 'cho_xacnhan')
+                            ->whereHas('goiHoc', fn ($goiQuery) => $goiQuery->whereIn('trang_thai', ['danghoc', 'hoanthanh']));
+                    });
+            });
+
+            return;
+        }
+
+        if ($trangThai === 'cho_xacnhan') {
+            $query
+                ->where('trang_thai', 'cho_xacnhan')
+                ->whereHas('goiHoc', fn ($goiQuery) => $goiQuery->whereNotIn('trang_thai', ['danghoc', 'hoanthanh']));
+
+            return;
+        }
+
+        $query->where('trang_thai', $trangThai);
+    }
+
     public function adminXacNhanHoanThanhLichHoc(Request $request, int $lichHocId): JsonResponse
     {
         if ($request->user()?->vai_tro !== 'admin') {
@@ -366,14 +401,40 @@ class AdminLichHocController extends DatLichBaseController
         }
 
         DB::transaction(function () use ($request, $yeuCau) {
-            $yeuCau->lichHocGoc->update([
+            $lichHocGoc = $yeuCau->lichHocGoc;
+            $ghiChuDoiBuoi = 'Chuyen sang ' . Carbon::parse($yeuCau->ngay_hoc)->format('d/m/Y') . ' '
+                . substr((string) $yeuCau->gio_batdau, 0, 5) . ' - ' . substr((string) $yeuCau->gio_ketthuc, 0, 5);
+            $trangThaiBuoiMoi = $lichHocGoc->trang_thai === 'dahuy'
+                ? 'dahuy'
+                : ($lichHocGoc->goiHoc && in_array($lichHocGoc->goiHoc->trang_thai, ['danghoc', 'hoanthanh'], true) ? 'da_nhan' : $lichHocGoc->trang_thai);
+
+            LichHoc::create([
+                'goihoc_id' => $lichHocGoc->goihoc_id,
+                'giasu_id' => $lichHocGoc->giasu_id,
+                'loai_buoi' => $lichHocGoc->loai_buoi,
                 'ngay_hoc' => $yeuCau->ngay_hoc,
                 'gio_batdau' => $yeuCau->gio_batdau,
                 'gio_ketthuc' => $yeuCau->gio_ketthuc,
+                'dia_chi_hoc' => $lichHocGoc->dia_chi_hoc,
+                'hinh_thuc_hoc' => $lichHocGoc->hinh_thuc_hoc,
+                'tien_hoc' => $lichHocGoc->tien_hoc,
+                'phi_hoahong' => $lichHocGoc->phi_hoahong,
+                'tien_giasu_nhan' => $lichHocGoc->tien_giasu_nhan,
+                'trang_thai' => $trangThaiBuoiMoi,
                 'ghi_chu' => $this->themDongGhiChu(
-                    $yeuCau->lichHocGoc->ghi_chu,
+                    $lichHocGoc->ghi_chu,
                     'Admin duyet doi buoi',
-                    'Chuyen sang ' . Carbon::parse($yeuCau->ngay_hoc)->format('d/m/Y') . ' ' . substr((string) $yeuCau->gio_batdau, 0, 5) . ' - ' . substr((string) $yeuCau->gio_ketthuc, 0, 5),
+                    'Tao buoi moi tu ' . ($lichHocGoc->ma ?? ('LH' . str_pad((string) $lichHocGoc->id, 6, '0', STR_PAD_LEFT))),
+                ),
+            ]);
+
+            $lichHocGoc->update([
+                'trang_thai' => 'dahuy',
+                'lydo_huy' => 'Da doi sang buoi moi: ' . $ghiChuDoiBuoi,
+                'ghi_chu' => $this->themDongGhiChu(
+                    $lichHocGoc->ghi_chu,
+                    'Admin duyet doi buoi',
+                    $ghiChuDoiBuoi,
                 ),
             ]);
 

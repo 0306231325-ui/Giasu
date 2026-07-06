@@ -65,8 +65,10 @@ function dinhDangNgay(ngay) {
 }
 
 function dinhDangTien(soTien) {
-    const giaTri = Number(soTien || 0);
-    if (!giaTri) return "Chờ báo giá";
+    if (soTien === null || soTien === undefined || soTien === "") return "Chờ báo giá";
+
+    const giaTri = Number(soTien);
+    if (Number.isNaN(giaTri)) return "Chờ báo giá";
 
     return `${giaTri.toLocaleString("vi-VN")} đ`;
 }
