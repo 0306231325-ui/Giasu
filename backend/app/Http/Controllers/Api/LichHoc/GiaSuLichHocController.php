@@ -56,6 +56,78 @@ class GiaSuLichHocController extends DatLichBaseController
             'data' => $danhSach,
         ]);
     }
+
+    public function capNhatLinkHocOnline(Request $request, int $lichHocId): JsonResponse
+    {
+        $giaSu = $this->layGiaSuDangNhap($request);
+
+        if (! $giaSu) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Khu vực này chỉ dành cho tài khoản gia sư.',
+            ], 403);
+        }
+
+        $duLieu = $request->validate([
+            'link_hoc_online' => ['required', 'url', 'max:500'],
+        ], [
+            'link_hoc_online.required' => 'Vui lòng nhập link lớp học online.',
+            'link_hoc_online.url' => 'Link lớp học phải là một đường dẫn hợp lệ.',
+            'link_hoc_online.max' => 'Link lớp học không được vượt quá 500 ký tự.',
+        ]);
+
+        $lichHoc = LichHoc::query()
+            ->with([
+                'goiHoc.hocVien:id,ho_ten',
+                'goiHoc.monHoc:id,ten_mon,lop',
+                'giasu.user:id,ho_ten',
+            ])
+            ->where('giasu_id', $giaSu->id)
+            ->find($lichHocId);
+
+        if (! $lichHoc) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy buổi học của bạn.',
+            ], 404);
+        }
+
+        if ($lichHoc->hinh_thuc_hoc !== 'online') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chỉ buổi học online mới cần cập nhật link lớp học.',
+            ], 422);
+        }
+
+        if (in_array($lichHoc->trang_thai, ['hoanthanh', 'dahuy'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Buổi học này đã kết thúc hoặc đã hủy, không thể cập nhật link.',
+            ], 422);
+        }
+
+        $lichHoc->update([
+            'link_hoc_online' => $duLieu['link_hoc_online'],
+        ]);
+
+        NhatKyHeThongService::ghi(
+            $request->user(),
+            'cap_nhat_link_hoc_online',
+            $lichHoc->id,
+            "{$request->user()->ho_ten} cập nhật link lớp học online cho buổi học LH" . str_pad((string) $lichHoc->id, 6, '0', STR_PAD_LEFT) . "."
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã cập nhật link lớp học online.',
+            'data' => $this->dinhDangLichDayChoGiaSu($lichHoc->fresh([
+                'goiHoc.hocVien:id,ho_ten',
+                'goiHoc.monHoc:id,ten_mon,lop',
+                'giasu.user:id,ho_ten',
+            ])),
+        ]);
+    }
+
     public function giaSuXacNhanHoanThanhBuoiHoc(Request $request, int $lichHocId): JsonResponse
     {
         $user = $request->user();
@@ -110,11 +182,11 @@ class GiaSuLichHocController extends DatLichBaseController
             ], 422);
         }
 
-        $thoiDiemBatDau = $this->thoiDiemLichHoc($lichHoc, 'gio_batdau');
-        if ($this->bayGioLichHoc()->lt($thoiDiemBatDau)) {
+        //   them kiem tra ngay hoc cuar Gia su truoc khi xac nhan  3/7
+        if (! $this->daDenNgayHoc($lichHoc)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Chi co the xac nhan khi buoi hoc da bat dau.',
+                'message' => 'Chỉ có thể xác nhận trong ngày học hoặc sau ngày học.',
             ], 422);
         }
 

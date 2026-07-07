@@ -16,6 +16,7 @@ function GiaSuLichDay() {
         soYeuCauChoPhanHoi,
         soYeuCauDoiBuoiChoPhanHoi,
         xacNhanBuoiHoc,
+        capNhatLinkHocOnline,
         phanHoiYeuCau,
         phanHoiYeuCauDoiBuoi,
     } = useQuanLyLichDay();
@@ -74,12 +75,14 @@ function GiaSuLichDay() {
                     danhSach={danhSachLichHoc}
                     dangXuLyId={dangXuLyId}
                     onXacNhan={xacNhanBuoiHoc}
+                    onCapNhatLinkHocOnline={capNhatLinkHocOnline}
                 />
             ) : tab === "lich_tuan" ? (
                 <TabLichTuan
                     danhSach={danhSachLichHoc}
                     dangXuLyId={dangXuLyId}
                     onXacNhan={xacNhanBuoiHoc}
+                    onCapNhatLinkHocOnline={capNhatLinkHocOnline}
                 />
             ) : tab === "yeu_cau" ? (
                 <TabYeuCauDatGiaSu

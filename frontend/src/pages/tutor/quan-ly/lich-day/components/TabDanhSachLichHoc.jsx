@@ -3,7 +3,12 @@ import IconLichDay from "./IconLichDay";
 import ModalChiTietLichHoc from "./ModalChiTietLichHoc";
 import { trangThaiLichHoc } from "../constants";
 
-function TabDanhSachLichHoc({ danhSach, dangXuLyId, onXacNhan }) {
+function TabDanhSachLichHoc({
+    danhSach,
+    dangXuLyId,
+    onXacNhan,
+    onCapNhatLinkHocOnline,
+}) {
     const [tuKhoa, setTuKhoa] = useState("");
     const [trangThai, setTrangThai] = useState("");
     const [lichDangXem, setLichDangXem] = useState(null);
@@ -120,8 +125,12 @@ function TabDanhSachLichHoc({ danhSach, dangXuLyId, onXacNhan }) {
             {lichDangXem && (
                 <ModalChiTietLichHoc
                     lichHoc={lichDangXemMoiNhat}
-                    dangXuLy={dangXuLyId === `lich-${lichDangXem.id}`}
+                    dangXuLy={
+                        dangXuLyId === `lich-${lichDangXem.id}` ||
+                        dangXuLyId === `link-${lichDangXem.id}`
+                    }
                     onXacNhan={onXacNhan}
+                    onCapNhatLinkHocOnline={onCapNhatLinkHocOnline}
                     onDong={() => setLichDangXem(null)}
                 />
             )}

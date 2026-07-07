@@ -61,11 +61,7 @@ function ModalChiTietYeuCau({
                         nhan="Học định kỳ"
                         giaTri={yeuCau.hocDinhKy ? "Có" : "Không"}
                     />
-                    <ThongTin
-                        nhan="Lịch mong muốn"
-                        giaTri={yeuCau.lichMongMuon}
-                        className="sm:col-span-2"
-                    />
+                    <DanhSachLichMongMuon yeuCau={yeuCau} />
                     <ThongTin
                         nhan="Đơn giá"
                         giaTri={yeuCau.donGia}
@@ -117,6 +113,87 @@ function ModalChiTietYeuCau({
             </div>
         </LopModal>
     );
+}
+
+function DanhSachLichMongMuon({ yeuCau }) {
+    const danhSach = Array.isArray(yeuCau.lichHoc) ? yeuCau.lichHoc : [];
+
+    if (danhSach.length === 0) {
+        return (
+            <ThongTin
+                nhan="Lịch mong muốn"
+                giaTri={yeuCau.lichMongMuon || "Chưa cập nhật"}
+                className="sm:col-span-2"
+            />
+        );
+    }
+
+    return (
+        <div className="sm:col-span-2 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400">
+                        Lịch mong muốn
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-slate-500">
+                        Hiển thị đầy đủ từng buổi học viên đã chọn.
+                    </p>
+                </div>
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-600">
+                    {danhSach.length} buổi
+                </span>
+            </div>
+
+            <div className="mt-3 grid max-h-64 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+                {danhSach.map((buoi, index) => (
+                    <div
+                        key={buoi.id || `${buoi.ngayHoc}-${buoi.gioBatDau}-${index}`}
+                        className="rounded-xl border border-slate-200 bg-white px-3 py-2"
+                    >
+                        <p className="text-sm font-extrabold text-slate-900">
+                            {buoi.thu ? `${buoi.thu} · ` : ""}
+                            {dinhDangNgayBuoi(buoi)}
+                        </p>
+                        <p className="mt-1 text-xs font-bold text-slate-500">
+                            {dinhDangKhungGioBuoi(buoi)} ·{" "}
+                            {buoi.hinhThuc || yeuCau.hinhThuc}
+                        </p>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function dinhDangNgayBuoi(buoi) {
+    const ngay = buoi.ngayHoc || buoi.ngay_hoc || buoi.ngay;
+
+    if (!ngay) {
+        return "Chưa cập nhật";
+    }
+
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(ngay)) {
+        return ngay;
+    }
+
+    const [nam, thang, ngayTrongThang] = String(ngay).split("-");
+
+    if (nam && thang && ngayTrongThang) {
+        return `${ngayTrongThang}/${thang}/${nam}`;
+    }
+
+    return ngay;
+}
+
+function dinhDangKhungGioBuoi(buoi) {
+    const batDau = buoi.gioBatDau || buoi.batDau || buoi.gio_batdau;
+    const ketThuc = buoi.gioKetThuc || buoi.ketThuc || buoi.gio_ketthuc;
+
+    if (!batDau || !ketThuc) {
+        return "Chưa cập nhật giờ";
+    }
+
+    return `${batDau} - ${ketThuc}`;
 }
 
 export default ModalChiTietYeuCau;

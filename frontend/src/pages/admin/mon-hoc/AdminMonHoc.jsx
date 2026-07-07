@@ -60,6 +60,7 @@ function AdminMonHoc() {
     () => laySoLopTheoCap(capHocDangChon?.ten),
     [capHocDangChon],
   );
+  const coDanhSachLop = cacLopTheoCap.length > 0;
   const goiYTenMon = useMemo(() => {
     const tenMonDaCo = danhSach
       .filter((monHoc) => !form.cap_hoc_id || String(monHoc.cap_hoc_id) === String(form.cap_hoc_id))
@@ -389,25 +390,31 @@ function AdminMonHoc() {
               </select>
             </label>
 
-            <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-white/75">Lớp</span>
-              <select
-                value={form.lop}
-                onChange={(event) => capNhatForm("lop", event.target.value)}
-                disabled={!form.cap_hoc_id}
-                required
-                className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <option value="">
-                  {form.cap_hoc_id ? "Chọn lớp" : "Chọn cấp học trước"}
-                </option>
-                {cacLopTheoCap.map((lop) => (
-                  <option key={lop} value={`Lớp ${lop}`}>
-                    Lớp {lop}
+            {(!form.cap_hoc_id || coDanhSachLop) ? (
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-white/75">Lớp</span>
+                <select
+                  value={form.lop}
+                  onChange={(event) => capNhatForm("lop", event.target.value)}
+                  disabled={!form.cap_hoc_id}
+                  required={coDanhSachLop}
+                  className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <option value="">
+                    {form.cap_hoc_id ? "Chọn lớp" : "Chọn cấp học trước"}
                   </option>
-                ))}
-              </select>
-            </label>
+                  {cacLopTheoCap.map((lop) => (
+                    <option key={lop} value={`Lớp ${lop}`}>
+                      Lớp {lop}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <div className="rounded-xl border border-blue-300/20 bg-blue-500/10 px-4 py-3 text-sm font-semibold text-blue-100">
+                {capHocDangChon?.ten} không phân theo lớp. Môn học sẽ được lưu theo cấp học này.
+              </div>
+            )}
 
             <label className="block">
               <span className="mb-2 block text-sm font-semibold text-white/75">Giá gốc / giờ</span>

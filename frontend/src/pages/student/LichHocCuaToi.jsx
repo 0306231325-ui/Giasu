@@ -91,6 +91,21 @@ function nhanLoaiGoi(goiHoc) {
     return Number(goiHoc.soBuoi) === 1 ? "Gói học thử" : "Gói học không định kỳ";
 }
 
+function laGoiHocThu(goiHoc, lichHoc = {}) {
+    const kieuGoi = String(goiHoc?.kieuGoi || lichHoc?.kieuGoi || "").toLowerCase();
+    const loaiGoi = String(goiHoc?.loaiGoi || lichHoc?.loaiGoi || "").toLowerCase();
+
+    return kieuGoi === "hoc_thu" || loaiGoi.includes("học thử") || loaiGoi.includes("hoc thu");
+}
+
+function laBuoiOnline(lichHoc = {}) {
+    const hinhThuc = String(lichHoc.hinhThuc || lichHoc.hinhThucHoc || "").toLowerCase();
+
+    return hinhThuc.includes("online")
+        || hinhThuc.includes("trực tuyến")
+        || hinhThuc.includes("truc tuyen");
+}
+
 function layThongDiepLoi(error, fallback) {
     const duLieu = error.response?.data;
     const loiDauTien = duLieu?.errors ? Object.values(duLieu.errors)[0]?.[0] : null;
@@ -505,6 +520,7 @@ function LichHocCuaToi() {
     };
 
     const yeuCauDoiBuoiDangMo = chiTietBuoi?.lichHoc?.yeuCauDoiBuoi || null;
+    const laBuoiHocThuDangXem = chiTietBuoi ? laGoiHocThu(chiTietBuoi.goiHoc, chiTietBuoi.lichHoc) : false;
 
     if (authLoading || dangTai) {
         return (
@@ -752,6 +768,38 @@ function LichHocCuaToi() {
                                 <ThongTinBuoi label="Địa điểm" value={chiTietBuoi.lichHoc.diaDiem} />
                             </section>
 
+                            {laBuoiOnline(chiTietBuoi.lichHoc) && (
+                                <section className="rounded-xl border border-sky-100 bg-sky-50/70 p-5">
+                                    <p className="text-xs font-bold uppercase text-sky-700">
+                                        Link lớp học online
+                                    </p>
+                                    {chiTietBuoi.lichHoc.linkHocOnline ? (
+                                        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                            <a
+                                                href={chiTietBuoi.lichHoc.linkHocOnline}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="min-w-0 truncate text-sm font-bold text-blue-700 hover:underline"
+                                            >
+                                                {chiTietBuoi.lichHoc.linkHocOnline}
+                                            </a>
+                                            <a
+                                                href={chiTietBuoi.lichHoc.linkHocOnline}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-blue-600 px-4 text-sm font-bold text-white transition hover:bg-blue-700"
+                                            >
+                                                Vào lớp học
+                                            </a>
+                                        </div>
+                                    ) : (
+                                        <p className="mt-2 text-sm font-semibold text-slate-500">
+                                            Gia sư chưa cập nhật link lớp học.
+                                        </p>
+                                    )}
+                                </section>
+                            )}
+
                             <div className="grid gap-5 lg:grid-cols-[1fr_1fr] lg:items-start">
                                 <section className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-5">
                                     <div className="flex items-start justify-between gap-3">
@@ -779,7 +827,7 @@ function LichHocCuaToi() {
                                             )}
                                         </div>
                                     ) : null}
-
+                                    {/* xacs nhan hoan thanh buoi hoc  */}
                                     {chiTietBuoi.lichHoc.coTheXacNhanHoanThanh ? (
                                         <form onSubmit={guiXacNhanBuoiHoc} className="mt-4 flex flex-col gap-3 rounded-lg border border-emerald-100 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
                                             <div>
@@ -858,7 +906,7 @@ function LichHocCuaToi() {
                                 </section>
                             </div>
 
-                            {(chiTietBuoi.lichHoc.coTheDoiBuoi || yeuCauDoiBuoiDangMo) && (
+                            {!laBuoiHocThuDangXem && (chiTietBuoi.lichHoc.coTheDoiBuoi || yeuCauDoiBuoiDangMo) && (
                                 <section className="rounded-xl border border-sky-100 bg-sky-50/70 p-5">
                                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                         <div>

@@ -2,15 +2,26 @@ import { useState } from "react";
 import IconLichDay from "./IconLichDay";
 import { trangThaiLichHoc } from "../constants";
 
-function ModalChiTietLichHoc({ lichHoc, dangXuLy = false, onXacNhan, onDong }) {
+function ModalChiTietLichHoc({
+    lichHoc,
+    dangXuLy = false,
+    onXacNhan,
+    onCapNhatLinkHocOnline,
+    onDong,
+}) {
     const [dangMoFormDoiBuoi, setDangMoFormDoiBuoi] = useState(false);
+    const [dangMoFormLink, setDangMoFormLink] = useState(false);
+    const [linkHocOnline, setLinkHocOnline] = useState(lichHoc.linkHocOnline || "");
     const [daBamXacNhan, setDaBamXacNhan] = useState(false);
     const trangThai = trangThaiLichHoc[lichHoc.trangThai];
     const daHoanThanh = lichHoc.trangThai === "hoan_thanh";
     const daHuy = lichHoc.trangThai === "da_huy";
+    const laOnline = laLichOnline(lichHoc);
+    const laHocThu = laLichHocThu(lichHoc);
     const xacNhan = lichHoc.xacNhan || {};
     const giaSuDaGui = xacNhan.giaSuDaXacNhan || xacNhan.giaSuBaoVanDe;
     const coTheXacNhan = lichHoc.coTheXacNhanHoanThanh && !dangXuLy && !giaSuDaGui && !daBamXacNhan;
+    const coTheSuaLink = laOnline && !daHoanThanh && !daHuy && Boolean(onCapNhatLinkHocOnline);
 
     return (
         <LopModal onDong={onDong}>
@@ -56,6 +67,102 @@ function ModalChiTietLichHoc({ lichHoc, dangXuLy = false, onXacNhan, onDong }) {
                     </div>
                 )}
 
+                {laOnline && (
+                    <div className="mt-5 rounded-2xl border border-sky-100 bg-sky-50 p-4">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="min-w-0">
+                                <p className="text-sm font-extrabold text-slate-900">
+                                    Link lớp học online
+                                </p>
+                                {lichHoc.linkHocOnline ? (
+                                    <a
+                                        href={lichHoc.linkHocOnline}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="mt-1 block truncate text-sm font-bold text-blue-700 hover:underline"
+                                    >
+                                        {lichHoc.linkHocOnline}
+                                    </a>
+                                ) : (
+                                    <p className="mt-1 text-sm font-semibold text-slate-500">
+                                        Chưa có link lớp học. Cập nhật link để học viên vào lớp.
+                                    </p>
+                                )}
+                            </div>
+                            <div className="flex shrink-0 flex-wrap gap-2">
+                                {lichHoc.linkHocOnline && (
+                                    <a
+                                        href={lichHoc.linkHocOnline}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center justify-center rounded-xl border border-sky-200 bg-white px-4 py-2.5 text-sm font-extrabold text-blue-700 transition hover:bg-sky-100"
+                                    >
+                                        Mở link
+                                    </a>
+                                )}
+                                {coTheSuaLink && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setLinkHocOnline(lichHoc.linkHocOnline || "");
+                                            setDangMoFormLink((hienTai) => !hienTai);
+                                        }}
+                                        className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white transition hover:bg-blue-700"
+                                    >
+                                        {lichHoc.linkHocOnline ? "Sửa link" : "Cập nhật link"}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {dangMoFormLink && coTheSuaLink && (
+                            <form
+                                className="mt-4 border-t border-sky-100 pt-4"
+                                onSubmit={async (event) => {
+                                    event.preventDefault();
+                                    const thanhCong = await onCapNhatLinkHocOnline?.(
+                                        lichHoc,
+                                        linkHocOnline.trim(),
+                                    );
+                                    if (thanhCong !== false) {
+                                        setDangMoFormLink(false);
+                                    }
+                                }}
+                            >
+                                <label className="block">
+                                    <span className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                                        Link lớp học
+                                    </span>
+                                    <input
+                                        type="url"
+                                        value={linkHocOnline}
+                                        onChange={(event) => setLinkHocOnline(event.target.value)}
+                                        placeholder="Ví dụ: https://meet.google.com/abc-defg-hij"
+                                        className="mt-2 h-11 w-full rounded-xl border border-sky-100 bg-white px-3 text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400 focus:border-blue-400"
+                                    />
+                                </label>
+                                <div className="mt-3 flex justify-end gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setDangMoFormLink(false)}
+                                        className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-extrabold text-slate-600 hover:bg-white"
+                                    >
+                                        Hủy
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={dangXuLy}
+                                        className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        {dangXuLy ? "Đang lưu..." : "Lưu link"}
+                                    </button>
+                                </div>
+                            </form>
+                        )}
+                    </div>
+                )}
+
+                {!laHocThu && (
                 <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
@@ -139,6 +246,7 @@ function ModalChiTietLichHoc({ lichHoc, dangXuLy = false, onXacNhan, onDong }) {
                         </form>
                     )}
                 </div>
+                )}
 
                 <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -244,6 +352,21 @@ export function ThongTin({ nhan, giaTri, className = "" }) {
             </p>
         </div>
     );
+}
+
+function laLichHocThu(lichHoc) {
+    const kieuGoi = String(lichHoc.kieuGoi || "").toLowerCase();
+    const loaiGoi = String(lichHoc.loaiGoi || lichHoc.loaiBuoi || "").toLowerCase();
+
+    return kieuGoi === "hoc_thu" || loaiGoi.includes("học thử") || loaiGoi.includes("hoc thu");
+}
+
+function laLichOnline(lichHoc) {
+    const hinhThuc = String(lichHoc.hinhThuc || lichHoc.hinhThucHoc || "").toLowerCase();
+
+    return hinhThuc.includes("online")
+        || hinhThuc.includes("trực tuyến")
+        || hinhThuc.includes("truc tuyen");
 }
 
 export default ModalChiTietLichHoc;

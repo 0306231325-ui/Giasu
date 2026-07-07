@@ -20,6 +20,7 @@ class LichHoc extends Model
         'gio_ketthuc',
         'dia_chi_hoc',
         'hinh_thuc_hoc',
+        'link_hoc_online',
         'tien_hoc',
         'phi_hoahong',
         'tien_giasu_nhan',

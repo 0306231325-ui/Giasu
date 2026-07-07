@@ -170,11 +170,11 @@ class HocVienLichHocController extends DatLichBaseController
             ], 422);
         }
 
-        $thoiDiemBatDau = $this->thoiDiemLichHoc($lichHoc, 'gio_batdau');
-        if ($this->bayGioLichHoc()->lt($thoiDiemBatDau)) {
+        // chan nut xac nhan hoan thanh buoi hoc 3/7
+        if (! $this->daDenNgayHoc($lichHoc)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Chi co the xac nhan khi buoi hoc da bat dau.',
+                'message' => 'Chỉ có thể xác nhận trong ngày học hoặc sau ngày học.',
             ], 422);
         }
 

@@ -47,14 +47,6 @@ function ChiTietYeuCauDatGoi({ yeuCau, onThucHien }) {
                         <ThongTin label="Loại gói" value={yeuCau.loaiGoi} />
                         <ThongTin label="Số buổi" value={`${yeuCau.soBuoi} buổi`} />
                         <ThongTin label="Tổng tiền" value={yeuCau.tongTien} noiBat />
-                        <ThongTin
-                            label="Ngày học mong muốn"
-                            value={yeuCau.ngayMongMuon || yeuCau.lichMongMuon}
-                        />
-                        <ThongTin
-                            label="Giờ mong muốn"
-                            value={yeuCau.gioMongMuon || "Chưa cập nhật"}
-                        />
                         <ThongTin label="Hình thức" value={yeuCau.hinhThuc} />
                         <ThongTin label="Địa điểm" value={yeuCau.diaDiem} />
                     </div>

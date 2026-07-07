@@ -153,9 +153,17 @@ class GiaSuYeuCauDatGoiController extends DatLichBaseController
                     'lydo_huy' => $lyDo,
                 ]);
             } else {
+                $canThanhToan = $this->goiHocCanThanhToan($goiHoc);
+
                 $goiHoc->update([
-                    'trang_thai' => 'cho_thanhtoan',
+                    'trang_thai' => $canThanhToan ? 'cho_thanhtoan' : 'danghoc',
                 ]);
+
+                if (! $canThanhToan) {
+                    $goiHoc->lichHocs()->update([
+                        'trang_thai' => 'da_nhan',
+                    ]);
+                }
             }
 
             User::query()
@@ -177,7 +185,9 @@ class GiaSuYeuCauDatGoiController extends DatLichBaseController
                 'tieu_de' => $laTuChoi ? 'Gia sư đã từ chối yêu cầu' : 'Gia sư đã đồng ý nhận lớp',
                 'noi_dung' => $laTuChoi
                     ? 'Gia sư đã từ chối yêu cầu đặt gói của bạn' . ($lyDo ? ': ' . $lyDo : '.')
-                    : 'Gia sư đã đồng ý nhận lớp. Bạn có thể tiến hành thanh toán gói học.',
+                    : ($this->goiHocCanThanhToan($goiHoc)
+                        ? 'Gia sư đã đồng ý nhận lớp. Bạn có thể tiến hành thanh toán gói học.'
+                        : 'Gia sư đã đồng ý nhận lớp. Gói học miễn phí/học thử của bạn đã được kích hoạt.'),
                 'url' => '/hoc-vien/lich-hoc',
                 'da_doc' => false,
             ]);
@@ -196,7 +206,11 @@ class GiaSuYeuCauDatGoiController extends DatLichBaseController
 
         return response()->json([
             'success' => true,
-            'message' => $laTuChoi ? 'Đã từ chối yêu cầu đặt gói.' : 'Đã đồng ý nhận lớp. Gói học đã chuyển sang chờ thanh toán.',
+            'message' => $laTuChoi
+                ? 'Đã từ chối yêu cầu đặt gói.'
+                : ($this->goiHocCanThanhToan($goiHoc)
+                    ? 'Đã đồng ý nhận lớp. Gói học đã chuyển sang chờ thanh toán.'
+                    : 'Đã đồng ý nhận lớp. Gói học miễn phí/học thử đã được kích hoạt.'),
             'data' => $this->dinhDangYeuCauChoGiaSu($goiHocMoi),
         ]);
     }

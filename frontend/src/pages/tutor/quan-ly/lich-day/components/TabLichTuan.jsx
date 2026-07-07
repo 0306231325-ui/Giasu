@@ -8,7 +8,12 @@ const GIO_KET_THUC = 22;
 const CHIEU_CAO_MOI_GIO = 76;
 const CAC_THU = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "CN"];
 
-function TabLichTuan({ danhSach, dangXuLyId, onXacNhan }) {
+function TabLichTuan({
+    danhSach,
+    dangXuLyId,
+    onXacNhan,
+    onCapNhatLinkHocOnline,
+}) {
     const [ngayTrongTuan, setNgayTrongTuan] = useState(() => new Date());
     const [lichDangXem, setLichDangXem] = useState(null);
     const lichDangXemMoiNhat = useMemo(
@@ -95,22 +100,22 @@ function TabLichTuan({ danhSach, dangXuLyId, onXacNhan }) {
                     </div>
                 </div>
 
-                <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-[#0a132d]">
-                    <div className="grid grid-cols-[76px_repeat(7,minmax(130px,1fr))] border-b border-white/10 bg-white/[0.03]">
-                        <div className="sticky left-0 z-20 border-r border-white/10 bg-[#0d1733] px-3 py-4 text-xs font-bold uppercase tracking-wide text-white/35">
+                <div className="mt-4 overflow-hidden rounded-2xl border border-slate-400 bg-white shadow-xl shadow-slate-950/10">
+                    <div className="grid grid-cols-[76px_repeat(7,minmax(130px,1fr))] border-b border-slate-400 bg-slate-50">
+                        <div className="sticky left-0 z-20 border-r border-slate-400 bg-slate-100 px-3 py-4 text-xs font-bold uppercase tracking-wide text-slate-600">
                             Giờ
                         </div>
                         {cacNgayTrongTuan.map((ngay, index) => (
                             <div
                                 key={ngay.toISOString()}
-                                className="border-r border-white/10 px-3 py-3 text-center last:border-r-0"
+                                className="border-r border-slate-400 px-3 py-3 text-center last:border-r-0"
                             >
-                                <p className="text-sm font-extrabold text-white">
+                                <p className="text-sm font-extrabold text-slate-900">
                                     {CAC_THU[index]}
                                 </p>
                                 <p className={[
                                     "mt-1 text-xs font-semibold",
-                                    laHomNay(ngay) ? "text-blue-200" : "text-white/40",
+                                    laHomNay(ngay) ? "text-blue-600" : "text-slate-400",
                                 ].join(" ")}
                                 >
                                     {dinhDangNgayNgan(ngay)}
@@ -124,11 +129,11 @@ function TabLichTuan({ danhSach, dangXuLyId, onXacNhan }) {
                             className="relative grid min-w-[1040px] grid-cols-[76px_repeat(7,minmax(130px,1fr))]"
                             style={{ height: (GIO_KET_THUC - GIO_BAT_DAU) * CHIEU_CAO_MOI_GIO }}
                         >
-                            <div className="sticky left-0 z-10 border-r border-white/10 bg-[#0d1733]">
+                            <div className="sticky left-0 z-10 border-r border-slate-400 bg-slate-50">
                                 {gioTrongNgay.slice(0, -1).map((gio) => (
                                     <div
                                         key={gio}
-                                        className="border-b border-white/10 px-3 pt-2 text-xs font-bold text-white/35"
+                                        className="border-b border-slate-400 px-3 pt-2 text-xs font-bold text-slate-600"
                                         style={{ height: CHIEU_CAO_MOI_GIO }}
                                     >
                                         {String(gio).padStart(2, "0")}:00
@@ -139,12 +144,12 @@ function TabLichTuan({ danhSach, dangXuLyId, onXacNhan }) {
                             {cacNgayTrongTuan.map((ngay) => (
                                 <div
                                     key={ngay.toISOString()}
-                                    className="relative border-r border-white/10 last:border-r-0"
+                                    className="relative border-r border-slate-400 bg-white last:border-r-0"
                                 >
                                     {gioTrongNgay.slice(0, -1).map((gio) => (
                                         <div
                                             key={gio}
-                                            className="border-b border-white/10"
+                                            className="border-b border-slate-300"
                                             style={{ height: CHIEU_CAO_MOI_GIO }}
                                         />
                                     ))}
@@ -180,8 +185,12 @@ function TabLichTuan({ danhSach, dangXuLyId, onXacNhan }) {
             {lichDangXem && (
                 <ModalChiTietLichHoc
                     lichHoc={lichDangXemMoiNhat}
-                    dangXuLy={dangXuLyId === `lich-${lichDangXem.id}`}
+                    dangXuLy={
+                        dangXuLyId === `lich-${lichDangXem.id}` ||
+                        dangXuLyId === `link-${lichDangXem.id}`
+                    }
                     onXacNhan={onXacNhan}
+                    onCapNhatLinkHocOnline={onCapNhatLinkHocOnline}
                     onDong={() => setLichDangXem(null)}
                 />
             )}
@@ -217,7 +226,7 @@ function TheLichHocTuan({ lichHoc, onClick }) {
         <button
             type="button"
             onClick={onClick}
-            className="absolute left-1.5 right-1.5 overflow-hidden rounded-xl border border-blue-300/25 bg-blue-500/20 p-2 text-left shadow-lg shadow-black/10 transition hover:border-blue-200/60 hover:bg-blue-500/30"
+            className="absolute left-1.5 right-1.5 overflow-hidden rounded-xl border border-blue-300 bg-blue-600 p-2 text-left shadow-lg shadow-blue-950/20 transition hover:border-blue-200 hover:bg-blue-700"
             style={{ top: top + 4, height: height - 8 }}
         >
             <p className="truncate text-xs font-extrabold text-white">

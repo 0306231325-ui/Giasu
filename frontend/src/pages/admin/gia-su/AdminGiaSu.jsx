@@ -27,7 +27,7 @@ function AdminGiaSu() {
     const [thongBao, setThongBao] = useState("");
     const [taiLieuDangXem, setTaiLieuDangXem] = useState(null);
     const boDemThongBao = useRef(null);
-    const soHoSoChoDuyet = demCanXuLy?.giaSuHoSoChoDuyet ?? thongKe.choDuyet;
+    const soHoSoChoDuyet = thongKe.choDuyet ?? demCanXuLy?.giaSuHoSoChoDuyet ?? 0;
     const soYeuCauChuyenMon = demCanXuLy?.giaSuYeuCauChuyenMon ?? 0;
 
     const hienThongBao = useCallback((noiDung) => {

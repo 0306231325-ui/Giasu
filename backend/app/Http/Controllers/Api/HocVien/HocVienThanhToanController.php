@@ -85,6 +85,13 @@ class HocVienThanhToanController extends Controller
             ], 404);
         }
 
+        if ($this->laGoiHocThu($goiHoc) || (float) $goiHoc->tong_tien <= 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gói học miễn phí hoặc học thử không cần gửi minh chứng thanh toán.',
+            ], 422);
+        }
+
         if ($goiHoc->thanhToanMoiNhat?->trang_thai === 'cho_thanhtoan') {
             return response()->json([
                 'success' => false,
@@ -160,6 +167,8 @@ class HocVienThanhToanController extends Controller
             'trangThai' => $trangThai,
             'coTheHuy' => $goiHoc->trang_thai === 'cho_xacnhan',
             'coTheThanhToan' => $goiHoc->trang_thai === 'cho_thanhtoan'
+                && ! $this->laGoiHocThu($goiHoc)
+                && (float) $goiHoc->tong_tien > 0
                 && ! in_array($goiHoc->thanhToanMoiNhat?->trang_thai, ['cho_thanhtoan', 'da_thanhtoan'], true),
             'thanhToan' => $goiHoc->thanhToanMoiNhat ? $this->dinhDangThanhToan($goiHoc->thanhToanMoiNhat) : null,
             'lichHoc' => $goiHoc->lichHocs
@@ -204,6 +213,11 @@ class HocVienThanhToanController extends Controller
     private function laGoiDinhKy(GoiHoc $goiHoc): bool
     {
         return $this->kieuGoiHoc($goiHoc) === 'dinh_ky';
+    }
+
+    private function laGoiHocThu(GoiHoc $goiHoc): bool
+    {
+        return $this->kieuGoiHoc($goiHoc) === 'hoc_thu';
     }
 
     private function kieuGoiHoc(GoiHoc $goiHoc): string

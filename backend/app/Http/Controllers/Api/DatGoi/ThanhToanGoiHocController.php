@@ -63,6 +63,13 @@ class ThanhToanGoiHocController extends DatLichBaseController
             ], 404);
         }
 
+        if (! $this->goiHocCanThanhToan($goiHoc)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gói học miễn phí hoặc học thử không cần gửi minh chứng thanh toán.',
+            ], 422);
+        }
+
         if ($goiHoc->thanhToanMoiNhat?->trang_thai === 'cho_thanhtoan') {
             return response()->json([
                 'success' => false,

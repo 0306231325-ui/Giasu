@@ -116,6 +116,37 @@ function useQuanLyLichDay() {
         [capNhatLichHoc, dangXuLyId, toast],
     );
 
+    const capNhatLinkHocOnline = useCallback(
+        async (lichHoc, linkHocOnline) => {
+            if (!lichHoc || dangXuLyId) return false;
+
+            setDangXuLyId(`link-${lichHoc.id}`);
+
+            try {
+                const response = await api.patch(
+                    `/gia-su/lich-day/${lichHoc.id}/link-hoc-online`,
+                    {
+                        link_hoc_online: linkHocOnline,
+                    },
+                );
+
+                capNhatLichHoc(response.data.data);
+                toast.success(response.data.message || "Đã cập nhật link lớp học.");
+                return true;
+            } catch (error) {
+                console.error("Không thể cập nhật link lớp học:", error);
+                toast.error(
+                    error.response?.data?.message ||
+                        "Không thể cập nhật link lớp học.",
+                );
+                return false;
+            } finally {
+                setDangXuLyId(null);
+            }
+        },
+        [capNhatLichHoc, dangXuLyId, toast],
+    );
+
     const phanHoiYeuCau = useCallback(
         async (yeuCau, ketQua, lyDo = "") => {
             if (!yeuCau || dangXuLyId) return;
@@ -191,6 +222,7 @@ function useQuanLyLichDay() {
         soYeuCauChoPhanHoi,
         soYeuCauDoiBuoiChoPhanHoi,
         xacNhanBuoiHoc,
+        capNhatLinkHocOnline,
         phanHoiYeuCau,
         phanHoiYeuCauDoiBuoi,
     };

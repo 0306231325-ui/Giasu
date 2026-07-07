@@ -75,12 +75,6 @@ export function layHanhDong(yeuCau) {
             { key: "gui_gia_su", label: "Gửi/Nhắc gia sư", className: nutChinh },
             { key: "huy_yeu_cau", label: "Hủy yêu cầu", className: nutDo },
         ],
-        giasu_dong_y: [
-            { key: "xem_thanh_toan", label: "Xem thông tin thanh toán", className: nutPhu },
-        ],
-        giasu_tu_choi: [
-            { key: "huy_yeu_cau", label: "Hủy yêu cầu", className: nutDo },
-        ],
         cho_thanh_toan: hanhDongChoThanhToan,
         da_tao_lich: [],
         da_huy: [

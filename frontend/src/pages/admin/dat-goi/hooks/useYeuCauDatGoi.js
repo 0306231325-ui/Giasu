@@ -238,12 +238,6 @@ function useYeuCauDatGoi() {
             return;
         }
 
-        if (hanhDong === "xem_thanh_toan") {
-            hienToast("Phần thông tin thanh toán sẽ nối sau khi có dữ liệu thanh toán.", "info");
-            setDangXuLyHanhDong(false);
-            return;
-        }
-
         if (hanhDong === "huy_yeu_cau") {
             try {
                 const response = await api.patch(`/admin/dat-goi/${yeuCau.id}/huy`, {
