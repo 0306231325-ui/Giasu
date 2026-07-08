@@ -212,11 +212,11 @@ class GiaSuLichHocController extends DatLichBaseController
                 'user_id' => $lichHoc->goiHoc->hocvien_id,
                 'tieu_de' => $trangThaiXacNhan === 'baovan_de'
                     ? 'Gia sư báo vấn đề buổi học'
-                    : 'Gia sư đã xác nhận buổi học',
+                    : 'Gia sư đã xác nhận buổi học, Vào Xác Nhận Buổi Học Nhé',
                 'noi_dung' => $trangThaiXacNhan === 'baovan_de'
                     ? "{$user->ho_ten} đã báo có vấn đề với buổi học."
                     : "{$user->ho_ten} đã xác nhận đã dạy xong buổi học.",
-                'url' => '/hoc-vien/lich-hoc',
+                'url' => '/hoc-vien/lich-hoc?mo_lich_hoc=' . $lichHoc->id,
                 'da_doc' => false,
             ]);
         }
@@ -234,7 +234,7 @@ class GiaSuLichHocController extends DatLichBaseController
             'success' => true,
             'message' => $trangThaiXacNhan === 'baovan_de'
                 ? 'Da ghi nhan van de cua buoi hoc. Admin se kiem tra tren trang quan ly lich hoc.'
-                : 'Da ghi nhan xac nhan cua gia su. Admin se xu ly sau khi hoc vien cung xac nhan.',
+                : 'Đã Ghi Nhận Và Gửi Cho Học Viên Xác Nhận',
             'data' => $this->dinhDangLichDayChoGiaSu($lichHoc->fresh([
                 'goiHoc.hocVien:id,ho_ten',
                 'goiHoc.monHoc:id,ten_mon,lop,cap_hoc_id',

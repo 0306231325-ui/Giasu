@@ -192,15 +192,43 @@ class HocVienLichHocController extends DatLichBaseController
             ], 422);
         }
 
+        if (! $xacNhan['giaSuDaXacNhan']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn chỉ có thể xác nhận sau khi gia sư đã xác nhận hoàn thành buổi học.',
+            ], 422);
+        }
+
         $ghiChuMoi = $this->themDongGhiChu(
             $lichHoc->ghi_chu,
             $trangThaiXacNhan === 'baovan_de' ? self::DAU_HOCVIEN_BAO_VAN_DE : self::DAU_HOCVIEN_XACNHAN,
             $duLieu['ghi_chu'] ?? null,
         );
 
-        $lichHoc->update([
-            'ghi_chu' => $ghiChuMoi !== '' ? $ghiChuMoi : null,
-        ]);
+        DB::transaction(function () use ($lichHoc, $ghiChuMoi, $trangThaiXacNhan, $xacNhan) {
+            $lichHoc->update([
+                'ghi_chu' => $ghiChuMoi !== '' ? $ghiChuMoi : null,
+            ]);
+
+            // Nếu cả gia sư và học viên đều xác nhận hoàn thành (không báo vấn đề) -> tự động chuyển trạng thái
+            if ($trangThaiXacNhan === 'daxacnhan' && ! $xacNhan['giaSuBaoVanDe']) {
+                $ghiChuMoiHoanThanh = $this->themDongGhiChu(
+                    $lichHoc->ghi_chu,
+                    'Hệ thống tự động xác nhận hoàn thành (2 bên đồng thuận)',
+                    null
+                );
+
+                $lichHoc->update([
+                    'trang_thai' => 'hoanthanh',
+                    'ghi_chu' => $ghiChuMoiHoanThanh,
+                ]);
+
+                $goiHoc = $lichHoc->goiHoc;
+                if ($goiHoc && ! $goiHoc->lichHocs()->whereNotIn('trang_thai', ['hoanthanh', 'dahuy'])->exists()) {
+                    $goiHoc->update(['trang_thai' => 'hoanthanh']);
+                }
+            }
+        });
 
         if ($lichHoc->giasu?->user_id) {
             ThongBao::create([

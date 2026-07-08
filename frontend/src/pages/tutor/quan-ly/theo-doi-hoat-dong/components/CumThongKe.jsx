@@ -8,7 +8,7 @@ function CumThongKe({ tongQuan, dangTai }) {
                 giaTri={dangTai ? "..." : tongQuan.tongPhanHoi > 0 ? `${Number(tongQuan.diemTrungBinh).toFixed(1)}/5` : "—"}
                 phuDe={tongQuan.tongPhanHoi > 0 ? `${tongQuan.tongPhanHoi} lượt đánh giá` : "Chưa có đánh giá"}
                 bieuTuong="star"
-                mau="amber"
+                mau="blue"
             />
             <TheThongKe
                 nhan="Tổng phản hồi"
@@ -22,14 +22,14 @@ function CumThongKe({ tongQuan, dangTai }) {
                 giaTri={dangTai ? "..." : tongQuan.danhGiaTichCuc}
                 phuDe="Từ 4 sao trở lên"
                 bieuTuong="check"
-                mau="emerald"
+                mau="blue"
             />
             <TheThongKe
                 nhan="Đánh giá tiêu cực"
                 giaTri={dangTai ? "..." : tongQuan.danhGiaTieuCuc}
                 phuDe="Dưới 4 sao"
                 bieuTuong="alert"
-                mau="red"
+                mau="blue"
             />
         </div>
     );

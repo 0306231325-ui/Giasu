@@ -17,7 +17,7 @@ class GiaSuTheoDoiHoatDongController extends Controller
     public function thongKe(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'thoi_gian' => ['nullable', 'in:tat_ca,7_ngay,30_ngay,nam_nay'],
+            'ngay_danh_gia' => ['nullable', 'date_format:Y-m-d'],
             'so_sao' => ['nullable', 'in:5,4,3,duoi_3'],
         ]);
 
@@ -46,7 +46,7 @@ class GiaSuTheoDoiHoatDongController extends Controller
             ])
             ->whereHas('lichHoc', fn ($lichHoc) => $lichHoc->where('giasu_id', $user->giasu->id));
 
-        $this->apDungLocThoiGian($query, $request->input('thoi_gian', 'tat_ca'));
+        $this->apDungLocThoiGian($query, $request->input('ngay_danh_gia'));
         $this->apDungLocSoSao($query, $request->input('so_sao'));
 
         $danhGias = $query
@@ -64,14 +64,11 @@ class GiaSuTheoDoiHoatDongController extends Controller
         ]);
     }
 
-    private function apDungLocThoiGian(Builder $query, string $thoiGian): void
+    private function apDungLocThoiGian(Builder $query, ?string $ngayDanhGia): void
     {
-        match ($thoiGian) {
-            '7_ngay' => $query->where('updated_at', '>=', now()->subDays(7)->startOfDay()),
-            '30_ngay' => $query->where('updated_at', '>=', now()->subDays(30)->startOfDay()),
-            'nam_nay' => $query->where('updated_at', '>=', now()->startOfYear()),
-            default => null,
-        };
+        if ($ngayDanhGia) {
+            $query->whereDate('updated_at', $ngayDanhGia);
+        }
     }
 
     private function apDungLocSoSao(Builder $query, ?string $soSao): void

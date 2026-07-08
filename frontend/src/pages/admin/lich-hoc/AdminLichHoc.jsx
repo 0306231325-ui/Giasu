@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import ModalNhapLyDo from "../../../components/ModalNhapLyDo";
 import api from "../../../services/api";
 
@@ -42,6 +42,7 @@ function AdminLichHoc() {
   const [dangXuLy, setDangXuLy] = useState(false);
   const [loi, setLoi] = useState("");
   const [thongBao, setThongBao] = useState("");
+  const [lichCanHuy, setLichCanHuy] = useState(null);
   const [lichDangChonId, setLichDangChonId] = useState(null);
   const [trangHienTai, setTrangHienTai] = useState(1);
   const [boLoc, setBoLoc] = useState({
@@ -611,9 +612,6 @@ function NhanXacNhanNho({ active, warning, children }) {
 }
 
 function ChiTietLichHoc({ lich, dangXuLy, onXuLy }) {
-  const [lichCanHuy, setLichCanHuy] = useState(null);
-  const [tab, setTab] = useState("tong_quan");
-
   if (!lich) {
     return (
       <aside className="rounded-2xl border border-white/10 bg-white p-6 text-center text-sm text-slate-500">
@@ -622,14 +620,7 @@ function ChiTietLichHoc({ lich, dangXuLy, onXuLy }) {
     );
   }
 
-  const coTheXuLy = !["hoanthanh", "dahuy"].includes(lich.trangThai);
   const xacNhan = lich.xacNhan || {};
-  const coTheHoanThanh = Boolean(lich.coTheAdminXacNhanHoanThanh);
-
-  const xacNhanHuyLich = async (lyDo) => {
-    const thanhCong = await onXuLy(lichCanHuy, "huy", { ly_do: lyDo });
-    if (thanhCong) setLichCanHuy(null);
-  };
 
   return (
     <aside className="h-fit rounded-2xl border border-white/10 bg-white p-5 text-slate-900">
@@ -644,29 +635,7 @@ function ChiTietLichHoc({ lich, dangXuLy, onXuLy }) {
         </span>
       </div>
 
-      <div className="mt-5 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">
-        {[
-          { key: "tong_quan", label: "Tổng quan" },
-          { key: "xu_ly", label: "Xử lý" },
-        ].map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            onClick={() => setTab(item.key)}
-            className={[
-              "rounded-lg px-3 py-2 text-sm font-bold transition",
-              tab === item.key
-                ? "bg-white text-blue-700 shadow-sm"
-                : "text-slate-500 hover:text-slate-900",
-            ].join(" ")}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
-
-      {tab === "tong_quan" ? (
-        <div className="mt-4 grid gap-3">
+      <div className="mt-4 grid gap-3">
         <KhoiThongTin title="Trạng thái">
           <div className="flex items-center justify-between gap-3">
             <span className="text-sm text-slate-500">Buổi học</span>
@@ -723,67 +692,6 @@ function ChiTietLichHoc({ lich, dangXuLy, onXuLy }) {
           </KhoiThongTin>
         )}
         </div>
-      ) : (
-        <div className="mt-4 grid gap-3">
-        <KhoiThongTin title="Xử lý admin">
-          {coTheXuLy ? (
-            <div className="space-y-4">
-              <form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  if (!coTheHoanThanh) return;
-                  onXuLy(lich, "hoan-thanh", {});
-                }}
-                className="rounded-xl border border-emerald-200 bg-emerald-50 p-3"
-              >
-                {!coTheHoanThanh && (
-                  <p className="mt-2 rounded-lg bg-white/70 px-3 py-2 text-xs font-semibold leading-5 text-emerald-800">
-                    Can hoc vien va gia su cung xac nhan hoan thanh, dong thoi khong co bao van de.
-                  </p>
-                )}
-                <button
-                  type="submit"
-                  disabled={dangXuLy || !coTheHoanThanh}
-                  className="mt-3 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {dangXuLy ? "Đang xử lý..." : "Xác nhận hoàn thành"}
-                </button>
-              </form>
-
-              <div className="rounded-xl border border-red-200 bg-red-50 p-3">
-                <p className="text-sm font-bold text-red-900">Hủy buổi học</p>
-                <p className="mt-1 text-xs font-semibold leading-5 text-red-700">
-                  Admin cần nhập lý do trước khi hủy để hệ thống lưu lại và thông báo cho người liên quan.
-                </p>
-                <button
-                  type="button"
-                  disabled={dangXuLy}
-                  onClick={() => setLichCanHuy(lich)}
-                  className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Hủy buổi học
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500">
-              Buổi học đã ở trạng thái cuối, không cần xử lý thêm.
-            </div>
-          )}
-        </KhoiThongTin>
-        </div>
-      )}
-
-      <ModalNhapLyDo
-        mo={Boolean(lichCanHuy)}
-        tieuDe="Hủy buổi học"
-        moTa={`Nhập lý do hủy buổi học ${lichCanHuy?.maGoi || ""}. Nội dung này sẽ được lưu vào lịch học.`}
-        placeholder="Ví dụ: Gia sư báo bận đột xuất..."
-        nutXacNhan="Xác nhận hủy"
-        dangXuLy={dangXuLy}
-        onDong={() => setLichCanHuy(null)}
-        onXacNhan={xacNhanHuyLich}
-      />
     </aside>
   );
 }

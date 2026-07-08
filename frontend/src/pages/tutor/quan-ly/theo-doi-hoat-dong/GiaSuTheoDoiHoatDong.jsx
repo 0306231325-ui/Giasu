@@ -1,5 +1,4 @@
 import BangDanhGia from "./components/BangDanhGia";
-import BoLocThoiGian from "./components/BoLocThoiGian";
 import CumThongKe from "./components/CumThongKe";
 import KhoiPhanBoDanhGia from "./components/KhoiPhanBoDanhGia";
 import { duLieuRong } from "./constants";
@@ -9,8 +8,8 @@ function GiaSuTheoDoiHoatDong() {
     const {
         boLocDanhGia,
         setBoLocDanhGia,
-        boLocThoiGian,
-        setBoLocThoiGian,
+        ngayDanhGia,
+        setNgayDanhGia,
         dangTai,
         duLieu,
     } = useTheoDoiHoatDong();
@@ -32,10 +31,6 @@ function GiaSuTheoDoiHoatDong() {
                     </p>
                 </div>
 
-                <BoLocThoiGian
-                    value={boLocThoiGian}
-                    onChange={setBoLocThoiGian}
-                />
             </div>
 
             <CumThongKe tongQuan={tongQuan} dangTai={dangTai} />
@@ -44,6 +39,8 @@ function GiaSuTheoDoiHoatDong() {
                 <BangDanhGia
                     boLocDanhGia={boLocDanhGia}
                     setBoLocDanhGia={setBoLocDanhGia}
+                    ngayDanhGia={ngayDanhGia}
+                    setNgayDanhGia={setNgayDanhGia}
                     danhSach={danhSach}
                     dangTai={dangTai}
                 />

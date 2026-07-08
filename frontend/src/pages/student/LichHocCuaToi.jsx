@@ -1,5 +1,5 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import ModalXemTaiLieu from "../../components/ModalXemTaiLieu";
@@ -180,6 +180,7 @@ function NhanTrangThaiThanhToan({ trangThai }) {
 
 function LichHocCuaToi() {
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const { user, loading: authLoading, isAuthenticated } = useAuth();
     const toast = useToast();
     const [manHinh, setManHinh] = useState("goi_hoc");
@@ -412,7 +413,7 @@ function LichHocCuaToi() {
         );
     };
 
-    const moChiTietBuoi = (goiHoc, lichHoc) => {
+    const moChiTietBuoi = useCallback((goiHoc, lichHoc) => {
         setChiTietBuoi({ goiHoc, lichHoc });
         setFormDanhGia({
             so_sao: lichHoc.danhGia?.soSao || 5,
@@ -429,7 +430,22 @@ function LichHocCuaToi() {
             ghi_chu: "",
         });
         setThongBao("");
-    };
+    }, [setThongBao]);
+
+    useEffect(() => {
+        const moLichHocId = searchParams.get("mo_lich_hoc");
+        if (moLichHocId && danhSachGoi.length > 0) {
+            for (const goi of danhSachGoi) {
+                const lichHocFound = (goi.lichHoc || []).find((lh) => lh.id === Number(moLichHocId));
+                if (lichHocFound) {
+                    moChiTietBuoi(goi, lichHocFound);
+                    setGoiDangMo(goi.id);
+                    setSearchParams({}, { replace: true });
+                    break;
+                }
+            }
+        }
+    }, [danhSachGoi, searchParams, setSearchParams, moChiTietBuoi]);
 
     const guiDanhGia = async (event) => {
         event.preventDefault();
@@ -832,11 +848,15 @@ function LichHocCuaToi() {
                                         <form onSubmit={guiXacNhanBuoiHoc} className="mt-4 flex flex-col gap-3 rounded-lg border border-emerald-100 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
                                             <div>
                                                 <p className="text-sm font-bold text-slate-900">Xác nhận đã học xong</p>
-                                                <p className="mt-1 text-xs font-semibold text-slate-500">Buổi học diễn ra bình thường.</p>
+                                                {!chiTietBuoi.lichHoc.xacNhan?.giaSuDaXacNhan ? (
+                                                    <p className="mt-1 text-xs font-semibold text-amber-600">Bạn cần chờ gia sư xác nhận trước.</p>
+                                                ) : (
+                                                    <p className="mt-1 text-xs font-semibold text-slate-500">Buổi học diễn ra bình thường.</p>
+                                                )}
                                             </div>
                                             <button
                                                 type="submit"
-                                                disabled={dangGuiXacNhanBuoi}
+                                                disabled={dangGuiXacNhanBuoi || !chiTietBuoi.lichHoc.xacNhan?.giaSuDaXacNhan}
                                                 className="h-10 shrink-0 rounded-lg bg-emerald-600 px-4 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                                             >
                                                 {dangGuiXacNhanBuoi ? "Đang gửi..." : "Gửi xác nhận"}

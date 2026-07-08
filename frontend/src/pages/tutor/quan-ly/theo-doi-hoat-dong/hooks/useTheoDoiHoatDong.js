@@ -6,7 +6,7 @@ import { duLieuRong } from "../constants";
 function useTheoDoiHoatDong() {
     const toast = useToast();
     const [boLocDanhGia, setBoLocDanhGia] = useState("");
-    const [boLocThoiGian, setBoLocThoiGian] = useState("tat_ca");
+    const [ngayDanhGia, setNgayDanhGia] = useState("");
     const [duLieu, setDuLieu] = useState(duLieuRong);
     const [dangTai, setDangTai] = useState(false);
 
@@ -16,7 +16,7 @@ function useTheoDoiHoatDong() {
         try {
             const response = await api.get("/gia-su/theo-doi-hoat-dong", {
                 params: {
-                    thoi_gian: boLocThoiGian,
+                    ngay_danh_gia: ngayDanhGia || undefined,
                     so_sao: boLocDanhGia || undefined,
                 },
             });
@@ -31,7 +31,7 @@ function useTheoDoiHoatDong() {
         } finally {
             setDangTai(false);
         }
-    }, [boLocDanhGia, boLocThoiGian, toast]);
+    }, [boLocDanhGia, ngayDanhGia, toast]);
 
     useEffect(() => {
         const boDemTaiLanDau = setTimeout(() => {
@@ -53,8 +53,8 @@ function useTheoDoiHoatDong() {
     return {
         boLocDanhGia,
         setBoLocDanhGia,
-        boLocThoiGian,
-        setBoLocThoiGian,
+        ngayDanhGia,
+        setNgayDanhGia,
         dangTai,
         duLieu,
     };
