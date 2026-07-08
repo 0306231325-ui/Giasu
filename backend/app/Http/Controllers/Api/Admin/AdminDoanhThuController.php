@@ -107,7 +107,7 @@ class AdminDoanhThuController extends Controller
                 'goiHoc.hocVien:id,ho_ten,email,sdt',
                 'goiHoc.giasu:id,user_id',
                 'goiHoc.giasu.user:id,ho_ten,email,sdt',
-                'goiHoc.monHoc:id,ten_mon,lop',
+                'goiHoc.monHoc:id,ten_mon,lop,cap_hoc_id',
                 'goiHoc.loaiGoi:id,ten_loai_goi',
             ])
             ->orderByDesc(DB::raw('COALESCE(ngay_thanhtoan, created_at)'))

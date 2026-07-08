@@ -40,7 +40,7 @@ class GiaSuYeuCauDatGoiController extends DatLichBaseController
         $danhSach = GoiHoc::query()
             ->with([
                 'hocVien:id,ho_ten,email,sdt',
-                'monHoc:id,ten_mon,lop',
+                'monHoc:id,ten_mon,lop,cap_hoc_id',
                 'lichHocs' => fn ($query) => $query->orderBy('ngay_hoc')->orderBy('gio_batdau'),
                 'phanHoiMoiNhat',
             ])
@@ -89,7 +89,7 @@ class GiaSuYeuCauDatGoiController extends DatLichBaseController
         ]);
 
         $goiHoc = GoiHoc::query()
-            ->with(['hocVien:id,ho_ten', 'monHoc:id,ten_mon,lop', 'giasu.user:id,ho_ten', 'lichHocs'])
+            ->with(['hocVien:id,ho_ten', 'monHoc:id,ten_mon,lop,cap_hoc_id', 'giasu.user:id,ho_ten', 'lichHocs'])
             ->where('giasu_id', $giaSu->id)
             ->where('trang_thai', 'cho_xacnhan')
             ->find($goiHocId);
@@ -202,7 +202,7 @@ class GiaSuYeuCauDatGoiController extends DatLichBaseController
                 : ($request->user()->ho_ten . " đồng ý nhận yêu cầu đặt gói GH" . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . ".")
         );
 
-        $goiHocMoi = $goiHoc->fresh(['hocVien:id,ho_ten,email,sdt', 'monHoc:id,ten_mon,lop', 'lichHocs', 'phanHoiMoiNhat']);
+        $goiHocMoi = $goiHoc->fresh(['hocVien:id,ho_ten,email,sdt', 'monHoc:id,ten_mon,lop,cap_hoc_id', 'lichHocs', 'phanHoiMoiNhat']);
 
         return response()->json([
             'success' => true,

@@ -38,7 +38,7 @@ class AdminDatGoiController extends DatLichBaseController
         $danhSach = GoiHoc::query()
             ->with([
                 'hocVien:id,ho_ten,email,sdt',
-                'monHoc:id,ten_mon,lop',
+                'monHoc:id,ten_mon,lop,cap_hoc_id',
                 'giasu.user:id,ho_ten,email,sdt',
                 'lichHocs' => fn ($query) => $query->orderBy('ngay_hoc')->orderBy('gio_batdau'),
                 'phanHoiMoiNhat',
@@ -64,7 +64,7 @@ class AdminDatGoiController extends DatLichBaseController
         }
 
         $goiHoc = GoiHoc::query()
-            ->with(['hocVien:id,ho_ten', 'monHoc:id,ten_mon,lop', 'giasu.user:id,ho_ten'])
+            ->with(['hocVien:id,ho_ten', 'monHoc:id,ten_mon,lop,cap_hoc_id', 'giasu.user:id,ho_ten'])
             ->where('trang_thai', 'cho_xacnhan')
             ->find($goiHocId);
 
@@ -123,7 +123,7 @@ class AdminDatGoiController extends DatLichBaseController
         }
 
         $goiHoc = GoiHoc::query()
-            ->with(['hocVien:id,ho_ten', 'monHoc:id,ten_mon,lop', 'giasu.user:id,ho_ten', 'lichHocs', 'phanHoiMoiNhat'])
+            ->with(['hocVien:id,ho_ten', 'monHoc:id,ten_mon,lop,cap_hoc_id', 'giasu.user:id,ho_ten', 'lichHocs', 'phanHoiMoiNhat'])
             ->where('trang_thai', 'cho_xacnhan')
             ->find($goiHocId);
 
@@ -183,7 +183,7 @@ class AdminDatGoiController extends DatLichBaseController
         }
 
         $goiHoc = GoiHoc::query()
-            ->with(['hocVien:id,ho_ten', 'monHoc:id,ten_mon,lop', 'giasu.user:id,ho_ten', 'lichHocs', 'phanHoiMoiNhat', 'thanhToanMoiNhat'])
+            ->with(['hocVien:id,ho_ten', 'monHoc:id,ten_mon,lop,cap_hoc_id', 'giasu.user:id,ho_ten', 'lichHocs', 'phanHoiMoiNhat', 'thanhToanMoiNhat'])
             ->where('trang_thai', 'cho_thanhtoan')
             ->find($goiHocId);
 

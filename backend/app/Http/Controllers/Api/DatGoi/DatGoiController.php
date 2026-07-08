@@ -269,7 +269,7 @@ class DatGoiController extends DatLichBaseController
                     'da_doc' => false,
                 ]));
 
-            return $goiHoc->load(['monHoc:id,ten_mon,lop', 'giasu.user:id,ho_ten', 'lichHocs']);
+            return $goiHoc->load(['monHoc:id,ten_mon,lop,cap_hoc_id', 'giasu.user:id,ho_ten', 'lichHocs']);
         });
 
         NhatKyHeThongService::ghi(
@@ -297,7 +297,7 @@ class DatGoiController extends DatLichBaseController
         }
 
         $goiHoc = GoiHoc::query()
-            ->with(['hocVien:id,ho_ten', 'giasu.user:id,ho_ten', 'monHoc:id,ten_mon,lop', 'lichHocs', 'thanhToanMoiNhat'])
+            ->with(['hocVien:id,ho_ten', 'giasu.user:id,ho_ten', 'monHoc:id,ten_mon,lop,cap_hoc_id', 'lichHocs', 'thanhToanMoiNhat'])
             ->where('hocvien_id', $user->id)
             ->where('trang_thai', 'cho_xacnhan')
             ->find($goiHocId);
@@ -339,7 +339,7 @@ class DatGoiController extends DatLichBaseController
                 ]);
             }
 
-            return $goiHoc->fresh(['hocVien:id,ho_ten', 'giasu.user:id,ho_ten', 'monHoc:id,ten_mon,lop', 'lichHocs', 'thanhToanMoiNhat']);
+            return $goiHoc->fresh(['hocVien:id,ho_ten', 'giasu.user:id,ho_ten', 'monHoc:id,ten_mon,lop,cap_hoc_id', 'lichHocs', 'thanhToanMoiNhat']);
         });
 
         NhatKyHeThongService::ghi(

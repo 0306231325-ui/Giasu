@@ -31,7 +31,7 @@ export function getRedirectPath(vaiTro) {
     case 'admin':
       return '/admin';
     case 'giasu':
-      return '/home';
+      return '/gia-su/quan-ly';
     case 'hocvien':
       return '/home';
     default:

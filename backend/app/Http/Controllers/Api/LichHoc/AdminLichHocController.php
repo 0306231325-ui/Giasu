@@ -45,7 +45,7 @@ class AdminLichHocController extends DatLichBaseController
             ->with([
                 'goiHoc:id,hocvien_id,giasu_id,monhoc_id,loai_goi_id,ngay_batdau,ngay_ketthuc,so_buoi,hoc_dinhky,kieu_goi,tong_tien,trang_thai',
                 'goiHoc.hocVien:id,ho_ten,email,sdt',
-                'goiHoc.monHoc:id,ten_mon,lop',
+                'goiHoc.monHoc:id,ten_mon,lop,cap_hoc_id',
                 'goiHoc.loaiGoi:id,ten_loai_goi,so_thang',
                 'giasu:id,user_id',
                 'giasu.user:id,ho_ten,email,sdt',
@@ -505,7 +505,7 @@ class AdminLichHocController extends DatLichBaseController
         return [
             'lichHocGoc',
             'lichHocGoc.goiHoc.hocVien:id,ho_ten,email,sdt',
-            'lichHocGoc.goiHoc.monHoc:id,ten_mon,lop',
+            'lichHocGoc.goiHoc.monHoc:id,ten_mon,lop,cap_hoc_id',
             'giasu:id,user_id',
             'giasu.user:id,ho_ten,email,sdt',
             'nguoiYeuCau:id,ho_ten,email,sdt',

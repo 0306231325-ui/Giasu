@@ -39,7 +39,7 @@ class HocVienLichHocController extends DatLichBaseController
 
         $danhSach = GoiHoc::query()
             ->with([
-                'monHoc:id,ten_mon,lop',
+                'monHoc:id,ten_mon,lop,cap_hoc_id',
                 'giasu.user:id,ho_ten',
                 'lichHocs' => fn ($query) => $query
                     ->with(['danhGia', 'yeuCauHocBus' => fn ($yeuCau) => $yeuCau->latest()])

@@ -14,6 +14,9 @@ export default function useBangCap({
     const [loi, setLoi] = useState({});
     const [dangThem, setDangThem] = useState(false);
     const [idDangXoa, setIdDangXoa] = useState(null);
+    const [bangCapDangXoa, setBangCapDangXoa] = useState(null);
+    const [taiLieuDangXem, setTaiLieuDangXem] = useState(null);
+    const [chiTietBangCap, setChiTietBangCap] = useState(null);
 
     const taiDanhSach = useCallback(async () => {
         const phanHoi = await api.get("/gia-su/ho-so/bang-cap");
@@ -71,18 +74,23 @@ export default function useBangCap({
             setDangThem(false);
         }
     };
-    const xem = async (bangCap) => {
-        try {
-            const phanHoi = await api.get(bangCap.url_xem, { responseType: "blob" });
-            const urlTam = URL.createObjectURL(phanHoi.data);
-            window.open(urlTam, "_blank", "noopener,noreferrer");
-            window.setTimeout(() => URL.revokeObjectURL(urlTam), 60000);
-        } catch {
-            baoLoi("Không thể mở file tài liệu.");
-        }
+    const xem = (bangCap) => {
+        setTaiLieuDangXem({
+            tieuDe: bangCap.ten_bang || "Tài liệu minh chứng",
+            tenFile: bangCap.ten_file || bangCap.ten_bang || "tai-lieu",
+            urlXem: bangCap.url_xem,
+        });
     };
-    const xoa = async (bangCap) => {
-        if (!window.confirm(`Xóa tài liệu "${bangCap.ten_bang}"?`)) return;
+    const dongXem = () => setTaiLieuDangXem(null);
+    const xemChiTiet = (bangCap) => setChiTietBangCap(bangCap);
+    const dongChiTiet = () => setChiTietBangCap(null);
+    const xoa = (bangCap) => {
+        setBangCapDangXoa(bangCap);
+    };
+    const xacNhanXoa = async () => {
+        if (!bangCapDangXoa) return;
+        const bangCap = bangCapDangXoa;
+        setBangCapDangXoa(null);
         setIdDangXoa(bangCap.id);
         try {
             const phanHoi = await api.delete(`/gia-su/ho-so/bang-cap/${bangCap.id}`);
@@ -94,6 +102,7 @@ export default function useBangCap({
             setIdDangXoa(null);
         }
     };
+    const huyXoa = () => setBangCapDangXoa(null);
 
-    return { danhSach, danhMucTrinhDo, dangTai, hienForm, form, loi, dangThem, idDangXoa, setHienForm, thayDoi, dongForm, them, xem, xoa, taiDanhSach };
+    return { danhSach, danhMucTrinhDo, dangTai, hienForm, form, loi, dangThem, idDangXoa, bangCapDangXoa, taiLieuDangXem, chiTietBangCap, setHienForm, thayDoi, dongForm, them, xem, dongXem, xemChiTiet, dongChiTiet, xoa, xacNhanXoa, huyXoa, taiDanhSach };
 }

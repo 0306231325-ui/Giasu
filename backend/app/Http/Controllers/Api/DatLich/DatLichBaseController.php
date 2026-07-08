@@ -9,6 +9,7 @@ use App\Models\GoiHoc;
 use App\Models\DanhGia;
 use App\Models\LichHoc;
 use App\Models\LoaiGoi;
+use App\Models\MonHoc;
 use App\Models\PhanHoi;
 use App\Models\ThanhToan;
 use App\Models\ThongBao;
@@ -373,13 +374,13 @@ class DatLichBaseController extends Controller
             'id' => $goiHoc->id,
             'ma' => 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT),
             'trangThai' => $trangThai,
-            'hocVien' => $goiHoc->hocVien?->ho_ten ?? 'Hoc vien',
-            'hocVienEmail' => $goiHoc->hocVien?->email ?? 'Chua cap nhat',
-            'hocVienSdt' => $goiHoc->hocVien?->sdt ?? 'Chua cap nhat',
-            'giaSu' => $goiHoc->giasu?->user?->ho_ten ?? 'Gia su',
-            'giaSuEmail' => $goiHoc->giasu?->user?->email ?? 'Chua cap nhat',
-            'mon' => $goiHoc->monHoc?->ten_mon ?? 'Mon hoc',
-            'capHoc' => $goiHoc->monHoc?->lop ?? 'Chua cap nhat',
+            'hocVien' => $goiHoc->hocVien?->ho_ten ?? 'Học viên',
+            'hocVienEmail' => $goiHoc->hocVien?->email ?? 'Chưa cập nhật',
+            'hocVienSdt' => $goiHoc->hocVien?->sdt ?? 'Chưa cập nhật',
+            'giaSu' => $goiHoc->giasu?->user?->ho_ten ?? 'Gia sư',
+            'giaSuEmail' => $goiHoc->giasu?->user?->email ?? 'Chưa cập nhật',
+            'mon' => $goiHoc->monHoc?->ten_mon ?? 'Môn học',
+            'capHoc' => $this->tenCapHoacLop($goiHoc->monHoc),
             'loaiGoi' => $this->tenKieuGoiHoc($goiHoc),
             'kieuGoi' => $this->kieuGoiHoc($goiHoc),
             'hocDinhKy' => $this->laGoiDinhKy($goiHoc),
@@ -417,13 +418,13 @@ class DatLichBaseController extends Controller
             'maYeuCau' => 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT),
             'guiLuc' => $goiHoc->created_at?->format('d/m/Y H:i') ?? '',
             'trangThai' => $trangThai,
-            'hocVien' => $goiHoc->hocVien?->ho_ten ?? 'Hoc vien',
-            'mon' => $goiHoc->monHoc?->ten_mon ?? 'Mon hoc',
-            'capHoc' => $goiHoc->monHoc?->lop ?? 'Chua cap nhat',
+            'hocVien' => $goiHoc->hocVien?->ho_ten ?? 'Học viên',
+            'mon' => $goiHoc->monHoc?->ten_mon ?? 'Môn học',
+            'capHoc' => $this->tenCapHoacLop($goiHoc->monHoc),
             'lop' => match ($this->kieuGoiHoc($goiHoc)) {
-                'dinh_ky' => 'Hoc dinh ky',
-                'hoc_thu' => 'Hoc thu',
-                default => 'Hoc khong dinh ky',
+                'dinh_ky' => 'Học định kỳ',
+                'hoc_thu' => 'Học thử',
+                default => 'Học không định kỳ',
             },
             'soBuoi' => $goiHoc->so_buoi,
             'gioMoiBuoi' => $lichDau ? round(Carbon::parse($lichDau->gio_batdau)->diffInMinutes(Carbon::parse($lichDau->gio_ketthuc)) / 60, 1) : 0,
@@ -465,17 +466,17 @@ class DatLichBaseController extends Controller
             'ketThuc' => substr((string) $lichHoc->gio_ketthuc, 0, 5),
             'thu' => $this->tenThu($ngayHoc->isoWeekday()),
             'ngayHoc' => $ngayHoc->format('d/m/Y'),
-            'loaiBuoi' => $lichHoc->loai_buoi === 'hoc_bu' ? 'Hoc bu' : 'Hoc thuong',
+            'loaiBuoi' => $lichHoc->loai_buoi === 'hoc_bu' ? 'Học bù' : 'Học thường',
             'kieuGoi' => $goiHoc ? $this->kieuGoiHoc($goiHoc) : null,
             'loaiGoi' => $goiHoc ? $this->tenKieuGoiHoc($goiHoc) : null,
-            'mon' => $goiHoc?->monHoc?->ten_mon ?? 'Mon hoc',
-            'capHoc' => $goiHoc?->monHoc?->lop ?? 'Chua cap nhat',
-            'hocVien' => $goiHoc?->hocVien?->ho_ten ?? 'Hoc vien',
+            'mon' => $goiHoc?->monHoc?->ten_mon ?? 'Môn học',
+            'capHoc' => $this->tenCapHoacLop($goiHoc?->monHoc),
+            'hocVien' => $goiHoc?->hocVien?->ho_ten ?? 'Học viên',
             'hinhThuc' => $lichHoc->hinh_thuc_hoc === 'online' ? 'Trực tuyến' : 'Trực tiếp',
             'diaDiem' => $lichHoc->dia_chi_hoc ?: ($lichHoc->hinh_thuc_hoc === 'online' ? 'Online' : 'Chưa cập nhật'),
             'linkHocOnline' => $lichHoc->link_hoc_online,
             'trangThai' => $trangThai,
-            'ghiChu' => $lichHoc->ghi_chu ?: 'Khong co ghi chu.',
+            'ghiChu' => $lichHoc->ghi_chu ?: 'Không có ghi chú.',
             'daToiGioBatDau' => $daToiGioBatDau,
             'daQuaGioKetThuc' => $daQuaGioKetThuc,
             'coTheXacNhanHoanThanh' => $daDenNgayHoc
@@ -492,7 +493,7 @@ class DatLichBaseController extends Controller
             ->with([
                 'goiHoc:id,hocvien_id,giasu_id,monhoc_id,loai_goi_id,ngay_batdau,ngay_ketthuc,so_buoi,hoc_dinhky,kieu_goi,tong_tien,trang_thai',
                 'goiHoc.hocVien:id,ho_ten,email,sdt',
-                'goiHoc.monHoc:id,ten_mon,lop',
+                'goiHoc.monHoc:id,ten_mon,lop,cap_hoc_id',
                 'goiHoc.loaiGoi:id,ten_loai_goi,so_thang',
                 'giasu:id,user_id',
                 'giasu.user:id,ho_ten,email,sdt',
@@ -643,6 +644,19 @@ class DatLichBaseController extends Controller
         }
 
         return str_starts_with(mb_strtolower($lop, 'UTF-8'), 'lớp') ? $lop : 'Lớp ' . $lop;
+    }
+
+    protected function tenCapHoacLop(?MonHoc $monHoc): string
+    {
+        if (! $monHoc) {
+            return 'Chưa cập nhật';
+        }
+
+        if (filled($monHoc->lop)) {
+            return $this->dinhDangLop($monHoc->lop);
+        }
+
+        return $monHoc->capHoc?->ten ?? 'Chưa cập nhật';
     }
 
     protected function dinhDangPhanHoi(PhanHoi $phanHoi): array

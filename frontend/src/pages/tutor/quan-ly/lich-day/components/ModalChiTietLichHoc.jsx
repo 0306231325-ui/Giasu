@@ -162,7 +162,7 @@ function ModalChiTietLichHoc({
                     </div>
                 )}
 
-                {!laHocThu && (
+                {!laHocThu && !daHoanThanh && !daHuy && (
                 <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>

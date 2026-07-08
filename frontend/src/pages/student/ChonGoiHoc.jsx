@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import api from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
@@ -1080,6 +1080,11 @@ function ChonGoiHoc() {
                                     <option value="online">Online</option>
                                     <option value="offline">Tại nhà</option>
                                 </select>
+                                {form.hinh_thuc_hoc === "online" && (
+                                    <p className="mt-2 text-xs font-medium text-blue-400">
+                                        * Link lớp học sẽ được gia sư cập nhật trước khi bắt đầu buổi học.
+                                    </p>
+                                )}
                             </label>
                         </div>
 

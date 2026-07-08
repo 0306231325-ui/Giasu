@@ -33,7 +33,7 @@ class HocVienThanhToanController extends Controller
                 'goiHoc:id,hocvien_id,giasu_id,monhoc_id,loai_goi_id,tong_tien,trang_thai',
                 'goiHoc.giasu:id,user_id',
                 'goiHoc.giasu.user:id,ho_ten',
-                'goiHoc.monHoc:id,ten_mon,lop',
+                'goiHoc.monHoc:id,ten_mon,lop,cap_hoc_id',
                 'goiHoc.loaiGoi:id,ten_loai_goi',
             ])
             ->whereHas('goiHoc', fn ($query) => $query->where('hocvien_id', $user->id))
@@ -73,7 +73,7 @@ class HocVienThanhToanController extends Controller
         ]);
 
         $goiHoc = GoiHoc::query()
-            ->with(['hocVien:id,ho_ten', 'giasu.user:id,ho_ten', 'monHoc:id,ten_mon,lop', 'lichHocs', 'thanhToanMoiNhat'])
+            ->with(['hocVien:id,ho_ten', 'giasu.user:id,ho_ten', 'monHoc:id,ten_mon,lop,cap_hoc_id', 'lichHocs', 'thanhToanMoiNhat'])
             ->where('hocvien_id', $user->id)
             ->where('trang_thai', 'cho_thanhtoan')
             ->find($goiHocId);
@@ -129,7 +129,7 @@ class HocVienThanhToanController extends Controller
                     'da_doc' => false,
                 ]));
 
-            return $goiHoc->fresh(['monHoc:id,ten_mon,lop', 'giasu.user:id,ho_ten', 'lichHocs', 'thanhToanMoiNhat']);
+            return $goiHoc->fresh(['monHoc:id,ten_mon,lop,cap_hoc_id', 'giasu.user:id,ho_ten', 'lichHocs', 'thanhToanMoiNhat']);
         });
 
         return response()->json([

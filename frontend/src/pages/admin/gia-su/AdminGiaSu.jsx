@@ -11,7 +11,7 @@ import YeuCauChuyenMon from "./YeuCauChuyenMon";
 function AdminGiaSu() {
     const { demCanXuLy, taiDemCanXuLy } = useOutletContext() ?? {};
     const [searchParams, setSearchParams] = useSearchParams();
-    const tab = searchParams.get("tab") || "xet_duyet";
+    const tab = searchParams.get("tab") || "danh_sach";
     const [tuKhoa, setTuKhoa] = useState("");
     const [danhSachChoDuyet, setDanhSachChoDuyet] = useState([]);
     const [hoSoDangChon, setHoSoDangChon] = useState(null);
@@ -82,7 +82,7 @@ function AdminGiaSu() {
     }, [hienThongBao, hoSoDangChon?.id]);
 
     const doiTab = (tabMoi) => {
-        if (tabMoi === "xet_duyet") {
+        if (tabMoi === "danh_sach") {
             setSearchParams({});
             return;
         }
@@ -183,15 +183,15 @@ function AdminGiaSu() {
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex gap-1 overflow-x-auto rounded-xl border border-white/10 bg-white/5 p-1">
                     <Tab
+                        active={tab === "danh_sach"}
+                        onClick={() => doiTab("danh_sach")}
+                        label="Danh sách gia sư"
+                    />
+                    <Tab
                         active={tab === "xet_duyet"}
                         onClick={() => doiTab("xet_duyet")}
                         label="Xét duyệt hồ sơ"
                         badge={soHoSoChoDuyet}
-                    />
-                    <Tab
-                        active={tab === "danh_sach"}
-                        onClick={() => doiTab("danh_sach")}
-                        label="Danh sách gia sư"
                     />
                     <Tab
                         active={tab === "chuyen_mon"}

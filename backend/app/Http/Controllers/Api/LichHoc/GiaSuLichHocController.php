@@ -40,7 +40,7 @@ class GiaSuLichHocController extends DatLichBaseController
         $danhSach = LichHoc::query()
             ->with([
                 'goiHoc.hocVien:id,ho_ten,email,sdt',
-                'goiHoc.monHoc:id,ten_mon,lop',
+                'goiHoc.monHoc:id,ten_mon,lop,cap_hoc_id',
                 'goiHoc.phanHoiMoiNhat',
             ])
             ->where('giasu_id', $giaSu->id)
@@ -79,7 +79,7 @@ class GiaSuLichHocController extends DatLichBaseController
         $lichHoc = LichHoc::query()
             ->with([
                 'goiHoc.hocVien:id,ho_ten',
-                'goiHoc.monHoc:id,ten_mon,lop',
+                'goiHoc.monHoc:id,ten_mon,lop,cap_hoc_id',
                 'giasu.user:id,ho_ten',
             ])
             ->where('giasu_id', $giaSu->id)
@@ -122,7 +122,7 @@ class GiaSuLichHocController extends DatLichBaseController
             'message' => 'Đã cập nhật link lớp học online.',
             'data' => $this->dinhDangLichDayChoGiaSu($lichHoc->fresh([
                 'goiHoc.hocVien:id,ho_ten',
-                'goiHoc.monHoc:id,ten_mon,lop',
+                'goiHoc.monHoc:id,ten_mon,lop,cap_hoc_id',
                 'giasu.user:id,ho_ten',
             ])),
         ]);
@@ -155,7 +155,7 @@ class GiaSuLichHocController extends DatLichBaseController
         $lichHoc = LichHoc::query()
             ->with([
                 'goiHoc.hocVien:id,ho_ten',
-                'goiHoc.monHoc:id,ten_mon,lop',
+                'goiHoc.monHoc:id,ten_mon,lop,cap_hoc_id',
                 'giasu.user:id,ho_ten',
             ])
             ->where('giasu_id', $giaSuId)
@@ -237,7 +237,7 @@ class GiaSuLichHocController extends DatLichBaseController
                 : 'Da ghi nhan xac nhan cua gia su. Admin se xu ly sau khi hoc vien cung xac nhan.',
             'data' => $this->dinhDangLichDayChoGiaSu($lichHoc->fresh([
                 'goiHoc.hocVien:id,ho_ten',
-                'goiHoc.monHoc:id,ten_mon,lop',
+                'goiHoc.monHoc:id,ten_mon,lop,cap_hoc_id',
                 'giasu.user:id,ho_ten',
             ])),
         ]);
@@ -335,7 +335,7 @@ class GiaSuLichHocController extends DatLichBaseController
         return [
             'lichHocGoc',
             'lichHocGoc.goiHoc.hocVien:id,ho_ten,email,sdt',
-            'lichHocGoc.goiHoc.monHoc:id,ten_mon,lop',
+            'lichHocGoc.goiHoc.monHoc:id,ten_mon,lop,cap_hoc_id',
             'giasu:id,user_id',
             'giasu.user:id,ho_ten,email,sdt',
             'nguoiYeuCau:id,ho_ten,email,sdt',

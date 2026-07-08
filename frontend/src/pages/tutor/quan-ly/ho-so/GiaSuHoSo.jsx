@@ -10,6 +10,8 @@ import useAvatarGiaSu from "./hooks/useAvatarGiaSu";
 import useChuyenMon from "./hooks/useChuyenMon";
 import useMonDay from "./hooks/useMonDay";
 import useThongTinCaNhan from "./hooks/useThongTinCaNhan";
+import ModalXemTaiLieu from "../../../../components/ModalXemTaiLieu";
+import ModalXacNhan from "../../../../components/ModalXacNhan";
 
 function GiaSuHoSo() {
     const { user, updateUser } = useAuth();
@@ -121,6 +123,35 @@ function GiaSuHoSo() {
                     </div>
                 </section>
             </div>
+
+            {bangCap.taiLieuDangXem && (
+                <ModalXemTaiLieu
+                    taiLieu={bangCap.taiLieuDangXem}
+                    onDong={bangCap.dongXem}
+                />
+            )}
+
+            <ModalXacNhan
+                mo={Boolean(bangCap.bangCapDangXoa)}
+                tieuDe="Xóa tài liệu"
+                moTa={`Bạn có chắc muốn xóa tài liệu "${bangCap.bangCapDangXoa?.ten_bang}"? Thao tác này không thể hoàn tác.`}
+                nutXacNhan="Xóa"
+                bienThe="danger"
+                dangXuLy={Boolean(bangCap.idDangXoa)}
+                onDong={bangCap.huyXoa}
+                onXacNhan={bangCap.xacNhanXoa}
+            />
+
+            <ModalXacNhan
+                mo={Boolean(monDay.monDangXoa)}
+                tieuDe="Xóa môn dạy"
+                moTa={`Bạn có chắc muốn xóa môn "${monDay.monDangXoa?.tenMon}" khỏi hồ sơ? Thao tác này không thể hoàn tác.`}
+                nutXacNhan="Xóa"
+                bienThe="danger"
+                dangXuLy={Boolean(monDay.idDangXoa)}
+                onDong={monDay.huyXoaMon}
+                onXacNhan={monDay.xacNhanXoaMon}
+            />
         </div>
     );
 }

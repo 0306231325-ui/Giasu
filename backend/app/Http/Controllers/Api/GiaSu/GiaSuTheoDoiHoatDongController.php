@@ -42,7 +42,7 @@ class GiaSuTheoDoiHoatDongController extends Controller
                 'lichHoc:id,goihoc_id,giasu_id,ngay_hoc,gio_batdau,gio_ketthuc,trang_thai',
                 'lichHoc.goiHoc:id,hocvien_id,monhoc_id',
                 'lichHoc.goiHoc.hocVien:id,ho_ten,email',
-                'lichHoc.goiHoc.monHoc:id,ten_mon,lop',
+                'lichHoc.goiHoc.monHoc:id,ten_mon,lop,cap_hoc_id',
             ])
             ->whereHas('lichHoc', fn ($lichHoc) => $lichHoc->where('giasu_id', $user->giasu->id));
 

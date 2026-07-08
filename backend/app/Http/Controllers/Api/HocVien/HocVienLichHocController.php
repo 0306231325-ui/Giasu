@@ -52,7 +52,7 @@ class HocVienLichHocController extends Controller
 
         $danhSach = GoiHoc::query()
             ->with([
-                'monHoc:id,ten_mon,lop',
+                'monHoc:id,ten_mon,lop,cap_hoc_id',
                 'loaiGoi:id,so_thang',
                 'giasu.user:id,ho_ten',
                 'lichHocs' => fn ($query) => $query

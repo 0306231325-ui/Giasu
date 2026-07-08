@@ -33,11 +33,18 @@ function BoLocThuNhap({ boLoc, cauHinh, giaTriBoLoc, doiBoLoc, setGiaTriBoLoc })
                     onChange={(event) => setGiaTriBoLoc(event.target.value)}
                     min={boLoc === "nam" ? "2020" : undefined}
                     max={boLoc === "nam" ? "2030" : undefined}
-                    className="h-11 w-full rounded-xl border border-white/10 bg-[#101a39] px-4 pr-11 text-sm font-semibold text-white outline-none transition [color-scheme:dark] focus:border-blue-400 sm:w-48 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-y-0 [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-11 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
+                    className={[
+                        "h-11 w-full rounded-xl border border-white/10 bg-[#101a39] text-sm font-semibold text-white outline-none transition [color-scheme:dark] focus:border-blue-400 sm:w-48",
+                        boLoc === "nam"
+                            ? "px-4"
+                            : "px-4 pr-11 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-y-0 [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-11 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0",
+                    ].join(" ")}
                 />
-                <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-white">
-                    <BieuTuong ten="calendar" />
-                </span>
+                {boLoc !== "nam" && (
+                    <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-white">
+                        <BieuTuong ten="calendar" />
+                    </span>
+                )}
             </label>
         </div>
     );

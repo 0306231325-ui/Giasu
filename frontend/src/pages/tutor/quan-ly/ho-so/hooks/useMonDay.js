@@ -14,6 +14,7 @@ export default function useMonDay({
     const [capHocIdsDaChon, setCapHocIdsDaChon] = useState([]);
     const [dangThem, setDangThem] = useState(false);
     const [idDangXoa, setIdDangXoa] = useState(null);
+    const [monDangXoa, setMonDangXoa] = useState(null);
     const [tuKhoa, setTuKhoa] = useState("");
     const [locCapHoc, setLocCapHoc] = useState("");
     const [locTrangThai, setLocTrangThai] = useState("");
@@ -171,8 +172,13 @@ export default function useMonDay({
             setDangThem(false);
         }
     };
-    const xoa = async (mon) => {
-        if (!window.confirm(`Xóa môn "${mon.tenMon}" khỏi hồ sơ?`)) return;
+    const xoa = (mon) => {
+        setMonDangXoa(mon);
+    };
+    const xacNhanXoaMon = async () => {
+        if (!monDangXoa) return;
+        const mon = monDangXoa;
+        setMonDangXoa(null);
         setIdDangXoa(mon.id);
         try {
             const phanHoi = await api.delete(`/gia-su/ho-so/mon-day/${mon.id}`);
@@ -184,14 +190,15 @@ export default function useMonDay({
             setIdDangXoa(null);
         }
     };
+    const huyXoaMon = () => setMonDangXoa(null);
 
     return {
         danhSach, coTheThem, capHocs, daLoc, dangTai, hienForm, idsDaChon,
         capHocIdsDaChon, monHocTheoCapDaChon, capHocIdsCoMonDeThem,
         giaDuKienDaChon,
         loi,
-        dangThem, idDangXoa, tuKhoa, locCapHoc, locTrangThai,
+        dangThem, idDangXoa, monDangXoa, tuKhoa, locCapHoc, locTrangThai,
         setTuKhoa, setLocCapHoc, setLocTrangThai, setHienForm,
-        chonCapHoc, chonMon, dongForm, them, xoa, taiDanhSach,
+        chonCapHoc, chonMon, dongForm, them, xoa, xacNhanXoaMon, huyXoaMon, taiDanhSach,
     };
 }
