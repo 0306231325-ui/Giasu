@@ -5,19 +5,19 @@ export const danhSachYeuCauMau = [];
 export const trangThaiLichHoc = {
     sap_dien_ra: {
         nhan: "Sắp diễn ra",
-        lop: "bg-blue-400/10 text-blue-200",
+        lop: "bg-white/20 text-white",
     },
     cho_xac_nhan: {
         nhan: "Chờ xác nhận",
-        lop: "bg-amber-400/10 text-amber-200",
+        lop: "bg-amber-400 text-amber-950 font-extrabold",
     },
     hoan_thanh: {
         nhan: "Hoàn thành",
-        lop: "bg-emerald-400/10 text-emerald-200",
+        lop: "bg-emerald-400 text-emerald-950 font-extrabold",
     },
     da_huy: {
         nhan: "Đã hủy",
-        lop: "bg-red-400/10 text-red-200",
+        lop: "bg-red-400/80 text-white",
     },
 };
 

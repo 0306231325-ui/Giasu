@@ -77,7 +77,7 @@ function AdminLayout() {
         </div>
       </aside>
 
-      {/* Content */}
+
       <div className="flex-1 min-w-0">
         <header className="h-16 flex items-center justify-between gap-4 px-6 border-b border-white/10 bg-[#0a0f24]">
           <div className="text-sm text-white/70">

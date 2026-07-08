@@ -1,12 +1,12 @@
 export const BO_LOC_TRANG_THAI = [
+    { value: "danh_sach_goi_hoc", label: "Danh sách gói học" },
     { value: "cho_xu_ly", label: "Chờ xử lý" },
     { value: "cho_thanh_toan", label: "Chờ thanh toán" },
     { value: "xac_nhan_thanh_toan", label: "Xác nhận thanh toán" },
-    { value: "danh_sach_goi_hoc", label: "Danh sách gói học" },
     { value: "da_huy", label: "Đã huỷ" },
 ];
 
-export const TRANG_THAI_MAC_DINH = "cho_xu_ly";
+export const TRANG_THAI_MAC_DINH = "danh_sach_goi_hoc";
 
 export const TRANG_THAI_GOI = {
     cho_xu_ly: {

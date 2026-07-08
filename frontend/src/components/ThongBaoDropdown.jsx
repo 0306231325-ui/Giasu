@@ -43,6 +43,20 @@ function ThongBaoDropdown({
     }, [taiThongBao]);
 
     useEffect(() => {
+        const langNgheLamMoi = () => {
+            taiThongBao();
+        };
+
+        window.addEventListener("giasu:refresh", langNgheLamMoi);
+        window.addEventListener("admin:refresh", langNgheLamMoi);
+
+        return () => {
+            window.removeEventListener("giasu:refresh", langNgheLamMoi);
+            window.removeEventListener("admin:refresh", langNgheLamMoi);
+        };
+    }, [taiThongBao]);
+
+    useEffect(() => {
         const dongKhiBamNgoai = (event) => {
             if (
                 hopThongBaoRef.current &&
