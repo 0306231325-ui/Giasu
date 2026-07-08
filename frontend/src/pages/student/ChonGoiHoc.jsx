@@ -980,7 +980,7 @@ function ChonGoiHoc() {
             console.error("Không thể gửi yêu cầu đặt lịch:", error);
             setThongBao(
                 error.response?.data?.message
-                    || "Không thể gửi yêu cầu đặt lịch. Vui lòng kiểm tra lại thông tin.",
+                || "Không thể gửi yêu cầu đặt lịch. Vui lòng kiểm tra lại thông tin.",
             );
         } finally {
             setDangGui(false);
@@ -1015,520 +1015,520 @@ function ChonGoiHoc() {
         <>
             <ToastThongBao message={thongBao} type={loaiThongBao} onClose={() => setThongBao("")} />
             <div className="min-h-screen bg-[#07122f] text-white">
-            <section className="border-b border-white/10 bg-[#09173a]">
-                <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-8 lg:flex-row lg:items-end lg:justify-between">
-                    <div>
-                        <Link to={`/gia-su/${giaSu.id}`} className="text-sm font-semibold text-blue-300 hover:text-blue-200">
-                            Quay lại chi tiết gia sư
-                        </Link>
-                        <h1 className="mt-4 text-3xl font-extrabold md:text-4xl">
-                            Chọn gói và đặt lịch học
-                        </h1>
-                    </div>
-
-                    <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
-                        <div className="text-sm text-slate-300">Gia sư</div>
-                        <div className="mt-1 text-lg font-extrabold">{giaSu.user?.ho_ten || "Gia sư"}</div>
-                        <div className="mt-1 text-sm font-semibold text-blue-300">{dinhDangGia(giaSu)}</div>
-                    </div>
-                </div>
-            </section>
-
-            <main className="mx-auto grid max-w-7xl gap-6 px-6 py-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <section className="rounded-2xl border border-white/10 bg-[#0d1854] p-5 shadow-xl">
-                        <h2 className="text-xl font-extrabold">1. Chọn môn và gói học</h2>
-
-                        <div className="mt-5 grid gap-4 md:grid-cols-2">
-                            <label className="block">
-                                <span className="mb-2 block text-sm font-semibold text-slate-200">Môn học</span>
-                                <select
-                                    value={form.monhoc_id}
-                                    onChange={(event) => capNhatForm("monhoc_id", event.target.value)}
-                                    className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
-                                >
-                                    <option value="">Chọn môn học</option>
-                                    {monHocsCoTheDat.map((mon) => {
-                                        const daDatMon = monHocDaDatIds.has(String(mon.id));
-
-                                        return (
-                                            <option
-                                                key={mon.id}
-                                                value={mon.id}
-                                                disabled={daDatMon}
-                                                className={daDatMon ? "bg-slate-900 text-slate-500" : ""}
-                                            >
-                                                {dinhDangTenMon(mon)}{daDatMon ? " - đã đặt" : ""}
-                                            </option>
-                                        );
-                                    })}
-                                </select>
-                                {monHocDaDatIds.size > 0 && (
-                                    <p className="mt-2 text-xs font-medium text-slate-400">
-                                        Môn đã có gói đang xử lý hoặc đang học sẽ bị khóa riêng với tài khoản của bạn.
-                                    </p>
-                                )}
-                            </label>
-
-                            <label className="block">
-                                <span className="mb-2 block text-sm font-semibold text-slate-200">Hình thức học</span>
-                                <select
-                                    value={form.hinh_thuc_hoc}
-                                    onChange={(event) => capNhatForm("hinh_thuc_hoc", event.target.value)}
-                                    className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
-                                >
-                                    <option value="online">Online</option>
-                                    <option value="offline">Tại nhà</option>
-                                </select>
-                                {form.hinh_thuc_hoc === "online" && (
-                                    <p className="mt-2 text-xs font-medium text-blue-400">
-                                        * Link lớp học sẽ được gia sư cập nhật trước khi bắt đầu buổi học.
-                                    </p>
-                                )}
-                            </label>
+                <section className="border-b border-white/10 bg-[#09173a]">
+                    <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-8 lg:flex-row lg:items-end lg:justify-between">
+                        <div>
+                            <Link to={`/gia-su/${giaSu.id}`} className="text-sm font-semibold text-blue-300 hover:text-blue-200">
+                                Quay lại chi tiết gia sư
+                            </Link>
+                            <h1 className="mt-4 text-3xl font-extrabold md:text-4xl">
+                                Chọn gói và đặt lịch học
+                            </h1>
                         </div>
 
-                        <div className={`mt-5 grid ${daDangKyHocThu ? "grid-cols-2" : "grid-cols-3"} gap-2 rounded-2xl bg-[#07122f] p-2`}>
-                            {!daDangKyHocThu && (
+                        <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
+                            <div className="text-sm text-slate-300">Gia sư</div>
+                            <div className="mt-1 text-lg font-extrabold">{giaSu.user?.ho_ten || "Gia sư"}</div>
+                            <div className="mt-1 text-sm font-semibold text-blue-300">{dinhDangGia(giaSu)}</div>
+                        </div>
+                    </div>
+                </section>
+
+                <main className="mx-auto grid max-w-7xl gap-6 px-6 py-8 lg:grid-cols-[minmax(0,1fr)_360px]">
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <section className="rounded-2xl border border-white/10 bg-[#0d1854] p-5 shadow-xl">
+                            <h2 className="text-xl font-extrabold">1. Chọn môn và gói học</h2>
+
+                            <div className="mt-5 grid gap-4 md:grid-cols-2">
+                                <label className="block">
+                                    <span className="mb-2 block text-sm font-semibold text-slate-200">Môn học</span>
+                                    <select
+                                        value={form.monhoc_id}
+                                        onChange={(event) => capNhatForm("monhoc_id", event.target.value)}
+                                        className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
+                                    >
+                                        <option value="">Chọn môn học</option>
+                                        {monHocsCoTheDat.map((mon) => {
+                                            const daDatMon = monHocDaDatIds.has(String(mon.id));
+
+                                            return (
+                                                <option
+                                                    key={mon.id}
+                                                    value={mon.id}
+                                                    disabled={daDatMon}
+                                                    className={daDatMon ? "bg-slate-900 text-slate-500" : ""}
+                                                >
+                                                    {dinhDangTenMon(mon)}{daDatMon ? " - đã đặt" : ""}
+                                                </option>
+                                            );
+                                        })}
+                                    </select>
+                                    {monHocDaDatIds.size > 0 && (
+                                        <p className="mt-2 text-xs font-medium text-slate-400">
+                                            Môn đã có gói đang xử lý hoặc đang học sẽ bị khóa riêng với tài khoản của bạn.
+                                        </p>
+                                    )}
+                                </label>
+
+                                <label className="block">
+                                    <span className="mb-2 block text-sm font-semibold text-slate-200">Hình thức học</span>
+                                    <select
+                                        value={form.hinh_thuc_hoc}
+                                        onChange={(event) => capNhatForm("hinh_thuc_hoc", event.target.value)}
+                                        className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
+                                    >
+                                        <option value="online">Online</option>
+                                        <option value="offline">Tại nhà</option>
+                                    </select>
+                                    {form.hinh_thuc_hoc === "online" && (
+                                        <p className="mt-2 text-xs font-medium text-blue-400">
+                                            * Link lớp học sẽ được gia sư cập nhật trước khi bắt đầu buổi học.
+                                        </p>
+                                    )}
+                                </label>
+                            </div>
+
+                            <div className={`mt-5 grid ${daDangKyHocThu ? "grid-cols-2" : "grid-cols-3"} gap-2 rounded-2xl bg-[#07122f] p-2`}>
+                                {!daDangKyHocThu && (
+                                    <button
+                                        type="button"
+                                        onClick={() => doiLoaiGoi("hoc_thu")}
+                                        className={[
+                                            "rounded-xl px-4 py-3 text-sm font-bold transition",
+                                            loaiGoi === "hoc_thu" ? "bg-blue-500 text-white" : "text-slate-300 hover:bg-white/5",
+                                        ].join(" ")}
+                                    >
+                                        Học thử
+                                    </button>
+                                )}
                                 <button
                                     type="button"
-                                    onClick={() => doiLoaiGoi("hoc_thu")}
+                                    onClick={() => doiLoaiGoi("dinh_ky")}
                                     className={[
                                         "rounded-xl px-4 py-3 text-sm font-bold transition",
-                                        loaiGoi === "hoc_thu" ? "bg-blue-500 text-white" : "text-slate-300 hover:bg-white/5",
+                                        loaiGoi === "dinh_ky" ? "bg-blue-500 text-white" : "text-slate-300 hover:bg-white/5",
                                     ].join(" ")}
                                 >
-                                    Học thử
+                                    Định kỳ
                                 </button>
-                            )}
-                            <button
-                                type="button"
-                                onClick={() => doiLoaiGoi("dinh_ky")}
-                                className={[
-                                    "rounded-xl px-4 py-3 text-sm font-bold transition",
-                                    loaiGoi === "dinh_ky" ? "bg-blue-500 text-white" : "text-slate-300 hover:bg-white/5",
-                                ].join(" ")}
-                            >
-                                Định kỳ
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => doiLoaiGoi("khong_dinh_ky")}
-                                className={[
-                                    "rounded-xl px-4 py-3 text-sm font-bold transition",
-                                    loaiGoi === "khong_dinh_ky" ? "bg-blue-500 text-white" : "text-slate-300 hover:bg-white/5",
-                                ].join(" ")}
-                            >
-                                Không định kỳ
-                            </button>
-                        </div>
-
-                        {loaiGoi === "hoc_thu" && (
-                            <button
-                                type="button"
-                                onClick={() => chonGoi(goiHocThu)}
-                                className={[
-                                    "mt-5 w-full rounded-2xl border p-5 text-left transition",
-                                    String(goiId) === String(goiHocThu.id)
-                                        ? "border-blue-400 bg-blue-500/15"
-                                        : "border-white/10 bg-white/[0.03] hover:border-white/25",
-                                ].join(" ")}
-                            >
-                                <div>
-                                    <span className="w-fit rounded-full bg-blue-300/15 px-3 py-1 text-xs font-bold text-blue-100">
-                                        Trải nghiệm trước
-                                    </span>
-                                    <h3 className="mt-4 text-2xl font-extrabold text-white">Buổi học thử</h3>
-                                    <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-                                        Một buổi để học viên làm quen với gia sư, trao đổi mục tiêu học tập và thử phong cách dạy trước khi chọn gói dài hơn.
-                                    </p>
-                                    <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-blue-100">
-                                        <span className="rounded-full bg-white/10 px-3 py-1">1 buổi</span>
-                                        <span className="rounded-full bg-white/10 px-3 py-1">90 phút</span>
-                                        <span className="rounded-full bg-white/10 px-3 py-1">Chọn 1 ngày học</span>
-                                    </div>
-                                </div>
-                                <div className="mt-5 text-sm font-bold text-white">
-                                    {String(goiId) === String(goiHocThu.id) ? "Đang chọn" : "Chọn gói này"}
-                                </div>
-                                <div className="hidden">
-                                    <div className="text-sm font-semibold text-slate-300">Gói học thử</div>
-                                    <div className="mt-2 text-3xl font-extrabold text-blue-300">1</div>
-                                    <div className="text-sm font-semibold text-slate-200">buổi học</div>
-                                    <div className="mt-5 text-sm font-bold text-white">Đang chọn</div>
-                                </div>
-                            </button>
-                        )}
-
-                        <div className={`${loaiGoi === "hoc_thu" ? "hidden" : "grid"} mt-5 gap-4 ${lopLuoiGoi}`}>
-                            {danhSachGoi.map((goi) => (
                                 <button
-                                    key={goi.id}
                                     type="button"
-                                    onClick={() => chonGoi(goi)}
+                                    onClick={() => doiLoaiGoi("khong_dinh_ky")}
                                     className={[
-                                        "flex min-h-56 flex-col rounded-2xl border p-5 text-left transition",
-                                        String(goiId) === String(goi.id)
+                                        "rounded-xl px-4 py-3 text-sm font-bold transition",
+                                        loaiGoi === "khong_dinh_ky" ? "bg-blue-500 text-white" : "text-slate-300 hover:bg-white/5",
+                                    ].join(" ")}
+                                >
+                                    Không định kỳ
+                                </button>
+                            </div>
+
+                            {loaiGoi === "hoc_thu" && (
+                                <button
+                                    type="button"
+                                    onClick={() => chonGoi(goiHocThu)}
+                                    className={[
+                                        "mt-5 w-full rounded-2xl border p-5 text-left transition",
+                                        String(goiId) === String(goiHocThu.id)
                                             ? "border-blue-400 bg-blue-500/15"
                                             : "border-white/10 bg-white/[0.03] hover:border-white/25",
                                     ].join(" ")}
                                 >
-                                    <span className="w-fit rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                                        {goi.phuHop}
-                                    </span>
-                                    <h3 className="mt-4 text-xl font-extrabold">{goi.ten}</h3>
-                                    <div className="mt-2 text-3xl font-extrabold text-blue-300">
-                                        {goi.soThang}
-                                        <span className="ml-1 text-sm font-semibold text-slate-300">tháng</span>
-                                    </div>
-                                    <div className="mt-2 text-sm font-semibold text-slate-200">
-                                        {goi.soBuoiMoiThang} buổi/tháng
-                                    </div>
-                                    {goi.giamGia > 0 && (
-                                        <div className="mt-3 w-fit rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-bold text-emerald-200">
-                                            Giảm {goi.giamGia}%
+                                    <div>
+                                        <span className="w-fit rounded-full bg-blue-300/15 px-3 py-1 text-xs font-bold text-blue-100">
+                                            Trải nghiệm trước
+                                        </span>
+                                        <h3 className="mt-4 text-2xl font-extrabold text-white">Buổi học thử</h3>
+                                        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
+                                            Một buổi để học viên làm quen với gia sư, trao đổi mục tiêu học tập và thử phong cách dạy trước khi chọn gói dài hơn.
+                                        </p>
+                                        <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-blue-100">
+                                            <span className="rounded-full bg-white/10 px-3 py-1">1 buổi</span>
+                                            <span className="rounded-full bg-white/10 px-3 py-1">90 phút</span>
+                                            <span className="rounded-full bg-white/10 px-3 py-1">Chọn 1 ngày học</span>
                                         </div>
-                                    )}
-                                    <p className="mt-4 flex-1 text-sm leading-6 text-slate-300">{goi.moTa}</p>
-                                    <span className="mt-5 text-sm font-bold text-white">
-                                        {String(goiId) === String(goi.id) ? "Đang chọn" : "Chọn gói này"}
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
-                    </section>
-
-                    <section className="rounded-2xl border border-white/10 bg-[#0d1854] p-5 shadow-xl">
-                        <h2 className="text-xl font-extrabold">2. Chọn lịch học</h2>
-
-                        {loaiGoi === "dinh_ky" ? (
-                            <div className="mt-5 space-y-5">
-                                <div>
-                                    <div className="mb-2 text-sm font-semibold text-slate-200">Thứ học cố định</div>
-                                    <p className="mb-3 text-xs font-medium text-blue-200">
-                                        Chọn tối đa 2 thứ học cố định trong tuần.
-                                    </p>
-                                    <div className="grid gap-2 sm:grid-cols-4 lg:grid-cols-7">
-                                        {cacThu.map((thu) => {
-                                            const daChon = thuHoc.includes(thu);
-                                            const biKhoa = !daChon && thuHoc.length >= SO_THU_TOI_DA;
-
-                                            return (
-                                                <button
-                                                    key={thu}
-                                                    type="button"
-                                                    onClick={() => toggleThu(thu)}
-                                                    disabled={biKhoa}
-                                                    className={[
-                                                        "rounded-xl border px-3 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-45",
-                                                        daChon
-                                                            ? "border-blue-400 bg-blue-500/20 text-white"
-                                                            : "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/25",
-                                                    ].join(" ")}
-                                                >
-                                                    {thu}
-                                                </button>
-                                            );
-                                        })}
                                     </div>
-                                </div>
+                                    <div className="mt-5 text-sm font-bold text-white">
+                                        {String(goiId) === String(goiHocThu.id) ? "Đang chọn" : "Chọn gói này"}
+                                    </div>
+                                    <div className="hidden">
+                                        <div className="text-sm font-semibold text-slate-300">Gói học thử</div>
+                                        <div className="mt-2 text-3xl font-extrabold text-blue-300">1</div>
+                                        <div className="text-sm font-semibold text-slate-200">buổi học</div>
+                                        <div className="mt-5 text-sm font-bold text-white">Đang chọn</div>
+                                    </div>
+                                </button>
+                            )}
 
-                                <label className="block">
-                                    <span className="mb-2 block text-sm font-semibold text-slate-200">Ngày bắt đầu</span>
-                                    <input
-                                        type="date"
-                                        value={form.ngay_batdau}
-                                        readOnly
-                                        tabIndex={-1}
-                                        className="w-full cursor-not-allowed rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white/80 outline-none transition focus:border-blue-400 md:w-64"
-                                    />
-                                    <p className="mt-2 text-xs font-medium text-blue-200">
-                                        Tự sinh theo ngày học đầu tiên gần nhất trong các thứ đã chọn.
-                                    </p>
-                                </label>
+                            <div className={`${loaiGoi === "hoc_thu" ? "hidden" : "grid"} mt-5 gap-4 ${lopLuoiGoi}`}>
+                                {danhSachGoi.map((goi) => (
+                                    <button
+                                        key={goi.id}
+                                        type="button"
+                                        onClick={() => chonGoi(goi)}
+                                        className={[
+                                            "flex min-h-56 flex-col rounded-2xl border p-5 text-left transition",
+                                            String(goiId) === String(goi.id)
+                                                ? "border-blue-400 bg-blue-500/15"
+                                                : "border-white/10 bg-white/[0.03] hover:border-white/25",
+                                        ].join(" ")}
+                                    >
+                                        <span className="w-fit rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                                            {goi.phuHop}
+                                        </span>
+                                        <h3 className="mt-4 text-xl font-extrabold">{goi.ten}</h3>
+                                        <div className="mt-2 text-3xl font-extrabold text-blue-300">
+                                            {goi.soThang}
+                                            <span className="ml-1 text-sm font-semibold text-slate-300">tháng</span>
+                                        </div>
+                                        <div className="mt-2 text-sm font-semibold text-slate-200">
+                                            {goi.soBuoiMoiThang} buổi/tháng
+                                        </div>
+                                        {goi.giamGia > 0 && (
+                                            <div className="mt-3 w-fit rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-bold text-emerald-200">
+                                                Giảm {goi.giamGia}%
+                                            </div>
+                                        )}
+                                        <p className="mt-4 flex-1 text-sm leading-6 text-slate-300">{goi.moTa}</p>
+                                        <span className="mt-5 text-sm font-bold text-white">
+                                            {String(goiId) === String(goi.id) ? "Đang chọn" : "Chọn gói này"}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </section>
 
-                                <div className="space-y-3">
-                                    <p className="text-xs font-medium leading-5 text-blue-200">
-                                        Khung giờ học: bắt đầu từ 07:00 đến 19:30, mỗi buổi kéo dài 1 giờ 30 phút và kết thúc muộn nhất lúc 21:00.
-                                    </p>
-                                    <div className="grid gap-4 md:grid-cols-2">
-                                        <label className="block">
-                                        <span className="mb-2 block text-sm font-semibold text-slate-200">Giờ bắt đầu</span>
-                                        <select
-                                            value={form.gio_batdau}
-                                            onChange={(event) => capNhatForm("gio_batdau", event.target.value)}
-                                            className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
-                                        >
-                                            {cacKhungGioBatDau.map((gio) => {
-                                                const biKhoa = khungGioDinhKyBiKhoa(gio);
+                        <section className="rounded-2xl border border-white/10 bg-[#0d1854] p-5 shadow-xl">
+                            <h2 className="text-xl font-extrabold">2. Chọn lịch học</h2>
+
+                            {loaiGoi === "dinh_ky" ? (
+                                <div className="mt-5 space-y-5">
+                                    <div>
+                                        <div className="mb-2 text-sm font-semibold text-slate-200">Thứ học cố định</div>
+                                        <p className="mb-3 text-xs font-medium text-blue-200">
+                                            Chọn tối đa 2 thứ học cố định trong tuần.
+                                        </p>
+                                        <div className="grid gap-2 sm:grid-cols-4 lg:grid-cols-7">
+                                            {cacThu.map((thu) => {
+                                                const daChon = thuHoc.includes(thu);
+                                                const biKhoa = !daChon && thuHoc.length >= SO_THU_TOI_DA;
+
                                                 return (
-                                                    <option key={gio} value={gio} disabled={biKhoa}>
-                                                        {gio}{biKhoa ? " - đã có lịch" : ""}
-                                                    </option>
+                                                    <button
+                                                        key={thu}
+                                                        type="button"
+                                                        onClick={() => toggleThu(thu)}
+                                                        disabled={biKhoa}
+                                                        className={[
+                                                            "rounded-xl border px-3 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-45",
+                                                            daChon
+                                                                ? "border-blue-400 bg-blue-500/20 text-white"
+                                                                : "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/25",
+                                                        ].join(" ")}
+                                                    >
+                                                        {thu}
+                                                    </button>
                                                 );
                                             })}
-                                        </select>
-                                        {lichTrungDinhKy(form.gio_batdau)[0] && (
-                                            <p className="mt-2 text-xs font-medium leading-5 text-amber-200">
-                                                Khung giờ này đã có lịch ngày {lichTrungDinhKy(form.gio_batdau)[0].ngay}. Vui lòng chọn giờ khác.
-                                            </p>
-                                        )}
-                                        </label>
-                                        <label className="block">
-                                        <span className="mb-2 block text-sm font-semibold text-slate-200">Giờ kết thúc</span>
+                                        </div>
+                                    </div>
+
+                                    <label className="block">
+                                        <span className="mb-2 block text-sm font-semibold text-slate-200">Ngày bắt đầu</span>
                                         <input
-                                            type="text"
-                                            value={form.gio_ketthuc}
+                                            type="date"
+                                            value={form.ngay_batdau}
                                             readOnly
                                             tabIndex={-1}
-                                            className="w-full cursor-not-allowed rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white/80 outline-none transition focus:border-blue-400"
+                                            className="w-full cursor-not-allowed rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white/80 outline-none transition focus:border-blue-400 md:w-64"
                                         />
-                                        </label>
+                                        <p className="mt-2 text-xs font-medium text-blue-200">
+                                            Tự sinh theo ngày học đầu tiên gần nhất trong các thứ đã chọn.
+                                        </p>
+                                    </label>
+
+                                    <div className="space-y-3">
+                                        <p className="text-xs font-medium leading-5 text-blue-200">
+                                            Khung giờ học: bắt đầu từ 07:00 đến 19:30, mỗi buổi kéo dài 1 giờ 30 phút và kết thúc muộn nhất lúc 21:00.
+                                        </p>
+                                        <div className="grid gap-4 md:grid-cols-2">
+                                            <label className="block">
+                                                <span className="mb-2 block text-sm font-semibold text-slate-200">Giờ bắt đầu</span>
+                                                <select
+                                                    value={form.gio_batdau}
+                                                    onChange={(event) => capNhatForm("gio_batdau", event.target.value)}
+                                                    className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
+                                                >
+                                                    {cacKhungGioBatDau.map((gio) => {
+                                                        const biKhoa = khungGioDinhKyBiKhoa(gio);
+                                                        return (
+                                                            <option key={gio} value={gio} disabled={biKhoa}>
+                                                                {gio}{biKhoa ? " - đã có lịch" : ""}
+                                                            </option>
+                                                        );
+                                                    })}
+                                                </select>
+                                                {lichTrungDinhKy(form.gio_batdau)[0] && (
+                                                    <p className="mt-2 text-xs font-medium leading-5 text-amber-200">
+                                                        Khung giờ này đã có lịch ngày {lichTrungDinhKy(form.gio_batdau)[0].ngay}. Vui lòng chọn giờ khác.
+                                                    </p>
+                                                )}
+                                            </label>
+                                            <label className="block">
+                                                <span className="mb-2 block text-sm font-semibold text-slate-200">Giờ kết thúc</span>
+                                                <input
+                                                    type="text"
+                                                    value={form.gio_ketthuc}
+                                                    readOnly
+                                                    tabIndex={-1}
+                                                    className="w-full cursor-not-allowed rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white/80 outline-none transition focus:border-blue-400"
+                                                />
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ) : loaiGoi === "hoc_thu" ? (
-                            <div className="mt-5 space-y-5">
-                                <label className="block">
-                                    <span className="mb-2 block text-sm font-semibold text-slate-200">Ngày học thử</span>
-                                    <input
-                                        type="date"
-                                        value={form.ngay_batdau}
-                                        min={ngayHomNay()}
-                                        onChange={(event) => capNhatForm("ngay_batdau", event.target.value)}
-                                        className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400 md:w-64"
-                                    />
-                                </label>
+                            ) : loaiGoi === "hoc_thu" ? (
+                                <div className="mt-5 space-y-5">
+                                    <label className="block">
+                                        <span className="mb-2 block text-sm font-semibold text-slate-200">Ngày học thử</span>
+                                        <input
+                                            type="date"
+                                            value={form.ngay_batdau}
+                                            min={ngayHomNay()}
+                                            onChange={(event) => capNhatForm("ngay_batdau", event.target.value)}
+                                            className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400 md:w-64"
+                                        />
+                                    </label>
 
-                                <div className="space-y-3">
-                                    <p className="text-xs font-medium leading-5 text-blue-200">
-                                        Buổi học thử kéo dài 1 giờ 30 phút. Giờ bắt đầu từ 07:00 đến 19:30 và kết thúc muộn nhất lúc 21:00.
+                                    <div className="space-y-3">
+                                        <p className="text-xs font-medium leading-5 text-blue-200">
+                                            Buổi học thử kéo dài 1 giờ 30 phút. Giờ bắt đầu từ 07:00 đến 19:30 và kết thúc muộn nhất lúc 21:00.
+                                        </p>
+                                        <div className="grid gap-4 md:grid-cols-2">
+                                            <label className="block">
+                                                <span className="mb-2 block text-sm font-semibold text-slate-200">Giờ bắt đầu</span>
+                                                <select
+                                                    value={form.gio_batdau}
+                                                    onChange={(event) => capNhatForm("gio_batdau", event.target.value)}
+                                                    className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
+                                                >
+                                                    {cacKhungGioBatDau.map((gio) => {
+                                                        const daQuaGio = !laThoiDiemHocTuongLai(form.ngay_batdau, gio);
+                                                        const biKhoa = daQuaGio || slotTrungLichBan(form.ngay_batdau, gio);
+
+                                                        return (
+                                                            <option key={gio} value={gio} disabled={biKhoa}>
+                                                                {gio}{daQuaGio ? " - đã qua giờ" : slotTrungLichBan(form.ngay_batdau, gio) ? " - trùng lịch gia sư" : ""}
+                                                            </option>
+                                                        );
+                                                    })}
+                                                </select>
+                                            </label>
+                                            <label className="block">
+                                                <span className="mb-2 block text-sm font-semibold text-slate-200">Giờ kết thúc</span>
+                                                <input
+                                                    type="text"
+                                                    value={form.gio_ketthuc}
+                                                    readOnly
+                                                    tabIndex={-1}
+                                                    className="w-full cursor-not-allowed rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white/80 outline-none transition focus:border-blue-400"
+                                                />
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="mt-5 space-y-3">
+                                    <p className="text-xs font-medium text-blue-200">
+                                        Mỗi buổi học chọn giờ bắt đầu từ 07:00 đến 19:30, kéo dài 1 giờ 30 phút và kết thúc muộn nhất lúc 21:00.
                                     </p>
-                                    <div className="grid gap-4 md:grid-cols-2">
-                                        <label className="block">
-                                            <span className="mb-2 block text-sm font-semibold text-slate-200">Giờ bắt đầu</span>
+                                    <div className="flex justify-end">
+                                        <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-slate-200">
+                                            {buoiLinhHoat.length}/{soBuoi} buổi
+                                        </span>
+                                    </div>
+                                    {buoiLinhHoat.map((buoi, index) => (
+                                        <div key={`${buoi.ngay}-${index}`} className="grid gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 md:grid-cols-[1fr_1fr_1fr_auto]">
+                                            <input
+                                                type="date"
+                                                value={buoi.ngay}
+                                                onChange={(event) => capNhatBuoi(index, "ngay", event.target.value)}
+                                                className="rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
+                                            />
                                             <select
-                                                value={form.gio_batdau}
-                                                onChange={(event) => capNhatForm("gio_batdau", event.target.value)}
-                                                className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
+                                                value={buoi.gio_batdau}
+                                                onChange={(event) => capNhatBuoi(index, "gio_batdau", event.target.value)}
+                                                className="rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
                                             >
                                                 {cacKhungGioBatDau.map((gio) => {
-                                                    const daQuaGio = !laThoiDiemHocTuongLai(form.ngay_batdau, gio);
-                                                    const biKhoa = daQuaGio || slotTrungLichBan(form.ngay_batdau, gio);
+                                                    const trungLichGiaSu = slotTrungLichBan(buoi.ngay, gio);
+                                                    const trungBuoiDaChon = slotTrungBuoiDangChon(buoi.ngay, gio, index);
+                                                    const biKhoa = trungLichGiaSu || trungBuoiDaChon;
 
                                                     return (
                                                         <option key={gio} value={gio} disabled={biKhoa}>
-                                                            {gio}{daQuaGio ? " - đã qua giờ" : slotTrungLichBan(form.ngay_batdau, gio) ? " - trùng lịch gia sư" : ""}
+                                                            {gio}{trungLichGiaSu ? " - trùng lịch gia sư" : trungBuoiDaChon ? " - trùng buổi đã chọn" : ""}
                                                         </option>
                                                     );
                                                 })}
                                             </select>
-                                        </label>
-                                        <label className="block">
-                                            <span className="mb-2 block text-sm font-semibold text-slate-200">Giờ kết thúc</span>
                                             <input
                                                 type="text"
-                                                value={form.gio_ketthuc}
+                                                value={buoi.gio_ketthuc}
                                                 readOnly
                                                 tabIndex={-1}
-                                                className="w-full cursor-not-allowed rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white/80 outline-none transition focus:border-blue-400"
+                                                className="cursor-not-allowed rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white/80 outline-none transition focus:border-blue-400"
                                             />
-                                        </label>
-                                    </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => xoaBuoiLinhHoat(index)}
+                                                disabled={buoiLinhHoat.length === 1}
+                                                className="rounded-xl border border-red-300/30 px-4 py-2 text-sm font-semibold text-red-200 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                Xóa
+                                            </button>
+                                        </div>
+                                    ))}
+
+                                    <button
+                                        type="button"
+                                        onClick={themBuoiLinhHoat}
+                                        disabled={buoiLinhHoat.length >= soBuoi}
+                                        className="rounded-xl border border-white/15 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-blue-300 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        Thêm buổi học
+                                    </button>
+                                </div>
+                            )}
+                        </section>
+
+                        {form.hinh_thuc_hoc === "offline" && (
+                            <section className="rounded-2xl border border-white/10 bg-[#0d1854] p-5 shadow-xl">
+                                <h2 className="text-xl font-extrabold">3. Địa chỉ học</h2>
+                                <input
+                                    value={form.dia_chi_hoc}
+                                    onChange={(event) => capNhatForm("dia_chi_hoc", event.target.value)}
+                                    placeholder="Nhập địa chỉ học tại nhà"
+                                    className="mt-5 w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-blue-400"
+                                />
+                            </section>
+                        )}
+
+                        <section className="rounded-2xl border border-white/10 bg-[#0d1854] p-5 shadow-xl">
+                            <button
+                                type="submit"
+                                disabled={dangGui}
+                                className="rounded-xl bg-blue-500 px-6 py-3 text-sm font-bold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {dangGui ? "Đang gửi yêu cầu..." : "Gửi yêu cầu đặt lịch"}
+                            </button>
+                        </section>
+                    </form>
+
+                    <aside className="h-fit rounded-2xl border border-white/10 bg-[#0d1854] p-5 shadow-xl">
+                        <h2 className="text-lg font-extrabold">Tóm tắt</h2>
+                        <div className="mt-5 space-y-4 text-sm">
+                            <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                                <span className="text-slate-400">Gia sư</span>
+                                <span className="text-right font-semibold">{giaSu.user?.ho_ten || "Gia sư"}</span>
+                            </div>
+                            <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                                <span className="text-slate-400">Môn học</span>
+                                <span className="text-right font-semibold">{monHocDaChon ? dinhDangTenMon(monHocDaChon) : "Chưa chọn"}</span>
+                            </div>
+                            <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                                <span className="text-slate-400">Loại gói</span>
+                                <span className="text-right font-semibold">
+                                    {loaiGoi === "hoc_thu" ? "Học thử" : loaiGoi === "dinh_ky" ? "Định kỳ" : "Không định kỳ"}
+                                </span>
+                            </div>
+                            <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                                <span className="text-slate-400">Gói</span>
+                                <span className="text-right font-semibold">{goiDangChon?.ten || "Chưa chọn"}</span>
+                            </div>
+                            <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                                <span className="text-slate-400">Số buổi</span>
+                                <span className="text-right font-semibold">{soBuoi} buổi</span>
+                            </div>
+                            <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                                <span className="text-slate-400">Giảm giá</span>
+                                <span className="text-right font-semibold">
+                                    {(goiDangChon?.giamGia || 0) > 0 ? `${goiDangChon.giamGia}%` : "Không có"}
+                                </span>
+                            </div>
+                            <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                                <span className="text-slate-400">Trước giảm</span>
+                                <div className="flex flex-col text-right">
+                                    <span className="font-semibold">
+                                        {loaiGoi === "hoc_thu"
+                                            ? "0 đ"
+                                            : tienGoi.tongTruocGiam
+                                                ? `${tienGoi.tongTruocGiam.toLocaleString("vi-VN")} đ`
+                                                : "Chờ báo giá"}
+                                    </span>
+                                    {tienGoi.tongTruocGiam > 0 && (
+                                        <div className="mt-1 space-y-1 text-xs text-slate-400">
+                                            <div>({dinhDangTien(tienGoi.donGia)} x {soBuoi} buổi x 1.5 giờ.)</div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                        ) : (
-                            <div className="mt-5 space-y-3">
-                                <p className="text-xs font-medium text-blue-200">
-                                    Mỗi buổi học chọn giờ bắt đầu từ 07:00 đến 19:30, kéo dài 1 giờ 30 phút và kết thúc muộn nhất lúc 21:00.
-                                </p>
-                                <div className="flex justify-end">
-                                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-slate-200">
-                                        {buoiLinhHoat.length}/{soBuoi} buổi
+                            {tienGoi.tienGiam > 0 && (
+                                <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                                    <span className="text-slate-400">Tiết kiệm</span>
+                                    <span className="text-right font-semibold text-emerald-300">
+                                        {tienGoi.tienGiam.toLocaleString("vi-VN")} đ
                                     </span>
                                 </div>
-                                {buoiLinhHoat.map((buoi, index) => (
-                                    <div key={`${buoi.ngay}-${index}`} className="grid gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 md:grid-cols-[1fr_1fr_1fr_auto]">
-                                        <input
-                                            type="date"
-                                            value={buoi.ngay}
-                                            onChange={(event) => capNhatBuoi(index, "ngay", event.target.value)}
-                                            className="rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
-                                        />
-                                        <select
-                                            value={buoi.gio_batdau}
-                                            onChange={(event) => capNhatBuoi(index, "gio_batdau", event.target.value)}
-                                            className="rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
-                                        >
-                                            {cacKhungGioBatDau.map((gio) => {
-                                                const trungLichGiaSu = slotTrungLichBan(buoi.ngay, gio);
-                                                const trungBuoiDaChon = slotTrungBuoiDangChon(buoi.ngay, gio, index);
-                                                const biKhoa = trungLichGiaSu || trungBuoiDaChon;
-
-                                                return (
-                                                    <option key={gio} value={gio} disabled={biKhoa}>
-                                                        {gio}{trungLichGiaSu ? " - trùng lịch gia sư" : trungBuoiDaChon ? " - trùng buổi đã chọn" : ""}
-                                                    </option>
-                                                );
-                                            })}
-                                        </select>
-                                        <input
-                                            type="text"
-                                            value={buoi.gio_ketthuc}
-                                            readOnly
-                                            tabIndex={-1}
-                                            className="cursor-not-allowed rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white/80 outline-none transition focus:border-blue-400"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => xoaBuoiLinhHoat(index)}
-                                            disabled={buoiLinhHoat.length === 1}
-                                            className="rounded-xl border border-red-300/30 px-4 py-2 text-sm font-semibold text-red-200 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
-                                        >
-                                            Xóa
-                                        </button>
-                                    </div>
-                                ))}
-
-                                <button
-                                    type="button"
-                                    onClick={themBuoiLinhHoat}
-                                    disabled={buoiLinhHoat.length >= soBuoi}
-                                    className="rounded-xl border border-white/15 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-blue-300 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                    Thêm buổi học
-                                </button>
-                            </div>
-                        )}
-                    </section>
-
-                    {form.hinh_thuc_hoc === "offline" && (
-                        <section className="rounded-2xl border border-white/10 bg-[#0d1854] p-5 shadow-xl">
-                            <h2 className="text-xl font-extrabold">3. Địa chỉ học</h2>
-                            <input
-                                value={form.dia_chi_hoc}
-                                onChange={(event) => capNhatForm("dia_chi_hoc", event.target.value)}
-                                placeholder="Nhập địa chỉ học tại nhà"
-                                className="mt-5 w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-blue-400"
-                            />
-                        </section>
-                    )}
-
-                    <section className="rounded-2xl border border-white/10 bg-[#0d1854] p-5 shadow-xl">
-                        <button
-                            type="submit"
-                            disabled={dangGui}
-                            className="rounded-xl bg-blue-500 px-6 py-3 text-sm font-bold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                            {dangGui ? "Đang gửi yêu cầu..." : "Gửi yêu cầu đặt lịch"}
-                        </button>
-                    </section>
-                </form>
-
-                <aside className="h-fit rounded-2xl border border-white/10 bg-[#0d1854] p-5 shadow-xl">
-                    <h2 className="text-lg font-extrabold">Tóm tắt</h2>
-                    <div className="mt-5 space-y-4 text-sm">
-                        <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
-                            <span className="text-slate-400">Gia sư</span>
-                            <span className="text-right font-semibold">{giaSu.user?.ho_ten || "Gia sư"}</span>
-                        </div>
-                        <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
-                            <span className="text-slate-400">Môn học</span>
-                            <span className="text-right font-semibold">{monHocDaChon ? dinhDangTenMon(monHocDaChon) : "Chưa chọn"}</span>
-                        </div>
-                        <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
-                            <span className="text-slate-400">Loại gói</span>
-                            <span className="text-right font-semibold">
-                                {loaiGoi === "hoc_thu" ? "Học thử" : loaiGoi === "dinh_ky" ? "Định kỳ" : "Không định kỳ"}
-                            </span>
-                        </div>
-                        <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
-                            <span className="text-slate-400">Gói</span>
-                            <span className="text-right font-semibold">{goiDangChon?.ten || "Chưa chọn"}</span>
-                        </div>
-                        <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
-                            <span className="text-slate-400">Số buổi</span>
-                            <span className="text-right font-semibold">{soBuoi} buổi</span>
-                        </div>
-                        <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
-                            <span className="text-slate-400">Giảm giá</span>
-                            <span className="text-right font-semibold">
-                                {(goiDangChon?.giamGia || 0) > 0 ? `${goiDangChon.giamGia}%` : "Không có"}
-                            </span>
-                        </div>
-                        <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
-                            <span className="text-slate-400">Trước giảm</span>
-                            <div className="flex flex-col text-right">
-                                <span className="font-semibold">
+                            )}
+                            <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
+                                <span className="text-slate-400">Lịch</span>
+                                <span className="text-right font-semibold">
                                     {loaiGoi === "hoc_thu"
-                                        ? "0 đ"
-                                        : tienGoi.tongTruocGiam
-                                        ? `${tienGoi.tongTruocGiam.toLocaleString("vi-VN")} đ`
-                                        : "Chờ báo giá"}
+                                        ? `${form.ngay_batdau} ${form.gio_batdau} - ${form.gio_ketthuc}`
+                                        : loaiGoi === "dinh_ky"
+                                            ? thuHoc.join(", ") || "Chưa chọn"
+                                            : "Chọn từng buổi"}
                                 </span>
-                                {tienGoi.tongTruocGiam > 0 && (
-                                    <div className="mt-1 space-y-1 text-xs text-slate-400">
-                                        <div>({dinhDangTien(tienGoi.donGia)} x {soBuoi} buổi x 1.5 giờ.)</div>
+                            </div>
+                            <div className="rounded-2xl bg-white/5 p-4">
+                                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                                    Tạm tính
+                                </div>
+                                <div className="mt-2 text-2xl font-extrabold text-blue-300">
+                                    {loaiGoi === "hoc_thu" ? "0 đ" : tamTinh ? `${tamTinh.toLocaleString("vi-VN")} đ` : "Chờ báo giá"}
+                                </div>
+                                {loaiGoi !== "hoc_thu" && tienGoi.donGia > 0 && (
+                                    <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/30 p-3 text-xs text-slate-300">
+                                        <div className="mb-2 font-semibold text-slate-200">Cách tính đơn giá/giờ</div>
+                                        <div className="space-y-1.5">
+                                            <div className="flex justify-between gap-3">
+                                                <span>Giá môn</span>
+                                                <span className="font-semibold text-slate-100">{dinhDangTien(mucGiaDangChon?.gia_mon)}</span>
+                                            </div>
+                                            <div className="flex justify-between gap-3">
+                                                <span>Cộng trình độ</span>
+                                                <span className="font-semibold text-slate-100">{dinhDangTien(mucGiaDangChon?.gia_cong_trinh_do)}</span>
+                                            </div>
+                                            <div className="flex justify-between gap-3">
+                                                <span>Cộng kinh nghiệm</span>
+                                                <span className="font-semibold text-slate-100">{dinhDangTien(mucGiaDangChon?.gia_cong_kinh_nghiem)}</span>
+                                            </div>
+                                            <div className="flex justify-between gap-3">
+                                                <span>Cộng hệ số giá</span>
+                                                <span className="font-semibold text-slate-100">{dinhDangTien(mucGiaDangChon?.gia_cong_them)}</span>
+                                            </div>
+                                        </div>
+                                        <div className="mt-2 flex justify-between gap-3 border-t border-white/10 pt-2 font-bold text-blue-200">
+                                            <span>Đơn giá/giờ</span>
+                                            <span>{dinhDangTien(tienGoi.donGia)}</span>
+                                        </div>
                                     </div>
                                 )}
                             </div>
                         </div>
-                        {tienGoi.tienGiam > 0 && (
-                            <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
-                                <span className="text-slate-400">Tiết kiệm</span>
-                                <span className="text-right font-semibold text-emerald-300">
-                                    {tienGoi.tienGiam.toLocaleString("vi-VN")} đ
-                                </span>
-                            </div>
-                        )}
-                        <div className="flex justify-between gap-4 border-b border-white/10 pb-3">
-                            <span className="text-slate-400">Lịch</span>
-                            <span className="text-right font-semibold">
-                                {loaiGoi === "hoc_thu"
-                                    ? `${form.ngay_batdau} ${form.gio_batdau} - ${form.gio_ketthuc}`
-                                    : loaiGoi === "dinh_ky"
-                                        ? thuHoc.join(", ") || "Chưa chọn"
-                                        : "Chọn từng buổi"}
-                            </span>
-                        </div>
-                        <div className="rounded-2xl bg-white/5 p-4">
-                            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                                Tạm tính
-                            </div>
-                            <div className="mt-2 text-2xl font-extrabold text-blue-300">
-                                {loaiGoi === "hoc_thu" ? "0 đ" : tamTinh ? `${tamTinh.toLocaleString("vi-VN")} đ` : "Chờ báo giá"}
-                            </div>
-                            {loaiGoi !== "hoc_thu" && tienGoi.donGia > 0 && (
-                                <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/30 p-3 text-xs text-slate-300">
-                                    <div className="mb-2 font-semibold text-slate-200">Cách tính đơn giá/giờ</div>
-                                    <div className="space-y-1.5">
-                                        <div className="flex justify-between gap-3">
-                                            <span>Giá môn</span>
-                                            <span className="font-semibold text-slate-100">{dinhDangTien(mucGiaDangChon?.gia_mon)}</span>
-                                        </div>
-                                        <div className="flex justify-between gap-3">
-                                            <span>Cộng trình độ</span>
-                                            <span className="font-semibold text-slate-100">{dinhDangTien(mucGiaDangChon?.gia_cong_trinh_do)}</span>
-                                        </div>
-                                        <div className="flex justify-between gap-3">
-                                            <span>Cộng kinh nghiệm</span>
-                                            <span className="font-semibold text-slate-100">{dinhDangTien(mucGiaDangChon?.gia_cong_kinh_nghiem)}</span>
-                                        </div>
-                                        <div className="flex justify-between gap-3">
-                                            <span>Cộng hệ số giá</span>
-                                            <span className="font-semibold text-slate-100">{dinhDangTien(mucGiaDangChon?.gia_cong_them)}</span>
-                                        </div>
-                                    </div>
-                                    <div className="mt-2 flex justify-between gap-3 border-t border-white/10 pt-2 font-bold text-blue-200">
-                                        <span>Đơn giá/giờ</span>
-                                        <span>{dinhDangTien(tienGoi.donGia)}</span>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </aside>
-            </main>
+                    </aside>
+                </main>
             </div>
         </>
     );

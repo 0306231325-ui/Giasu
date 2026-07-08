@@ -27,15 +27,15 @@ function Navbar() {
     }, []);
 
     return (
-        <header className="flex items-center justify-between bg-gray-900 px-10 py-6 text-white">
+        <header className="sticky top-0 z-50 flex items-center justify-between bg-gray-900 px-10 py-6 text-white shadow-lg">
             <Link
                 to="/"
-                className="text-3xl font-bold transition hover:text-blue-400"
+                className="text-2xl font-extrabold tracking-tight transition hover:text-blue-200"
             >
-                DATN_GIASU
+                DATN<span className="text-blue-200">_GIASU</span>
             </Link>
 
-            <nav className="flex items-center gap-10 text-gray-300">
+            <nav className="flex items-center gap-8 text-sm font-bold text-blue-50">
                 <Link to="/home" className="transition hover:text-white">
                     Trang Chủ
                 </Link>
@@ -62,7 +62,7 @@ function Navbar() {
                 </Link>
             </nav>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-5">
                 {isAuthenticated ? (
                     <>
                         <ThongBaoDropdown
@@ -77,11 +77,11 @@ function Navbar() {
                             <button
                                 type="button"
                                 onClick={() => setUserDropdownOpen((prev) => !prev)}
-                                className="flex items-center gap-3 rounded-xl border border-gray-700 bg-gray-800/70 px-4 py-2 text-left transition hover:border-blue-500 hover:bg-gray-800"
+                                className="flex items-center gap-3 rounded-full border border-blue-400/30 bg-blue-800/50 px-2 py-1.5 pr-4 text-left transition hover:border-white/30 hover:bg-blue-800"
                                 aria-expanded={userDropdownOpen}
                                 aria-haspopup="menu"
                             >
-                                <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-blue-500 text-sm font-bold text-white">
+                                <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-xs font-bold text-white shadow-inner">
                                     {avatarUrl ? (
                                         <img
                                             src={avatarUrl}
@@ -93,19 +93,19 @@ function Navbar() {
                                     )}
                                 </span>
                                 <span className="min-w-0">
-                                    <span className="block max-w-36 truncate text-sm font-semibold text-white">
+                                    <span className="block max-w-[120px] truncate text-sm font-bold text-white">
                                         {user?.ho_ten}
                                     </span>
-                                    <span className="block text-xs uppercase text-blue-300">
+                                    <span className="block text-[10px] font-bold uppercase tracking-wider text-blue-200">
                                         {user?.vai_tro}
                                     </span>
                                 </span>
                                 <span
-                                    className={`text-xs text-gray-300 transition-transform ${
+                                    className={`ml-1 flex h-4 w-4 items-center justify-center text-[10px] text-gray-400 transition-transform duration-300 ${
                                         userDropdownOpen ? "rotate-180" : ""
                                     }`}
                                 >
-                                    ▾
+                                    ▼
                                 </span>
                             </button>
 
@@ -171,7 +171,7 @@ function Navbar() {
                                             await logout();
                                             navigate("/login");
                                         }}
-                                        className="block w-full border-t border-gray-700 px-4 py-2.5 text-left text-sm font-semibold text-red-300 transition hover:bg-red-500/10 hover:text-red-200"
+                                        className="block w-full border-t border-gray-700 px-4 py-3 text-left text-sm font-bold text-red-400 transition hover:bg-red-500/10 hover:text-red-300"
                                     >
                                         Đăng xuất
                                     </button>
@@ -180,21 +180,21 @@ function Navbar() {
                         </div>
                     </>
                 ) : (
-                    <>
+                    <div className="flex items-center gap-3">
                         <Link
                             to="/login"
-                            className="px-5 py-2 transition hover:text-blue-400"
+                            className="rounded-full px-5 py-2 text-sm font-bold text-blue-50 transition hover:text-white"
                         >
                             Đăng Nhập
                         </Link>
 
                         <Link
                             to="/register"
-                            className="rounded-xl bg-blue-500 px-5 py-2 transition hover:bg-blue-600"
+                            className="rounded-full bg-white px-6 py-2 text-sm font-bold text-blue-600 shadow-lg shadow-white/20 transition hover:bg-gray-100 hover:shadow-white/30"
                         >
                             Đăng Ký
                         </Link>
-                    </>
+                    </div>
                 )}
             </div>
         </header>

@@ -14,13 +14,6 @@ function BangThuNhap({ cauHinh, chiTiet, dangTai, onXemChiTiet }) {
                         Chỉ hiển thị các buổi học đã hoàn thành trong {cauHinh.nhanThoiGian}.
                     </p>
                 </div>
-                <button
-                    type="button"
-                    className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 sm:self-center"
-                >
-                    <BieuTuong ten="download" />
-                    Xuất báo cáo
-                </button>
             </div>
 
             <div className="hidden grid-cols-[0.9fr_1fr_1fr_1fr_1fr_0.8fr] gap-4 bg-slate-50 px-6 py-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-400 lg:grid">
