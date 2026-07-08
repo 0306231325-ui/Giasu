@@ -305,27 +305,92 @@ class GiaSuLichHocController extends DatLichBaseController
             ], 422);
         }
 
-        $yeuCau->update([
-            'trang_thai' => $duLieu['phan_hoi'] === 'dong_y' ? 'giasu_dong_y' : 'giasu_tu_choi',
-        ]);
+        if ($duLieu['phan_hoi'] === 'dong_y') {
+            $loiTrungLich = $this->kiemTraTrungLichDoiBuoi($yeuCau);
+            if ($loiTrungLich) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $loiTrungLich,
+                ], 422);
+            }
 
-        User::query()->where('vai_tro', 'admin')->each(function (User $admin) use ($duLieu, $yeuCau) {
-            ThongBao::create([
-                'user_id' => $admin->id,
-                'tieu_de' => $duLieu['phan_hoi'] === 'dong_y'
-                    ? 'Gia su dong y doi buoi'
-                    : 'Gia su tu choi doi buoi',
-                'noi_dung' => 'Gia su da phan hoi yeu cau doi buoi, admin can chot xu ly.',
-                'url' => '/admin/lich-hoc',
-                'da_doc' => false,
+            DB::transaction(function () use ($request, $yeuCau) {
+                $lichHocGoc = $yeuCau->lichHocGoc;
+                $ghiChuDoiBuoi = 'Chuyen sang ' . Carbon::parse($yeuCau->ngay_hoc)->format('d/m/Y') . ' '
+                    . substr((string) $yeuCau->gio_batdau, 0, 5) . ' - ' . substr((string) $yeuCau->gio_ketthuc, 0, 5);
+                $trangThaiBuoiMoi = $lichHocGoc->trang_thai === 'dahuy'
+                    ? 'dahuy'
+                    : ($lichHocGoc->goiHoc && in_array($lichHocGoc->goiHoc->trang_thai, ['danghoc', 'hoanthanh'], true) ? 'da_nhan' : $lichHocGoc->trang_thai);
+
+                LichHoc::create([
+                    'goihoc_id' => $lichHocGoc->goihoc_id,
+                    'giasu_id' => $lichHocGoc->giasu_id,
+                    'loai_buoi' => $lichHocGoc->loai_buoi,
+                    'ngay_hoc' => $yeuCau->ngay_hoc,
+                    'gio_batdau' => $yeuCau->gio_batdau,
+                    'gio_ketthuc' => $yeuCau->gio_ketthuc,
+                    'dia_chi_hoc' => $lichHocGoc->dia_chi_hoc,
+                    'hinh_thuc_hoc' => $lichHocGoc->hinh_thuc_hoc,
+                    'tien_hoc' => $lichHocGoc->tien_hoc,
+                    'phi_hoahong' => $lichHocGoc->phi_hoahong,
+                    'tien_giasu_nhan' => $lichHocGoc->tien_giasu_nhan,
+                    'trang_thai' => $trangThaiBuoiMoi,
+                    'ghi_chu' => $this->themDongGhiChu(
+                        $lichHocGoc->ghi_chu,
+                        'Gia su duyet doi buoi',
+                        'Tao buoi moi tu ' . ($lichHocGoc->ma ?? ('LH' . str_pad((string) $lichHocGoc->id, 6, '0', STR_PAD_LEFT))),
+                    ),
+                ]);
+
+                $lichHocGoc->update([
+                    'trang_thai' => 'dahuy',
+                    'lydo_huy' => 'Da doi sang buoi moi: ' . $ghiChuDoiBuoi,
+                    'ghi_chu' => $this->themDongGhiChu(
+                        $lichHocGoc->ghi_chu,
+                        'Gia su duyet doi buoi',
+                        $ghiChuDoiBuoi,
+                    ),
+                ]);
+
+                $yeuCau->update([
+                    'trang_thai' => 'da_duyet',
+                    'nguoi_duyet_id' => $request->user()->id,
+                    'ngay_xu_ly' => now(),
+                ]);
+            });
+
+            if ($yeuCau->lichHocGoc?->goiHoc?->hocvien_id) {
+                ThongBao::create([
+                    'user_id' => $yeuCau->lichHocGoc->goiHoc->hocvien_id,
+                    'tieu_de' => 'Gia sư đồng ý đổi buổi học',
+                    'noi_dung' => 'Gia sư đã đồng ý và lịch học mới đã được cập nhật.',
+                    'url' => '/hoc-vien/lich-hoc',
+                    'da_doc' => false,
+                ]);
+            }
+        } else {
+            $yeuCau->update([
+                'trang_thai' => 'tu_choi',
+                'nguoi_duyet_id' => $request->user()->id,
+                'ngay_xu_ly' => now(),
             ]);
-        });
+
+            if ($yeuCau->lichHocGoc?->goiHoc?->hocvien_id) {
+                ThongBao::create([
+                    'user_id' => $yeuCau->lichHocGoc->goiHoc->hocvien_id,
+                    'tieu_de' => 'Gia sư từ chối đổi buổi học',
+                    'noi_dung' => 'Gia sư đã từ chối yêu cầu đổi buổi học của bạn.',
+                    'url' => '/hoc-vien/lich-hoc',
+                    'da_doc' => false,
+                ]);
+            }
+        }
 
         return response()->json([
             'success' => true,
             'message' => $duLieu['phan_hoi'] === 'dong_y'
-                ? 'Da dong y yeu cau doi buoi. Admin se duyet de cap nhat lich.'
-                : 'Da tu choi yeu cau doi buoi. Admin se xu ly tiep.',
+                ? 'Đã đồng ý và cập nhật lịch học.'
+                : 'Đã từ chối yêu cầu đổi buổi học.',
             'data' => $this->dinhDangYeuCauHocBu($yeuCau->fresh($this->quanHeYeuCauDoiBuoi())),
         ]);
     }
@@ -340,5 +405,42 @@ class GiaSuLichHocController extends DatLichBaseController
             'giasu.user:id,ho_ten,email,sdt',
             'nguoiYeuCau:id,ho_ten,email,sdt',
         ];
+    }
+
+    private function kiemTraTrungLichDoiBuoi(YeuCauHocBu $yeuCau): ?string
+    {
+        $lichHocGoc = $yeuCau->lichHocGoc;
+        if (! $lichHocGoc) {
+            return 'Khong tim thay buoi hoc goc.';
+        }
+
+        $trungGiaSu = LichHoc::query()
+            ->where('id', '<>', $lichHocGoc->id)
+            ->where('giasu_id', $yeuCau->giasu_id)
+            ->where('trang_thai', '<>', 'dahuy')
+            ->whereDate('ngay_hoc', $yeuCau->ngay_hoc)
+            ->where('gio_batdau', '<', $yeuCau->gio_ketthuc)
+            ->where('gio_ketthuc', '>', $yeuCau->gio_batdau)
+            ->exists();
+
+        if ($trungGiaSu) {
+            return 'Gia su da co lich trung khung gio moi.';
+        }
+
+        $hocVienId = $lichHocGoc->goiHoc?->hocvien_id;
+        if (! $hocVienId) {
+            return null;
+        }
+
+        $trungHocVien = LichHoc::query()
+            ->where('id', '<>', $lichHocGoc->id)
+            ->where('trang_thai', '<>', 'dahuy')
+            ->whereHas('goiHoc', fn ($query) => $query->where('hocvien_id', $hocVienId))
+            ->whereDate('ngay_hoc', $yeuCau->ngay_hoc)
+            ->where('gio_batdau', '<', $yeuCau->gio_ketthuc)
+            ->where('gio_ketthuc', '>', $yeuCau->gio_batdau)
+            ->exists();
+
+        return $trungHocVien ? 'Hoc vien da co lich trung khung gio moi.' : null;
     }
 }

@@ -16,7 +16,6 @@ use App\Models\User;
 use App\Models\YeuCauHocBu;
 use App\Services\NhatKyHeThongService;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
@@ -39,7 +38,8 @@ class AdminLichHocController extends DatLichBaseController
         $tuNgay = $request->query('tu_ngay');
         $denNgay = $request->query('den_ngay');
         $tuKhoa = trim((string) $request->query('q', ''));
-        $trangThaiGoiDaDuyet = ['cho_thanhtoan', 'danghoc', 'hoanthanh'];
+        $trangThaiGoiDaKichHoat = ['danghoc', 'hoanthanh'];
+        $trangThaiLichQuanLy = ['da_nhan', 'hoanthanh', 'dahuy'];
 
         $query = LichHoc::query()
             ->with([
@@ -51,7 +51,8 @@ class AdminLichHocController extends DatLichBaseController
                 'giasu.user:id,ho_ten,email,sdt',
                 'danhGia:id,lichhoc_id,so_sao,noi_dung,created_at',
             ])
-            ->whereHas('goiHoc', fn ($goiQuery) => $goiQuery->whereIn('trang_thai', $trangThaiGoiDaDuyet))
+            ->whereIn('trang_thai', $trangThaiLichQuanLy)
+            ->whereHas('goiHoc', fn ($goiQuery) => $goiQuery->whereIn('trang_thai', $trangThaiGoiDaKichHoat))
             ->when($tuNgay, fn ($lichQuery) => $lichQuery->whereDate('ngay_hoc', '>=', $tuNgay))
             ->when($denNgay, fn ($lichQuery) => $lichQuery->whereDate('ngay_hoc', '<=', $denNgay))
             ->when($tuKhoa !== '', function ($lichQuery) use ($tuKhoa) {
@@ -73,14 +74,13 @@ class AdminLichHocController extends DatLichBaseController
 
         $thongKe = [
             'tat_ca' => (clone $query)->count(),
-            'cho_xacnhan' => $this->demLichHocTheoTrangThaiHieuLuc(clone $query, 'cho_xacnhan'),
-            'da_nhan' => $this->demLichHocTheoTrangThaiHieuLuc(clone $query, 'da_nhan'),
+            'da_nhan' => (clone $query)->where('trang_thai', 'da_nhan')->count(),
             'hoanthanh' => (clone $query)->where('trang_thai', 'hoanthanh')->count(),
             'dahuy' => (clone $query)->where('trang_thai', 'dahuy')->count(),
         ];
 
         if ($trangThai) {
-            $this->locLichHocTheoTrangThaiHieuLuc($query, $trangThai);
+            $query->where('trang_thai', $trangThai);
         }
 
         if ($trangThai) {
@@ -89,12 +89,12 @@ class AdminLichHocController extends DatLichBaseController
                 ->orderBy('gio_batdau');
         } else {
             $query
-                ->orderByRaw("CASE WHEN trang_thai IN ('cho_xacnhan', 'da_nhan') THEN 0 ELSE 1 END")
-                ->orderByRaw("CASE WHEN trang_thai IN ('cho_xacnhan', 'da_nhan') THEN ngay_hoc END ASC")
-                ->orderByRaw("CASE WHEN trang_thai IN ('cho_xacnhan', 'da_nhan') THEN gio_batdau END ASC")
-                ->orderByRaw("CASE WHEN trang_thai NOT IN ('cho_xacnhan', 'da_nhan') THEN ngay_hoc END DESC")
-                ->orderByRaw("CASE WHEN trang_thai NOT IN ('cho_xacnhan', 'da_nhan') THEN gio_batdau END DESC")
-                ->orderByRaw("CASE trang_thai WHEN 'cho_xacnhan' THEN 1 WHEN 'da_nhan' THEN 2 WHEN 'hoanthanh' THEN 3 WHEN 'dahuy' THEN 4 ELSE 5 END");
+                ->orderByRaw("CASE WHEN trang_thai = 'da_nhan' THEN 0 ELSE 1 END")
+                ->orderByRaw("CASE WHEN trang_thai = 'da_nhan' THEN ngay_hoc END ASC")
+                ->orderByRaw("CASE WHEN trang_thai = 'da_nhan' THEN gio_batdau END ASC")
+                ->orderByRaw("CASE WHEN trang_thai <> 'da_nhan' THEN ngay_hoc END DESC")
+                ->orderByRaw("CASE WHEN trang_thai <> 'da_nhan' THEN gio_batdau END DESC")
+                ->orderByRaw("CASE trang_thai WHEN 'da_nhan' THEN 1 WHEN 'hoanthanh' THEN 2 WHEN 'dahuy' THEN 3 ELSE 4 END");
         }
 
         $danhSach = $query
@@ -110,40 +110,6 @@ class AdminLichHocController extends DatLichBaseController
                 'danh_sach' => $danhSach,
             ],
         ]);
-    }
-
-    private function demLichHocTheoTrangThaiHieuLuc(Builder $query, string $trangThai): int
-    {
-        $this->locLichHocTheoTrangThaiHieuLuc($query, $trangThai);
-
-        return $query->count();
-    }
-
-    private function locLichHocTheoTrangThaiHieuLuc(Builder $query, string $trangThai): void
-    {
-        if ($trangThai === 'da_nhan') {
-            $query->where(function ($subQuery) {
-                $subQuery
-                    ->where('trang_thai', 'da_nhan')
-                    ->orWhere(function ($activeQuery) {
-                        $activeQuery
-                            ->where('trang_thai', 'cho_xacnhan')
-                            ->whereHas('goiHoc', fn ($goiQuery) => $goiQuery->whereIn('trang_thai', ['danghoc', 'hoanthanh']));
-                    });
-            });
-
-            return;
-        }
-
-        if ($trangThai === 'cho_xacnhan') {
-            $query
-                ->where('trang_thai', 'cho_xacnhan')
-                ->whereHas('goiHoc', fn ($goiQuery) => $goiQuery->whereNotIn('trang_thai', ['danghoc', 'hoanthanh']));
-
-            return;
-        }
-
-        $query->where('trang_thai', $trangThai);
     }
 
     public function adminXacNhanHoanThanhLichHoc(Request $request, int $lichHocId): JsonResponse

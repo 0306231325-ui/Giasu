@@ -553,18 +553,12 @@ function ChonGoiHoc() {
             ? "md:grid-cols-2"
             : "md:grid-cols-3";
 
-    const doiLoaiGoi = (value) => {
-        setLoaiGoi(value);
-        setGoiId("");
-        datKhungGioMacDinh();
-        setThongBao("");
-    };
-
-    const datKhungGioMacDinh = () => {
+    const datKhungGioMacDinh = (capNhatThem = {}) => {
         setForm((prev) => ({
             ...prev,
             gio_batdau: GIO_BAT_DAU_MAC_DINH,
             gio_ketthuc: GIO_KET_THUC_MAC_DINH,
+            ...capNhatThem,
         }));
         setBuoiLinhHoat((prev) =>
             prev.map((buoi, index) => ({
@@ -580,6 +574,38 @@ function ChonGoiHoc() {
             && !slotTrungLichBan(ngayHoc, gio)
         )) || ""
     );
+
+    const ngayHocThuHopLeDauTien = () => {
+        const ngayBatDau = bayGioVietNam();
+
+        for (let soNgayThem = 0; soNgayThem < 14; soNgayThem += 1) {
+            const ngay = new Date(ngayBatDau);
+            ngay.setDate(ngayBatDau.getDate() + soNgayThem);
+
+            const ngayHoc = dinhDangNgay(ngay);
+            if (khungGioHocThuHopLeDauTien(ngayHoc)) return ngayHoc;
+        }
+
+        return ngayHomNay();
+    };
+
+    const doiLoaiGoi = (value) => {
+        setLoaiGoi(value);
+        setGoiId("");
+
+        if (value === "hoc_thu") {
+            const ngayHoc = ngayHocThuHopLeDauTien();
+            const gioBatDau = khungGioHocThuHopLeDauTien(ngayHoc) || GIO_BAT_DAU_MAC_DINH;
+            datKhungGioMacDinh({
+                ngay_batdau: ngayHoc,
+                gio_batdau: gioBatDau,
+                gio_ketthuc: tinhGioKetThuc(gioBatDau),
+            });
+        } else {
+            datKhungGioMacDinh();
+        }
+        setThongBao("");
+    };
 
     const chonGoi = (goi) => {
         setGoiId(goi.id);
@@ -859,16 +885,10 @@ function ChonGoiHoc() {
             };
         });
 
-        if (loaiGoi === "dinh_ky" && thuHoc.length === 0) {
-            setThongBao("Vui lòng chọn ít nhất một thứ học cố định.");
+        if (loaiGoi === "dinh_ky" && thuHoc.length !== SO_THU_TOI_DA) {
+            setThongBao(`Goi dinh ky can chon du ${SO_THU_TOI_DA} thu hoc co dinh trong tuan.`);
             return;
         }
-
-        if (loaiGoi === "dinh_ky" && thuHoc.length > SO_THU_TOI_DA) {
-            setThongBao(`Chỉ được chọn tối đa ${SO_THU_TOI_DA} thứ học cố định.`);
-            return;
-        }
-
         if (loaiGoi === "dinh_ky" && !hopLeKhoangGioBatDau(form.gio_batdau)) {
             setThongBao(`Giờ bắt đầu phải trong khoảng ${GIO_BAT_DAU_MIN} - ${GIO_BAT_DAU_MAX}.`);
             return;
@@ -1206,7 +1226,7 @@ function ChonGoiHoc() {
                                     <div>
                                         <div className="mb-2 text-sm font-semibold text-slate-200">Thứ học cố định</div>
                                         <p className="mb-3 text-xs font-medium text-blue-200">
-                                            Chọn tối đa 2 thứ học cố định trong tuần.
+                                            Chon du 2 thu hoc co dinh trong tuan.
                                         </p>
                                         <div className="grid gap-2 sm:grid-cols-4 lg:grid-cols-7">
                                             {cacThu.map((thu) => {
