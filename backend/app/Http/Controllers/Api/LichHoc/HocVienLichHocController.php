@@ -86,6 +86,15 @@ class HocVienLichHocController extends DatLichBaseController
             ], 404);
         }
 
+        $xacNhan = $this->thongTinXacNhanLichHoc($lichHoc);
+
+        if (! $xacNhan['hocVienDaXacNhan']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chi co the danh gia sau khi ban xac nhan hoan thanh buoi hoc.',
+            ], 422);
+        }
+
         if ($lichHoc->trang_thai !== 'hoanthanh') {
             return response()->json([
                 'success' => false,
@@ -283,7 +292,7 @@ class HocVienLichHocController extends DatLichBaseController
             'ngay_hoc' => ['required', 'date', 'after_or_equal:today'],
             'gio_batdau' => ['required', 'date_format:H:i'],
             'gio_ketthuc' => ['required', 'date_format:H:i', 'after:gio_batdau'],
-            'ly_do' => ['required', 'string', 'max:1000'],
+            'ly_do' => ['required', 'string', 'max:100'],
         ]);
 
         $lichHoc = LichHoc::query()

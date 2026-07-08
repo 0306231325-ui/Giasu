@@ -119,7 +119,8 @@ function layThongDiepLoi(error, fallback) {
         .replace("The anh minh chung field is required.", "Vui lòng tải ảnh minh chứng giao dịch.")
         .replace("The anh minh chung must be an image.", "Minh chứng giao dịch phải là hình ảnh.")
         .replace("The anh minh chung must not be greater than 4096 kilobytes.", "Ảnh minh chứng không được vượt quá 4MB.")
-        .replace("The ghi chu field is required when trang thai is baovan de.", "Vui lòng nhập nội dung vấn đề.");
+        .replace("The ghi chu field is required when trang thai is baovan de.", "Vui lòng nhập nội dung vấn đề.")
+        .replace("The ly do must not be greater than 100 characters.", "Lý do đổi buổi không được vượt quá 100 ký tự.");
 }
 
 const ngayHomNay = () => {
@@ -136,6 +137,7 @@ const taoDanhSachKhungGio = () => {
     return danhSach;
 };
 const cacKhungGio = taoDanhSachKhungGio();
+const SO_KY_TU_TOI_DA_LY_DO_DOI_BUOI = 100;
 
 const congPhutVaoGio = (gio, soPhut) => {
     const [gioBatDau, phutBatDau] = String(gio || "00:00").split(":").map(Number);
@@ -144,6 +146,23 @@ const congPhutVaoGio = (gio, soPhut) => {
     const phutKetThuc = tongPhut % 60;
 
     return `${String(gioKetThuc).padStart(2, "0")}:${String(phutKetThuc).padStart(2, "0")}`;
+};
+
+const doiGioSangPhut = (gio) => {
+    const [gioSo, phutSo] = String(gio || "00:00").split(":").map(Number);
+    return gioSo * 60 + phutSo;
+};
+
+const khungGioBiTrung = (gioBatDau, danhSachLichBan = []) => {
+    const batDau = doiGioSangPhut(gioBatDau);
+    const ketThuc = doiGioSangPhut(congPhutVaoGio(gioBatDau, 90));
+
+    return danhSachLichBan.some((lichBan) => {
+        const batDauBan = doiGioSangPhut(lichBan.gio_batdau || lichBan.gioBatDau);
+        const ketThucBan = doiGioSangPhut(lichBan.gio_ketthuc || lichBan.gioKetThuc);
+
+        return batDau < ketThucBan && ketThuc > batDauBan;
+    });
 };
 
 const taoMaGiaoDich = (maGoi) => `GD${Date.now()}${String(maGoi || "").replace(/\D/g, "").slice(-6)}`;
@@ -216,6 +235,10 @@ function LichHocCuaToi() {
         gio_ketthuc: "19:30",
         ly_do: "",
     });
+    const [moFormDoiBuoi, setMoFormDoiBuoi] = useState(false);
+    const [moChiTietDoiBuoi, setMoChiTietDoiBuoi] = useState(false);
+    const [lichBanDoiBuoi, setLichBanDoiBuoi] = useState([]);
+    const [dangTaiLichBanDoiBuoi, setDangTaiLichBanDoiBuoi] = useState(false);
     const [taiLieuDangXem, setTaiLieuDangXem] = useState(null);
     const setThongBao = useCallback((noiDung, loai = "error") => {
         if (!noiDung) return;
@@ -415,6 +438,8 @@ function LichHocCuaToi() {
 
     const moChiTietBuoi = useCallback((goiHoc, lichHoc) => {
         setChiTietBuoi({ goiHoc, lichHoc });
+        setMoFormDoiBuoi(false);
+        setMoChiTietDoiBuoi(false);
         setFormDanhGia({
             so_sao: lichHoc.danhGia?.soSao || 5,
             noi_dung: lichHoc.danhGia?.noiDung || "",
@@ -446,6 +471,35 @@ function LichHocCuaToi() {
             }
         }
     }, [danhSachGoi, searchParams, setSearchParams, moChiTietBuoi]);
+
+    useEffect(() => {
+        const lichHocId = chiTietBuoi?.lichHoc?.id;
+        if (!lichHocId || !chiTietBuoi?.lichHoc?.coTheDoiBuoi || !moFormDoiBuoi || !formDoiBuoi.ngay_hoc) {
+            setLichBanDoiBuoi([]);
+            return undefined;
+        }
+
+        let dangHieuLuc = true;
+        setDangTaiLichBanDoiBuoi(true);
+
+        api.get(`/hoc-vien/lich-hoc/${lichHocId}/khoang-thoi-gian-ban`, {
+            params: { ngay_hoc: formDoiBuoi.ngay_hoc },
+        })
+            .then((response) => {
+                if (!dangHieuLuc) return;
+                setLichBanDoiBuoi(response.data.success ? response.data.data || [] : []);
+            })
+            .catch(() => {
+                if (dangHieuLuc) setLichBanDoiBuoi([]);
+            })
+            .finally(() => {
+                if (dangHieuLuc) setDangTaiLichBanDoiBuoi(false);
+            });
+
+        return () => {
+            dangHieuLuc = false;
+        };
+    }, [chiTietBuoi?.lichHoc?.id, chiTietBuoi?.lichHoc?.coTheDoiBuoi, moFormDoiBuoi, formDoiBuoi.ngay_hoc]);
 
     const guiDanhGia = async (event) => {
         event.preventDefault();
@@ -492,6 +546,8 @@ function LichHocCuaToi() {
                     coTheDoiBuoi: false,
                 });
                 setFormDoiBuoi((hienTai) => ({ ...hienTai, ly_do: "" }));
+                setMoFormDoiBuoi(false);
+                setMoChiTietDoiBuoi(false);
                 setThongBao(response.data.message || "Đã gửi yêu cầu đổi buổi.", "success");
             }
         } catch (error) {
@@ -537,6 +593,38 @@ function LichHocCuaToi() {
 
     const yeuCauDoiBuoiDangMo = chiTietBuoi?.lichHoc?.yeuCauDoiBuoi || null;
     const laBuoiHocThuDangXem = chiTietBuoi ? laGoiHocThu(chiTietBuoi.goiHoc, chiTietBuoi.lichHoc) : false;
+    const thongTinDoiLichThanhCong = chiTietBuoi?.lichHoc?.thongTinDoiLich || null;
+    const daDoiLichThanhCong = Boolean(chiTietBuoi?.lichHoc?.daDoiLich || thongTinDoiLichThanhCong);
+    const chiTietDoiBuoiDangXem = daDoiLichThanhCong
+        ? {
+            tieuDe: "Chi tiết đổi buổi",
+            trangThai: "Đã đổi buổi",
+            lopTrangThai: "bg-emerald-50 text-emerald-700",
+            ngayHocText: thongTinDoiLichThanhCong?.ngayHocText || dinhDangNgay(chiTietBuoi?.lichHoc?.ngayHoc),
+            gioBatDau: chiTietBuoi?.lichHoc?.gioBatDau,
+            gioKetThuc: chiTietBuoi?.lichHoc?.gioKetThuc,
+            khungGio: thongTinDoiLichThanhCong?.khungGio,
+            lyDo: thongTinDoiLichThanhCong?.lyDo,
+        }
+        : yeuCauDoiBuoiDangMo
+            ? {
+                tieuDe: "Chi tiết yêu cầu đổi lịch học",
+                trangThai: nhanTrangThaiYeuCau(yeuCauDoiBuoiDangMo.trangThai),
+                lopTrangThai: "bg-sky-50 text-sky-700",
+                ngayHocText: yeuCauDoiBuoiDangMo.ngayHocText || dinhDangNgay(yeuCauDoiBuoiDangMo.ngayHoc),
+                gioBatDau: yeuCauDoiBuoiDangMo.gioBatDau,
+                gioKetThuc: yeuCauDoiBuoiDangMo.gioKetThuc,
+                khungGio: yeuCauDoiBuoiDangMo.khungGio,
+                lyDo: yeuCauDoiBuoiDangMo.lyDo,
+            }
+            : null;
+    const hocVienDaXacNhanHoanThanh = Boolean(
+        chiTietBuoi?.lichHoc?.xacNhan?.hocVienDaXacNhan
+        || chiTietBuoi?.lichHoc?.hocVienXacNhan?.trangThai === "daxacnhan",
+    );
+    const hienThiKhoiDoiBuoi = !laBuoiHocThuDangXem
+        && Boolean(chiTietBuoi?.lichHoc?.coTheDoiBuoi || yeuCauDoiBuoiDangMo || daDoiLichThanhCong);
+    const gioDoiBuoiDangChonBiTrung = khungGioBiTrung(formDoiBuoi.gio_batdau, lichBanDoiBuoi);
 
     if (authLoading || dangTai) {
         return (
@@ -751,8 +839,8 @@ function LichHocCuaToi() {
 
             {chiTietBuoi && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 py-6">
-                    <div className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-2xl">
-                        <div className="border-b border-slate-100 bg-slate-50 px-6 py-5">
+                    <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 shadow-2xl">
+                        <div className="border-b border-slate-100 bg-white px-6 py-5">
                             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                 <div>
                                     <div className="flex flex-wrap items-center gap-3">
@@ -768,7 +856,11 @@ function LichHocCuaToi() {
                                 </div>
                                 <button
                                     type="button"
-                                    onClick={() => setChiTietBuoi(null)}
+                                    onClick={() => {
+                                        setMoFormDoiBuoi(false);
+                                        setMoChiTietDoiBuoi(false);
+                                        setChiTietBuoi(null);
+                                    }}
                                     className="h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-600 transition hover:bg-slate-100"
                                 >
                                     Đóng
@@ -776,52 +868,94 @@ function LichHocCuaToi() {
                             </div>
                         </div>
 
-                        <div className="space-y-5 p-6">
-                            <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                                <ThongTinBuoi label="Ngày học" value={`${chiTietBuoi.lichHoc.thu}, ${dinhDangNgay(chiTietBuoi.lichHoc.ngayHoc)}`} />
-                                <ThongTinBuoi label="Khung giờ" value={`${chiTietBuoi.lichHoc.gioBatDau} - ${chiTietBuoi.lichHoc.gioKetThuc}`} />
-                                <ThongTinBuoi label="Hình thức" value={chiTietBuoi.lichHoc.hinhThuc} />
-                                <ThongTinBuoi label="Địa điểm" value={chiTietBuoi.lichHoc.diaDiem} />
+                        <div className="space-y-4 p-6">
+                            <section className="rounded-xl border border-slate-200 bg-white p-5">
+                                <p className="text-xs font-bold uppercase text-slate-500">Thông tin chi tiết</p>
+                                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                    <ThongTinBuoi label="Ngày học" value={`${chiTietBuoi.lichHoc.thu}, ${dinhDangNgay(chiTietBuoi.lichHoc.ngayHoc)}`} />
+                                    <ThongTinBuoi label="Khung giờ" value={`${chiTietBuoi.lichHoc.gioBatDau} - ${chiTietBuoi.lichHoc.gioKetThuc}`} />
+                                    <ThongTinBuoi label="Hình thức" value={chiTietBuoi.lichHoc.hinhThuc} />
+                                    <ThongTinBuoi label="Địa điểm" value={chiTietBuoi.lichHoc.diaDiem} />
+                                </div>
+
+                                {laBuoiOnline(chiTietBuoi.lichHoc) && (
+                                    <div className="mt-5 border-t border-slate-100 pt-4">
+                                        <p className="text-xs font-bold uppercase text-sky-700">
+                                            Link lớp học online
+                                        </p>
+                                        {chiTietBuoi.lichHoc.linkHocOnline ? (
+                                            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                                <a
+                                                    href={chiTietBuoi.lichHoc.linkHocOnline}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="min-w-0 truncate text-sm font-bold text-blue-700 hover:underline"
+                                                >
+                                                    {chiTietBuoi.lichHoc.linkHocOnline}
+                                                </a>
+                                                <a
+                                                    href={chiTietBuoi.lichHoc.linkHocOnline}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-blue-600 px-4 text-sm font-bold text-white transition hover:bg-blue-700"
+                                                >
+                                                    Vào lớp học
+                                                </a>
+                                            </div>
+                                        ) : (
+                                            <p className="mt-2 text-sm font-semibold text-slate-500">
+                                                Gia sư chưa cập nhật link lớp học.
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
+                                {hienThiKhoiDoiBuoi && (
+                                    <div className="mt-5 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                                        <div>
+                                            <p className="text-xs font-bold uppercase text-sky-700">Đổi buổi</p>
+                                            <p className="mt-1 text-sm font-semibold text-slate-500">
+                                                {daDoiLichThanhCong
+                                                    ? "Lịch học đã được cập nhật."
+                                                    : yeuCauDoiBuoiDangMo
+                                                        ? "Yêu cầu đổi buổi đã được gửi."
+                                                        : "Chọn lịch khác khi cần đổi buổi học."}
+                                            </p>
+                                        </div>
+                                        {daDoiLichThanhCong ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => setMoChiTietDoiBuoi(true)}
+                                                className="h-10 rounded-lg border border-sky-200 bg-white px-4 text-sm font-bold text-sky-700 transition hover:border-sky-300 hover:bg-sky-50"
+                                            >
+                                                Xem chi tiết
+                                            </button>
+                                        ) : chiTietBuoi.lichHoc.coTheDoiBuoi ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => setMoFormDoiBuoi(true)}
+                                                className="h-10 rounded-lg bg-sky-600 px-4 text-sm font-bold text-white transition hover:bg-sky-700"
+                                            >
+                                                Yêu cầu đổi buổi
+                                            </button>
+                                        ) : yeuCauDoiBuoiDangMo && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setMoChiTietDoiBuoi(true)}
+                                                className="h-10 rounded-lg border border-sky-200 bg-white px-4 text-sm font-bold text-sky-700 transition hover:border-sky-300 hover:bg-sky-50"
+                                            >
+                                                Xem chi tiết
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
                             </section>
 
-                            {laBuoiOnline(chiTietBuoi.lichHoc) && (
-                                <section className="rounded-xl border border-sky-100 bg-sky-50/70 p-5">
-                                    <p className="text-xs font-bold uppercase text-sky-700">
-                                        Link lớp học online
-                                    </p>
-                                    {chiTietBuoi.lichHoc.linkHocOnline ? (
-                                        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                            <a
-                                                href={chiTietBuoi.lichHoc.linkHocOnline}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="min-w-0 truncate text-sm font-bold text-blue-700 hover:underline"
-                                            >
-                                                {chiTietBuoi.lichHoc.linkHocOnline}
-                                            </a>
-                                            <a
-                                                href={chiTietBuoi.lichHoc.linkHocOnline}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-blue-600 px-4 text-sm font-bold text-white transition hover:bg-blue-700"
-                                            >
-                                                Vào lớp học
-                                            </a>
-                                        </div>
-                                    ) : (
-                                        <p className="mt-2 text-sm font-semibold text-slate-500">
-                                            Gia sư chưa cập nhật link lớp học.
-                                        </p>
-                                    )}
-                                </section>
-                            )}
-
-                            <div className="grid gap-5 lg:grid-cols-[1fr_1fr] lg:items-start">
+                            <div className={`grid gap-5 lg:items-start ${hocVienDaXacNhanHoanThanh ? "lg:grid-cols-2" : "lg:grid-cols-1"}`}>
                                 <section className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-5">
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
                                             <p className="text-xs font-bold uppercase text-emerald-700">Xác nhận</p>
-                                            <h3 className="mt-1 text-lg font-bold text-slate-950">Tiến độ buổi học</h3>
                                         </div>
                                         <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700">
                                             {chiTietBuoi.lichHoc.loaiBuoi || "Học thường"}
@@ -865,9 +999,9 @@ function LichHocCuaToi() {
                                     ) : null}
                                 </section>
 
+                                {hocVienDaXacNhanHoanThanh && (
                                 <section className="rounded-xl border border-amber-100 bg-amber-50/70 p-5">
                                     <p className="text-xs font-bold uppercase text-amber-700">Đánh giá</p>
-                                    <h3 className="mt-1 text-lg font-bold text-slate-950">Phản hồi sau buổi học</h3>
 
                                     {chiTietBuoi.lichHoc.danhGia && (
                                         <div className="mt-4 rounded-lg border border-amber-200 bg-white px-4 py-3 text-sm text-amber-800">
@@ -924,101 +1058,194 @@ function LichHocCuaToi() {
                                         )}
                                     </form>
                                 </section>
+                                )}
+
                             </div>
-
-                            {!laBuoiHocThuDangXem && (chiTietBuoi.lichHoc.coTheDoiBuoi || yeuCauDoiBuoiDangMo) && (
-                                <section className="rounded-xl border border-sky-100 bg-sky-50/70 p-5">
-                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                        <div>
-                                            <p className="text-xs font-bold uppercase text-sky-700">Đổi buổi</p>
-                                            <h3 className="mt-1 text-lg font-bold text-slate-950">Yêu cầu đổi lịch học</h3>
-                                        </div>
-                                        {yeuCauDoiBuoiDangMo && (
-                                            <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-sky-700">
-                                                {nhanTrangThaiYeuCau(yeuCauDoiBuoiDangMo.trangThai)}
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    {yeuCauDoiBuoiDangMo && (
-                                        <div className="mt-4 rounded-lg border border-sky-100 bg-white px-4 py-3">
-                                            <p className="text-xs font-bold uppercase text-sky-500">Lịch đề xuất</p>
-                                            <p className="mt-1 font-bold text-slate-950">
-                                                {yeuCauDoiBuoiDangMo.ngayHocText || dinhDangNgay(yeuCauDoiBuoiDangMo.ngayHoc)}
-                                            </p>
-                                            <p className="text-sm text-slate-600">{yeuCauDoiBuoiDangMo.khungGio || `${yeuCauDoiBuoiDangMo.gioBatDau} - ${yeuCauDoiBuoiDangMo.gioKetThuc}`}</p>
-                                            {yeuCauDoiBuoiDangMo.lyDo && (
-                                                <p className="mt-2 text-sm text-slate-500">{yeuCauDoiBuoiDangMo.lyDo}</p>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {chiTietBuoi.lichHoc.coTheDoiBuoi && (
-                                        <form onSubmit={guiYeuCauDoiBuoi} className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_1fr]">
-                                            <label className="block">
-                                                <span className="mb-2 block text-sm font-semibold text-slate-700">Ngày mới</span>
-                                                <input
-                                                    type="date"
-                                                    min={ngayHomNay()}
-                                                    value={formDoiBuoi.ngay_hoc}
-                                                    onChange={(event) => setFormDoiBuoi((hienTai) => ({ ...hienTai, ngay_hoc: event.target.value }))}
-                                                    className="h-11 w-full rounded-lg border border-sky-100 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-400"
-                                                />
-                                            </label>
-                                            <label className="block">
-                                                <span className="mb-2 block text-sm font-semibold text-slate-700">Giờ bắt đầu</span>
-                                                <select
-                                                    value={formDoiBuoi.gio_batdau}
-                                                    onChange={(event) => {
-                                                        const gioBatDau = event.target.value;
-                                                        setFormDoiBuoi((hienTai) => ({
-                                                            ...hienTai,
-                                                            gio_batdau: gioBatDau,
-                                                            gio_ketthuc: congPhutVaoGio(gioBatDau, 90),
-                                                        }));
-                                                    }}
-                                                    className="h-11 w-full rounded-lg border border-sky-100 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-400"
-                                                >
-                                                    {cacKhungGio.map((gio) => (
-                                                        <option key={gio} value={gio}>{gio}</option>
-                                                    ))}
-                                                </select>
-                                            </label>
-                                            <label className="block">
-                                                <span className="mb-2 block text-sm font-semibold text-slate-700">Giờ kết thúc</span>
-                                                <input
-                                                    type="text"
-                                                    value={formDoiBuoi.gio_ketthuc}
-                                                    readOnly
-                                                    className="h-11 w-full rounded-lg border border-sky-100 bg-slate-100 px-3 text-sm font-semibold text-slate-600 outline-none"
-                                                />
-                                                <p className="mt-1 text-xs text-slate-500">Tự tính 1 giờ 30 phút từ giờ bắt đầu.</p>
-                                            </label>
-                                            <label className="block md:col-span-3">
-                                                <span className="mb-2 block text-sm font-semibold text-slate-700">Lý do đổi buổi</span>
-                                                <textarea
-                                                    rows={3}
-                                                    value={formDoiBuoi.ly_do}
-                                                    onChange={(event) => setFormDoiBuoi((hienTai) => ({ ...hienTai, ly_do: event.target.value }))}
-                                                    placeholder="Ví dụ: em bận lịch kiểm tra, muốn chuyển sang buổi khác"
-                                                    className="w-full resize-none rounded-lg border border-sky-100 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400"
-                                                />
-                                            </label>
-                                            <div className="md:col-span-3">
-                                                <button
-                                                    type="submit"
-                                                    disabled={dangGuiDoiBuoi}
-                                                    className="h-10 rounded-lg bg-sky-600 px-4 text-sm font-bold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
-                                                >
-                                                    {dangGuiDoiBuoi ? "Đang gửi..." : "Gửi yêu cầu đổi buổi"}
-                                                </button>
-                                            </div>
-                                        </form>
-                                    )}
-                                </section>
-                            )}
                         </div>
                     </div>
+                </div>
+            )}
+
+            {chiTietDoiBuoiDangXem && moChiTietDoiBuoi && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 px-4 py-6">
+                    <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-slate-200 bg-white p-6 shadow-2xl">
+                        <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <p className="text-xs font-bold uppercase text-sky-700">Đổi buổi</p>
+                                    <span className={`rounded-full px-3 py-1 text-xs font-bold ${chiTietDoiBuoiDangXem.lopTrangThai}`}>
+                                        {chiTietDoiBuoiDangXem.trangThai}
+                                    </span>
+                                </div>
+                                <h2 className="mt-2 text-xl font-bold text-slate-950">{chiTietDoiBuoiDangXem.tieuDe}</h2>
+                                <p className="mt-1 text-sm text-slate-500">
+                                    {chiTietBuoi.lichHoc.ma} · {dinhDangMonVaLop(chiTietBuoi.goiHoc)}
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setMoChiTietDoiBuoi(false)}
+                                className="h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+                            >
+                                Đóng
+                            </button>
+                        </div>
+
+                        <div className="mt-5 grid gap-3 rounded-xl border border-sky-100 bg-sky-50/60 p-4 text-sm sm:grid-cols-3">
+                            <div>
+                                <p className="text-[11px] font-bold uppercase text-slate-400">Ngày mới</p>
+                                <p className="mt-1 font-bold text-slate-950">
+                                    {chiTietDoiBuoiDangXem.ngayHocText}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-[11px] font-bold uppercase text-slate-400">Giờ bắt đầu</p>
+                                <p className="mt-1 font-bold text-slate-950">
+                                    {chiTietDoiBuoiDangXem.gioBatDau}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-[11px] font-bold uppercase text-slate-400">Giờ kết thúc</p>
+                                <p className="mt-1 font-bold text-slate-950">
+                                    {chiTietDoiBuoiDangXem.gioKetThuc}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-3 rounded-xl border border-slate-200 bg-white p-4 text-sm">
+                            <p className="text-[11px] font-bold uppercase text-slate-400">Nhận xét</p>
+                            <p className="mt-2 whitespace-pre-wrap break-words font-semibold text-slate-700">
+                                {chiTietDoiBuoiDangXem.lyDo || "Không có lý do"}
+                            </p>
+                        </div>
+
+                        <div className="mt-5 flex justify-end border-t border-slate-100 pt-4">
+                            <button
+                                type="button"
+                                onClick={() => setMoChiTietDoiBuoi(false)}
+                                className="h-10 rounded-lg bg-sky-600 px-4 text-sm font-bold text-white transition hover:bg-sky-700"
+                            >
+                                Đã xem
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {chiTietBuoi?.lichHoc?.coTheDoiBuoi && moFormDoiBuoi && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 px-4 py-6">
+                    <form
+                        onSubmit={guiYeuCauDoiBuoi}
+                        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-slate-200 bg-white p-6 shadow-2xl"
+                    >
+                        <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                                <p className="text-xs font-bold uppercase text-sky-700">Đổi buổi</p>
+                                <h2 className="mt-1 text-xl font-bold text-slate-950">Yêu cầu đổi lịch học</h2>
+                                <p className="mt-1 text-sm text-slate-500">
+                                    {chiTietBuoi.lichHoc.ma} · {dinhDangMonVaLop(chiTietBuoi.goiHoc)}
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setMoFormDoiBuoi(false)}
+                                className="h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+                            >
+                                Đóng
+                            </button>
+                        </div>
+
+                        <div className="mt-5 grid gap-4 md:grid-cols-3">
+                            <label className="block">
+                                <span className="mb-2 block text-sm font-semibold text-slate-700">Ngày mới</span>
+                                <input
+                                    type="date"
+                                    min={ngayHomNay()}
+                                    value={formDoiBuoi.ngay_hoc}
+                                    onChange={(event) => setFormDoiBuoi((hienTai) => ({ ...hienTai, ngay_hoc: event.target.value }))}
+                                    className="h-11 w-full rounded-lg border border-sky-100 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-400"
+                                />
+                            </label>
+                            <label className="block">
+                                <span className="mb-2 block text-sm font-semibold text-slate-700">Giờ bắt đầu</span>
+                                <select
+                                    value={formDoiBuoi.gio_batdau}
+                                    onChange={(event) => {
+                                        const gioBatDau = event.target.value;
+                                        setFormDoiBuoi((hienTai) => ({
+                                            ...hienTai,
+                                            gio_batdau: gioBatDau,
+                                            gio_ketthuc: congPhutVaoGio(gioBatDau, 90),
+                                        }));
+                                    }}
+                                    className="h-11 w-full rounded-lg border border-sky-100 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-400"
+                                >
+                                    {cacKhungGio.map((gio) => {
+                                        const biTrung = khungGioBiTrung(gio, lichBanDoiBuoi);
+
+                                        return (
+                                            <option key={gio} value={gio} disabled={biTrung}>
+                                                {gio}{biTrung ? " - da co lich" : ""}
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                                {dangTaiLichBanDoiBuoi && (
+                                    <p className="mt-1 text-xs font-semibold text-sky-600">Dang kiem tra lich ban...</p>
+                                )}
+                                {!dangTaiLichBanDoiBuoi && gioDoiBuoiDangChonBiTrung && (
+                                    <p className="mt-1 text-xs font-semibold text-amber-600">
+                                        Khung gio nay bi trung lich da dat hoac lich cua gia su.
+                                    </p>
+                                )}
+                            </label>
+                            <label className="block">
+                                <span className="mb-2 block text-sm font-semibold text-slate-700">Giờ kết thúc</span>
+                                <input
+                                    type="text"
+                                    value={formDoiBuoi.gio_ketthuc}
+                                    readOnly
+                                    className="h-11 w-full rounded-lg border border-sky-100 bg-slate-100 px-3 text-sm font-semibold text-slate-600 outline-none"
+                                />
+                                <p className="mt-1 text-xs text-slate-500">Tự tính 1 giờ 30 phút từ giờ bắt đầu.</p>
+                            </label>
+                            <label className="block md:col-span-3">
+                                <span className="mb-2 block text-sm font-semibold text-slate-700">Lý do đổi buổi</span>
+                                <textarea
+                                    rows={4}
+                                    value={formDoiBuoi.ly_do}
+                                    maxLength={SO_KY_TU_TOI_DA_LY_DO_DOI_BUOI}
+                                    onChange={(event) => {
+                                        const lyDo = event.target.value.slice(0, SO_KY_TU_TOI_DA_LY_DO_DOI_BUOI);
+                                        setFormDoiBuoi((hienTai) => ({ ...hienTai, ly_do: lyDo }));
+                                    }}
+                                    placeholder="Ví dụ: em bận lịch kiểm tra, muốn chuyển sang buổi khác"
+                                    className="w-full resize-none rounded-lg border border-sky-100 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400"
+                                />
+                                <div className="mt-1 flex justify-between gap-3 text-xs font-semibold text-slate-500">
+                                    <span>Nhập tối đa {SO_KY_TU_TOI_DA_LY_DO_DOI_BUOI} ký tự.</span>
+                                    <span>{formDoiBuoi.ly_do.length}/{SO_KY_TU_TOI_DA_LY_DO_DOI_BUOI}</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div className="mt-5 flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-4">
+                            <button
+                                type="button"
+                                onClick={() => setMoFormDoiBuoi(false)}
+                                className="h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={dangGuiDoiBuoi || dangTaiLichBanDoiBuoi || gioDoiBuoiDangChonBiTrung}
+                                className="h-10 rounded-lg bg-sky-600 px-4 text-sm font-bold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {dangGuiDoiBuoi ? "Đang gửi..." : "Gửi yêu cầu đổi buổi"}
+                            </button>
+                        </div>
+                    </form>
                 </div>
             )}
 
