@@ -49,9 +49,7 @@ function ThongTinDauTrang({ tenGiaSu, thongTin, avatar }) {
                     <div>
                         <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
                             <h2 className="text-xl font-extrabold sm:text-2xl">{tenGiaSu}</h2>
-                            <span className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-1 text-xs font-bold text-emerald-300">
-                                Đã duyệt
-                            </span>
+
                         </div>
                         <div className="mt-2.5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-white/55 sm:justify-start">
                             <span className="inline-flex items-center gap-2">

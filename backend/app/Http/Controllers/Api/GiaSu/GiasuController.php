@@ -171,4 +171,43 @@ class GiasuController extends Controller
             'data' => $danhSach,
         ]);
     }
+
+    public function demCanXuLy(Request $request): JsonResponse
+    {
+        $giaSu = $request->user()->giasu;
+        
+        if (!$giaSu) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'lichDay' => 0,
+                    'hoSo' => 0,
+                ],
+            ]);
+        }
+
+        $soYeuCauDatGoi = \App\Models\GoiHoc::query()
+            ->where('giasu_id', $giaSu->id)
+            ->where('trang_thai', 'cho_xacnhan')
+            ->whereNotNull('gui_giasu_luc')
+            ->count();
+
+        $soYeuCauDoiBuoi = \App\Models\YeuCauHocBu::query()
+            ->where('giasu_id', $giaSu->id)
+            ->where('trang_thai', 'cho_gia_su_xac_nhan')
+            ->count();
+            
+        $soHoSo = 0;
+        if (in_array($giaSu->trang_thai_ho_so, ['tu_choi', 'cho_cap_nhat'])) {
+            $soHoSo = 1;
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'lichDay' => $soYeuCauDatGoi + $soYeuCauDoiBuoi,
+                'hoSo' => $soHoSo,
+            ],
+        ]);
+    }
 }

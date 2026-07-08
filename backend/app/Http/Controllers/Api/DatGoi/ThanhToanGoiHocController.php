@@ -73,7 +73,7 @@ class ThanhToanGoiHocController extends DatLichBaseController
         if ($goiHoc->thanhToanMoiNhat?->trang_thai === 'cho_thanhtoan') {
             return response()->json([
                 'success' => false,
-                'message' => 'Ban da gui minh chung thanh toan. Vui long cho admin xac nhan.',
+                'message' => 'Bạn đã gửi minh chứng thanh toán. Vui lòng chờ admin xác nhận.',
             ], 422);
         }
 
@@ -119,7 +119,7 @@ class ThanhToanGoiHocController extends DatLichBaseController
 
         return response()->json([
             'success' => true,
-            'message' => 'Da gui minh chung thanh toan. Vui long cho admin xac nhan.',
+            'message' => 'Đã gửi minh chứng thanh toán. Vui lòng chờ admin xác nhận.',
             'data' => $this->dinhDangGoiHocChoHocVien($goiHocMoi),
         ]);
     }
@@ -140,14 +140,14 @@ class ThanhToanGoiHocController extends DatLichBaseController
         if (! $goiHoc || ! $goiHoc->thanhToanMoiNhat) {
             return response()->json([
                 'success' => false,
-                'message' => 'Khong tim thay thanh toan can xac nhan.',
+                'message' => 'Không tìm thấy thanh toán cần xác nhận.',
             ], 404);
         }
 
         if ($goiHoc->thanhToanMoiNhat->trang_thai !== 'cho_thanhtoan') {
             return response()->json([
                 'success' => false,
-                'message' => 'Thanh toan nay khong con o trang thai cho xac nhan.',
+                'message' => 'Thanh toán này không còn ở trạng thái chờ xác nhận.',
             ], 422);
         }
 
@@ -192,7 +192,7 @@ class ThanhToanGoiHocController extends DatLichBaseController
 
         return response()->json([
             'success' => true,
-            'message' => 'Da xac nhan thanh toan va chuyen goi hoc sang dang hoc.',
+            'message' => 'Đã xác nhận thanh toán và chuyển gói học sang trạng thái đang học.',
             'data' => $this->dinhDangGoiHocChoAdmin($goiHoc->fresh(['hocVien', 'monHoc', 'giasu.user', 'lichHocs', 'phanHoiMoiNhat', 'thanhToanMoiNhat'])),
         ]);
     }
@@ -217,14 +217,14 @@ class ThanhToanGoiHocController extends DatLichBaseController
         if (! $goiHoc || ! $goiHoc->thanhToanMoiNhat) {
             return response()->json([
                 'success' => false,
-                'message' => 'Khong tim thay thanh toan can tu choi.',
+                'message' => 'Không tìm thấy thanh toán cần từ chối.',
             ], 404);
         }
 
         if ($goiHoc->thanhToanMoiNhat->trang_thai !== 'cho_thanhtoan') {
             return response()->json([
                 'success' => false,
-                'message' => 'Thanh toan nay khong con o trang thai cho xac nhan.',
+                'message' => 'Thanh toán này không còn ở trạng thái chờ xác nhận.',
             ], 422);
         }
 
@@ -253,7 +253,7 @@ class ThanhToanGoiHocController extends DatLichBaseController
 
         return response()->json([
             'success' => true,
-            'message' => 'Da tu choi thanh toan. Goi hoc van o trang thai cho thanh toan.',
+            'message' => 'Đã từ chối thanh toán. Gói học vẫn ở trạng thái chờ thanh toán.',
             'data' => $this->dinhDangGoiHocChoAdmin($goiHoc->fresh(['hocVien', 'monHoc', 'giasu.user', 'lichHocs', 'phanHoiMoiNhat', 'thanhToanMoiNhat'])),
         ]);
     }

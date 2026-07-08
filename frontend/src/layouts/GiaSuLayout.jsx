@@ -2,11 +2,14 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import RefreshButton from "../components/RefreshButton";
 import ThongBaoDropdown from "../components/ThongBaoDropdown";
+import useGiaSuDemCanXuLy from "../hooks/useGiaSuDemCanXuLy";
 
 function GiaSuLayout() {
     const navigate = useNavigate();
     const { user, logout, loading } = useAuth();
     const laGiaSu = user?.vai_tro === "giasu";
+    const { dem: demCanXuLy } = useGiaSuDemCanXuLy({ kichHoat: laGiaSu });
+
     const lamMoiTrangGiaSu = () => {
         window.dispatchEvent(new CustomEvent("giasu:refresh"));
     };
@@ -42,8 +45,8 @@ function GiaSuLayout() {
 
                 <nav className="flex-1 space-y-1 p-3">
                     <MucDieuHuong to="/gia-su/quan-ly" end label="Tổng quan" />
-                    <MucDieuHuong to="/gia-su/quan-ly/ho-so" label="Hồ sơ gia sư" />
-                    <MucDieuHuong to="/gia-su/quan-ly/lich-day" label="Lịch dạy" />
+                    <MucDieuHuong to="/gia-su/quan-ly/ho-so" label="Hồ sơ gia sư" badge={demCanXuLy.hoSo} />
+                    <MucDieuHuong to="/gia-su/quan-ly/lich-day" label="Lịch dạy" badge={demCanXuLy.lichDay} />
                     <MucDieuHuong to="/gia-su/quan-ly/thu-nhap" label="Thu nhập" />
                     <MucDieuHuong to="/gia-su/quan-ly/theo-doi-hoat-dong" label="Theo dõi hoạt động" />
                 </nav>
@@ -111,21 +114,26 @@ function GiaSuLayout() {
     );
 }
 
-function MucDieuHuong({ to, end, label }) {
+function MucDieuHuong({ to, end, label, badge }) {
     return (
         <NavLink
             to={to}
             end={end}
             className={({ isActive }) =>
                 [
-                    "block rounded-xl px-4 py-2.5 text-sm font-semibold transition",
+                    "flex items-center justify-between rounded-xl px-4 py-2.5 text-sm font-semibold transition",
                     isActive
                         ? "bg-blue-600 text-white"
                         : "text-white/80 hover:bg-white/5 hover:text-white",
                 ].join(" ")
             }
         >
-            {label}
+            <span>{label}</span>
+            {Number(badge) > 0 && (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-xs font-extrabold text-slate-950">
+                    {badge > 9 ? "9+" : badge}
+                </span>
+            )}
         </NavLink>
     );
 }

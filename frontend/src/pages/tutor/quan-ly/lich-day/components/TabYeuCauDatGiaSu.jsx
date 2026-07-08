@@ -159,13 +159,7 @@ function TheYeuCau({ yeuCau, dangXuLy, onXem, onDongY, onTuChoi }) {
                 </div>
 
                 <div className="space-y-2 text-sm text-white/55">
-                    <p className="flex gap-2">
-                        <IconLichDay
-                            ten="calendar"
-                            className="mt-0.5 h-4 w-4 shrink-0"
-                        />
-                        <span>{yeuCau.lichMongMuon}</span>
-                    </p>
+
                     <p className="flex gap-2">
                         <IconLichDay
                             ten={

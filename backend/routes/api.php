@@ -70,6 +70,7 @@ Route::middleware(['auth:sanctum', 'tai_khoan.hoat_dong'])->group(function () {
     });
 
     Route::prefix('gia-su')->group(function () {
+        Route::get('/dem-can-xu-ly', [GiasuController::class, 'demCanXuLy']);
         Route::post('/{giaSuId}/goi-hoc', [DatGoiController::class, 'datLich']);
         Route::get('/lich-day', [GiaSuLichHocController::class, 'lichDayGiaSu']);
         Route::patch('/lich-day/{lichHocId}/link-hoc-online', [GiaSuLichHocController::class, 'capNhatLinkHocOnline']);

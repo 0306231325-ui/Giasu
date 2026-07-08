@@ -95,7 +95,7 @@ class HocVienThanhToanController extends Controller
         if ($goiHoc->thanhToanMoiNhat?->trang_thai === 'cho_thanhtoan') {
             return response()->json([
                 'success' => false,
-                'message' => 'Ban da gui minh chung thanh toan. Vui long cho admin xac nhan.',
+                'message' => 'Bạn đã gửi minh chứng thanh toán. Vui lòng chờ admin xác nhận.',
             ], 422);
         }
 
@@ -134,7 +134,7 @@ class HocVienThanhToanController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Da gui minh chung thanh toan. Vui long cho admin xac nhan.',
+            'message' => 'Đã gửi minh chứng thanh toán. Vui lòng chờ admin xác nhận.',
             'data' => $this->dinhDangGoiHocChoHocVien($goiHocMoi),
         ]);
     }

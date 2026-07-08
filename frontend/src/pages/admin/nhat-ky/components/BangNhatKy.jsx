@@ -47,7 +47,6 @@ function BangNhatKy({
                 <th className="px-5 py-4">Người thực hiện</th>
                 <th className="min-w-[150px] px-5 py-4">Vai trò</th>
                 <th className="min-w-[250px] px-5 py-4">Hành động</th>
-                <th className="px-5 py-4">Đối tượng</th>
                 <th className="min-w-[520px] px-5 py-4">Nội dung</th>
               </tr>
             </thead>
@@ -55,7 +54,7 @@ function BangNhatKy({
               {dangTai ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={5}
                     className="px-5 py-12 text-center text-sm font-semibold text-white/50"
                   >
                     Đang tải nhật ký...
@@ -64,7 +63,7 @@ function BangNhatKy({
               ) : danhSach.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={5}
                     className="px-5 py-12 text-center text-sm font-semibold text-white/50"
                   >
                     Không có nhật ký phù hợp bộ lọc.
@@ -91,9 +90,6 @@ function BangNhatKy({
                       <span className="inline-flex whitespace-nowrap rounded-full bg-blue-500/10 px-3 py-1 text-xs font-extrabold text-blue-200">
                         {NHAN_HANH_DONG[item.hanh_dong] || item.hanh_dong}
                       </span>
-                    </td>
-                    <td className="whitespace-nowrap px-5 py-4 font-bold text-white/70">
-                      {item.doi_tuong_id ? `#${item.doi_tuong_id}` : "—"}
                     </td>
                     <td className="min-w-[520px] px-5 py-4 leading-6 text-white/70">
                       <div className="grid grid-cols-[minmax(0,1fr)_130px] items-center gap-4">
