@@ -691,7 +691,7 @@ function ChiTietLichHoc({ lich, dangXuLy, onXuLy }) {
             {lich.lyDoHuy && <p className="mt-2 text-sm leading-6 text-red-600">{lich.lyDoHuy}</p>}
           </KhoiThongTin>
         )}
-        </div>
+      </div>
     </aside>
   );
 }
