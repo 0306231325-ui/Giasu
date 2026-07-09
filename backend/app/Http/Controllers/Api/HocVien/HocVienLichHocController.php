@@ -163,7 +163,7 @@ class HocVienLichHocController extends Controller
             'ngay_hoc' => ['required', 'date', 'after_or_equal:today'],
             'gio_batdau' => ['required', 'date_format:H:i'],
             'gio_ketthuc' => ['required', 'date_format:H:i', 'after:gio_batdau'],
-            'ly_do' => ['required', 'string', 'max:100'],
+            'ly_do' => ['required', 'string', 'max:50'],
         ]);
 
         $lichHoc = LichHoc::query()

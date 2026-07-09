@@ -37,6 +37,18 @@ class GiasuController extends Controller
                 },
                 'giasuGias.monHoc:id,ten_mon,cap_hoc_id,lop',
                 'giasuGias.monHoc.capHoc:id,ten,thu_tu',
+                'lichHocs' => function ($query) {
+                    $query
+                        ->select('id', 'goihoc_id', 'giasu_id', 'ngay_hoc')
+                        ->whereHas('danhGia')
+                        ->with([
+                            'danhGia:id,lichhoc_id,user_id,so_sao,noi_dung,updated_at',
+                            'danhGia.user:id,ho_ten',
+                            'goiHoc:id,monhoc_id',
+                            'goiHoc.monHoc:id,ten_mon,lop',
+                        ])
+                        ->orderByDesc('ngay_hoc');
+                },
             ])
             ->withCount([
                 'lichHocs as danh_gias_count' => function ($query) {
@@ -78,6 +90,8 @@ class GiasuController extends Controller
             $danhSachGiaSu = $query
                 ->orderBy('id', 'desc')
                 ->paginate(12);
+
+            $danhSachGiaSu->getCollection()->each(fn (Giasu $giaSu) => $this->ganDanhSachDanhGia($giaSu));
 
             return response()->json([
                 'success' => true,
@@ -165,11 +179,39 @@ class GiasuController extends Controller
             ->limit(12)
             ->get();
 
+        $danhSach->each(fn (Giasu $giaSu) => $this->ganDanhSachDanhGia($giaSu));
+
         return response()->json([
             'success' => true,
             'message' => 'Gợi ý gia sư theo yêu cầu thành công',
             'data' => $danhSach,
         ]);
+    }
+
+    private function ganDanhSachDanhGia(Giasu $giaSu): void
+    {
+        $danhGias = $giaSu->lichHocs
+            ->filter(fn ($lichHoc) => $lichHoc->danhGia)
+            ->sortByDesc(fn ($lichHoc) => $lichHoc->danhGia->updated_at)
+            ->values()
+            ->map(function ($lichHoc) {
+                $danhGia = $lichHoc->danhGia;
+                $monHoc = $lichHoc->goiHoc?->monHoc;
+                $tenMon = $monHoc?->ten_mon;
+                $lop = $monHoc?->lop;
+
+                return [
+                    'id' => $danhGia->id,
+                    'soSao' => (int) $danhGia->so_sao,
+                    'noiDung' => $danhGia->noi_dung,
+                    'nguoiDanhGia' => $danhGia->user?->ho_ten,
+                    'monHoc' => $tenMon && $lop ? "{$tenMon} - {$lop}" : ($tenMon ?: 'Buổi học'),
+                    'ngayDanhGia' => $danhGia->updated_at?->format('d/m/Y H:i') ?? '',
+                ];
+            });
+
+        $giaSu->setAttribute('danh_gias', $danhGias);
+        $giaSu->unsetRelation('lichHocs');
     }
 
     public function demCanXuLy(Request $request): JsonResponse
