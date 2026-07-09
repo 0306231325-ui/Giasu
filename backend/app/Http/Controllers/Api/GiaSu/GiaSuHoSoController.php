@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\GiaSu;
 use App\Http\Controllers\Controller;
 use App\Services\GiaSuFileService;
 use App\Services\GiaSuHoSoService;
+use App\Services\NhatKyHeThongService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -69,26 +70,75 @@ class GiaSuHoSoController extends Controller
             'mo_ta.max' => 'Giới thiệu bản thân không được vượt quá 2000 ký tự.',
         ]);
 
+        // Lưu lại dữ liệu cũ trước khi cập nhật để ghi log
+        $duLieuCu = [
+            'ho_ten'   => $user->ho_ten,
+            'ngay_sinh' => $user->ngay_sinh,
+            'sdt'      => $user->sdt,
+            'email'    => $user->email,
+            'dia_chi'  => $giaSu->dia_chi,
+            'mo_ta'    => $giaSu->mo_ta,
+        ];
+
         DB::transaction(function () use ($duLieu, $user, $giaSu) {
             $user->update([
-                'ho_ten' => trim($duLieu['ho_ten']),
+                'ho_ten'    => trim($duLieu['ho_ten']),
                 'ngay_sinh' => $duLieu['ngay_sinh'],
-                'sdt' => $duLieu['sdt'],
-                'email' => strtolower(trim($duLieu['email'])),
+                'sdt'       => $duLieu['sdt'],
+                'email'     => strtolower(trim($duLieu['email'])),
             ]);
 
             $giaSu->update([
                 'dia_chi' => trim($duLieu['dia_chi']),
-                'mo_ta' => filled($duLieu['mo_ta'] ?? null)
+                'mo_ta'   => filled($duLieu['mo_ta'] ?? null)
                     ? trim($duLieu['mo_ta'])
                     : null,
             ]);
         });
 
+        // Xác định các trường đã thay đổi
+        $duLieuMoi = [
+            'ho_ten'    => trim($duLieu['ho_ten']),
+            'ngay_sinh' => $duLieu['ngay_sinh'],
+            'sdt'       => $duLieu['sdt'],
+            'email'     => strtolower(trim($duLieu['email'])),
+            'dia_chi'   => trim($duLieu['dia_chi']),
+            'mo_ta'     => filled($duLieu['mo_ta'] ?? null) ? trim($duLieu['mo_ta']) : null,
+        ];
+
+        $nhanTruong = [
+            'ho_ten'    => 'Họ tên',
+            'ngay_sinh' => 'Ngày sinh',
+            'sdt'       => 'Số điện thoại',
+            'email'     => 'Email',
+            'dia_chi'   => 'Địa chỉ',
+            'mo_ta'     => 'Giới thiệu',
+        ];
+
+        $danhSachThayDoi = [];
+        foreach ($nhanTruong as $truong => $nhan) {
+            $cu  = (string) ($duLieuCu[$truong] ?? '');
+            $moi = (string) ($duLieuMoi[$truong] ?? '');
+            if ($cu !== $moi) {
+                $danhSachThayDoi[] = $nhan;
+            }
+        }
+
+        $noiDungLog = empty($danhSachThayDoi)
+            ? ($user->ho_ten . ' cập nhật thông tin cá nhân (không có thay đổi).')
+            : ($user->fresh()->ho_ten . ' cập nhật thông tin cá nhân: ' . implode(', ', $danhSachThayDoi) . '.');
+
+        NhatKyHeThongService::ghi(
+            $user,
+            'cap_nhat_thong_tin_ca_nhan',
+            $giaSu->id,
+            $noiDungLog,
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Cập nhật thông tin cá nhân thành công.',
-            'data' => $this->giaSuHoSoService->dinhDangThongTinCaNhan($user->fresh(), $giaSu->fresh()),
+            'data'    => $this->giaSuHoSoService->dinhDangThongTinCaNhan($user->fresh(), $giaSu->fresh()),
         ]);
     }
 
