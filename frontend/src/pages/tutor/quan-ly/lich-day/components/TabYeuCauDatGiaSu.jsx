@@ -25,11 +25,7 @@ function TabYeuCauDatGiaSu({
     return (
         <>
             <section className="mt-5">
-                <div className="rounded-2xl border border-blue-400/20 bg-blue-400/10 p-4 text-sm leading-6 text-blue-100/80">
-                    Đây là các yêu cầu học viên đã chọn bạn và được quản trị viên
-                    chuyển sang. Hãy kiểm tra lịch mong muốn trước khi đồng ý
-                    nhận lớp.
-                </div>
+
 
                 <div className="mt-4 flex flex-wrap gap-2">
                     {[

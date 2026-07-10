@@ -377,7 +377,7 @@ class AdminLichHocController extends DatLichBaseController
             LichHoc::create([
                 'goihoc_id' => $lichHocGoc->goihoc_id,
                 'giasu_id' => $lichHocGoc->giasu_id,
-                'loai_buoi' => $lichHocGoc->loai_buoi,
+                'loai_buoi' => 'hoc_bu',
                 'ngay_hoc' => $yeuCau->ngay_hoc,
                 'gio_batdau' => $yeuCau->gio_batdau,
                 'gio_ketthuc' => $yeuCau->gio_ketthuc,

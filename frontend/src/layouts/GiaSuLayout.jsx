@@ -44,7 +44,6 @@ function GiaSuLayout() {
                 </div>
 
                 <nav className="flex-1 space-y-1 p-3">
-                    <MucDieuHuong to="/gia-su/quan-ly" end label="Tổng quan" />
                     <MucDieuHuong to="/gia-su/quan-ly/ho-so" label="Hồ sơ gia sư" badge={demCanXuLy.hoSo} />
                     <MucDieuHuong to="/gia-su/quan-ly/lich-day" label="Lịch dạy" badge={demCanXuLy.lichDay} />
                     <MucDieuHuong to="/gia-su/quan-ly/thu-nhap" label="Thu nhập" />

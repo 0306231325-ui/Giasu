@@ -144,6 +144,8 @@ function TabDanhSachLichHoc({
 
 function DongLichHoc({ lichHoc, onXem }) {
     const trangThai = trangThaiLichHoc[lichHoc.trangThai];
+    const loaiBuoi = String(lichHoc.loaiBuoi || "").toLowerCase();
+    const laBuoiHocBu = lichHoc.daDoiLich || loaiBuoi.includes("bù") || loaiBuoi.includes("bu");
 
     return (
         <article className="rounded-2xl border border-white/10 bg-[#0a132d] p-4 transition hover:border-blue-400/25 sm:p-5">
@@ -155,8 +157,13 @@ function DongLichHoc({ lichHoc, onXem }) {
                     <p className="mt-1 text-sm font-semibold text-white/50">
                         {lichHoc.thu}, {lichHoc.ngayHoc}
                     </p>
-                    <p className="mt-1 text-xs text-white/30">
-                        {lichHoc.loaiBuoi}
+                    <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-white/30">
+                        <span>{lichHoc.loaiBuoi}</span>
+                        {laBuoiHocBu && (
+                            <span className="inline-flex rounded border border-amber-400/30 bg-amber-400/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-400">
+                                Lịch thay đổi
+                            </span>
+                        )}
                     </p>
                 </div>
 

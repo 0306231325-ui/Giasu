@@ -52,7 +52,7 @@ const ngayHocDauTienTheoThu = (danhSachThu) => {
         .map((thu) => thuSangSo[thu])
         .filter(Boolean);
 
-    if (danhSachThuSo.length === 0) return ngayMai();
+    if (danhSachThuSo.length === 0) return "";
 
     const ngayBatDau = new Date(`${ngayMai()}T00:00:00`);
     const tapThu = new Set(danhSachThuSo);
@@ -287,7 +287,7 @@ function ChonGoiHoc() {
     const [dangGui, setDangGui] = useState(false);
     const [loaiGoi, setLoaiGoi] = useState("dinh_ky");
     const [goiId, setGoiId] = useState("");
-    const [thuHoc, setThuHoc] = useState(["Thứ 2", "Thứ 5"]);
+    const [thuHoc, setThuHoc] = useState([]);
     const [thongBao, setThongBaoRaw] = useState("");
     const [loaiThongBao, setLoaiThongBao] = useState("error");
     const [form, setForm] = useState({
@@ -1281,10 +1281,11 @@ function ChonGoiHoc() {
                                                     className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
                                                 >
                                                     {cacKhungGioBatDau.map((gio) => {
-                                                        const biKhoa = khungGioDinhKyBiKhoa(gio);
+                                                        const daQuaGio = !laThoiDiemHocTuongLai(form.ngay_batdau, gio);
+                                                        const biKhoa = daQuaGio || khungGioDinhKyBiKhoa(gio);
                                                         return (
                                                             <option key={gio} value={gio} disabled={biKhoa}>
-                                                                {gio}{biKhoa ? " - đã có lịch" : ""}
+                                                                {gio}{daQuaGio ? " - đã qua giờ" : khungGioDinhKyBiKhoa(gio) ? " - đã có lịch" : ""}
                                                             </option>
                                                         );
                                                     })}
@@ -1384,13 +1385,14 @@ function ChonGoiHoc() {
                                                 className="rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
                                             >
                                                 {cacKhungGioBatDau.map((gio) => {
+                                                    const daQuaGio = !laThoiDiemHocTuongLai(buoi.ngay, gio);
                                                     const trungLichGiaSu = slotTrungLichBan(buoi.ngay, gio);
                                                     const trungBuoiDaChon = slotTrungBuoiDangChon(buoi.ngay, gio, index);
-                                                    const biKhoa = trungLichGiaSu || trungBuoiDaChon;
+                                                    const biKhoa = daQuaGio || trungLichGiaSu || trungBuoiDaChon;
 
                                                     return (
                                                         <option key={gio} value={gio} disabled={biKhoa}>
-                                                            {gio}{trungLichGiaSu ? " - trùng lịch gia sư" : trungBuoiDaChon ? " - trùng buổi đã chọn" : ""}
+                                                            {gio}{daQuaGio ? " - đã qua giờ" : trungLichGiaSu ? " - trùng lịch gia sư" : trungBuoiDaChon ? " - trùng buổi đã chọn" : ""}
                                                         </option>
                                                     );
                                                 })}

@@ -42,6 +42,8 @@ function ModalChiTietLichHoc({
     const laOnline = laLichOnline(lichHoc);
     const laHocThu = laLichHocThu(lichHoc);
     const xacNhan = lichHoc.xacNhan || {};
+    const loaiBuoi = String(lichHoc.loaiBuoi || "").toLowerCase();
+    const laBuoiHocBu = lichHoc.daDoiLich || loaiBuoi.includes("bù") || loaiBuoi.includes("bu");
     const giaSuDaGui = xacNhan.giaSuDaXacNhan || xacNhan.giaSuBaoVanDe;
     const coTheXacNhan = lichHoc.coTheXacNhanHoanThanh && !dangXuLy && !giaSuDaGui && !daBamXacNhan;
 
@@ -225,7 +227,7 @@ function ModalChiTietLichHoc({
                     </div>
                 )}
 
-                {!laHocThu && !daHoanThanh && !daHuy && (
+                {!laHocThu && !daHoanThanh && !daHuy && !laBuoiHocBu && (
                     <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>

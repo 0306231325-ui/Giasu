@@ -475,9 +475,14 @@ class DatLichBaseController extends Controller
             default => 'sap_dien_ra',
         };
 
+        $thongTinDoiLich = $this->thongTinBuoiMoiDaDoiLich($lichHoc);
+        $daDoiLich = $thongTinDoiLich !== null;
+
         return [
             'id' => $lichHoc->id,
             'ma' => 'LH' . str_pad((string) $lichHoc->id, 6, '0', STR_PAD_LEFT),
+            'daDoiLich' => $daDoiLich,
+            'thongTinDoiLich' => $thongTinDoiLich,
             'batDau' => substr((string) $lichHoc->gio_batdau, 0, 5),
             'ketThuc' => substr((string) $lichHoc->gio_ketthuc, 0, 5),
             'thu' => $this->tenThu($ngayHoc->isoWeekday()),

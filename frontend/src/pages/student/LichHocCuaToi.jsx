@@ -109,6 +109,12 @@ function laBuoiOnline(lichHoc = {}) {
         || hinhThuc.includes("truc tuyen");
 }
 
+function laBuoiHocBu(lichHoc = {}) {
+    if (lichHoc.daDoiLich || lichHoc.thongTinDoiLich) return true;
+    const loaiBuoi = String(lichHoc.loaiBuoi || "").toLowerCase();
+    return loaiBuoi.includes("bù") || loaiBuoi.includes("bu");
+}
+
 function layThongDiepLoi(error, fallback) {
     const duLieu = error.response?.data;
     const loiDauTien = duLieu?.errors ? Object.values(duLieu.errors)[0]?.[0] : null;
@@ -683,6 +689,7 @@ function LichHocCuaToi() {
     const daCoDanhGia = Boolean(chiTietBuoi?.lichHoc?.danhGia);
     const coTheMoDanhGia = Boolean(chiTietBuoi?.lichHoc?.coTheDanhGia) || daCoDanhGia;
     const hienThiKhoiDoiBuoi = !laBuoiHocThuDangXem
+        && !laBuoiHocBu(chiTietBuoi?.lichHoc)
         && Boolean(chiTietBuoi?.lichHoc?.coTheDoiBuoi || yeuCauDoiBuoiDangMo || daDoiLichThanhCong);
     const gioDoiBuoiDangChonBiTrung = khungGioBiTrung(formDoiBuoi.gio_batdau, lichBanDoiBuoi);
 
@@ -855,8 +862,13 @@ function LichHocCuaToi() {
                                                                     key={lichHoc.id}
                                                                     className="grid grid-cols-[minmax(0,1fr)_120px_90px] gap-3 px-4 py-3 text-sm"
                                                                 >
-                                                                    <span className="text-slate-600">
-                                                                        {lichHoc.thu}, {dinhDangNgay(lichHoc.ngayHoc)} · {lichHoc.gioBatDau} - {lichHoc.gioKetThuc}
+                                                                    <span className="text-slate-600 flex flex-wrap items-center gap-1.5">
+                                                                        <span>{lichHoc.thu}, {dinhDangNgay(lichHoc.ngayHoc)} · {lichHoc.gioBatDau} - {lichHoc.gioKetThuc}</span>
+                                                                        {laBuoiHocBu(lichHoc) && (
+                                                                            <span className="inline-flex rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-700">
+                                                                                Lịch thay đổi
+                                                                            </span>
+                                                                        )}
                                                                     </span>
                                                                     <NhanTrangThai trangThai={lichHoc.trangThai} loai="buoi" />
                                                                     <button

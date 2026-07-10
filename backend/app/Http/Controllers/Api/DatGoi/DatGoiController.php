@@ -63,7 +63,7 @@ class DatGoiController extends DatLichBaseController
         if (! $giaSu) {
             return response()->json([
                 'success' => false,
-                'message' => 'Khong tim thay gia su phu hop.',
+                'message' => 'Không tìm thấy gia sư phù hợp.',
             ], 404);
         }
 
@@ -95,7 +95,7 @@ class DatGoiController extends DatLichBaseController
         if ($user->vai_tro !== 'hocvien') {
             return response()->json([
                 'success' => false,
-                'message' => 'Chuc nang dat lich chi danh cho tai khoan hoc vien.',
+                'message' => 'Chức năng đặt lịch chỉ dành cho tài khoản học viên.',
             ], 403);
         }
 
@@ -124,7 +124,7 @@ class DatGoiController extends DatLichBaseController
         if ($duLieu['hinh_thuc_hoc'] === 'offline' && blank($duLieu['dia_chi_hoc'] ?? null)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Vui long nhap dia chi hoc tai nha.',
+                'message' => 'Vui lòng nhập địa chỉ học tại nhà.',
             ], 422);
         }
 
@@ -138,7 +138,7 @@ class DatGoiController extends DatLichBaseController
             if ($daDangKyHocThu) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Ban dang co goi hoc thu dang xu ly hoac da duoc chap nhan.',
+                    'message' => 'Bạn đang có gói học thử đang xử lý hoặc đã được chấp nhận.',
                 ], 422);
             }
         }
@@ -168,7 +168,7 @@ class DatGoiController extends DatLichBaseController
         if (! $giaSu) {
             return response()->json([
                 'success' => false,
-                'message' => 'Khong tim thay gia su phu hop.',
+                'message' => 'Không tìm thấy gia sư phù hợp.',
             ], 404);
         }
 
@@ -181,7 +181,7 @@ class DatGoiController extends DatLichBaseController
         if (! $mucGia) {
             return response()->json([
                 'success' => false,
-                'message' => 'Gia su nay chua co muc gia duoc duyet cho mon hoc da chon.',
+                'message' => 'Gia sư này chưa có mức giá được duyệt cho môn học đã chọn.',
             ], 422);
         }
 
@@ -193,7 +193,7 @@ class DatGoiController extends DatLichBaseController
         if (count($lichHocNhap) !== (int) $duLieu['so_buoi']) {
             return response()->json([
                 'success' => false,
-                'message' => 'So buoi hoc khong khop voi goi da chon.',
+                'message' => 'Số buổi học không khớp với gói đã chọn.',
             ], 422);
         }
 
@@ -238,6 +238,7 @@ class DatGoiController extends DatLichBaseController
                 'trang_thai' => 'cho_xacnhan',
             ]);
 
+            //tính phí hoa hồng để đây cho dễ nhớ 
             foreach ($lichHocNhap as $lichHoc) {
                 $tienHoc = round($donGia * $lichHoc['so_gio'] * $heSoGiam);
                 $phiHoaHong = round($tienHoc * 0.2);
@@ -281,7 +282,7 @@ class DatGoiController extends DatLichBaseController
 
         return response()->json([
             'success' => true,
-            'message' => 'Da tao goi hoc va lich hoc. Vui long cho gia su xac nhan.',
+            'message' => 'Đã tạo gói học và lịch học. Vui lòng chờ gia sư xác nhận.',
             'data' => $this->dinhDangGoiHoc($goiHoc),
         ], 201);
     }
@@ -292,7 +293,7 @@ class DatGoiController extends DatLichBaseController
         if ($user->vai_tro !== 'hocvien') {
             return response()->json([
                 'success' => false,
-                'message' => 'Chuc nang huy goi chi danh cho tai khoan hoc vien.',
+                'message' => 'Chức năng hủy gói chỉ dành cho tài khoản học viên.',
             ], 403);
         }
 
@@ -305,7 +306,7 @@ class DatGoiController extends DatLichBaseController
         if (! $goiHoc) {
             return response()->json([
                 'success' => false,
-                'message' => 'Khong tim thay goi hoc co the huy.',
+                'message' => 'Không tìm thấy gói học có thể hủy.',
             ], 404);
         }
 
@@ -351,7 +352,7 @@ class DatGoiController extends DatLichBaseController
 
         return response()->json([
             'success' => true,
-            'message' => 'Da huy goi hoc.',
+            'message' => 'Đã hủy gói học.',
             'data' => $this->dinhDangGoiHocChoHocVien($goiHocMoi),
         ]);
     }

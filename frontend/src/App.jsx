@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import Home from "./pages/Home"
-import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import { Routes, Route, useLocation, useNavigate, Navigate } from "react-router-dom";
 import { useToast } from "./context/ToastContext";
 import MainLayout from "./layouts/MainLayout";
 import BaiViet from "./pages/bai-viet/BaiViet";
@@ -24,7 +24,6 @@ import AdminLichHoc from "./pages/admin/lich-hoc/AdminLichHoc";
 import AdminNhatKy from "./pages/admin/nhat-ky/AdminNhatKy";
 import DangKyLamGiaSu from "./pages/tutor/dang-ky-gia-su/DangKyLamGiaSu";
 import GiaSuLayout from "./layouts/GiaSuLayout";
-import GiaSuTongQuan from "./pages/tutor/quan-ly/GiaSuTongQuan";
 import GiaSuHoSo from "./pages/tutor/quan-ly/ho-so/GiaSuHoSo";
 import GiaSuLichDay from "./pages/tutor/quan-ly/lich-day/GiaSuLichDay";
 import GiaSuThuNhap from "./pages/tutor/quan-ly/thu-nhap/GiaSuThuNhap";
@@ -106,7 +105,7 @@ function App() {
         </Route>
 
         <Route path="/gia-su/quan-ly" element={<GiaSuLayout />}>
-          <Route index element={<GiaSuTongQuan />} />
+          <Route index element={<Navigate to="ho-so" replace />} />
           <Route path="ho-so" element={<GiaSuHoSo />} />
           <Route path="lich-day" element={<GiaSuLichDay />} />
           <Route path="thu-nhap" element={<GiaSuThuNhap />} />
