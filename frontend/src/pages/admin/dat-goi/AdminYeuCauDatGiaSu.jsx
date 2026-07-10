@@ -5,6 +5,7 @@ import ChiTietYeuCauDatGoi from "./ChiTietYeuCauDatGoi";
 import { BO_LOC_TRANG_THAI } from "./constants";
 import TheYeuCauDatGoi from "./TheYeuCauDatGoi";
 import useYeuCauDatGoi from "./hooks/useYeuCauDatGoi";
+import TabDanhSachGoiHoc from "./TabDanhSachGoiHoc";
 
 const MO_TA_DANH_SACH = {
     cho_xu_ly: {
@@ -32,6 +33,7 @@ const MO_TA_DANH_SACH = {
 function AdminYeuCauDatGiaSu() {
     const {
         boLocTrangThai,
+        boLocTrangThaiCon,
         dangTai,
         dangXuLyHanhDong,
         danhSachDaLoc,
@@ -43,6 +45,7 @@ function AdminYeuCauDatGiaSu() {
         dongHopThoaiXacNhan,
         demTheoTrangThai,
         doiTrangThai,
+        setBoLocTrangThaiCon,
         setTuKhoa,
         setYeuCauDangChonId,
         xacNhanHopThoai,
@@ -92,50 +95,76 @@ function AdminYeuCauDatGiaSu() {
                 tuKhoa={tuKhoa}
                 soKetQua={danhSachDaLoc.length}
                 onDoiTuKhoa={setTuKhoa}
-            />
+            >
+                {boLocTrangThai === "danh_sach_goi_hoc" && (
+                    <label className="block w-[180px] shrink-0">
+                        <span className="text-xs font-bold uppercase tracking-wide text-white/45">
+                            Trạng thái
+                        </span>
+                        <select
+                            value={boLocTrangThaiCon}
+                            onChange={(e) => setBoLocTrangThaiCon(e.target.value)}
+                            className="mt-1.5 w-full appearance-none rounded-xl border border-white/10 bg-[#0a0f24] px-4 py-2.5 text-sm font-semibold text-white outline-none transition hover:border-white/20 focus:border-blue-500"
+                        >
+                            <option value="tat_ca">Tất cả</option>
+                            <option value="dang_hoc">Đang học</option>
+                            <option value="hoan_thanh">Đã hoàn thành</option>
+                        </select>
+                    </label>
+                )}
+            </BoLocDatGoi>
 
-            <div className="mt-5 grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
-                <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#0a0f24]">
-                    <div className="border-b border-white/10 px-5 py-4">
-                        <h2 className="text-lg font-extrabold">{thongTinDanhSach.tieuDe}</h2>
-                        <p className="mt-1 text-sm text-white/45">
-                            {thongTinDanhSach.moTa}
-                        </p>
-                    </div>
-
-                    <div className="max-h-[720px] space-y-3 overflow-y-auto p-3">
-                        {dangTai ? (
-                            <div className="rounded-2xl border border-white/10 px-5 py-12 text-center text-white/55">
-                                Đang tải danh sách đặt gói...
-                            </div>
-                        ) : danhSachDaLoc.length === 0 ? (
-                            <TrangThaiRong />
-                        ) : (
-                            danhSachDaLoc.map((yeuCau) => (
-                                <TheYeuCauDatGoi
-                                    key={yeuCau.id}
-                                    yeuCau={yeuCau}
-                                    active={yeuCauDangChon?.id === yeuCau.id}
-                                    onClick={() => setYeuCauDangChonId(yeuCau.id)}
-                                />
-                            ))
-                        )}
-                    </div>
-                </section>
-
-                <section className="min-h-[720px] rounded-2xl border border-white/10 bg-white text-slate-900">
-                    {yeuCauDangChon ? (
-                        <ChiTietYeuCauDatGoi
-                            yeuCau={yeuCauDangChon}
-                            onThucHien={xuLyHanhDong}
-                        />
-                    ) : (
-                        <div className="flex min-h-[520px] items-center justify-center px-6 text-center text-slate-500">
-                            Chọn một yêu cầu bên trái để xem chi tiết.
+            {boLocTrangThai === "danh_sach_goi_hoc" ? (
+                <div className="mt-5">
+                    <TabDanhSachGoiHoc
+                        danhSachDaLoc={danhSachDaLoc}
+                        onXuLyHanhDong={xuLyHanhDong}
+                    />
+                </div>
+            ) : (
+                <div className="mt-5 grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
+                    <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#0a0f24]">
+                        <div className="border-b border-white/10 px-5 py-4">
+                            <h2 className="text-lg font-extrabold">{thongTinDanhSach.tieuDe}</h2>
+                            <p className="mt-1 text-sm text-white/45">
+                                {thongTinDanhSach.moTa}
+                            </p>
                         </div>
-                    )}
-                </section>
-            </div>
+
+                        <div className="max-h-[720px] space-y-3 overflow-y-auto p-3">
+                            {dangTai ? (
+                                <div className="rounded-2xl border border-white/10 px-5 py-12 text-center text-white/55">
+                                    Đang tải danh sách đặt gói...
+                                </div>
+                            ) : danhSachDaLoc.length === 0 ? (
+                                <TrangThaiRong />
+                            ) : (
+                                danhSachDaLoc.map((yeuCau) => (
+                                    <TheYeuCauDatGoi
+                                        key={yeuCau.id}
+                                        yeuCau={yeuCau}
+                                        active={yeuCauDangChon?.id === yeuCau.id}
+                                        onClick={() => setYeuCauDangChonId(yeuCau.id)}
+                                    />
+                                ))
+                            )}
+                        </div>
+                    </section>
+
+                    <section className="min-h-[720px] rounded-2xl border border-white/10 bg-white text-slate-900">
+                        {yeuCauDangChon ? (
+                            <ChiTietYeuCauDatGoi
+                                yeuCau={yeuCauDangChon}
+                                onThucHien={xuLyHanhDong}
+                            />
+                        ) : (
+                            <div className="flex min-h-[520px] items-center justify-center px-6 text-center text-slate-500">
+                                Chọn một yêu cầu bên trái để xem chi tiết.
+                            </div>
+                        )}
+                    </section>
+                </div>
+            )}
 
             <ModalXacNhan
                 mo={Boolean(hopThoaiXacNhan)}

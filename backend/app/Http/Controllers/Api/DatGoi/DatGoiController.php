@@ -266,7 +266,7 @@ class DatGoiController extends DatLichBaseController
                     'user_id' => $admin->id,
                     'tieu_de' => 'Có yêu cầu đặt gói mới',
                     'noi_dung' => "{$user->ho_ten} vừa gửi yêu cầu đặt " . count($lichHocNhap) . ' buổi học. Vui lòng kiểm tra và gửi cho gia sư.',
-                    'url' => '/admin/quan-ly-dat-goi',
+                    'url' => '/admin/quan-ly-dat-goi#cho_xu_ly',
                     'da_doc' => false,
                 ]));
 
@@ -326,7 +326,7 @@ class DatGoiController extends DatLichBaseController
                     'user_id' => $admin->id,
                     'tieu_de' => 'Học viên hủy gói học',
                     'noi_dung' => "{$user->ho_ten} đã hủy gói học GH" . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . '.',
-                    'url' => '/admin/quan-ly-dat-goi',
+                    'url' => '/admin/quan-ly-dat-goi#da_huy',
                     'da_doc' => false,
                 ]));
 

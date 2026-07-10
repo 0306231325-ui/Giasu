@@ -125,7 +125,7 @@ class HocVienThanhToanController extends Controller
                     'user_id' => $admin->id,
                     'tieu_de' => 'Học viên gửi minh chứng thanh toán',
                     'noi_dung' => "{$user->ho_ten} đã gửi minh chứng thanh toán gói học GH" . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . '. Vui lòng kiểm tra và xác nhận.',
-                    'url' => '/admin/quan-ly-dat-goi',
+                    'url' => '/admin/quan-ly-dat-goi#xac_nhan_thanh_toan',
                     'da_doc' => false,
                 ]));
 

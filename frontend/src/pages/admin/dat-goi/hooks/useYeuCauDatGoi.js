@@ -1,13 +1,25 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useToast } from "../../../../context/ToastContext";
 import api from "../../../../services/api";
-import { TRANG_THAI_MAC_DINH } from "../constants";
+import { TRANG_THAI_MAC_DINH, BO_LOC_TRANG_THAI } from "../constants";
 import { coThongTinChoXacNhanThanhToan } from "../utils";
 
 function useYeuCauDatGoi() {
     const toast = useToast();
+    const location = useLocation();
+
+    const layTrangThaiTuHash = () => {
+        const hash = location.hash.replace("#", "");
+        if (hash && BO_LOC_TRANG_THAI.some((muc) => muc.value === hash)) {
+            return hash;
+        }
+        return null;
+    };
+
     const [danhSachYeuCau, setDanhSachYeuCau] = useState([]);
-    const [boLocTrangThai, setBoLocTrangThai] = useState(TRANG_THAI_MAC_DINH);
+    const [boLocTrangThai, setBoLocTrangThai] = useState(() => layTrangThaiTuHash() || TRANG_THAI_MAC_DINH);
+    const [boLocTrangThaiCon, setBoLocTrangThaiCon] = useState("tat_ca");
     const [tuKhoa, setTuKhoa] = useState("");
     const [yeuCauDangChonId, setYeuCauDangChonId] = useState(null);
     const [dangTai, setDangTai] = useState(false);
@@ -79,6 +91,15 @@ function useYeuCauDatGoi() {
         };
     }, [hienToast, taiDanhSach]);
 
+    useEffect(() => {
+        const hash = layTrangThaiTuHash();
+        if (hash) {
+            setBoLocTrangThai(hash);
+            setBoLocTrangThaiCon("tat_ca");
+            setYeuCauDangChonId(null);
+        }
+    }, [location.hash]);
+
     const danhSachDaLoc = useMemo(() => {
         const tuKhoaChuanHoa = tuKhoa.trim().toLowerCase();
 
@@ -97,7 +118,8 @@ function useYeuCauDatGoi() {
                     yeuCau.trangThai === "cho_thanh_toan" &&
                     coThongTinChoXacNhanThanhToan(yeuCau)) ||
                 (boLocTrangThai === "danh_sach_goi_hoc" &&
-                    yeuCau.trangThai === "da_tao_lich");
+                    ["dang_hoc", "hoan_thanh"].includes(yeuCau.trangThai) &&
+                    (boLocTrangThaiCon === "tat_ca" || yeuCau.trangThai === boLocTrangThaiCon));
 
             const khopTrangThai =
                 laBoLocDacBiet
@@ -119,7 +141,7 @@ function useYeuCauDatGoi() {
 
             return khopTrangThai && khopTuKhoa;
         });
-    }, [boLocTrangThai, danhSachYeuCau, tuKhoa]);
+    }, [boLocTrangThai, boLocTrangThaiCon, danhSachYeuCau, tuKhoa]);
 
     const yeuCauDangChon =
         danhSachDaLoc.find((yeuCau) => yeuCau.id === yeuCauDangChonId) ??
@@ -142,7 +164,7 @@ function useYeuCauDatGoi() {
         }
 
         if (trangThai === "danh_sach_goi_hoc") {
-            return danhSachYeuCau.filter((yeuCau) => yeuCau.trangThai === "da_tao_lich").length;
+            return danhSachYeuCau.filter((yeuCau) => ["dang_hoc", "hoan_thanh"].includes(yeuCau.trangThai)).length;
         }
 
         return danhSachYeuCau.filter((yeuCau) => yeuCau.trangThai === trangThai).length;
@@ -150,7 +172,9 @@ function useYeuCauDatGoi() {
 
     const doiTrangThai = (trangThai) => {
         setBoLocTrangThai(trangThai);
+        setBoLocTrangThaiCon("tat_ca");
         setYeuCauDangChonId(null);
+        window.history.replaceState(null, "", `#${trangThai}`);
     };
 
     const capNhatYeuCau = (id, duLieuMoi) => {
@@ -330,6 +354,7 @@ function useYeuCauDatGoi() {
 
     return {
         boLocTrangThai,
+        boLocTrangThaiCon,
         dangTai,
         dangXuLyHanhDong,
         danhSachDaLoc,
@@ -341,6 +366,7 @@ function useYeuCauDatGoi() {
         dongHopThoaiXacNhan,
         demTheoTrangThai,
         doiTrangThai,
+        setBoLocTrangThaiCon,
         setTuKhoa,
         setYeuCauDangChonId,
         xacNhanHopThoai,

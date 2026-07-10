@@ -243,7 +243,7 @@ class HocVienLichHocController extends DatLichBaseController
                             'user_id' => $admin->id,
                             'tieu_de' => 'Gói học đã hoàn thành',
                             'noi_dung' => 'Gói học GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . ' đã hoàn tất tất cả buổi học và chuyển sang trạng thái hoàn thành.',
-                            'url' => '/admin/quan-ly-dat-goi',
+                            'url' => '/admin/quan-ly-dat-goi#danh_sach_goi_hoc',
                             'da_doc' => false,
                         ]));
                 }

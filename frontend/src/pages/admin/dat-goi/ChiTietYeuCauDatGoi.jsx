@@ -83,7 +83,7 @@ function KhoiThanhToan({ yeuCau }) {
         return null;
     }
 
-    if (!["cho_thanh_toan", "da_tao_lich"].includes(yeuCau.trangThai)) {
+    if (!["cho_thanh_toan", "dang_hoc", "hoan_thanh"].includes(yeuCau.trangThai)) {
         return null;
     }
 

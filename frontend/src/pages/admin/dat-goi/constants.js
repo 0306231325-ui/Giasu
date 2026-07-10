@@ -21,9 +21,13 @@ export const TRANG_THAI_GOI = {
         label: "Xác nhận thanh toán",
         className: "border-sky-400/25 bg-sky-400/10 text-sky-200",
     },
-    da_tao_lich: {
+    dang_hoc: {
         label: "Đang học",
         className: "border-cyan-400/25 bg-cyan-400/10 text-cyan-200",
+    },
+    hoan_thanh: {
+        label: "Đã hoàn thành",
+        className: "border-blue-400/25 bg-blue-400/10 text-blue-200",
     },
     da_huy: {
         label: "Đã huỷ",

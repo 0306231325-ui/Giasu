@@ -4,10 +4,11 @@ function BoLocDatGoi({
     tuKhoa,
     soKetQua,
     onDoiTuKhoa,
+    children,
 }) {
     return (
-        <div className="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 lg:grid-cols-[minmax(0,1fr)_140px]">
-            <label className="block">
+        <div className="mt-4 flex flex-wrap items-end gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+            <label className="block flex-1 min-w-[240px]">
                 <span className="text-xs font-bold uppercase tracking-wide text-white/45">
                     Tìm kiếm
                 </span>
@@ -25,7 +26,9 @@ function BoLocDatGoi({
                 </div>
             </label>
 
-            <div className="rounded-xl border border-white/10 bg-[#0a0f24] px-4 py-3">
+            {children}
+
+            <div className="w-[140px] shrink-0 rounded-xl border border-white/10 bg-[#0a0f24] px-4 py-3">
                 <p className="text-xs font-bold uppercase tracking-wide text-white/35">
                     Kết quả
                 </p>

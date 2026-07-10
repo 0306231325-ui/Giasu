@@ -25,7 +25,7 @@ export function coThongTinChoXacNhanThanhToan(yeuCau) {
 }
 
 export function layNhanThanhToanPhu(yeuCau) {
-    if (yeuCau?.trangThai === "da_tao_lich") {
+    if (yeuCau?.trangThai === "dang_hoc" || yeuCau?.trangThai === "hoan_thanh") {
         return {
             nhan: yeuCau?.kieuGoi === "hoc_thu" ? "Không cần thanh toán" : "Đã thanh toán",
             className: "bg-emerald-400/10 text-emerald-200",
@@ -76,7 +76,8 @@ export function layHanhDong(yeuCau) {
             { key: "huy_yeu_cau", label: "Hủy yêu cầu", className: nutDo },
         ],
         cho_thanh_toan: hanhDongChoThanhToan,
-        da_tao_lich: [],
+        dang_hoc: [],
+        hoan_thanh: [],
         da_huy: [
             { key: "xem_huy", label: "Xem chi tiết hủy", className: nutPhu },
         ],

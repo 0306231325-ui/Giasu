@@ -376,11 +376,11 @@ class DatLichBaseController extends Controller
         $thanhToanMoiNhat = $goiHoc->thanhToanMoiNhat;
         $trangThai = match ($goiHoc->trang_thai) {
             'cho_thanhtoan' => 'cho_thanh_toan',
-            'danghoc' => 'da_tao_lich',
-            'hoanthanh' => 'da_tao_lich',
+            'danghoc' => 'dang_hoc',
+            'hoanthanh' => 'hoan_thanh',
             'dahuy' => 'da_huy',
             default => match ($phanHoiMoiNhat?->phan_hoi) {
-                PhanHoi::DONG_Y => $this->goiHocCanThanhToan($goiHoc) ? 'cho_thanh_toan' : 'da_tao_lich',
+                PhanHoi::DONG_Y => $this->goiHocCanThanhToan($goiHoc) ? 'cho_thanh_toan' : 'dang_hoc',
                 PhanHoi::TU_CHOI => 'da_huy',
                 default => 'cho_xu_ly',
             },

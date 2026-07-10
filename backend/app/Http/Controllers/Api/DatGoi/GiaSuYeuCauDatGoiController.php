@@ -176,7 +176,7 @@ class GiaSuYeuCauDatGoiController extends DatLichBaseController
                         . ($laTuChoi ? ' đã từ chối ' : ' đã đồng ý ')
                         . 'yêu cầu ' . 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT)
                         . ($laTuChoi && $lyDo ? '. Lý do: ' . $lyDo : '.'),
-                    'url' => '/admin/quan-ly-dat-goi',
+                    'url' => '/admin/quan-ly-dat-goi#cho_xu_ly',
                     'da_doc' => false,
                 ]));
 
