@@ -63,6 +63,7 @@ Route::middleware(['auth:sanctum', 'tai_khoan.hoat_dong'])->group(function () {
             Route::post('/{lichHocId}/danh-gia', [HocVienLichHocController::class, 'danhGiaBuoiHoc']);
             Route::post('/{lichHocId}/doi-buoi', [HocVienLichHocController::class, 'yeuCauDoiBuoiHoc']);
             Route::get('/{lichHocId}/khoang-thoi-gian-ban', [HocVienLichHocController::class, 'thongTinKhoangThoiGianBan']);
+            Route::post('/{lichHocId}/phan-hoi-hoc-bu', [HocVienLichHocController::class, 'phanHoiYeuCauHocBuTuGiaSu']);
         });
 
         Route::get('/thanh-toan', [HocVienThanhToanController::class, 'lichSuThanhToan']);
@@ -76,6 +77,8 @@ Route::middleware(['auth:sanctum', 'tai_khoan.hoat_dong'])->group(function () {
         Route::get('/lich-day', [GiaSuLichHocController::class, 'lichDayGiaSu']);
         Route::patch('/lich-day/{lichHocId}/link-hoc-online', [GiaSuLichHocController::class, 'capNhatLinkHocOnline']);
         Route::post('/lich-day/{lichHocId}/xac-nhan-hoan-thanh', [GiaSuLichHocController::class, 'giaSuXacNhanHoanThanhBuoiHoc']);
+        Route::post('/lich-day/{lichHocId}/doi-buoi', [GiaSuLichHocController::class, 'yeuCauDoiBuoiGiaSu']);
+        Route::get('/lich-day/{lichHocId}/khoang-thoi-gian-ban', [GiaSuLichHocController::class, 'thongTinKhoangThoiGianBan']);
         Route::get('/yeu-cau-doi-buoi', [GiaSuLichHocController::class, 'danhSachYeuCauDoiBuoiGiaSu']);
         Route::patch('/yeu-cau-doi-buoi/{yeuCauId}/phan-hoi', [GiaSuLichHocController::class, 'phanHoiYeuCauDoiBuoiGiaSu']);
         Route::get('/thu-nhap', [GiaSuThuNhapController::class, 'thongKe']);
@@ -186,5 +189,7 @@ Route::get('/tim-gia-su-theo-yeu-cau', [GiasuController::class, 'timTheoYeuCau']
 Route::get('/dang-ky-gia-su/danh-muc', [DangKyGiaSuController::class, 'danhMuc']);
 Route::post('/dang-ky-gia-su/tinh-gia', [DangKyGiaSuController::class, 'tinhGia']);
 
+Route::get('/mon-hoc', [MonHocController::class, 'index']);
+Route::get('/loai-goi', [DatGoiController::class, 'danhSachLoaiGoi']);
 Route::get('/mon-hoc', [MonHocController::class, 'index']);
 Route::get('/loai-goi', [DatGoiController::class, 'danhSachLoaiGoi']);

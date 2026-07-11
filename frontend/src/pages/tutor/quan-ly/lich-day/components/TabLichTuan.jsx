@@ -13,6 +13,8 @@ function TabLichTuan({
     dangXuLyId,
     onXacNhan,
     onCapNhatLinkHocOnline,
+    onLayKhoangThoiGianBan,
+    onGuiYeuCauDoiBuoi,
 }) {
     const [ngayTrongTuan, setNgayTrongTuan] = useState(() => new Date());
     const [lichDangXem, setLichDangXem] = useState(null);
@@ -192,6 +194,8 @@ function TabLichTuan({
                     onXacNhan={onXacNhan}
                     onCapNhatLinkHocOnline={onCapNhatLinkHocOnline}
                     onDong={() => setLichDangXem(null)}
+                    onLayKhoangThoiGianBan={onLayKhoangThoiGianBan}
+                    onGuiYeuCauDoiBuoi={onGuiYeuCauDoiBuoi}
                 />
             )}
         </>

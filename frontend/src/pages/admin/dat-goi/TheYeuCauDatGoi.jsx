@@ -33,7 +33,6 @@ function TheYeuCauDatGoi({ yeuCau, active, onClick }) {
             <div className="mt-4 space-y-2 text-sm text-white/55">
                 <p>HV: <span className="font-semibold text-white/80">{yeuCau.hocVien}</span></p>
                 <p>GS: <span className="font-semibold text-white/80">{yeuCau.giaSu}</span></p>
-                <p className="line-clamp-2">{yeuCau.lichMongMuon}</p>
             </div>
 
             <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3">

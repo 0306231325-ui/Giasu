@@ -24,7 +24,7 @@ const trangThaiGoi = {
         lop: "border-emerald-200 bg-emerald-50 text-emerald-700",
     },
     da_huy: {
-        ten: "Đã hủy",
+        ten: "Gói đã hủy",
         lop: "border-slate-200 bg-slate-100 text-slate-600",
     },
 };
@@ -36,7 +36,10 @@ const trangThaiBuoi = {
         lop: "border-sky-200 bg-sky-50 text-sky-700",
     },
     hoan_thanh: trangThaiGoi.hoan_thanh,
-    da_huy: trangThaiGoi.da_huy,
+    da_huy: {
+        ten: "Đã hủy",
+        lop: "border-slate-200 bg-slate-100 text-slate-600",
+    },
 };
 
 const trangThaiThanhToan = {
@@ -461,18 +464,28 @@ function LichHocCuaToi() {
 
     useEffect(() => {
         const moLichHocId = searchParams.get("mo_lich_hoc");
-        if (moLichHocId && danhSachGoi.length > 0) {
-            for (const goi of danhSachGoi) {
-                const lichHocFound = (goi.lichHoc || []).find((lh) => lh.id === Number(moLichHocId));
-                if (lichHocFound) {
-                    moChiTietBuoi(goi, lichHocFound);
-                    setGoiDangMo(goi.id);
+        if (moLichHocId) {
+            api.get("/hoc-vien/lich-hoc")
+                .then((response) => {
+                    if (response.data?.success) {
+                        const dsGoiMoi = response.data.data || [];
+                        setDanhSachGoi(dsGoiMoi);
+                        for (const goi of dsGoiMoi) {
+                            const lichHocFound = (goi.lichHoc || []).find((lh) => lh.id === Number(moLichHocId));
+                            if (lichHocFound) {
+                                moChiTietBuoi(goi, lichHocFound);
+                                setGoiDangMo(goi.id);
+                                break;
+                            }
+                        }
+                    }
+                })
+                .catch(console.error)
+                .finally(() => {
                     setSearchParams({}, { replace: true });
-                    break;
-                }
-            }
+                });
         }
-    }, [danhSachGoi, searchParams, setSearchParams, moChiTietBuoi]);
+    }, [searchParams, setSearchParams, moChiTietBuoi]);
 
     useEffect(() => {
         const lichHocId = chiTietBuoi?.lichHoc?.id;
@@ -561,6 +574,45 @@ function LichHocCuaToi() {
         }
     };
 
+    const phanHoiYeuCauHocBu = async (phanHoi) => {
+        if (!chiTietBuoi) return;
+        
+        setThongBao("");
+        try {
+            const response = await api.post(`/hoc-vien/lich-hoc/${chiTietBuoi.lichHoc.id}/phan-hoi-hoc-bu`, { phan_hoi: phanHoi });
+            
+            if (response.data.success) {
+                // If the student accepts, the backend creates a new lesson and cancels this one
+                // If they reject, the yeu_cau is updated to hoc_vien_tu_choi
+                // A quick way is to trigger a refetch of the list or update local state
+                // Since this component might need to refetch the whole package to get the new lesson, let's just trigger a reload or update the current lesson's request status
+                if (phanHoi === "tu_choi") {
+                    capNhatBuoiHoc(chiTietBuoi.lichHoc.id, {
+                        yeuCauDoiBuoi: {
+                            ...chiTietBuoi.lichHoc.yeuCauDoiBuoi,
+                            trangThai: "hoc_vien_tu_choi"
+                        }
+                    });
+                } else {
+                    // It's accepted, the original lesson is now cancelled. We can update local state.
+                    capNhatBuoiHoc(chiTietBuoi.lichHoc.id, {
+                        trangThai: "da_huy",
+                        yeuCauDoiBuoi: {
+                            ...chiTietBuoi.lichHoc.yeuCauDoiBuoi,
+                            trangThai: "da_duyet"
+                        }
+                    });
+                    // Ideal would be to refetch data to see the new scheduled lesson.
+                    // For now, updating state is enough.
+                }
+                setThongBao(response.data.message || "Đã phản hồi yêu cầu học bù.", "success");
+            }
+        } catch (error) {
+            console.error("Không thể phản hồi yêu cầu học bù:", error);
+            setThongBao(layThongDiepLoi(error, "Không thể phản hồi yêu cầu học bù."));
+        }
+    };
+
     const guiXacNhanBuoiHoc = async (event) => {
         event.preventDefault();
         if (!chiTietBuoi) return;
@@ -595,6 +647,9 @@ function LichHocCuaToi() {
     };
 
     const yeuCauDoiBuoiDangMo = chiTietBuoi?.lichHoc?.yeuCauDoiBuoi || null;
+    
+    const yeuCauHocBuTuGiaSu = yeuCauDoiBuoiDangMo?.trangThai === 'cho_hoc_vien_xac_nhan' ? yeuCauDoiBuoiDangMo : null;
+
     const laBuoiHocThuDangXem = chiTietBuoi ? laGoiHocThu(chiTietBuoi.goiHoc, chiTietBuoi.lichHoc) : false;
     const thongTinDoiLichThanhCong = chiTietBuoi?.lichHoc?.thongTinDoiLich || null;
     const daDoiLichThanhCong = Boolean(chiTietBuoi?.lichHoc?.daDoiLich || thongTinDoiLichThanhCong);
@@ -688,9 +743,8 @@ function LichHocCuaToi() {
                             key={item.key}
                             type="button"
                             onClick={() => setManHinh(item.key)}
-                            className={`rounded-md px-4 py-3 text-sm font-bold transition ${
-                                manHinh === item.key ? "bg-sky-600 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
-                            }`}
+                            className={`rounded-md px-4 py-3 text-sm font-bold transition ${manHinh === item.key ? "bg-sky-600 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                                }`}
                         >
                             {item.label}
                         </button>
@@ -699,131 +753,130 @@ function LichHocCuaToi() {
 
                 {manHinh === "goi_hoc" ? (
                     <>
-                    <div className="mt-8 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
-                        {Object.entries(thongKe).map(([key, value]) => (
-                            <button
-                                key={key}
-                                type="button"
-                                onClick={() => setTab(key)}
-                                className={`rounded-lg border bg-white p-4 text-left shadow-sm transition ${
-                                    tab === key ? "border-sky-400 ring-4 ring-sky-100" : "border-slate-200 hover:border-sky-200"
-                                }`}
-                            >
-                                <div className="text-2xl font-bold">{value}</div>
-                                <div className="mt-1 text-sm font-semibold text-slate-500">{trangThaiGoi[key].ten}</div>
-                            </button>
-                        ))}
-                    </div>
-
-                    <section className="mt-8 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-                        <div className="border-b border-slate-100 px-5 py-4">
-                            <h2 className="text-lg font-bold">Danh sách gói học</h2>
+                        <div className="mt-8 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+                            {Object.entries(thongKe).map(([key, value]) => (
+                                <button
+                                    key={key}
+                                    type="button"
+                                    onClick={() => setTab(key)}
+                                    className={`rounded-lg border bg-white p-4 text-left shadow-sm transition ${tab === key ? "border-sky-400 ring-4 ring-sky-100" : "border-slate-200 hover:border-sky-200"
+                                        }`}
+                                >
+                                    <div className="text-2xl font-bold">{value}</div>
+                                    <div className="mt-1 text-sm font-semibold text-slate-500">{trangThaiGoi[key].ten}</div>
+                                </button>
+                            ))}
                         </div>
 
-                        {danhSachDaLoc.length === 0 ? (
-                            <div className="px-5 py-12 text-center">
-                                <p className="text-base font-bold text-slate-900">Chưa có gói học phù hợp</p>
-                                <p className="mt-2 text-sm text-slate-500">Bạn có thể đặt gói mới hoặc chọn trạng thái khác.</p>
+                        <section className="mt-8 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                            <div className="border-b border-slate-100 px-5 py-4">
+                                <h2 className="text-lg font-bold">Danh sách gói học</h2>
                             </div>
-                        ) : (
-                            <div className="divide-y divide-slate-100">
-                                {danhSachDaLoc.map((goiHoc) => {
-                                    const dangMo = goiDangMo === goiHoc.id;
 
-                                    return (
-                                        <article key={goiHoc.id} className="px-5 py-5">
-                                        <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr_auto] lg:items-center">
-                                            <div>
-                                                <div className="flex flex-wrap items-center gap-3">
-                                                    <h3 className="text-base font-bold text-slate-950">{dinhDangMonVaLop(goiHoc)}</h3>
-                                                    <NhanTrangThai trangThai={goiHoc.trangThai} />
-                                                    <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-600">
-                                                        {nhanLoaiGoi(goiHoc)}
-                                                    </span>
-                                                </div>
-                                                <p className="mt-2 text-sm text-slate-500">
-                                                    {goiHoc.ma} · Gia sư {goiHoc.giaSu}
-                                                </p>
-                                            </div>
+                            {danhSachDaLoc.length === 0 ? (
+                                <div className="px-5 py-12 text-center">
+                                    <p className="text-base font-bold text-slate-900">Chưa có gói học phù hợp</p>
+                                    <p className="mt-2 text-sm text-slate-500">Bạn có thể đặt gói mới hoặc chọn trạng thái khác.</p>
+                                </div>
+                            ) : (
+                                <div className="divide-y divide-slate-100">
+                                    {danhSachDaLoc.map((goiHoc) => {
+                                        const dangMo = goiDangMo === goiHoc.id;
 
-                                            <div className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-1">
-                                                <div>
-                                                    <span className="font-bold text-slate-900">
-                                                        {dinhDangNgay(goiHoc.ngayBatDau)} - {dinhDangNgay(goiHoc.ngayKetThuc)}
-                                                    </span>
-                                                </div>
-                                                <div>
-                                                    {goiHoc.soBuoiDaLenLich || goiHoc.soBuoi} / {goiHoc.soBuoi} buổi · {goiHoc.hinhThuc}
-                                                </div>
-                                                <div className="sm:col-span-2 lg:col-span-1">
-                                                    Tổng tiền: {dinhDangTien(goiHoc.tongTien)}
-                                                </div>
-                                            </div>
-
-                                            <div className="flex flex-wrap gap-2 lg:justify-end">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setGoiDangMo(dangMo ? null : goiHoc.id)}
-                                                    className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-sky-300 hover:text-sky-700"
-                                                >
-                                                    {dangMo ? "Ẩn buổi học" : "Xem buổi học"}
-                                                </button>
-                                                {goiHoc.coTheHuy && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => huyGoi(goiHoc)}
-                                                        disabled={dangHuyGoiId === goiHoc.id}
-                                                        className="rounded-lg border border-red-200 px-4 py-2 text-sm font-bold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                                                    >
-                                                        Hủy gói
-                                                    </button>
-                                                )}
-                                                {goiHoc.coTheThanhToan && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => moThanhToan(goiHoc)}
-                                                        className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-orange-600"
-                                                    >
-                                                        Thanh toán
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {dangMo && (
-                                            <div className="mt-5 overflow-hidden rounded-lg border border-slate-200">
-                                                <div className="grid grid-cols-[minmax(0,1fr)_120px_90px] gap-3 bg-slate-50 px-4 py-3 text-xs font-bold uppercase text-slate-500">
-                                                    <span>Thời gian</span>
-                                                    <span>Trạng thái</span>
-                                                </div>
-                                                <div className="divide-y divide-slate-100">
-                                                    {(goiHoc.lichHoc || []).map((lichHoc) => (
-                                                        <div
-                                                            key={lichHoc.id}
-                                                            className="grid grid-cols-[minmax(0,1fr)_120px_90px] gap-3 px-4 py-3 text-sm"
-                                                        >
-                                                            <span className="text-slate-600">
-                                                                {lichHoc.thu}, {dinhDangNgay(lichHoc.ngayHoc)} · {lichHoc.gioBatDau} - {lichHoc.gioKetThuc}
+                                        return (
+                                            <article key={goiHoc.id} className="px-5 py-5">
+                                                <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr_auto] lg:items-center">
+                                                    <div>
+                                                        <div className="flex flex-wrap items-center gap-3">
+                                                            <h3 className="text-base font-bold text-slate-950">{dinhDangMonVaLop(goiHoc)}</h3>
+                                                            <NhanTrangThai trangThai={goiHoc.trangThai} />
+                                                            <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-600">
+                                                                {nhanLoaiGoi(goiHoc)}
                                                             </span>
-                                                            <NhanTrangThai trangThai={lichHoc.trangThai} loai="buoi" />
+                                                        </div>
+                                                        <p className="mt-2 text-sm text-slate-500">
+                                                            {goiHoc.ma} · Gia sư {goiHoc.giaSu}
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-1">
+                                                        <div>
+                                                            <span className="font-bold text-slate-900">
+                                                                {dinhDangNgay(goiHoc.ngayBatDau)} - {dinhDangNgay(goiHoc.ngayKetThuc)}
+                                                            </span>
+                                                        </div>
+                                                        <div>
+                                                            {goiHoc.soBuoiDaLenLich || goiHoc.soBuoi} / {goiHoc.soBuoi} buổi · {goiHoc.hinhThuc}
+                                                        </div>
+                                                        <div className="sm:col-span-2 lg:col-span-1">
+                                                            Tổng tiền: {dinhDangTien(goiHoc.tongTien)}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex flex-wrap gap-2 lg:justify-end">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setGoiDangMo(dangMo ? null : goiHoc.id)}
+                                                            className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-sky-300 hover:text-sky-700"
+                                                        >
+                                                            {dangMo ? "Ẩn buổi học" : "Xem buổi học"}
+                                                        </button>
+                                                        {goiHoc.coTheHuy && (
                                                             <button
                                                                 type="button"
-                                                                onClick={() => moChiTietBuoi(goiHoc, lichHoc)}
-                                                                className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-sky-300 hover:text-sky-700"
+                                                                onClick={() => huyGoi(goiHoc)}
+                                                                disabled={dangHuyGoiId === goiHoc.id}
+                                                                className="rounded-lg border border-red-200 px-4 py-2 text-sm font-bold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                                                             >
-                                                                Chi tiết
+                                                                Hủy gói
                                                             </button>
-                                                        </div>
-                                                    ))}
+                                                        )}
+                                                        {goiHoc.coTheThanhToan && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => moThanhToan(goiHoc)}
+                                                                className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-orange-600"
+                                                            >
+                                                                Thanh toán
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
-                                        </article>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </section>
+
+                                                {dangMo && (
+                                                    <div className="mt-5 overflow-hidden rounded-lg border border-slate-200">
+                                                        <div className="grid grid-cols-[minmax(0,1fr)_120px_90px] gap-3 bg-slate-50 px-4 py-3 text-xs font-bold uppercase text-slate-500">
+                                                            <span>Thời gian</span>
+                                                            <span>Trạng thái</span>
+                                                        </div>
+                                                        <div className="divide-y divide-slate-100">
+                                                            {(goiHoc.lichHoc || []).map((lichHoc) => (
+                                                                <div
+                                                                    key={lichHoc.id}
+                                                                    className="grid grid-cols-[minmax(0,1fr)_120px_90px] gap-3 px-4 py-3 text-sm"
+                                                                >
+                                                                    <span className="text-slate-600">
+                                                                        {lichHoc.thu}, {dinhDangNgay(lichHoc.ngayHoc)} · {lichHoc.gioBatDau} - {lichHoc.gioKetThuc}
+                                                                    </span>
+                                                                    <NhanTrangThai trangThai={lichHoc.trangThai} loai="buoi" />
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => moChiTietBuoi(goiHoc, lichHoc)}
+                                                                        className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-sky-300 hover:text-sky-700"
+                                                                    >
+                                                                        Chi tiết
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </article>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </section>
                     </>
                 ) : (
                     <LichSuThanhToan
@@ -968,6 +1021,56 @@ function LichHocCuaToi() {
                             </section>
 
                             <div className="grid gap-5 lg:items-start">
+                                {yeuCauHocBuTuGiaSu && yeuCauHocBuTuGiaSu.trangThai === 'cho_hoc_vien_xac_nhan' && (
+                                    <section className="rounded-2xl border border-blue-100 bg-blue-50/70 p-5 shadow-sm">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div>
+                                                <p className="text-xs font-bold uppercase text-blue-700">Yêu cầu học bù từ gia sư</p>
+                                            </div>
+                                            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">
+                                                Cần phản hồi
+                                            </span>
+                                        </div>
+
+                                        <div className="mt-4 rounded-lg border border-blue-100 bg-white px-4 py-3 text-sm">
+                                            <p className="font-bold text-slate-900">Gia sư xin phép dời buổi học này sang:</p>
+                                            <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                                                <div>
+                                                    <p className="text-[11px] font-bold uppercase text-slate-400">Ngày học mới</p>
+                                                    <p className="font-medium text-slate-900 mt-0.5">{yeuCauHocBuTuGiaSu.ngayHocText}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[11px] font-bold uppercase text-slate-400">Khung giờ mới</p>
+                                                    <p className="font-medium text-slate-900 mt-0.5">{yeuCauHocBuTuGiaSu.khungGio}</p>
+                                                </div>
+                                            </div>
+                                            {yeuCauHocBuTuGiaSu.lyDo && (
+                                                <div className="mt-3 rounded bg-slate-50 p-2.5">
+                                                    <p className="text-[11px] font-bold uppercase text-slate-400">Lý do từ gia sư:</p>
+                                                    <p className="mt-1 font-medium text-slate-700 leading-relaxed">{yeuCauHocBuTuGiaSu.lyDo}</p>
+                                                </div>
+                                            )}
+
+                                            <div className="mt-4 flex gap-2">
+                                                <button
+                                                    type="button"
+                                                    className="flex-1 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 hover:shadow-md"
+                                                    onClick={() => phanHoiYeuCauHocBu("dong_y")}
+                                                >
+                                                    Đồng ý
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="flex-1 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-50"
+                                                    onClick={() => phanHoiYeuCauHocBu("tu_choi")}
+                                                >
+                                                    Từ chối
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </section>
+                                )}
+
                                 <section className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-5 shadow-sm">
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
@@ -1068,63 +1171,63 @@ function LichHocCuaToi() {
                         )}
 
                         {!chiTietBuoi.lichHoc.danhGia && (
-                        <div className="mt-5 space-y-4">
-                            <div>
-                                <p className="mb-2 text-sm font-semibold text-slate-700">Số sao</p>
-                                <div className="flex gap-2">
-                                    {[1, 2, 3, 4, 5].map((sao) => (
-                                        <button
-                                            key={sao}
-                                            type="button"
-                                            onClick={() => setFormDanhGia((hienTai) => ({ ...hienTai, so_sao: sao }))}
-                                            disabled={!chiTietBuoi.lichHoc.coTheDanhGia}
-                                            className={[
-                                                "h-10 w-10 rounded-xl border bg-white text-lg font-black shadow-sm transition hover:shadow disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none",
-                                                formDanhGia.so_sao >= sao
-                                                    ? "border-amber-300 text-amber-600"
-                                                    : "border-slate-200 text-slate-300 hover:border-amber-200",
-                                            ].join(" ")}
-                                        >
-                                            ★
-                                        </button>
-                                    ))}
+                            <div className="mt-5 space-y-4">
+                                <div>
+                                    <p className="mb-2 text-sm font-semibold text-slate-700">Số sao</p>
+                                    <div className="flex gap-2">
+                                        {[1, 2, 3, 4, 5].map((sao) => (
+                                            <button
+                                                key={sao}
+                                                type="button"
+                                                onClick={() => setFormDanhGia((hienTai) => ({ ...hienTai, so_sao: sao }))}
+                                                disabled={!chiTietBuoi.lichHoc.coTheDanhGia}
+                                                className={[
+                                                    "h-10 w-10 rounded-xl border bg-white text-lg font-black shadow-sm transition hover:shadow disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none",
+                                                    formDanhGia.so_sao >= sao
+                                                        ? "border-amber-300 text-amber-600"
+                                                        : "border-slate-200 text-slate-300 hover:border-amber-200",
+                                                ].join(" ")}
+                                            >
+                                                ★
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
+                                <textarea
+                                    rows={4}
+                                    value={formDanhGia.noi_dung}
+                                    onChange={(event) => setFormDanhGia((hienTai) => ({ ...hienTai, noi_dung: event.target.value }))}
+                                    disabled={!chiTietBuoi.lichHoc.coTheDanhGia}
+                                    placeholder="Nhận xét về buổi học"
+                                    className="w-full resize-none rounded-xl border border-amber-100 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-amber-300 focus:ring-4 focus:ring-amber-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60"
+                                />
+                                {!chiTietBuoi.lichHoc.coTheDanhGia && (
+                                    <p className="text-xs font-semibold text-amber-700/80">
+                                        {chiTietBuoi.lichHoc.danhGia
+                                            ? "Buổi học này đã được đánh giá. Mỗi buổi chỉ đánh giá một lần."
+                                            : "Chỉ có thể đánh giá sau khi buổi học hoàn thành."}
+                                    </p>
+                                )}
                             </div>
-                            <textarea
-                                rows={4}
-                                value={formDanhGia.noi_dung}
-                                onChange={(event) => setFormDanhGia((hienTai) => ({ ...hienTai, noi_dung: event.target.value }))}
-                                disabled={!chiTietBuoi.lichHoc.coTheDanhGia}
-                                placeholder="Nhận xét về buổi học"
-                                className="w-full resize-none rounded-xl border border-amber-100 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-amber-300 focus:ring-4 focus:ring-amber-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60"
-                            />
-                            {!chiTietBuoi.lichHoc.coTheDanhGia && (
-                                <p className="text-xs font-semibold text-amber-700/80">
-                                    {chiTietBuoi.lichHoc.danhGia
-                                        ? "Buổi học này đã được đánh giá. Mỗi buổi chỉ đánh giá một lần."
-                                        : "Chỉ có thể đánh giá sau khi buổi học hoàn thành."}
-                                </p>
-                            )}
-                        </div>
                         )}
 
                         {!chiTietBuoi.lichHoc.danhGia && (
-                        <div className="mt-5 flex justify-end gap-2 border-t border-slate-100 pt-4">
-                            <button
-                                type="button"
-                                onClick={() => setMoFormDanhGia(false)}
-                                className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
-                            >
-                                Hủy
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={!chiTietBuoi.lichHoc.coTheDanhGia || dangGuiDanhGia}
-                                className="h-10 rounded-xl bg-amber-500 px-4 text-sm font-bold text-white shadow-sm transition hover:bg-amber-600 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none"
-                            >
-                                {dangGuiDanhGia ? "Đang lưu..." : "Lưu đánh giá"}
-                            </button>
-                        </div>
+                            <div className="mt-5 flex justify-end gap-2 border-t border-slate-100 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setMoFormDanhGia(false)}
+                                    className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={!chiTietBuoi.lichHoc.coTheDanhGia || dangGuiDanhGia}
+                                    className="h-10 rounded-xl bg-amber-500 px-4 text-sm font-bold text-white shadow-sm transition hover:bg-amber-600 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none"
+                                >
+                                    {dangGuiDanhGia ? "Đang lưu..." : "Lưu đánh giá"}
+                                </button>
+                            </div>
                         )}
                     </form>
                 </div>

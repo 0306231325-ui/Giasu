@@ -19,6 +19,8 @@ function GiaSuLichDay() {
         capNhatLinkHocOnline,
         phanHoiYeuCau,
         phanHoiYeuCauDoiBuoi,
+        layKhoangThoiGianBan,
+        guiYeuCauDoiBuoi,
     } = useQuanLyLichDay();
 
     return (
@@ -76,6 +78,8 @@ function GiaSuLichDay() {
                     dangXuLyId={dangXuLyId}
                     onXacNhan={xacNhanBuoiHoc}
                     onCapNhatLinkHocOnline={capNhatLinkHocOnline}
+                    onLayKhoangThoiGianBan={layKhoangThoiGianBan}
+                    onGuiYeuCauDoiBuoi={guiYeuCauDoiBuoi}
                 />
             ) : tab === "lich_tuan" ? (
                 <TabLichTuan
@@ -83,6 +87,8 @@ function GiaSuLichDay() {
                     dangXuLyId={dangXuLyId}
                     onXacNhan={xacNhanBuoiHoc}
                     onCapNhatLinkHocOnline={capNhatLinkHocOnline}
+                    onLayKhoangThoiGianBan={layKhoangThoiGianBan}
+                    onGuiYeuCauDoiBuoi={guiYeuCauDoiBuoi}
                 />
             ) : tab === "yeu_cau" ? (
                 <TabYeuCauDatGiaSu

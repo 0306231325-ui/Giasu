@@ -235,6 +235,17 @@ class HocVienLichHocController extends DatLichBaseController
                 $goiHoc = $lichHoc->goiHoc;
                 if ($goiHoc && ! $goiHoc->lichHocs()->whereNotIn('trang_thai', ['hoanthanh', 'dahuy'])->exists()) {
                     $goiHoc->update(['trang_thai' => 'hoanthanh']);
+
+                    \App\Models\User::query()
+                        ->where('vai_tro', 'admin')
+                        ->get(['id'])
+                        ->each(fn ($admin) => \App\Models\ThongBao::create([
+                            'user_id' => $admin->id,
+                            'tieu_de' => 'Gói học đã hoàn thành',
+                            'noi_dung' => 'Gói học GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . ' đã hoàn tất tất cả buổi học và chuyển sang trạng thái hoàn thành.',
+                            'url' => '/admin/quan-ly-dat-goi',
+                            'da_doc' => false,
+                        ]));
                 }
             }
         });

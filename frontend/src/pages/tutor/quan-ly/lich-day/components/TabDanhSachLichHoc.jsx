@@ -8,6 +8,8 @@ function TabDanhSachLichHoc({
     dangXuLyId,
     onXacNhan,
     onCapNhatLinkHocOnline,
+    onLayKhoangThoiGianBan,
+    onGuiYeuCauDoiBuoi,
 }) {
     const [tuKhoa, setTuKhoa] = useState("");
     const [trangThai, setTrangThai] = useState("");
@@ -132,6 +134,8 @@ function TabDanhSachLichHoc({
                     onXacNhan={onXacNhan}
                     onCapNhatLinkHocOnline={onCapNhatLinkHocOnline}
                     onDong={() => setLichDangXem(null)}
+                    onLayKhoangThoiGianBan={onLayKhoangThoiGianBan}
+                    onGuiYeuCauDoiBuoi={onGuiYeuCauDoiBuoi}
                 />
             )}
         </>

@@ -1,46 +1,40 @@
 import { useMemo, useState } from "react";
 import IconLichDay from "./IconLichDay";
 
+const NHOM_TRANG_THAI = {
+    cho_phan_hoi: ["cho_gia_su_xac_nhan", "cho_hoc_vien_xac_nhan", "cho_duyet"],
+    da_dong_y: ["giasu_dong_y", "da_duyet"],
+    da_tu_choi: ["giasu_tu_choi", "tu_choi", "hoc_vien_tu_choi"],
+};
+
 const TRANG_THAI = {
-    cho_gia_su_xac_nhan: {
+    cho_phan_hoi: {
         nhan: "Chờ phản hồi",
         lop: "bg-amber-50 text-amber-700",
     },
-    giasu_dong_y: {
+    da_dong_y: {
         nhan: "Đã đồng ý",
         lop: "bg-emerald-50 text-emerald-700",
     },
-    giasu_tu_choi: {
+    da_tu_choi: {
         nhan: "Đã từ chối",
         lop: "bg-red-50 text-red-700",
-    },
-    da_duyet: {
-        nhan: "Admin đã duyệt",
-        lop: "bg-blue-50 text-blue-700",
-    },
-    tu_choi: {
-        nhan: "Admin từ chối",
-        lop: "bg-slate-100 text-slate-600",
     },
 };
 
 function TabYeuCauDoiBuoi({ danhSach, dangXuLyId, onDongY, onTuChoi }) {
-    const [boLoc, setBoLoc] = useState("cho_gia_su_xac_nhan");
+    const [boLoc, setBoLoc] = useState("cho_phan_hoi");
 
     const danhSachDaLoc = useMemo(
-        () => danhSach.filter((yeuCau) => yeuCau.trangThai === boLoc),
+        () => danhSach.filter((yeuCau) => NHOM_TRANG_THAI[boLoc].includes(yeuCau.trangThai)),
         [boLoc, danhSach],
     );
 
     return (
         <section className="mt-5">
-            <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-4 text-sm leading-6 text-cyan-100/80">
-                Admin đã kiểm tra yêu cầu đổi buổi và gửi sang bạn. Bạn chỉ cần đồng ý hoặc từ chối, admin sẽ là người chốt cập nhật lịch.
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2">
                 {Object.entries(TRANG_THAI).map(([giaTri, trangThai]) => {
-                    const soLuong = danhSach.filter((yeuCau) => yeuCau.trangThai === giaTri).length;
+                    const soLuong = danhSach.filter((yeuCau) => NHOM_TRANG_THAI[giaTri].includes(yeuCau.trangThai)).length;
 
                     return (
                         <button
@@ -86,7 +80,8 @@ function TabYeuCauDoiBuoi({ danhSach, dangXuLyId, onDongY, onTuChoi }) {
 }
 
 function TheYeuCauDoiBuoi({ yeuCau, dangXuLy, onDongY, onTuChoi }) {
-    const trangThai = TRANG_THAI[yeuCau.trangThai] || TRANG_THAI.cho_gia_su_xac_nhan;
+    const nhomTrangThai = Object.keys(NHOM_TRANG_THAI).find((key) => NHOM_TRANG_THAI[key].includes(yeuCau.trangThai)) || "cho_phan_hoi";
+    const trangThai = TRANG_THAI[nhomTrangThai];
     const dangCho = yeuCau.trangThai === "cho_gia_su_xac_nhan";
 
     return (

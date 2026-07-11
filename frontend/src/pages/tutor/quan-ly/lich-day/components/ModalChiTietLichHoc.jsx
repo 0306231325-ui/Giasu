@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import IconLichDay from "./IconLichDay";
 import { trangThaiLichHoc } from "../constants";
 
@@ -8,11 +8,34 @@ function ModalChiTietLichHoc({
     onXacNhan,
     onCapNhatLinkHocOnline,
     onDong,
+    onLayKhoangThoiGianBan,
+    onGuiYeuCauDoiBuoi,
 }) {
     const [dangMoFormDoiBuoi, setDangMoFormDoiBuoi] = useState(false);
     const [dangMoFormLink, setDangMoFormLink] = useState(false);
     const [linkHocOnline, setLinkHocOnline] = useState(lichHoc.linkHocOnline || "");
     const [daBamXacNhan, setDaBamXacNhan] = useState(false);
+
+    // Form đổi buổi
+    const [doiBuoiData, setDoiBuoiData] = useState({
+        ngayHoc: "",
+        gioBatDau: "07:00",
+        lyDo: "",
+    });
+    const [khoangThoiGianBan, setKhoangThoiGianBan] = useState([]);
+    const [dangKiemTraLich, setDangKiemTraLich] = useState(false);
+
+    useEffect(() => {
+        if (!dangMoFormDoiBuoi) {
+            setDoiBuoiData({
+                ngayHoc: "",
+                gioBatDau: "07:00",
+                lyDo: "",
+            });
+            setKhoangThoiGianBan([]);
+        }
+    }, [dangMoFormDoiBuoi, lichHoc]);
+
     const trangThai = trangThaiLichHoc[lichHoc.trangThai];
     const daHoanThanh = lichHoc.trangThai === "hoan_thanh";
     const daHuy = lichHoc.trangThai === "da_huy";
@@ -21,7 +44,47 @@ function ModalChiTietLichHoc({
     const xacNhan = lichHoc.xacNhan || {};
     const giaSuDaGui = xacNhan.giaSuDaXacNhan || xacNhan.giaSuBaoVanDe;
     const coTheXacNhan = lichHoc.coTheXacNhanHoanThanh && !dangXuLy && !giaSuDaGui && !daBamXacNhan;
-    const coTheSuaLink = laOnline && !daHoanThanh && !daHuy && Boolean(onCapNhatLinkHocOnline);
+
+    let quaGioKetThuc = false;
+    try {
+        if (lichHoc.ngayHoc && lichHoc.ketThuc) {
+            const [d, m, y] = lichHoc.ngayHoc.split("/");
+            const [h, min] = lichHoc.ketThuc.split(":");
+            quaGioKetThuc = new Date(y, m - 1, d, h, min, 0) < new Date();
+        }
+    } catch {
+        // Bỏ qua nếu lỗi parse date
+    }
+
+    const coTheSuaLink = laOnline && !daHoanThanh && !daHuy && !quaGioKetThuc && Boolean(onCapNhatLinkHocOnline);
+
+    const gioKetThucDoiBuoi = doiBuoiData.gioBatDau
+        ? tinhGioKetThuc(doiBuoiData.gioBatDau)
+        : "";
+
+    const handleKiemTraLich = async (ngayHoc) => {
+        if (!ngayHoc || !onLayKhoangThoiGianBan) return;
+        setDangKiemTraLich(true);
+        const ban = await onLayKhoangThoiGianBan(lichHoc.id, ngayHoc);
+        setKhoangThoiGianBan(ban || []);
+        setDangKiemTraLich(false);
+    };
+
+    const handleGuiYeuCau = async (event) => {
+        event.preventDefault();
+        if (!onGuiYeuCauDoiBuoi) return;
+
+        const thanhCong = await onGuiYeuCauDoiBuoi(lichHoc, {
+            ngay_hoc: doiBuoiData.ngayHoc,
+            gio_batdau: doiBuoiData.gioBatDau,
+            ly_do: doiBuoiData.lyDo,
+        });
+
+        if (thanhCong) {
+            setDangMoFormDoiBuoi(false);
+            setDoiBuoiData({ ngayHoc: "", gioBatDau: "07:00", lyDo: "" });
+        }
+    };
 
     return (
         <LopModal onDong={onDong}>
@@ -163,89 +226,121 @@ function ModalChiTietLichHoc({
                 )}
 
                 {!laHocThu && !daHoanThanh && !daHuy && (
-                <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <p className="text-sm font-extrabold text-slate-900">
-                                Đổi buổi học
-                            </p>
-                            <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
-                                Gửi yêu cầu đổi ngày hoặc khung giờ nếu buổi học cần sắp xếp lại.
-                            </p>
+                    <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <p className="text-sm font-extrabold text-slate-900">
+                                    Đổi buổi học
+                                </p>
+                                <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
+                                    Gửi yêu cầu đổi ngày hoặc khung giờ nếu buổi học cần sắp xếp lại.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                disabled={daHoanThanh || daHuy}
+                                onClick={() => setDangMoFormDoiBuoi((hienTai) => !hienTai)}
+                                className={[
+                                    "inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-extrabold transition",
+                                    daHoanThanh || daHuy
+                                        ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                                        : "border-blue-200 bg-white text-blue-700 hover:bg-blue-100",
+                                ].join(" ")}
+                            >
+                                <IconLichDay ten="calendar" className="h-4 w-4" />
+                                {dangMoFormDoiBuoi ? "Ẩn form đổi buổi" : "Yêu cầu đổi buổi"}
+                            </button>
                         </div>
-                        <button
-                            type="button"
-                            disabled={daHoanThanh || daHuy}
-                            onClick={() => setDangMoFormDoiBuoi((hienTai) => !hienTai)}
-                            className={[
-                                "inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-extrabold transition",
-                                daHoanThanh || daHuy
-                                    ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
-                                    : "border-blue-200 bg-white text-blue-700 hover:bg-blue-100",
-                            ].join(" ")}
-                        >
-                            <IconLichDay ten="calendar" className="h-4 w-4" />
-                            {dangMoFormDoiBuoi ? "Ẩn form đổi buổi" : "Yêu cầu đổi buổi"}
-                        </button>
+                        {dangMoFormDoiBuoi && !daHoanThanh && !daHuy && (
+                            <form
+                                className="mt-4 border-t border-blue-100 pt-4"
+                                onSubmit={handleGuiYeuCau}
+                            >
+                                <div className="grid gap-3 sm:grid-cols-3">
+                                    <label>
+                                        <span className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                                            Ngày mới
+                                        </span>
+                                        <input
+                                            type="date"
+                                            required
+                                            min={new Date().toISOString().split("T")[0]}
+                                            value={doiBuoiData.ngayHoc}
+                                            onChange={(e) => {
+                                                const newDate = e.target.value;
+                                                setDoiBuoiData(prev => ({ ...prev, ngayHoc: newDate }));
+                                                handleKiemTraLich(newDate);
+                                            }}
+                                            className="mt-2 h-11 w-full rounded-xl border border-blue-100 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-blue-400"
+                                        />
+                                    </label>
+                                    <label>
+                                        <span className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                                            Giờ bắt đầu
+                                        </span>
+                                        <select
+                                            required
+                                            value={doiBuoiData.gioBatDau}
+                                            onChange={(e) => setDoiBuoiData(prev => ({ ...prev, gioBatDau: e.target.value }))}
+                                            className="mt-2 h-11 w-full rounded-xl border border-blue-100 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-blue-400"
+                                            disabled={!doiBuoiData.ngayHoc || dangKiemTraLich}
+                                        >
+                                            {taoDanhSachKhungGio().map((khungGio) => {
+                                                const daQua = doiBuoiData.ngayHoc === new Date().toISOString().split("T")[0] &&
+                                                    khungGio < new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" });
+                                                const gioKetThuc = tinhGioKetThuc(khungGio);
+                                                const biBan = kiemTraTrungLich(khungGio, gioKetThuc, khoangThoiGianBan);
+                                                const disable = daQua || biBan;
+
+                                                return (
+                                                    <option
+                                                        key={khungGio}
+                                                        value={khungGio}
+                                                        disabled={disable}
+                                                    >
+                                                        {khungGio} {daQua ? "(Đã qua)" : biBan ? "(Trùng lịch bận)" : ""}
+                                                    </option>
+                                                );
+                                            })}
+                                        </select>
+                                    </label>
+                                    <label>
+                                        <span className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                                            Giờ kết thúc
+                                        </span>
+                                        <input
+                                            type="time"
+                                            readOnly
+                                            value={gioKetThucDoiBuoi}
+                                            className="mt-2 h-11 w-full rounded-xl border border-blue-100 bg-slate-50 px-3 text-sm font-semibold text-slate-500 outline-none focus:border-blue-400 cursor-not-allowed"
+                                        />
+                                    </label>
+                                </div>
+                                <label className="mt-3 block">
+                                    <span className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                                        Lý do đổi buổi
+                                    </span>
+                                    <textarea
+                                        rows={3}
+                                        required
+                                        value={doiBuoiData.lyDo}
+                                        onChange={(e) => setDoiBuoiData(prev => ({ ...prev, lyDo: e.target.value }))}
+                                        placeholder="Nhập lý do cần đổi buổi học..."
+                                        className="mt-2 w-full resize-none rounded-xl border border-blue-100 bg-white px-3 py-2 text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400 focus:border-blue-400"
+                                    />
+                                </label>
+                                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                    <button
+                                        type="submit"
+                                        disabled={dangXuLy || dangKiemTraLich || !doiBuoiData.ngayHoc}
+                                        className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white transition hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                                    >
+                                        {dangXuLy ? "Đang xử lý..." : "Gửi yêu cầu đổi buổi"}
+                                    </button>
+                                </div>
+                            </form>
+                        )}
                     </div>
-                    {dangMoFormDoiBuoi && !daHoanThanh && !daHuy && (
-                        <form
-                            className="mt-4 border-t border-blue-100 pt-4"
-                            onSubmit={(event) => event.preventDefault()}
-                        >
-                            <div className="grid gap-3 sm:grid-cols-3">
-                                <label>
-                                    <span className="text-xs font-bold uppercase tracking-wide text-slate-400">
-                                        Ngày mới
-                                    </span>
-                                    <input
-                                        type="date"
-                                        className="mt-2 h-11 w-full rounded-xl border border-blue-100 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-blue-400"
-                                    />
-                                </label>
-                                <label>
-                                    <span className="text-xs font-bold uppercase tracking-wide text-slate-400">
-                                        Giờ bắt đầu
-                                    </span>
-                                    <input
-                                        type="time"
-                                        defaultValue={lichHoc.batDau}
-                                        className="mt-2 h-11 w-full rounded-xl border border-blue-100 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-blue-400"
-                                    />
-                                </label>
-                                <label>
-                                    <span className="text-xs font-bold uppercase tracking-wide text-slate-400">
-                                        Giờ kết thúc
-                                    </span>
-                                    <input
-                                        type="time"
-                                        defaultValue={lichHoc.ketThuc}
-                                        className="mt-2 h-11 w-full rounded-xl border border-blue-100 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-blue-400"
-                                    />
-                                </label>
-                            </div>
-                            <label className="mt-3 block">
-                                <span className="text-xs font-bold uppercase tracking-wide text-slate-400">
-                                    Lý do đổi buổi
-                                </span>
-                                <textarea
-                                    rows={3}
-                                    placeholder="Nhập lý do cần đổi buổi học..."
-                                    className="mt-2 w-full resize-none rounded-xl border border-blue-100 bg-white px-3 py-2 text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400 focus:border-blue-400"
-                                />
-                            </label>
-                            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                               
-                                <button
-                                    type="submit"
-                                    className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white transition hover:bg-blue-700"
-                                >
-                                    Gửi yêu cầu đổi buổi
-                                </button>
-                            </div>
-                        </form>
-                    )}
-                </div>
                 )}
 
                 <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -367,6 +462,34 @@ function laLichOnline(lichHoc) {
     return hinhThuc.includes("online")
         || hinhThuc.includes("trực tuyến")
         || hinhThuc.includes("truc tuyen");
+}
+
+function taoDanhSachKhungGio() {
+    const d = [];
+    for (let h = 7; h <= 22; h++) {
+        const gioStr = String(h).padStart(2, "0");
+        d.push(`${gioStr}:00`);
+        if (h !== 22) d.push(`${gioStr}:30`);
+    }
+    return d;
+}
+
+function tinhGioKetThuc(gioBatDau) {
+    if (!gioBatDau) return "";
+    const [h, m] = gioBatDau.split(":").map(Number);
+    let totalMins = h * 60 + m + 90; // +1h30
+    const endH = Math.floor(totalMins / 60);
+    const endM = totalMins % 60;
+    return `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
+}
+
+function kiemTraTrungLich(gioBatDauMoi, gioKetThucMoi, khoangThoiGianBan) {
+    if (!khoangThoiGianBan || khoangThoiGianBan.length === 0) return false;
+    
+    return khoangThoiGianBan.some((ban) => {
+        // Trùng nếu: bắt đầu < kết thúc cũ VÀ kết thúc > bắt đầu cũ
+        return gioBatDauMoi < ban.gio_ketthuc && gioKetThucMoi > ban.gio_batdau;
+    });
 }
 
 export default ModalChiTietLichHoc;

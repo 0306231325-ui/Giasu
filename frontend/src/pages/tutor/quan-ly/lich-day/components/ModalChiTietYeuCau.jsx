@@ -25,11 +25,18 @@ function ModalChiTietYeuCau({
             <div className="p-6">
                 <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl bg-slate-50 p-5">
                     <div>
-                        <p className="text-xl font-extrabold">
-                            {yeuCau.mon} · {yeuCau.capHoc}
-                        </p>
-                        <p className="mt-1 text-sm text-slate-500">
-                            {yeuCau.lop} · Học viên {yeuCau.hocVien}
+                        <div className="flex items-center gap-2">
+                            <p className="text-xl font-extrabold text-slate-900">
+                                {yeuCau.mon} · {yeuCau.capHoc}
+                            </p>
+                            {yeuCau.lop === "Học thử" && (
+                                <span className="rounded-md border border-purple-200 bg-purple-50 px-2 py-1 text-[10px] font-extrabold uppercase tracking-widest text-purple-700 shadow-sm">
+                                    Học thử
+                                </span>
+                            )}
+                        </div>
+                        <p className="mt-1 text-sm font-medium text-slate-500">
+                            {yeuCau.lop !== "Học thử" ? `${yeuCau.lop} · ` : ""}Học viên {yeuCau.hocVien}
                         </p>
                     </div>
                     <span

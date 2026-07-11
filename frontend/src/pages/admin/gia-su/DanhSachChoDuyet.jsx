@@ -18,9 +18,6 @@ function DanhSachChoDuyet({
                             {danhSach.length} hồ sơ cần xem xét
                         </p>
                     </div>
-                    <span className="rounded-full bg-amber-400/15 px-2.5 py-1 text-xs font-bold text-amber-300">
-                        {danhSach.length}
-                    </span>
                 </div>
                 <label className="relative mt-4 block">
                     <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-white/35">

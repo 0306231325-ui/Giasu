@@ -106,6 +106,14 @@ class GiaSuLichHocController extends DatLichBaseController
             ], 422);
         }
 
+        $thoiDiemKetThuc = \Carbon\Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_ketthuc);
+        if (now()->isAfter($thoiDiemKetThuc)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Đã quá thời gian kết thúc buổi học, không thể cập nhật link lớp học nữa.',
+            ], 422);
+        }
+
         $lichHoc->update([
             'link_hoc_online' => $duLieu['link_hoc_online'],
         ]);
@@ -240,6 +248,148 @@ class GiaSuLichHocController extends DatLichBaseController
                 'goiHoc.monHoc:id,ten_mon,lop,cap_hoc_id',
                 'giasu.user:id,ho_ten',
             ])),
+        ]);
+    }
+
+    public function yeuCauDoiBuoiGiaSu(Request $request, int $lichHocId): JsonResponse
+    {
+        $giaSu = $this->layGiaSuDangNhap($request);
+
+        if (! $giaSu) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Khu vực này chỉ dành cho tài khoản gia sư.',
+            ], 403);
+        }
+
+        $duLieu = $request->validate([
+            'ngay_hoc' => ['required', 'date', 'after_or_equal:today'],
+            'gio_batdau' => ['required', 'date_format:H:i'],
+            'ly_do' => ['required', 'string', 'max:150'],
+        ]);
+
+        $lichHoc = LichHoc::query()
+            ->with(['goiHoc', 'yeuCauHocBus'])
+            ->where('giasu_id', $giaSu->id)
+            ->whereIn('trang_thai', ['cho_xacnhan', 'da_nhan'])
+            ->find($lichHocId);
+
+        if (! $lichHoc) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy buổi học có thể yêu cầu đổi.',
+            ], 404);
+        }
+
+        $thoiDiemBatDau = \Carbon\Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_batdau);
+        if (now()->gte($thoiDiemBatDau)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Buổi học đã đến giờ hoặc đã qua giờ, không thể yêu cầu đổi lịch.',
+            ], 422);
+        }
+
+        if ($lichHoc->yeuCauHocBus()->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mỗi buổi học chỉ được yêu cầu đổi lịch một lần.',
+            ], 422);
+        }
+
+        $duLieu['gio_ketthuc'] = \Carbon\Carbon::createFromFormat('H:i', $duLieu['gio_batdau'])
+            ->addMinutes(90)
+            ->format('H:i');
+
+        $loiTrungLich = $this->kiemTraTrungLichChoGiaSuDoiBuoi($lichHoc, $duLieu);
+        if ($loiTrungLich) {
+            return response()->json([
+                'success' => false,
+                'message' => $loiTrungLich,
+            ], 422);
+        }
+
+        $yeuCau = YeuCauHocBu::create([
+            'lichhoc_goc_id' => $lichHoc->id,
+            'giasu_id' => $lichHoc->giasu_id,
+            'nguoi_yeu_cau_id' => $request->user()->id,
+            'ngay_yeu_cau' => now(),
+            'ngay_hoc' => $duLieu['ngay_hoc'],
+            'gio_batdau' => $duLieu['gio_batdau'],
+            'gio_ketthuc' => $duLieu['gio_ketthuc'],
+            'ly_do' => trim($duLieu['ly_do']),
+            'trang_thai' => 'cho_hoc_vien_xac_nhan', // Thay vì chờ duyệt, trạng thái là chờ học viên
+        ]);
+
+        if ($lichHoc->goiHoc?->hocvien_id) {
+            ThongBao::create([
+                'user_id' => $lichHoc->goiHoc->hocvien_id,
+                'tieu_de' => 'Gia sư yêu cầu học bù/đổi buổi học',
+                'noi_dung' => "Gia sư {$request->user()->ho_ten} xin phép dời buổi học sang {$duLieu['ngay_hoc']} {$duLieu['gio_batdau']} - {$duLieu['gio_ketthuc']}.",
+                'url' => '/hoc-vien/lich-hoc?mo_lich_hoc=' . $lichHoc->id,
+                'da_doc' => false,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã gửi yêu cầu đổi buổi học đến học viên.',
+            'data' => $this->dinhDangYeuCauHocBu($yeuCau),
+        ], 201);
+    }
+
+    public function thongTinKhoangThoiGianBan(Request $request, int $lichHocId): JsonResponse
+    {
+        $giaSu = $this->layGiaSuDangNhap($request);
+
+        if (! $giaSu) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Khu vực này chỉ dành cho tài khoản gia sư.',
+            ], 403);
+        }
+
+        $ngayHoc = $request->query('ngay_hoc');
+        if (!$ngayHoc) {
+            return response()->json(['success' => true, 'data' => []]);
+        }
+
+        $lichHoc = LichHoc::query()
+            ->with(['goiHoc'])
+            ->where('giasu_id', $giaSu->id)
+            ->find($lichHocId);
+
+        if (!$lichHoc) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy buổi học.',
+            ], 404);
+        }
+
+        $hocVienId = $lichHoc->goiHoc?->hocvien_id;
+        $giaSuId = $giaSu->id;
+
+        $lichBan = LichHoc::query()
+            ->where('id', '<>', $lichHoc->id)
+            ->where('trang_thai', '<>', 'dahuy')
+            ->whereDate('ngay_hoc', $ngayHoc)
+            ->where(function ($q) use ($giaSuId, $hocVienId) {
+                $q->where('giasu_id', $giaSuId);
+                if ($hocVienId) {
+                    $q->orWhereHas('goiHoc', fn ($q2) => $q2->where('hocvien_id', $hocVienId));
+                }
+            })
+            ->get(['gio_batdau', 'gio_ketthuc'])
+            ->map(function ($lich) {
+                return [
+                    'gio_batdau' => substr((string) $lich->gio_batdau, 0, 5),
+                    'gio_ketthuc' => substr((string) $lich->gio_ketthuc, 0, 5),
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => $lichBan
         ]);
     }
 
@@ -405,6 +555,38 @@ class GiaSuLichHocController extends DatLichBaseController
             'giasu.user:id,ho_ten,email,sdt',
             'nguoiYeuCau:id,ho_ten,email,sdt',
         ];
+    }
+
+    private function kiemTraTrungLichChoGiaSuDoiBuoi(LichHoc $lichHoc, array $duLieu): ?string
+    {
+        $trungGiaSu = LichHoc::query()
+            ->where('id', '<>', $lichHoc->id)
+            ->where('giasu_id', $lichHoc->giasu_id)
+            ->where('trang_thai', '<>', 'dahuy')
+            ->whereDate('ngay_hoc', $duLieu['ngay_hoc'])
+            ->where('gio_batdau', '<', $duLieu['gio_ketthuc'])
+            ->where('gio_ketthuc', '>', $duLieu['gio_batdau'])
+            ->exists();
+
+        if ($trungGiaSu) {
+            return 'Khung giờ mới bị trùng lịch dạy khác của bạn.';
+        }
+
+        $hocVienId = $lichHoc->goiHoc?->hocvien_id;
+        if (! $hocVienId) {
+            return null;
+        }
+
+        $trungHocVien = LichHoc::query()
+            ->where('id', '<>', $lichHoc->id)
+            ->where('trang_thai', '<>', 'dahuy')
+            ->whereHas('goiHoc', fn ($query) => $query->where('hocvien_id', $hocVienId))
+            ->whereDate('ngay_hoc', $duLieu['ngay_hoc'])
+            ->where('gio_batdau', '<', $duLieu['gio_ketthuc'])
+            ->where('gio_ketthuc', '>', $duLieu['gio_batdau'])
+            ->exists();
+
+        return $trungHocVien ? 'Khung giờ mới bị trùng lịch học của học viên.' : null;
     }
 
     private function kiemTraTrungLichDoiBuoi(YeuCauHocBu $yeuCau): ?string

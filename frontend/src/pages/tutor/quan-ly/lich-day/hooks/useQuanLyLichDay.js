@@ -137,7 +137,7 @@ function useQuanLyLichDay() {
                 console.error("Không thể cập nhật link lớp học:", error);
                 toast.error(
                     error.response?.data?.message ||
-                        "Không thể cập nhật link lớp học.",
+                    "Không thể cập nhật link lớp học.",
                 );
                 return false;
             } finally {
@@ -172,7 +172,7 @@ function useQuanLyLichDay() {
                 console.error("Không thể phản hồi yêu cầu đặt gói:", error);
                 toast.error(
                     error.response?.data?.message ||
-                        "Không thể phản hồi yêu cầu đặt gói.",
+                    "Không thể phản hồi yêu cầu đặt gói.",
                 );
             } finally {
                 setDangXuLyId(null);
@@ -202,13 +202,58 @@ function useQuanLyLichDay() {
                 console.error("Không thể phản hồi yêu cầu đổi buổi:", error);
                 toast.error(
                     error.response?.data?.message ||
-                        "Không thể phản hồi yêu cầu đổi buổi.",
+                    "Không thể phản hồi yêu cầu đổi buổi.",
                 );
             } finally {
                 setDangXuLyId(null);
             }
         },
         [capNhatYeuCauDoiBuoi, dangXuLyId, toast],
+    );
+
+    const layKhoangThoiGianBan = useCallback(
+        async (lichHocId, ngayHoc) => {
+            if (!lichHocId || !ngayHoc) return [];
+            try {
+                const response = await api.get(`/gia-su/lich-day/${lichHocId}/khoang-thoi-gian-ban`, {
+                    params: { ngay_hoc: ngayHoc },
+                });
+                return response.data.data || [];
+            } catch (error) {
+                console.error("Không thể lấy khoảng thời gian bận:", error);
+                return [];
+            }
+        },
+        []
+    );
+
+    const guiYeuCauDoiBuoi = useCallback(
+        async (lichHoc, payload) => {
+            if (!lichHoc || dangXuLyId) return false;
+
+            setDangXuLyId(`yeu-cau-doi-buoi-${lichHoc.id}`);
+
+            try {
+                const response = await api.post(
+                    `/gia-su/lich-day/${lichHoc.id}/doi-buoi`,
+                    payload
+                );
+
+                toast.success(response.data.message || "Đã gửi yêu cầu đổi buổi học.");
+                taiDuLieu(); // Làm mới dữ liệu
+                return true;
+            } catch (error) {
+                console.error("Không thể gửi yêu cầu đổi buổi:", error);
+                const thongDiepLoi = error.response?.data?.errors 
+                    ? Object.values(error.response.data.errors)[0][0]
+                    : error.response?.data?.message || "Không thể gửi yêu cầu đổi buổi.";
+                toast.error(thongDiepLoi);
+                return false;
+            } finally {
+                setDangXuLyId(null);
+            }
+        },
+        [dangXuLyId, taiDuLieu, toast]
     );
 
     return {
@@ -225,6 +270,8 @@ function useQuanLyLichDay() {
         capNhatLinkHocOnline,
         phanHoiYeuCau,
         phanHoiYeuCauDoiBuoi,
+        layKhoangThoiGianBan,
+        guiYeuCauDoiBuoi,
     };
 }
 
