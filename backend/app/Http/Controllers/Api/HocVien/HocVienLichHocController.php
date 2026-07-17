@@ -752,15 +752,13 @@ class HocVienLichHocController extends Controller
         $giaSuDaXacNhan = str_contains($ghiChu, self::DAU_GIASU_XACNHAN);
         $hocVienChuaXacNhan = !str_contains($ghiChu, self::DAU_HOCVIEN_XACNHAN);
 
-        // BƯỚC 1: Nếu gia sư chưa báo cáo, hoặc học viên đã tự chốt rồi -> Thoát
         if (!$giaSuDaXacNhan || !$hocVienChuaXacNhan) {
             return $lichHoc;
         }
 
-        // BƯỚC 2: Tính toán mốc thời gian. Lấy thời gian kết thúc buổi học làm gốc
+       
         $thoiDiemKetThuc = Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_ketthuc, self::MUI_GIO_LICH_HOC);
 
-        // BƯỚC 3: Nếu thời điểm kết thúc + 8 tiếng đã trôi qua (isPast) -> Tự chốt DB
         if ($thoiDiemKetThuc->copy()->addHours(8)->isPast()) {
             $lichHoc->ghi_chu = $this->themDongGhiChu(
                 $lichHoc->ghi_chu,
@@ -786,7 +784,7 @@ class HocVienLichHocController extends Controller
                     ]));
             }
 
-            // Gửi thông báo cho Gia Sư
+
             if ($lichHoc->giasu?->user_id) {
                 \App\Models\ThongBao::create([
                     'user_id' => $lichHoc->giasu->user_id,
@@ -797,7 +795,7 @@ class HocVienLichHocController extends Controller
                 ]);
             }
 
-            // Gửi thông báo cho Học viên
+  
             $hocVienId = $lichHoc->goiHoc?->hocvien_id;
             if ($hocVienId) {
                 \App\Models\ThongBao::create([
@@ -809,9 +807,8 @@ class HocVienLichHocController extends Controller
                 ]);
             }
 
-            // Ghi Log Hệ Thống
             \App\Services\NhatKyHeThongService::ghi(
-                null, // null vì hành động tự động của hệ thống
+                null,
                 'tu_dong_xac_nhan',
                 $lichHoc->id,
                 'Hệ thống tự động chốt hoàn thành buổi học LH' . str_pad((string) $lichHoc->id, 6, '0', STR_PAD_LEFT) . ' do quá hạn 8 tiếng.',
