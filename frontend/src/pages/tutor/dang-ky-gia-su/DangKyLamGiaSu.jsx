@@ -10,6 +10,7 @@ import KinhNghiemGiangDay from "./components/KinhNghiemGiangDay";
 import ThongTinCaNhanDangKy from "./components/ThongTinCaNhanDangKy";
 import TrinhDoHoSo from "./components/TrinhDoHoSo";
 import XacNhanDangKy from "./components/XacNhanDangKy";
+
 import useDanhMucDangKyGiaSu from "./hooks/useDanhMucDangKyGiaSu";
 import useHoSoChuyenMon from "./hooks/useHoSoChuyenMon";
 import useLuaChonGiangDay from "./hooks/useLuaChonGiangDay";
@@ -110,7 +111,7 @@ function DangKyLamGiaSu() {
 
             toast.error(
                 noiDung ||
-                    "Không thể gửi đơn đăng ký. Vui lòng kiểm tra lại thông tin.",
+                "Không thể gửi đơn đăng ký. Vui lòng kiểm tra lại thông tin.",
             );
         } finally {
             setDangGuiDon(false);

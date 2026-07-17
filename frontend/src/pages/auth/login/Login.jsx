@@ -29,7 +29,11 @@ function Login() {
       if (response.data.success) {
         const { token, user } = response.data.data;
         login(token, user);
-        navigate(redirectPath || getRedirectPath(user.vai_tro), { replace: true });
+        if (user.vai_tro === "admin") {
+          navigate("/admin", { replace: true });
+        } else {
+          navigate(redirectPath || getRedirectPath(user.vai_tro), { replace: true });
+        }
       }
     } catch (err) {
       const data = err.response?.data;
@@ -295,7 +299,7 @@ function Login() {
         <div style={styles.wrapper}>
           <div style={styles.box}>
             <div style={styles.header}>
-              <p style={styles.logo}>📚 TRUNG TÂM GIA SƯ</p>
+              <p style={styles.logo}> TRUNG TÂM GIA SƯ</p>
               <h1 style={styles.title}>Đăng Nhập</h1>
               <p style={styles.subtitle}>Chào mừng bạn trở lại</p>
             </div>
@@ -310,7 +314,7 @@ function Login() {
             <form onSubmit={handleLogin} style={styles.form}>
               {/* Email */}
               <div style={styles.formGroup}>
-                <label style={styles.label}>📧 Email</label>
+                <label style={styles.label}> Email</label>
                 <input
                   type="email"
                   placeholder="Nhập email của bạn"
@@ -324,7 +328,7 @@ function Login() {
 
               {/* Mật khẩu */}
               <div style={styles.formGroup}>
-                <label style={styles.label}>🔐 Mật Khẩu</label>
+                <label style={styles.label}> Mật Khẩu</label>
                 <div style={styles.inputContainer}>
                   <input
                     type={showPassword ? "text" : "password"}
@@ -369,7 +373,7 @@ function Login() {
 
               {/* Nút đăng nhập */}
               <button type="submit" style={styles.button} disabled={loading}>
-                {loading ? "⏳ Đang xử lý..." : "🚀 Đăng Nhập"}
+                {loading ? "⏳ Đang xử lý..." : " Đăng Nhập"}
               </button>
             </form>
 

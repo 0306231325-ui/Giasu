@@ -80,16 +80,7 @@ function GiaSuThuNhap() {
                 />
             )}
 
-            <div className="mt-5 flex items-start gap-3 rounded-2xl border border-blue-400/20 bg-blue-400/10 p-4 text-sm text-blue-100">
-                <span className="mt-0.5 shrink-0 text-blue-300">
-                    <BieuTuong ten="info" />
-                </span>
-                <p className="leading-6">
-                    Thu nhập chỉ được ghi nhận từ những buổi học đã hoàn thành.
-                    Hệ thống lấy số tiền từ cột <span className="font-bold">tien_giasu_nhan</span>;
-                    nếu dữ liệu cũ chưa có tiền nhận thì tạm tính bằng tiền học trừ phí hoa hồng.
-                </p>
-            </div>
+
         </div>
     );
 }

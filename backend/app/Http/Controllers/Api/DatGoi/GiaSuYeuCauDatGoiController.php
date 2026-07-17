@@ -60,6 +60,16 @@ class GiaSuYeuCauDatGoiController extends DatLichBaseController
                                     ->where('gia_su_id', $giaSu->id)
                                     ->where('phan_hoi', PhanHoi::TU_CHOI);
                             });
+                    })
+                    ->orWhere(function ($hocThuQuery) use ($giaSu) {
+                        $hocThuQuery
+                            ->where('kieu_goi', 'hoc_thu')
+                            ->whereIn('trang_thai', ['danghoc', 'hoanthanh'])
+                            ->whereHas('phanHois', function ($phanHoiQuery) use ($giaSu) {
+                                $phanHoiQuery
+                                    ->where('gia_su_id', $giaSu->id)
+                                    ->where('phan_hoi', PhanHoi::DONG_Y);
+                            });
                     });
             })
             ->latest()

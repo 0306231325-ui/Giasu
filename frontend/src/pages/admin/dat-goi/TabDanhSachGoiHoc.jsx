@@ -81,7 +81,7 @@ function TabDanhSachGoiHoc({ danhSachDaLoc, onXuLyHanhDong }) {
                 </div>
             </div>
 
-            {/* Phân trang */}
+
             <div className="flex items-center justify-between px-2">
                 <div className="text-sm text-white/60">
                     Hiển thị {chiSoBatDau + 1} đến {Math.min(chiSoBatDau + soLuongMoiTrang, danhSachDaLoc.length)} trong tổng số {danhSachDaLoc.length}
@@ -121,7 +121,7 @@ function TabDanhSachGoiHoc({ danhSachDaLoc, onXuLyHanhDong }) {
                 </div>
             </div>
 
-            {/* Modal Chi Tiết */}
+
             {yeuCauDangXem && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm">
                     <div className="relative flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white text-slate-900 shadow-2xl">
@@ -140,7 +140,7 @@ function TabDanhSachGoiHoc({ danhSachDaLoc, onXuLyHanhDong }) {
                             </button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-0">
-                            {/* Dùng chung component chi tiết */}
+
                             <ChiTietYeuCauDatGoi
                                 yeuCau={yeuCauDangXem}
                                 onThucHien={onXuLyHanhDong}

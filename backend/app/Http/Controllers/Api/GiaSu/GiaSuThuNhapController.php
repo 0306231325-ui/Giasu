@@ -62,8 +62,6 @@ class GiaSuThuNhapController extends Controller
                 'tongQuan' => [
                     'tongThuNhap' => $tongThuNhap,
                     'soBuoiHoanThanh' => $soBuoi,
-                    'trungBinhMoiBuoi' => $soBuoi > 0 ? round($tongThuNhap / $soBuoi) : 0,
-                    'monThuNhapCaoNhat' => $this->monThuNhapCaoNhat($lichHocs),
                 ],
                 'bieuDo' => $this->duLieuBieuDo($lichHocs, $loai, $tuNgay, $denNgay),
                 'chiTiet' => $lichHocs->map(fn (LichHoc $lichHoc) => $this->dinhDangChiTiet($lichHoc))->values(),
@@ -120,21 +118,6 @@ class GiaSuThuNhapController extends Controller
         }
 
         return max((float) $lichHoc->tien_hoc - (float) $lichHoc->phi_hoahong, 0);
-    }
-
-    private function monThuNhapCaoNhat(Collection $lichHocs): ?array
-    {
-        $monHoc = $lichHocs
-            ->groupBy(fn (LichHoc $lichHoc) => $lichHoc->goiHoc?->monHoc?->ten_mon ?? 'Chưa cập nhật')
-            ->map(fn (Collection $nhom, string $tenMon) => [
-                'tenMon' => $tenMon,
-                'tongThuNhap' => $nhom->sum(fn (LichHoc $lichHoc) => $this->tienGiaSuNhan($lichHoc)),
-                'soBuoi' => $nhom->count(),
-            ])
-            ->sortByDesc('tongThuNhap')
-            ->first();
-
-        return $monHoc ?: null;
     }
 
     private function duLieuBieuDo(Collection $lichHocs, string $loai, Carbon $tuNgay, Carbon $denNgay): array
@@ -202,7 +185,7 @@ class GiaSuThuNhapController extends Controller
             'thoiGian' => $ngayHoc->format('d/m/Y') . ' · ' . substr((string) $lichHoc->gio_batdau, 0, 5) . ' - ' . substr((string) $lichHoc->gio_ketthuc, 0, 5),
             'hocVien' => $goiHoc?->hocVien?->ho_ten ?? 'Học viên',
             'monHoc' => trim(($goiHoc?->monHoc?->ten_mon ?? 'Môn học') . ' · ' . ($goiHoc?->monHoc?->lop ?? '')),
-            'loaiBuoi' => $lichHoc->loai_buoi === 'hoc_bu' ? 'Học bù' : 'Học thường',
+            'loaiBuoi' => $lichHoc->loai_buoi === 'hoc_bu' ? 'Học bù' : ($goiHoc && $goiHoc->kieu_goi === 'hoc_thu' ? 'Học thử' : 'Học thường'),
             'tienHoc' => (float) $lichHoc->tien_hoc,
             'phiHoaHong' => (float) $lichHoc->phi_hoahong,
             'thuNhap' => $this->tienGiaSuNhan($lichHoc),

@@ -18,8 +18,6 @@ class HocVienLichHocController extends Controller
 {
     private const DAU_HOCVIEN_XACNHAN = 'Hoc vien xac nhan hoan thanh';
     private const DAU_GIASU_XACNHAN = 'Gia su xac nhan hoan thanh';
-    private const DAU_HOCVIEN_BAO_VAN_DE = 'Hoc vien bao van de';
-    private const DAU_GIASU_BAO_VAN_DE = 'Gia su bao van de';
     private const MUI_GIO_LICH_HOC = 'Asia/Ho_Chi_Minh';
 
     private function bayGioLichHoc(): Carbon
@@ -517,6 +515,8 @@ class HocVienLichHocController extends Controller
 
     private function dinhDangLichHoc(LichHoc $lichHoc): array
     {
+        $lichHoc = $this->kiemTraVaTuDongChotQuaHan($lichHoc);
+
         $ngayHoc = Carbon::parse($lichHoc->ngay_hoc);
         $bayGio = $this->bayGioLichHoc();
         $daToiGioBatDau = $bayGio->gte($this->thoiDiemLichHoc($lichHoc, 'gio_batdau'));
@@ -562,18 +562,17 @@ class HocVienLichHocController extends Controller
             'daQuaGioKetThuc' => $daQuaGioKetThuc,
             'coTheXacNhanHoanThanh' => $daDenNgayHoc
                 && $trangThaiGoc === 'da_nhan'
-                && ! $xacNhan['hocVienDaXacNhan']
-                && ! $xacNhan['hocVienBaoVanDe'],
+                && ! $xacNhan['hocVienDaXacNhan'],
             'xacNhan' => $xacNhan,
             'hocVienXacNhan' => [
-                'trangThai' => $xacNhan['hocVienDaXacNhan'] ? 'daxacnhan' : ($xacNhan['hocVienBaoVanDe'] ? 'baovan_de' : null),
+                'trangThai' => $xacNhan['hocVienDaXacNhan'] ? 'daxacnhan' : null,
                 'thoiGian' => null,
-                'ghiChu' => $xacNhan['hocVienBaoVanDe'] ? $lichHoc->ghi_chu : null,
+                'ghiChu' => null,
             ],
             'giaSuXacNhan' => [
-                'trangThai' => $xacNhan['giaSuDaXacNhan'] ? 'daxacnhan' : ($xacNhan['giaSuBaoVanDe'] ? 'baovan_de' : null),
+                'trangThai' => $xacNhan['giaSuDaXacNhan'] ? 'daxacnhan' : null,
                 'thoiGian' => null,
-                'ghiChu' => $xacNhan['giaSuBaoVanDe'] ? $lichHoc->ghi_chu : null,
+                'ghiChu' => null,
             ],
             'daDoiLich' => $daDoiLich,
             'thongTinDoiLich' => $thongTinDoiLich,
@@ -609,18 +608,10 @@ class HocVienLichHocController extends Controller
         $ghiChu = (string) $lichHoc->ghi_chu;
         $hocVienDaXacNhan = str_contains($ghiChu, self::DAU_HOCVIEN_XACNHAN);
         $giaSuDaXacNhan = str_contains($ghiChu, self::DAU_GIASU_XACNHAN);
-        $hocVienBaoVanDe = str_contains($ghiChu, self::DAU_HOCVIEN_BAO_VAN_DE)
-            || str_contains($ghiChu, 'Hoc vien bao van de')
-            || str_contains($ghiChu, 'Học viên báo vấn đề');
-        $giaSuBaoVanDe = str_contains($ghiChu, self::DAU_GIASU_BAO_VAN_DE);
-
         return [
             'hocVienDaXacNhan' => $hocVienDaXacNhan,
             'giaSuDaXacNhan' => $giaSuDaXacNhan,
-            'hocVienBaoVanDe' => $hocVienBaoVanDe,
-            'giaSuBaoVanDe' => $giaSuBaoVanDe,
             'duHaiBenXacNhan' => $hocVienDaXacNhan && $giaSuDaXacNhan,
-            'coBaoVanDe' => $hocVienBaoVanDe || $giaSuBaoVanDe,
         ];
     }
 
@@ -638,8 +629,8 @@ class HocVienLichHocController extends Controller
     {
         return [
             'id' => $yeuCau->id,
-            'ngayHoc' => $yeuCau->ngay_hoc?->toDateString(),
-            'ngayHocText' => $yeuCau->ngay_hoc?->format('d/m/Y'),
+            'ngayHoc' => $yeuCau->ngay_hoc ? Carbon::parse($yeuCau->ngay_hoc)->toDateString() : null,
+            'ngayHocText' => $yeuCau->ngay_hoc ? Carbon::parse($yeuCau->ngay_hoc)->format('d/m/Y') : null,
             'gioBatDau' => substr((string) $yeuCau->gio_batdau, 0, 5),
             'gioKetThuc' => substr((string) $yeuCau->gio_ketthuc, 0, 5),
             'khungGio' => substr((string) $yeuCau->gio_batdau, 0, 5) . ' - ' . substr((string) $yeuCau->gio_ketthuc, 0, 5),
@@ -753,5 +744,81 @@ class HocVienLichHocController extends Controller
             6 => 'Thu 7',
             7 => 'Chu nhat',
         ][$isoWeekday] ?? '';
+    }
+
+    private function kiemTraVaTuDongChotQuaHan(LichHoc $lichHoc): LichHoc
+    {
+        $ghiChu = (string) $lichHoc->ghi_chu;
+        $giaSuDaXacNhan = str_contains($ghiChu, self::DAU_GIASU_XACNHAN);
+        $hocVienChuaXacNhan = !str_contains($ghiChu, self::DAU_HOCVIEN_XACNHAN);
+
+        // BƯỚC 1: Nếu gia sư chưa báo cáo, hoặc học viên đã tự chốt rồi -> Thoát
+        if (!$giaSuDaXacNhan || !$hocVienChuaXacNhan) {
+            return $lichHoc;
+        }
+
+        // BƯỚC 2: Tính toán mốc thời gian. Lấy thời gian kết thúc buổi học làm gốc
+        $thoiDiemKetThuc = Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_ketthuc, self::MUI_GIO_LICH_HOC);
+
+        // BƯỚC 3: Nếu thời điểm kết thúc + 8 tiếng đã trôi qua (isPast) -> Tự chốt DB
+        if ($thoiDiemKetThuc->copy()->addHours(8)->isPast()) {
+            $lichHoc->ghi_chu = $this->themDongGhiChu(
+                $lichHoc->ghi_chu,
+                self::DAU_HOCVIEN_XACNHAN,
+                'Hệ thống tự động xác nhận do quá 8 tiếng.'
+            );
+            $lichHoc->trang_thai = 'hoanthanh';
+            $lichHoc->save();
+
+            $goiHoc = $lichHoc->goiHoc;
+            if ($goiHoc && ! $goiHoc->lichHocs()->whereNotIn('trang_thai', ['hoanthanh', 'dahuy'])->exists()) {
+                $goiHoc->update(['trang_thai' => 'hoanthanh']);
+
+                \App\Models\User::query()
+                    ->where('vai_tro', 'admin')
+                    ->get(['id'])
+                    ->each(fn ($admin) => \App\Models\ThongBao::create([
+                        'user_id' => $admin->id,
+                        'tieu_de' => 'Gói học đã hoàn thành',
+                        'noi_dung' => 'Gói học GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . ' đã hoàn tất tất cả buổi học và chuyển sang trạng thái hoàn thành.',
+                        'url' => '/admin/quan-ly-dat-goi#danh_sach_goi_hoc',
+                        'da_doc' => false,
+                    ]));
+            }
+
+            // Gửi thông báo cho Gia Sư
+            if ($lichHoc->giasu?->user_id) {
+                \App\Models\ThongBao::create([
+                    'user_id' => $lichHoc->giasu->user_id,
+                    'tieu_de' => 'Hệ thống tự động xác nhận buổi học',
+                    'noi_dung' => 'Hệ thống đã tự động ghi nhận hoàn thành buổi học do quá 8 tiếng học viên không phản hồi.',
+                    'url' => '/gia-su/quan-ly/lich-day',
+                    'da_doc' => false,
+                ]);
+            }
+
+            // Gửi thông báo cho Học viên
+            $hocVienId = $lichHoc->goiHoc?->hocvien_id;
+            if ($hocVienId) {
+                \App\Models\ThongBao::create([
+                    'user_id' => $hocVienId,
+                    'tieu_de' => 'Hệ thống tự động xác nhận buổi học',
+                    'noi_dung' => 'Hệ thống đã tự động ghi nhận hoàn thành buổi học do quá 8 tiếng.',
+                    'url' => '/hoc-vien/lich-hoc',
+                    'da_doc' => false,
+                ]);
+            }
+
+            // Ghi Log Hệ Thống
+            \App\Services\NhatKyHeThongService::ghi(
+                null, // null vì hành động tự động của hệ thống
+                'tu_dong_xac_nhan',
+                $lichHoc->id,
+                'Hệ thống tự động chốt hoàn thành buổi học LH' . str_pad((string) $lichHoc->id, 6, '0', STR_PAD_LEFT) . ' do quá hạn 8 tiếng.',
+                'Hệ Thống'
+            );
+        }
+
+        return $lichHoc;
     }
 }

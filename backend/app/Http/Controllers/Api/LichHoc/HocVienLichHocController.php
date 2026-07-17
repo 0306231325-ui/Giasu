@@ -144,8 +144,8 @@ class HocVienLichHocController extends DatLichBaseController
         }
 
         $duLieu = $request->validate([
-            'trang_thai' => ['required', Rule::in(['daxacnhan', 'baovan_de'])],
-            'ghi_chu' => ['required_if:trang_thai,baovan_de', 'nullable', 'string', 'max:1000'],
+            'trang_thai' => ['required', Rule::in(['daxacnhan'])],
+            'ghi_chu' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $lichHoc = LichHoc::query()
@@ -188,13 +188,9 @@ class HocVienLichHocController extends DatLichBaseController
         }
 
         $trangThaiXacNhan = $duLieu['trang_thai'];
-        $ghiChuCu = trim((string) $lichHoc->ghi_chu);
-        $ghiChuMoi = $trangThaiXacNhan === 'baovan_de'
-            ? trim($ghiChuCu . "\n\n[Học viên báo vấn đề] " . trim((string) ($duLieu['ghi_chu'] ?? '')))
-            : $ghiChuCu;
 
         $xacNhan = $this->thongTinXacNhanLichHoc($lichHoc);
-        if ($xacNhan['hocVienDaXacNhan'] || $xacNhan['hocVienBaoVanDe']) {
+        if ($xacNhan['hocVienDaXacNhan']) {
             return response()->json([
                 'success' => false,
                 'message' => 'Ban da gui xac nhan cho buoi hoc nay.',
@@ -210,7 +206,7 @@ class HocVienLichHocController extends DatLichBaseController
 
         $ghiChuMoi = $this->themDongGhiChu(
             $lichHoc->ghi_chu,
-            $trangThaiXacNhan === 'baovan_de' ? self::DAU_HOCVIEN_BAO_VAN_DE : self::DAU_HOCVIEN_XACNHAN,
+            self::DAU_HOCVIEN_XACNHAN,
             $duLieu['ghi_chu'] ?? null,
         );
 
@@ -220,7 +216,7 @@ class HocVienLichHocController extends DatLichBaseController
             ]);
 
             // Nếu cả gia sư và học viên đều xác nhận hoàn thành (không báo vấn đề) -> tự động chuyển trạng thái
-            if ($trangThaiXacNhan === 'daxacnhan' && ! $xacNhan['giaSuBaoVanDe']) {
+            if ($trangThaiXacNhan === 'daxacnhan') {
                 $ghiChuMoiHoanThanh = $this->themDongGhiChu(
                     $lichHoc->ghi_chu,
                     'Hệ thống tự động xác nhận hoàn thành (2 bên đồng thuận)',
@@ -236,10 +232,10 @@ class HocVienLichHocController extends DatLichBaseController
                 if ($goiHoc && ! $goiHoc->lichHocs()->whereNotIn('trang_thai', ['hoanthanh', 'dahuy'])->exists()) {
                     $goiHoc->update(['trang_thai' => 'hoanthanh']);
 
-                    \App\Models\User::query()
+                    User::query()
                         ->where('vai_tro', 'admin')
                         ->get(['id'])
-                        ->each(fn ($admin) => \App\Models\ThongBao::create([
+                        ->each(fn ($admin) => ThongBao::create([
                             'user_id' => $admin->id,
                             'tieu_de' => 'Gói học đã hoàn thành',
                             'noi_dung' => 'Gói học GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) . ' đã hoàn tất tất cả buổi học và chuyển sang trạng thái hoàn thành.',
@@ -253,12 +249,8 @@ class HocVienLichHocController extends DatLichBaseController
         if ($lichHoc->giasu?->user_id) {
             ThongBao::create([
                 'user_id' => $lichHoc->giasu->user_id,
-                'tieu_de' => $trangThaiXacNhan === 'baovan_de'
-                    ? 'Học viên báo vấn đề buổi học'
-                    : 'Học viên đã xác nhận buổi học',
-                'noi_dung' => $trangThaiXacNhan === 'baovan_de'
-                    ? "{$user->ho_ten} đã báo có vấn đề với buổi học."
-                    : "{$user->ho_ten} đã xác nhận đã học xong buổi học.",
+                'tieu_de' => 'Học viên đã xác nhận buổi học',
+                'noi_dung' => "{$user->ho_ten} đã xác nhận đã học xong buổi học.",
                 'url' => '/gia-su/quan-ly/lich-day',
                 'da_doc' => false,
             ]);
@@ -268,9 +260,7 @@ class HocVienLichHocController extends DatLichBaseController
             $user,
             'xac_nhan_hoan_thanh_buoi_hoc',
             $lichHoc->id,
-            $trangThaiXacNhan === 'baovan_de'
-                ? "{$user->ho_ten} báo vấn đề buổi học LH" . str_pad((string) $lichHoc->id, 6, '0', STR_PAD_LEFT) . "."
-                : "{$user->ho_ten} xác nhận hoàn thành buổi học LH" . str_pad((string) $lichHoc->id, 6, '0', STR_PAD_LEFT) . "."
+            "{$user->ho_ten} xác nhận hoàn thành buổi học LH" . str_pad((string) $lichHoc->id, 6, '0', STR_PAD_LEFT) . "."
         );
 
         $lichHoc->refresh()->load([
@@ -282,9 +272,7 @@ class HocVienLichHocController extends DatLichBaseController
 
         return response()->json([
             'success' => true,
-            'message' => $trangThaiXacNhan === 'baovan_de'
-                ? 'Da ghi nhan van de cua buoi hoc. Admin se kiem tra tren trang quan ly lich hoc.'
-                : 'Da xac nhan hoan thanh buoi hoc.',
+            'message' => 'Da xac nhan hoan thanh buoi hoc.',
             'data' => $this->dinhDangLichHoc($lichHoc),
         ]);
     }

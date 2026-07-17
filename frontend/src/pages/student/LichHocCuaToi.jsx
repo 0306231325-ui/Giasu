@@ -582,11 +582,11 @@ function LichHocCuaToi() {
 
     const phanHoiYeuCauHocBu = async (phanHoi) => {
         if (!chiTietBuoi) return;
-        
+
         setThongBao("");
         try {
             const response = await api.post(`/hoc-vien/lich-hoc/${chiTietBuoi.lichHoc.id}/phan-hoi-hoc-bu`, { phan_hoi: phanHoi });
-            
+
             if (response.data.success) {
                 // If the student accepts, the backend creates a new lesson and cancels this one
                 // If they reject, the yeu_cau is updated to hoc_vien_tu_choi
@@ -653,7 +653,7 @@ function LichHocCuaToi() {
     };
 
     const yeuCauDoiBuoiDangMo = chiTietBuoi?.lichHoc?.yeuCauDoiBuoi || null;
-    
+
     const yeuCauHocBuTuGiaSu = yeuCauDoiBuoiDangMo?.trangThai === 'cho_hoc_vien_xac_nhan' ? yeuCauDoiBuoiDangMo : null;
 
     const laBuoiHocThuDangXem = chiTietBuoi ? laGoiHocThu(chiTietBuoi.goiHoc, chiTietBuoi.lichHoc) : false;
@@ -1108,7 +1108,8 @@ function LichHocCuaToi() {
                                             )}
                                         </div>
                                     ) : null}
-                                    {/* xacs nhan hoan thanh buoi hoc  */}
+
+
                                     {chiTietBuoi.lichHoc.coTheXacNhanHoanThanh ? (
                                         <form onSubmit={guiXacNhanBuoiHoc} className="mt-4 flex flex-col gap-3 rounded-xl border border-emerald-100 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                                             <div>
@@ -1116,7 +1117,10 @@ function LichHocCuaToi() {
                                                 {!chiTietBuoi.lichHoc.xacNhan?.giaSuDaXacNhan ? (
                                                     <p className="mt-1 text-xs font-semibold text-amber-600">Bạn cần chờ gia sư xác nhận trước.</p>
                                                 ) : (
-                                                    <p className="mt-1 text-xs font-semibold text-slate-500">Buổi học diễn ra bình thường.</p>
+                                                    <div>
+                                                        <p className="mt-1 text-xs font-semibold text-slate-500">Buổi học diễn ra bình thường.</p>
+                                                        <p className="mt-1.5 text-[11px] font-bold text-red-600 italic">* Hệ Thống Sẽ Tự Động Xác Nhận Hoàn Thành Buổi Học Sau 8 Tiếng Khi Kết Thúc Buổi Học.</p>
+                                                    </div>
                                                 )}
                                             </div>
                                             <button

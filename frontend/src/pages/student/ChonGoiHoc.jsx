@@ -52,7 +52,7 @@ const ngayHocDauTienTheoThu = (danhSachThu) => {
         .map((thu) => thuSangSo[thu])
         .filter(Boolean);
 
-    if (danhSachThuSo.length === 0) return "";
+    if (danhSachThuSo.length === 0) return ngayMai();
 
     const ngayBatDau = new Date(`${ngayMai()}T00:00:00`);
     const tapThu = new Set(danhSachThuSo);
@@ -287,7 +287,7 @@ function ChonGoiHoc() {
     const [dangGui, setDangGui] = useState(false);
     const [loaiGoi, setLoaiGoi] = useState("dinh_ky");
     const [goiId, setGoiId] = useState("");
-    const [thuHoc, setThuHoc] = useState([]);
+    const [thuHoc, setThuHoc] = useState(["Thứ 2", "Thứ 5"]);
     const [thongBao, setThongBaoRaw] = useState("");
     const [loaiThongBao, setLoaiThongBao] = useState("error");
     const [form, setForm] = useState({
@@ -1260,7 +1260,6 @@ function ChonGoiHoc() {
                                             value={form.ngay_batdau}
                                             readOnly
                                             tabIndex={-1}
-                                            style={{ colorScheme: "dark" }}
                                             className="w-full cursor-not-allowed rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white/80 outline-none transition focus:border-blue-400 md:w-64"
                                         />
                                         <p className="mt-2 text-xs font-medium text-blue-200">
@@ -1281,11 +1280,10 @@ function ChonGoiHoc() {
                                                     className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
                                                 >
                                                     {cacKhungGioBatDau.map((gio) => {
-                                                        const daQuaGio = !laThoiDiemHocTuongLai(form.ngay_batdau, gio);
-                                                        const biKhoa = daQuaGio || khungGioDinhKyBiKhoa(gio);
+                                                        const biKhoa = khungGioDinhKyBiKhoa(gio);
                                                         return (
                                                             <option key={gio} value={gio} disabled={biKhoa}>
-                                                                {gio}{daQuaGio ? " - đã qua giờ" : khungGioDinhKyBiKhoa(gio) ? " - đã có lịch" : ""}
+                                                                {gio}{biKhoa ? " - đã có lịch" : ""}
                                                             </option>
                                                         );
                                                     })}
@@ -1318,7 +1316,6 @@ function ChonGoiHoc() {
                                             value={form.ngay_batdau}
                                             min={ngayHomNay()}
                                             onChange={(event) => capNhatForm("ngay_batdau", event.target.value)}
-                                            style={{ colorScheme: "dark" }}
                                             className="w-full rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400 md:w-64"
                                         />
                                     </label>
@@ -1376,7 +1373,6 @@ function ChonGoiHoc() {
                                                 type="date"
                                                 value={buoi.ngay}
                                                 onChange={(event) => capNhatBuoi(index, "ngay", event.target.value)}
-                                                style={{ colorScheme: "dark" }}
                                                 className="rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
                                             />
                                             <select
@@ -1385,14 +1381,13 @@ function ChonGoiHoc() {
                                                 className="rounded-xl border border-white/10 bg-[#07122f] px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400"
                                             >
                                                 {cacKhungGioBatDau.map((gio) => {
-                                                    const daQuaGio = !laThoiDiemHocTuongLai(buoi.ngay, gio);
                                                     const trungLichGiaSu = slotTrungLichBan(buoi.ngay, gio);
                                                     const trungBuoiDaChon = slotTrungBuoiDangChon(buoi.ngay, gio, index);
-                                                    const biKhoa = daQuaGio || trungLichGiaSu || trungBuoiDaChon;
+                                                    const biKhoa = trungLichGiaSu || trungBuoiDaChon;
 
                                                     return (
                                                         <option key={gio} value={gio} disabled={biKhoa}>
-                                                            {gio}{daQuaGio ? " - đã qua giờ" : trungLichGiaSu ? " - trùng lịch gia sư" : trungBuoiDaChon ? " - trùng buổi đã chọn" : ""}
+                                                            {gio}{trungLichGiaSu ? " - trùng lịch gia sư" : trungBuoiDaChon ? " - trùng buổi đã chọn" : ""}
                                                         </option>
                                                     );
                                                 })}

@@ -158,13 +158,6 @@ class AdminLichHocController extends DatLichBaseController
             ], 422);
         }
 
-        if ($xacNhan['coBaoVanDe']) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Buoi hoc dang co bao van de, admin can kiem tra va khong the xac nhan hoan thanh truc tiep.',
-            ], 422);
-        }
-
         DB::transaction(function () use ($duLieu, $lichHoc) {
             $ghiChu = $this->themDongGhiChu(
                 $lichHoc->ghi_chu,

@@ -116,7 +116,7 @@ class HocVienHoSoController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Cập nhật thông tin cá nhân thành công.',
-            'data' => $this->formatHocVienProfile($user->fresh(), $hocVien->fresh()),
+            'data' => $this->formatHocVienProfile($user->fresh(), $hocVien ? $hocVien->fresh() : null),
         ]);
     }
 
@@ -127,7 +127,7 @@ class HocVienHoSoController extends Controller
         return [
             'id' => $user->id,
             'ho_ten' => $user->ho_ten,
-            'ngay_sinh' => $user->ngay_sinh?->format('Y-m-d'),
+            'ngay_sinh' => $user->ngay_sinh ? \Carbon\Carbon::parse($user->ngay_sinh)->format('Y-m-d') : null,
             'email' => $user->email,
             'sdt' => $user->sdt,
             'dia_chi' => $user->vai_tro === 'giasu'
@@ -139,7 +139,7 @@ class HocVienHoSoController extends Controller
         ];
     }
 
-    private function formatHocVienProfile(User $user, $hocVien): array
+    private function formatHocVienProfile(User $user, ?\App\Models\Hocvien $hocVien): array
     {
         return [
             ...$this->formatUser($user),

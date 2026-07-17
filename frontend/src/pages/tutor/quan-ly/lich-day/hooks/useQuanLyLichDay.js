@@ -240,11 +240,11 @@ function useQuanLyLichDay() {
                 );
 
                 toast.success(response.data.message || "Đã gửi yêu cầu đổi buổi học.");
-                taiDuLieu(); // Làm mới dữ liệu
+                taiDuLieu();
                 return true;
             } catch (error) {
                 console.error("Không thể gửi yêu cầu đổi buổi:", error);
-                const thongDiepLoi = error.response?.data?.errors 
+                const thongDiepLoi = error.response?.data?.errors
                     ? Object.values(error.response.data.errors)[0][0]
                     : error.response?.data?.message || "Không thể gửi yêu cầu đổi buổi.";
                 toast.error(thongDiepLoi);

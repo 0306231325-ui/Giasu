@@ -181,8 +181,8 @@ function DanhSachBuoiHoc({ yeuCau }) {
                         {laHocThu
                             ? "Buổi học thử do học viên chọn khi gửi yêu cầu."
                             : yeuCau.hocDinhKy
-                            ? "Hệ thống tóm tắt theo thứ và khung giờ học."
-                            : "Hiển thị từng buổi học viên đã chọn khi đặt gói."}
+                                ? "Hệ thống tóm tắt theo thứ và khung giờ học."
+                                : "Hiển thị từng buổi học viên đã chọn khi đặt gói."}
                     </p>
                 </div>
                 <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-500">
@@ -218,7 +218,7 @@ function KhoiPhanHoi({ yeuCau }) {
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
                     <p className="font-extrabold">Gia sư chưa phản hồi</p>
                     <p className="mt-1">
-                        Khi gia sư bấm đồng ý/từ chối, hệ thống sẽ tạo dòng trong bảng phản hồi và cập nhật trạng thái gói học.
+                        chỗ này để hiển thị phản hồi của gia sư nè kk
                     </p>
                 </div>
             </KhoiThongTin>

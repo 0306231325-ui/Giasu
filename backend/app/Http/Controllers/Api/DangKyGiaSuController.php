@@ -328,6 +328,7 @@ class DangKyGiaSuController extends Controller
             ->get(['id', 'cap_hoc_id', 'ten_mon', 'lop']);
     }
 
+
     private function luuAnhChanDung(Request $request): string
     {
         $thuMucAnh = public_path('images/avatar-gia-su');
@@ -345,7 +346,7 @@ class DangKyGiaSuController extends Controller
         return 'images/avatar-gia-su/' . $tenFile;
     }
 
-    private function luuFileBangCap(Giasu $giaSu, $file): string
+    private function luuFileBangCap(Giasu $giaSu, \Illuminate\Http\UploadedFile $file): string
     {
         $thuMuc = public_path("images/bang-cap-gia-su/{$giaSu->id}");
 

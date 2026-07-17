@@ -156,8 +156,8 @@ class GiaSuLichHocController extends DatLichBaseController
         }
 
         $duLieu = $request->validate([
-            'trang_thai' => ['required', Rule::in(['daxacnhan', 'baovan_de'])],
-            'ghi_chu' => ['required_if:trang_thai,baovan_de', 'nullable', 'string', 'max:1000'],
+            'trang_thai' => ['required', Rule::in(['daxacnhan'])],
+            'ghi_chu' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $lichHoc = LichHoc::query()
@@ -186,11 +186,11 @@ class GiaSuLichHocController extends DatLichBaseController
         if ($lichHoc->trang_thai !== 'da_nhan') {
             return response()->json([
                 'success' => false,
-                'message' => 'Buoi hoc chua o trang thai co the xac nhan.',
+                'message' => 'Buoi hoc chưa ở trạng  thái có thể xác nhận.',
             ], 422);
         }
 
-        //   them kiem tra ngay hoc cuar Gia su truoc khi xac nhan  3/7
+        //   them kiem tra ngay hoc cuar Gia su 
         if (! $this->daDenNgayHoc($lichHoc)) {
             return response()->json([
                 'success' => false,
@@ -199,18 +199,17 @@ class GiaSuLichHocController extends DatLichBaseController
         }
 
         $xacNhan = $this->thongTinXacNhanLichHoc($lichHoc);
-        if ($xacNhan['giaSuDaXacNhan'] || $xacNhan['giaSuBaoVanDe']) {
+        if ($xacNhan['giaSuDaXacNhan']) {
             return response()->json([
                 'success' => false,
                 'message' => 'Ban da gui xac nhan cho buoi hoc nay.',
             ], 422);
         }
 
-        $trangThaiXacNhan = $duLieu['trang_thai'];
         $lichHoc->update([
             'ghi_chu' => $this->themDongGhiChu(
                 $lichHoc->ghi_chu,
-                $trangThaiXacNhan === 'baovan_de' ? self::DAU_GIASU_BAO_VAN_DE : self::DAU_GIASU_XACNHAN,
+                self::DAU_GIASU_XACNHAN,
                 $duLieu['ghi_chu'] ?? null,
             ),
         ]);
@@ -218,12 +217,8 @@ class GiaSuLichHocController extends DatLichBaseController
         if ($lichHoc->goiHoc?->hocvien_id) {
             ThongBao::create([
                 'user_id' => $lichHoc->goiHoc->hocvien_id,
-                'tieu_de' => $trangThaiXacNhan === 'baovan_de'
-                    ? 'Gia sư báo vấn đề buổi học'
-                    : 'Gia sư đã xác nhận buổi học, Vào Xác Nhận Buổi Học Nhé',
-                'noi_dung' => $trangThaiXacNhan === 'baovan_de'
-                    ? "{$user->ho_ten} đã báo có vấn đề với buổi học."
-                    : "{$user->ho_ten} đã xác nhận đã dạy xong buổi học.",
+                'tieu_de' => 'Gia sư đã xác nhận buổi học, Vào Xác Nhận Buổi Học Nhé',
+                'noi_dung' => "{$user->ho_ten} đã xác nhận đã dạy xong buổi học.",
                 'url' => '/hoc-vien/lich-hoc?mo_lich_hoc=' . $lichHoc->id,
                 'da_doc' => false,
             ]);
@@ -233,16 +228,12 @@ class GiaSuLichHocController extends DatLichBaseController
             $user,
             'xac_nhan_hoan_thanh_buoi_hoc',
             $lichHoc->id,
-            $trangThaiXacNhan === 'baovan_de'
-                ? "{$user->ho_ten} báo vấn đề buổi học LH" . str_pad((string) $lichHoc->id, 6, '0', STR_PAD_LEFT) . "."
-                : "{$user->ho_ten} xác nhận hoàn thành buổi học LH" . str_pad((string) $lichHoc->id, 6, '0', STR_PAD_LEFT) . "."
+            "{$user->ho_ten} xác nhận hoàn thành buổi học LH" . str_pad((string) $lichHoc->id, 6, '0', STR_PAD_LEFT) . "."
         );
 
         return response()->json([
             'success' => true,
-            'message' => $trangThaiXacNhan === 'baovan_de'
-                ? 'Da ghi nhan van de cua buoi hoc. Admin se kiem tra tren trang quan ly lich hoc.'
-                : 'Đã Ghi Nhận Và Gửi Cho Học Viên Xác Nhận',
+            'message' => 'Đã Ghi Nhận Và Gửi Cho Học Viên Xác Nhận',
             'data' => $this->dinhDangLichDayChoGiaSu($lichHoc->fresh([
                 'goiHoc.hocVien:id,ho_ten',
                 'goiHoc.monHoc:id,ten_mon,lop,cap_hoc_id',
@@ -317,7 +308,7 @@ class GiaSuLichHocController extends DatLichBaseController
             'gio_batdau' => $duLieu['gio_batdau'],
             'gio_ketthuc' => $duLieu['gio_ketthuc'],
             'ly_do' => trim($duLieu['ly_do']),
-            'trang_thai' => 'cho_hoc_vien_xac_nhan', // Thay vì chờ duyệt, trạng thái là chờ học viên
+            'trang_thai' => 'cho_hoc_vien_xac_nhan', 
         ]);
 
         if ($lichHoc->goiHoc?->hocvien_id) {
@@ -407,6 +398,7 @@ class GiaSuLichHocController extends DatLichBaseController
         $danhSach = YeuCauHocBu::query()
             ->with($this->quanHeYeuCauDoiBuoi())
             ->where('giasu_id', $giaSu->id)
+            ->where('nguoi_yeu_cau_id', '<>', $giaSu->user_id) 
             ->whereIn('trang_thai', ['cho_gia_su_xac_nhan', 'giasu_dong_y', 'giasu_tu_choi', 'da_duyet', 'tu_choi'])
             ->orderByRaw("CASE trang_thai WHEN 'cho_gia_su_xac_nhan' THEN 1 ELSE 2 END")
             ->latest()
@@ -434,6 +426,7 @@ class GiaSuLichHocController extends DatLichBaseController
 
         $duLieu = $request->validate([
             'phan_hoi' => ['required', Rule::in(['dong_y', 'tu_choi'])],
+            'ly_do' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $yeuCau = YeuCauHocBu::query()
@@ -519,11 +512,23 @@ class GiaSuLichHocController extends DatLichBaseController
                 ]);
             }
         } else {
-            $yeuCau->update([
-                'trang_thai' => 'tu_choi',
-                'nguoi_duyet_id' => $request->user()->id,
-                'ngay_xu_ly' => now(),
-            ]);
+            DB::transaction(function () use ($request, $yeuCau, $duLieu) {
+                $yeuCau->update([
+                    'trang_thai' => 'tu_choi',
+                    'nguoi_duyet_id' => $request->user()->id,
+                    'ngay_xu_ly' => now(),
+                ]);
+
+                if (!empty($duLieu['ly_do']) && $yeuCau->lichHocGoc) {
+                    $yeuCau->lichHocGoc->update([
+                        'ghi_chu' => $this->themDongGhiChu(
+                            $yeuCau->lichHocGoc->ghi_chu,
+                            'Gia sư từ chối đổi buổi học',
+                            $duLieu['ly_do']
+                        )
+                    ]);
+                }
+            });
 
             if ($yeuCau->lichHocGoc?->goiHoc?->hocvien_id) {
                 ThongBao::create([

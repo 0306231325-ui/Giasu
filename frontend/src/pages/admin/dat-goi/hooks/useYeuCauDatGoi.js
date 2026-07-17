@@ -100,6 +100,7 @@ function useYeuCauDatGoi() {
         }
     }, [location.hash]);
 
+    //lọc trạng thái nè 
     const danhSachDaLoc = useMemo(() => {
         const tuKhoaChuanHoa = tuKhoa.trim().toLowerCase();
 

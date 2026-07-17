@@ -29,8 +29,6 @@ export const duLieuRong = {
     tongQuan: {
         tongThuNhap: 0,
         soBuoiHoanThanh: 0,
-        trungBinhMoiBuoi: 0,
-        monThuNhapCaoNhat: null,
     },
     bieuDo: [],
     chiTiet: [],

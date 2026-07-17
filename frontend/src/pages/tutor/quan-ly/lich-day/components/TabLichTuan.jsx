@@ -222,8 +222,8 @@ function NutChuyenTuan({ active, onClick, children }) {
 function TheLichHocTuan({ lichHoc, onClick }) {
     const batDau = doiGioSangPhut(lichHoc.batDau);
     const ketThuc = doiGioSangPhut(lichHoc.ketThuc);
-    const top = Math.max((batDau - GIO_BAT_DAU * 60) / 60 * CHIEU_CAO_MOI_GIO, 0);
-    const height = Math.max((ketThuc - batDau) / 60 * CHIEU_CAO_MOI_GIO, 46);
+    const top = Math.max((batDau - GIO_BAT_DAU * 60) / 60 * CHIEU_CAO_MOI_GIO, 0); //vị trí top đây nè -- phu
+    const height = Math.max((ketThuc - batDau) / 60 * CHIEU_CAO_MOI_GIO, 46); // chiều cao
     const trangThai = trangThaiLichHoc[lichHoc.trangThai] || trangThaiLichHoc.sap_dien_ra;
 
     return (

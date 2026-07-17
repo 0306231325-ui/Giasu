@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\DB;
 
 class AdminDoanhThuController extends Controller
 {
+    /**
+     * @return JsonResponse
+     */
     public function tongQuan(Request $request): JsonResponse
     {
         if ($request->user()?->vai_tro !== 'admin') {
@@ -57,24 +60,7 @@ class AdminDoanhThuController extends Controller
             ->groupBy('thang')
             ->orderBy('thang')
             ->get()
-            ->map(function ($item) use ($daThanhToanTheoBoLoc) {
-                $taiChinh = $this->tongTaiChinhTheoGoi(
-                    (clone $daThanhToanTheoBoLoc)
-                        ->whereRaw("DATE_FORMAT(ngay_thanhtoan, '%Y-%m') = ?", [$item->thang])
-                        ->pluck('goihoc_id')
-                        ->unique()
-                        ->values()
-                );
-
-                return [
-                    'thang' => $item->thang,
-                    'nhan' => Carbon::createFromFormat('Y-m', $item->thang)->format('m/Y'),
-                    'tongTien' => $taiChinh['hoaHong'],
-                    'doanhSo' => (float) $item->tong_tien,
-                    'giaSuNhan' => $taiChinh['giaSuNhan'],
-                    'soGiaoDich' => (int) $item->so_giao_dich,
-                ];
-            })
+            ->map(fn ($item) => $this->mapDoanhThuTheoThang($item, clone $daThanhToanTheoBoLoc))
             ->values();
 
         $doanhThuTheoPhuongThuc = (clone $daThanhToanTheoBoLoc)
@@ -82,22 +68,7 @@ class AdminDoanhThuController extends Controller
             ->selectRaw('COUNT(*) as so_giao_dich')
             ->groupBy('phuong_thuc')
             ->get()
-            ->map(function (ThanhToan $item) use ($daThanhToanTheoBoLoc) {
-                $thanhToanTheoPhuongThuc = (clone $daThanhToanTheoBoLoc)
-                    ->where('phuong_thuc', $item->phuong_thuc);
-                $taiChinh = $this->tongTaiChinhTheoGoi(
-                    (clone $thanhToanTheoPhuongThuc)->pluck('goihoc_id')->unique()->values()
-                );
-
-                return [
-                    'phuongThuc' => $item->phuong_thuc,
-                    'nhan' => $this->tenPhuongThuc($item->phuong_thuc),
-                    'tongTien' => $taiChinh['hoaHong'],
-                    'doanhSo' => (float) (clone $thanhToanTheoPhuongThuc)->sum('so_tien'),
-                    'giaSuNhan' => $taiChinh['giaSuNhan'],
-                    'soGiaoDich' => (int) $item->so_giao_dich,
-                ];
-            })
+            ->map(fn (ThanhToan $item) => $this->mapDoanhThuTheoPhuongThuc($item, clone $daThanhToanTheoBoLoc))
             ->sortByDesc('tongTien')
             ->values();
 
@@ -144,6 +115,44 @@ class AdminDoanhThuController extends Controller
         ]);
     }
 
+    private function mapDoanhThuTheoThang(object $item, \Illuminate\Database\Eloquent\Builder $daThanhToanTheoBoLoc): array
+    {
+        $taiChinh = $this->tongTaiChinhTheoGoi(
+            $daThanhToanTheoBoLoc
+                ->whereRaw("DATE_FORMAT(ngay_thanhtoan, '%Y-%m') = ?", [$item->thang])
+                ->pluck('goihoc_id')
+                ->unique()
+                ->values()
+        );
+
+        return [
+            'thang' => $item->thang,
+            'nhan' => Carbon::createFromFormat('Y-m', $item->thang)->format('m/Y'),
+            'tongTien' => $taiChinh['hoaHong'],
+            'doanhSo' => (float) $item->tong_tien,
+            'giaSuNhan' => $taiChinh['giaSuNhan'],
+            'soGiaoDich' => (int) $item->so_giao_dich,
+        ];
+    }
+
+    private function mapDoanhThuTheoPhuongThuc(ThanhToan $item, \Illuminate\Database\Eloquent\Builder $daThanhToanTheoBoLoc): array
+    {
+        $thanhToanTheoPhuongThuc = $daThanhToanTheoBoLoc
+            ->where('phuong_thuc', $item->phuong_thuc);
+        $taiChinh = $this->tongTaiChinhTheoGoi(
+            (clone $thanhToanTheoPhuongThuc)->pluck('goihoc_id')->unique()->values()
+        );
+
+        return [
+            'phuongThuc' => $item->phuong_thuc,
+            'nhan' => $this->tenPhuongThuc($item->phuong_thuc),
+            'tongTien' => $taiChinh['hoaHong'],
+            'doanhSo' => (float) (clone $thanhToanTheoPhuongThuc)->sum('so_tien'),
+            'giaSuNhan' => $taiChinh['giaSuNhan'],
+            'soGiaoDich' => (int) $item->so_giao_dich,
+        ];
+    }
+
     private function bieuDoDoanhThu(): array
     {
         return [
@@ -172,7 +181,7 @@ class AdminDoanhThuController extends Controller
         ];
     }
 
-    private function tongTaiChinhTuThanhToan($thanhToanQuery): array
+    private function tongTaiChinhTuThanhToan(\Illuminate\Database\Eloquent\Builder $thanhToanQuery): array
     {
         $goiHocIds = (clone $thanhToanQuery)
             ->pluck('goihoc_id')
