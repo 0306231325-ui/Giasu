@@ -124,6 +124,10 @@ function ModalChiTietLichHoc({
                         nhan="Địa điểm/phòng học"
                         giaTri={lichHoc.diaDiem}
                     />
+                    <ThongTin 
+                        nhan="Gói học" 
+                        giaTri={lichHoc.maGoiHoc ? `${lichHoc.maGoiHoc} (${lichHoc.soBuoi} buổi)` : 'Không có'} 
+                    />
                 </div>
 
                 {lichHoc.lienKet && (

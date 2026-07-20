@@ -40,15 +40,15 @@ function GiaSuLichDay() {
                     dangChon={tab === "lich_hoc"}
                     onClick={() => setTab("lich_hoc")}
                     tieuDe="Danh sách lịch học"
-                    moTa="Các buổi học đã được xác nhận"
-                    soLuong={danhSachLichHoc.length}
+                    moTa="Các buổi học chưa hoàn thành"
+                    soLuong={danhSachLichHoc.filter(lh => lh.trangThai !== 'hoan_thanh' && lh.trangThai !== 'da_huy').length}
                 />
                 <NutTab
                     dangChon={tab === "lich_tuan"}
                     onClick={() => setTab("lich_tuan")}
                     tieuDe="Lịch tuần"
                     moTa="Xem lịch theo thứ và khung giờ"
-                    soLuong={danhSachLichHoc.length}
+                    soLuong={danhSachLichHoc.filter(lh => lh.trangThai !== 'hoan_thanh' && lh.trangThai !== 'da_huy').length}
                 />
                 <NutTab
                     dangChon={tab === "yeu_cau"}

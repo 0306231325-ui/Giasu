@@ -35,8 +35,8 @@ function TabDanhSachLichHoc({
         });
     }, [danhSach, trangThai, tuKhoa]);
 
-    const sapDienRa = danhSach.filter(
-        (lichHoc) => lichHoc.trangThai === "sap_dien_ra",
+    const chuaHoanThanh = danhSach.filter(
+        (lichHoc) => lichHoc.trangThai === "sap_dien_ra" || lichHoc.trangThai === "cho_xac_nhan",
     ).length;
     const hoanThanh = danhSach.filter(
         (lichHoc) => lichHoc.trangThai === "hoan_thanh",
@@ -53,9 +53,9 @@ function TabDanhSachLichHoc({
                         icon="calendar"
                     />
                     <TheThongKe
-                        nhan="Sắp diễn ra"
-                        giaTri={sapDienRa}
-                        phuDe="Cần chuẩn bị giảng dạy"
+                        nhan="Chưa hoàn thành"
+                        giaTri={chuaHoanThanh}
+                        phuDe="Sắp diễn ra hoặc chờ xác nhận"
                         icon="clock"
                     />
                     <TheThongKe

@@ -490,6 +490,8 @@ class DatLichBaseController extends Controller
             'loaiBuoi' => $lichHoc->loai_buoi === 'hoc_bu' ? 'Học bù' : ($goiHoc && $this->laGoiHocThu($goiHoc) ? 'Học thử' : 'Học thường'),
             'kieuGoi' => $goiHoc ? $this->kieuGoiHoc($goiHoc) : null,
             'loaiGoi' => $goiHoc ? $this->tenKieuGoiHoc($goiHoc) : null,
+            'maGoiHoc' => $goiHoc ? 'GH' . str_pad((string) $goiHoc->id, 6, '0', STR_PAD_LEFT) : null,
+            'soBuoi' => $goiHoc ? $goiHoc->so_buoi : 0,
             'mon' => $goiHoc?->monHoc?->ten_mon ?? 'Môn học',
             'capHoc' => $this->tenCapHoacLop($goiHoc?->monHoc),
             'hocVien' => $goiHoc?->hocVien?->ho_ten ?? 'Học viên',

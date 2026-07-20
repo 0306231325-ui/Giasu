@@ -35,7 +35,7 @@ function BaiVietMoi() {
     <section className="max-w-7xl mx-auto px-5 mt-24">
 
       <h2 className="text-4xl font-bold text-white mb-12">
-        Tin Moi Nhat
+        Tin tức mới nhất
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
