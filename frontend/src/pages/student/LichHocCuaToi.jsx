@@ -1119,7 +1119,7 @@ function LichHocCuaToi() {
                                                 ) : (
                                                     <div>
                                                         <p className="mt-1 text-xs font-semibold text-slate-500">Buổi học diễn ra bình thường.</p>
-                                                        <p className="mt-1.5 text-[11px] font-bold text-red-600 italic">* Hệ Thống Sẽ Tự Động Xác Nhận Hoàn Thành Buổi Học Sau 8 Tiếng Khi Kết Thúc Buổi Học.</p>
+                                                        <p className="mt-1.5 text-[11px] font-bold text-red-600 italic">* Hệ Thống Sẽ Tự Động Xác Nhận Hoàn Thành Buổi Học Sau 36 Tiếng Kể Từ Lúc Gia Sư Xác Nhận.</p>
                                                     </div>
                                                 )}
                                             </div>

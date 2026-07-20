@@ -223,7 +223,7 @@ class DangKyGiaSuController extends Controller
                         'ly_do' => null,
                     ]);
                 }
-
+                //sinh môn ở đây nè , để đây cho dễ nhớ cấm sửa
                 $monHoc = $this->layTatCaMonTheoCapVaTen($duLieu['mon_hoc_ids']);
 
                 $giaSu->capHocs()->sync($monHoc->pluck('cap_hoc_id')->unique()->all());

@@ -70,7 +70,6 @@ class GiaSuHoSoController extends Controller
             'mo_ta.max' => 'Giới thiệu bản thân không được vượt quá 2000 ký tự.',
         ]);
 
-        // Lưu lại dữ liệu cũ trước khi cập nhật để ghi log
         $duLieuCu = [
             'ho_ten'   => $user->ho_ten,
             'ngay_sinh' => $user->ngay_sinh,
@@ -96,7 +95,6 @@ class GiaSuHoSoController extends Controller
             ]);
         });
 
-        // Xác định các trường đã thay đổi
         $duLieuMoi = [
             'ho_ten'    => trim($duLieu['ho_ten']),
             'ngay_sinh' => $duLieu['ngay_sinh'],

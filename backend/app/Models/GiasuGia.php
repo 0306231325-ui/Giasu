@@ -13,8 +13,6 @@ class GiasuGia extends Model
 
     public const TRANG_THAI_TU_CHOI = 'tu_choi';
 
-    public const TRANG_THAI_NGUNG_DAY = 'ngung_day';
-
     protected $table = 'giasu_gia';
 
     protected $fillable = [

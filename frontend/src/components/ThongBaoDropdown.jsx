@@ -85,7 +85,7 @@ function ThongBaoDropdown({
             try {
                 await api.patch(`/thong-bao/${thongBao.id}/da-doc`);
             } catch {
-                // Không chặn điều hướng nếu đánh dấu đã đọc thất bại.
+
             }
         }
 
@@ -98,7 +98,7 @@ function ThongBaoDropdown({
                         updateUser(response.data.data);
                     }
                 } catch {
-                    // Nếu cập nhật user thất bại vẫn cho điều hướng, layout sẽ tự chặn nếu chưa đủ quyền.
+
                 }
             }
             navigate(thongBao.url);

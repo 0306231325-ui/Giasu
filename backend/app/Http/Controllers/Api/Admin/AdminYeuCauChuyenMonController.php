@@ -131,8 +131,7 @@ class AdminYeuCauChuyenMonController extends Controller
             ->whereHas('giasu', function ($query) {
                 $query->where('trang_thai_ho_so', 'duyet');
             })
-            ->where('trang_thai', '!=', GiasuGia::TRANG_THAI_NGUNG_DAY)
-            ->latest()
+            ->latest('giasu_gia.created_at')
             ->get()
             ->groupBy(function (GiasuGia $mucGia) {
                 return implode('-', [

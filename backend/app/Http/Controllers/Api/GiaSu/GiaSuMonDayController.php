@@ -175,29 +175,17 @@ class GiaSuMonDayController extends Controller
         if ($coGoiDangXuLy) {
             return response()->json([
                 'success' => false,
-                'message' => 'Môn học này đang có gói học hoặc lịch học đang xử lý, không thể ngừng dạy.',
+                'message' => 'Môn học này đang có gói học hoặc lịch học đang xử lý, không thể Xóa.',
             ], 422);
         }
 
-        $coMonDaDuyet = $cacMucCungMon->contains(
-            fn (GiasuGia $muc) => $muc->trang_thai === GiasuGia::TRANG_THAI_DA_DUYET,
-        );
-
         DB::transaction(function () use ($cacMucCungMon) {
             foreach ($cacMucCungMon as $muc) {
-                if ($muc->trang_thai === GiasuGia::TRANG_THAI_DA_DUYET) {
-                    $muc->update([
-                        'trang_thai' => GiasuGia::TRANG_THAI_NGUNG_DAY,
-                    ]);
-                } else {
-                    $muc->delete();
-                }
+                $muc->delete();
             }
         });
 
-        $message = $coMonDaDuyet
-            ? 'Đã ngừng dạy môn học.'
-            : 'Đã xóa môn học khỏi hồ sơ.';
+        $message = 'Đã xóa môn học khỏi hồ sơ.';
 
         return response()->json(['success' => true, 'message' => $message]);
     }

@@ -118,12 +118,12 @@ function Hero() {
 
       {/* BUTTONS */}
       <div className="flex gap-6 mt-12 z-10 mb-20">
-        <button className="bg-blue-500 hover:bg-blue-600 transition px-10 py-4 rounded-xl text-white font-semibold text-lg shadow-md hover:shadow-blue-500/20">
-          Tìm Gia Sư
-        </button>
-        <button className="bg-gray-700 hover:bg-gray-600 transition px-10 py-4 rounded-xl text-white font-semibold text-lg border border-gray-600">
+        <Link to="/gia-su" className="bg-blue-500 hover:bg-blue-600 transition px-10 py-4 rounded-xl text-white font-semibold text-lg shadow-md hover:shadow-blue-500/20">
+          Danh sách gia sư
+        </Link>
+        <Link to="/dang-ky-lam-gia-su" className="bg-gray-700 hover:bg-gray-600 transition px-10 py-4 rounded-xl text-white font-semibold text-lg border border-gray-600">
           Đăng Ký Dạy
-        </button>
+        </Link>
       </div>
 
     </section>

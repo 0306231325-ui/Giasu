@@ -215,7 +215,7 @@ class HocVienLichHocController extends DatLichBaseController
                 'ghi_chu' => $ghiChuMoi !== '' ? $ghiChuMoi : null,
             ]);
 
-            // Nếu cả gia sư và học viên đều xác nhận hoàn thành (không báo vấn đề) -> tự động chuyển trạng thái
+        
             if ($trangThaiXacNhan === 'daxacnhan') {
                 $ghiChuMoiHoanThanh = $this->themDongGhiChu(
                     $lichHoc->ghi_chu,
@@ -358,7 +358,7 @@ class HocVienLichHocController extends DatLichBaseController
 
         return response()->json([
             'success' => true,
-            'message' => 'Da gui yeu cau doi buoi hoc. Vui long cho gia su/admin duyet.',
+            'message' => 'Đã gửi yêu cầu đổi buổi học.',
             'data' => $this->dinhDangYeuCauHocBu($yeuCau),
         ], 201);
     }
@@ -382,7 +382,7 @@ class HocVienLichHocController extends DatLichBaseController
             ->exists();
 
         if ($trungGiaSu) {
-            return 'Khung gio moi bi trung lich cua gia su.';
+            return 'Khung giờ này bị trùng lịch của gia sư.';
         }
 
         $hocVienId = $lichHoc->goiHoc?->hocvien_id;
@@ -399,6 +399,6 @@ class HocVienLichHocController extends DatLichBaseController
             ->where('gio_ketthuc', '>', $duLieu['gio_batdau'])
             ->exists();
 
-        return $trungHocVien ? 'Khung gio moi bi trung lich cua hoc vien.' : null;
+        return $trungHocVien ? 'Khung giờ mới bị tròng lịch của học viên.' : null;
     }
 }

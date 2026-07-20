@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import Home from "./pages/Home"
+import GioiThieu from "./pages/GioiThieu"
 import { Routes, Route, useLocation, useNavigate, Navigate } from "react-router-dom";
 import { useToast } from "./context/ToastContext";
 import MainLayout from "./layouts/MainLayout";
@@ -56,14 +57,25 @@ function AuthSessionHandler() {
   return null;
 }
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [pathname]);
+
+  return null;
+}
+
 function App() {
   return (
     <>
+      <ScrollToTop />
       <AuthSessionHandler />
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
-
+          <Route path="/gioi-thieu" element={<GioiThieu />} />
           <Route path="/home" element={<Home />} />
 
           <Route path="/gia-su" element={<DanhSachGiaSu />} />

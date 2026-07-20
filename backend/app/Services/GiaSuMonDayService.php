@@ -12,7 +12,6 @@ class GiaSuMonDayService
     {
         return $giaSu->giasuGias()
             ->with('monHoc.capHoc:id,ten')
-            ->where('trang_thai', '!=', GiasuGia::TRANG_THAI_NGUNG_DAY)
             ->latest()
             ->get()
             ->filter(fn (GiasuGia $mucGia) => $mucGia->monHoc)

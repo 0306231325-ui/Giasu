@@ -1005,13 +1005,14 @@ class DatLichBaseController extends Controller
             return $lichHoc;
         }
 
-        $thoiDiemKetThuc = Carbon::parse($lichHoc->ngay_hoc . ' ' . $lichHoc->gio_ketthuc, self::MUI_GIO_LICH_HOC);
+    
+        $thoiDiemGiaSuXacNhan = $lichHoc->updated_at;
 
-        if ($thoiDiemKetThuc->copy()->addHours(8)->isPast()) {
+        if ($thoiDiemGiaSuXacNhan->copy()->addHours(36)->isPast()) {
             $lichHoc->ghi_chu = $this->themDongGhiChu(
                 $lichHoc->ghi_chu,
                 self::DAU_HOCVIEN_XACNHAN,
-                'Hệ thống tự động xác nhận do quá 8 tiếng.'
+                'Hệ thống tự động xác nhận do quá 36 tiếng.'
             );
             $lichHoc->trang_thai = 'hoanthanh';
             $lichHoc->save();
@@ -1036,7 +1037,7 @@ class DatLichBaseController extends Controller
                 \App\Models\ThongBao::create([
                     'user_id' => $lichHoc->giasu->user_id,
                     'tieu_de' => 'Hệ thống tự động xác nhận buổi học',
-                    'noi_dung' => 'Hệ thống đã tự động ghi nhận hoàn thành buổi học do quá 8 tiếng học viên không phản hồi.',
+                    'noi_dung' => 'Hệ thống đã tự động ghi nhận hoàn thành buổi học do quá 36 tiếng học viên không phản hồi.',
                     'url' => '/gia-su/quan-ly/lich-day',
                     'da_doc' => false,
                 ]);
@@ -1047,7 +1048,7 @@ class DatLichBaseController extends Controller
                 \App\Models\ThongBao::create([
                     'user_id' => $hocVienId,
                     'tieu_de' => 'Hệ thống tự động xác nhận buổi học',
-                    'noi_dung' => 'Hệ thống đã tự động ghi nhận hoàn thành buổi học do quá 8 tiếng.',
+                    'noi_dung' => 'Hệ thống đã tự động ghi nhận hoàn thành buổi học do quá 36 tiếng.',
                     'url' => '/hoc-vien/lich-hoc',
                     'da_doc' => false,
                 ]);
@@ -1057,7 +1058,7 @@ class DatLichBaseController extends Controller
                 null, 
                 'tu_dong_xac_nhan',
                 $lichHoc->id,
-                'Hệ thống tự động chốt hoàn thành buổi học LH' . str_pad((string) $lichHoc->id, 6, '0', STR_PAD_LEFT) . ' do quá hạn 8 tiếng.',
+                'Hệ thống tự động chốt hoàn thành buổi học LH' . str_pad((string) $lichHoc->id, 6, '0', STR_PAD_LEFT) . ' do quá hạn 36 tiếng.',
                 'Hệ Thống'
             );
         }
