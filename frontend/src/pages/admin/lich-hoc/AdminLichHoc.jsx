@@ -33,13 +33,12 @@ const congNgay = (date, soNgay) => {
 
 function AdminLichHoc() {
   const [danhSach, setDanhSach] = useState([]);
-  const [danhSachYeuCauDoiBuoi, setDanhSachYeuCauDoiBuoi] = useState([]);
   const [thongKe, setThongKe] = useState({});
   const [dangTai, setDangTai] = useState(true);
-  const [dangXuLy, setDangXuLy] = useState(false);
   const [loi, setLoi] = useState("");
   const [thongBao, setThongBao] = useState("");
   const [lichDangChonId, setLichDangChonId] = useState(null);
+  const [lichChiTietId, setLichChiTietId] = useState(null);
   const [trangHienTai, setTrangHienTai] = useState(1);
   const [boLoc, setBoLoc] = useState({
     trang_thai: "",
@@ -49,8 +48,12 @@ function AdminLichHoc() {
   });
 
   const lichDangChon = useMemo(
-    () => danhSach.find((lich) => lich.id === lichDangChonId) || danhSach[0] || null,
+    () => danhSach.find((lich) => lich.id === lichDangChonId) || null,
     [danhSach, lichDangChonId],
+  );
+  const lichChiTiet = useMemo(
+    () => danhSach.find((lich) => lich.id === lichChiTietId) || null,
+    [danhSach, lichChiTietId],
   );
   const tongSoTrang = Math.max(Math.ceil(danhSach.length / SO_BUOI_MOI_TRANG), 1);
   const trangHopLe = Math.min(trangHienTai, tongSoTrang);
@@ -66,24 +69,21 @@ function AdminLichHoc() {
     setLoi("");
 
     try {
-      const [lichHocResponse, yeuCauResponse] = await Promise.all([
-        api.get("/admin/lich-hoc", { params: boLoc }),
-        api.get("/admin/lich-hoc/yeu-cau-doi-buoi"),
-      ]);
+      const lichHocResponse = await api.get("/admin/lich-hoc", { params: boLoc });
 
       if (lichHocResponse.data.success) {
         const nextDanhSach = lichHocResponse.data.data?.danh_sach || [];
         setDanhSach(nextDanhSach);
         setThongKe(lichHocResponse.data.data?.thong_ke || {});
         setLichDangChonId((currentId) => (
-          nextDanhSach.some((lich) => lich.id === currentId) ? currentId : nextDanhSach[0]?.id || null
+          nextDanhSach.some((lich) => lich.id === currentId) ? currentId : null
+        ));
+        setLichChiTietId((currentId) => (
+          nextDanhSach.some((lich) => lich.id === currentId) ? currentId : null
         ));
       }
-
-      if (yeuCauResponse.data.success) {
-        setDanhSachYeuCauDoiBuoi(yeuCauResponse.data.data || []);
-      }
     } catch (error) {
+
       setLoi(error.response?.data?.message || "Không tải được danh sách lịch học.");
     } finally {
       setDangTai(false);
@@ -142,37 +142,6 @@ function AdminLichHoc() {
     setTrangHienTai(1);
   };
 
-  const xuLyYeuCauDoiBuoi = async (yeuCau, hanhDong, duLieu = {}) => {
-    if (!yeuCau || dangXuLy) return;
-
-    setDangXuLy(true);
-    setLoi("");
-    setThongBao("");
-
-    const endpoint = {
-      gui_gia_su: `/admin/lich-hoc/yeu-cau-doi-buoi/${yeuCau.id}/gui-gia-su`,
-      duyet: `/admin/lich-hoc/yeu-cau-doi-buoi/${yeuCau.id}/duyet`,
-      tu_choi: `/admin/lich-hoc/yeu-cau-doi-buoi/${yeuCau.id}/tu-choi`,
-    }[hanhDong];
-
-    try {
-      const response = await api.patch(endpoint, duLieu);
-      if (response.data.success) {
-        setDanhSachYeuCauDoiBuoi((hienTai) =>
-          hienTai.map((item) => (item.id === yeuCau.id ? response.data.data : item)),
-        );
-        setThongBao(response.data.message || "Đã xử lý yêu cầu đổi buổi.");
-        if (hanhDong === "duyet") {
-          await taiLichHoc();
-        }
-      }
-    } catch (error) {
-      setLoi(error.response?.data?.message || "Không xử lý được yêu cầu đổi buổi.");
-    } finally {
-      setDangXuLy(false);
-    }
-  };
-
   return (
     <div className="mx-auto max-w-[1500px]">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
@@ -181,11 +150,9 @@ function AdminLichHoc() {
             Điều phối buổi học
           </p>
           <h1 className="mt-2 text-2xl font-extrabold">Quản lý lịch học</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-white/60">
-            Theo dõi các buổi học đã tạo từ gói học, trạng thái buổi học, học viên, gia sư và đánh giá nếu có.
-          </p>
         </div>
       </div>
+
 
       <div className="mt-6 grid gap-3 md:grid-cols-4">
         {BO_LOC_TRANG_THAI.map((item) => (
@@ -257,9 +224,6 @@ function AdminLichHoc() {
               Xóa lọc
             </button>
           )}
-          <span className="text-xs font-semibold text-white/40">
-            Tìm theo tên, email, SĐT, môn học hoặc mã gói.
-          </span>
         </div>
       </section>
 
@@ -274,23 +238,11 @@ function AdminLichHoc() {
         </div>
       )}
 
-      <YeuCauDoiBuoiAdmin
-        danhSach={danhSachYeuCauDoiBuoi}
-        dangXuLy={dangXuLy}
-        onGuiGiaSu={(yeuCau) => xuLyYeuCauDoiBuoi(yeuCau, "gui_gia_su")}
-        onDuyet={(yeuCau) => xuLyYeuCauDoiBuoi(yeuCau, "duyet")}
-        onTuChoi={(yeuCau) => {
-          const lyDo = window.prompt("Nhập lý do từ chối yêu cầu đổi buổi (có thể bỏ trống):") || "";
-          xuLyYeuCauDoiBuoi(yeuCau, "tu_choi", { ly_do: lyDo.trim() });
-        }}
-      />
-
-      <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="mt-5">
         <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#0a0f24]">
           <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
             <div>
               <h2 className="text-lg font-extrabold">Danh sách buổi học</h2>
-              <p className="mt-1 text-sm text-white/45">Sắp theo ngày giờ, phân trang để danh sách không quá dài.</p>
             </div>
             <div className="text-sm font-semibold text-white/55">
               {danhSach.length} buổi
@@ -313,7 +265,10 @@ function AdminLichHoc() {
                     <button
                       key={lich.id}
                       type="button"
-                      onClick={() => setLichDangChonId(lich.id)}
+                      onClick={() => {
+                        setLichDangChonId(lich.id);
+                        setLichChiTietId(lich.id);
+                      }}
                       className={[
                         "grid w-full gap-3 px-4 py-3 text-left transition lg:grid-cols-[132px_96px_minmax(0,1fr)_132px]",
                         lichDangChon?.id === lich.id
@@ -417,129 +372,51 @@ function AdminLichHoc() {
             </div>
           )}
         </section>
+      </div>
 
-        <ChiTietLichHoc lich={lichDangChon} />
+      <ModalChiTietLichHocAdmin
+        lich={lichChiTiet}
+        onDong={() => setLichChiTietId(null)}
+      />
+    </div>
+  );
+}
+
+
+function ModalChiTietLichHocAdmin({ lich, onDong }) {
+  if (!lich) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 px-4 py-6"
+      role="dialog"
+      aria-modal="true"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onDong?.();
+      }}
+    >
+      <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-blue-600">Chi tiết</p>
+            <h2 className="mt-1 text-lg font-extrabold text-slate-950">{lich.monHoc?.tenHienThi || "Buổi học"}</h2>
+          </div>
+          <button
+            type="button"
+            onClick={onDong}
+            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50"
+          >
+            Đóng
+          </button>
+        </div>
+        <div className="p-4">
+          <ChiTietLichHoc lich={lich} compact />
+        </div>
       </div>
     </div>
   );
 }
 
-function YeuCauDoiBuoiAdmin({ danhSach, dangXuLy, onGuiGiaSu, onDuyet, onTuChoi }) {
-  const danhSachCanXuLy = danhSach.filter((yeuCau) =>
-    ["cho_duyet", "cho_gia_su_xac_nhan", "giasu_dong_y", "giasu_tu_choi"].includes(yeuCau.trangThai),
-  );
-
-  if (danhSachCanXuLy.length === 0) return null;
-
-  return (
-    <section className="mt-5 overflow-hidden rounded-2xl border border-cyan-300/20 bg-cyan-300/10">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-cyan-200/10 px-5 py-4">
-        <div>
-          <h2 className="text-lg font-extrabold text-white">Yêu cầu đổi buổi</h2>
-          <p className="mt-1 text-sm text-cyan-100/65">Admin gửi sang gia sư phản hồi, rồi mới duyệt cập nhật lịch.</p>
-        </div>
-        <span className="rounded-full bg-cyan-200/15 px-3 py-1 text-xs font-extrabold text-cyan-100">
-          {danhSachCanXuLy.length} yêu cầu
-        </span>
-      </div>
-
-      <div className="grid gap-3 p-4 lg:grid-cols-2">
-        {danhSachCanXuLy.map((yeuCau) => (
-          <article key={yeuCau.id} className="rounded-2xl border border-white/10 bg-[#08142f] p-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-cyan-200">{yeuCau.maYeuCau}</p>
-                <h3 className="mt-2 text-base font-extrabold text-white">{yeuCau.monHoc?.tenHienThi || "Buổi học"}</h3>
-                <p className="mt-1 text-sm text-white/55">
-                  {yeuCau.hocVien?.hoTen || "Học viên"} · {yeuCau.giaSu?.hoTen || "Gia sư"}
-                </p>
-              </div>
-              <span className={`rounded-full px-3 py-1 text-xs font-bold ${mauYeuCauDoiBuoi(yeuCau.trangThai)}`}>
-                {yeuCau.trangThaiText}
-              </span>
-            </div>
-
-            <div className="mt-4 text-sm">
-              <div className="rounded-xl bg-white/5 p-3">
-                <div className="text-xs font-bold uppercase text-white/35">Lịch đề xuất</div>
-                <div className="mt-1 font-bold text-white">{yeuCau.ngayHocText}</div>
-                <div className="text-white/55">{yeuCau.khungGio}</div>
-              </div>
-            </div>
-
-            <p className="mt-3 rounded-xl bg-white/5 p-3 text-sm leading-6 text-white/65">
-              {yeuCau.lyDo || "Không có lý do."}
-            </p>
-
-            <div className="mt-4 flex flex-wrap justify-end gap-2">
-              {yeuCau.trangThai === "cho_duyet" && (
-                <>
-                  <button
-                    type="button"
-                    disabled={dangXuLy}
-                    onClick={() => onTuChoi(yeuCau)}
-                    className="rounded-xl bg-red-500/15 px-4 py-2 text-xs font-bold text-red-100 hover:bg-red-500/25 disabled:opacity-60"
-                  >
-                    Từ chối
-                  </button>
-                  <button
-                    type="button"
-                    disabled={dangXuLy}
-                    onClick={() => onGuiGiaSu(yeuCau)}
-                    className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-60"
-                  >
-                    Gửi gia sư
-                  </button>
-                </>
-              )}
-
-              {yeuCau.trangThai === "giasu_dong_y" && (
-                <>
-                  <button
-                    type="button"
-                    disabled={dangXuLy}
-                    onClick={() => onTuChoi(yeuCau)}
-                    className="rounded-xl bg-red-500/15 px-4 py-2 text-xs font-bold text-red-100 hover:bg-red-500/25 disabled:opacity-60"
-                  >
-                    Từ chối
-                  </button>
-                  <button
-                    type="button"
-                    disabled={dangXuLy}
-                    onClick={() => onDuyet(yeuCau)}
-                    className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
-                  >
-                    Duyệt đổi buổi
-                  </button>
-                </>
-              )}
-
-              {yeuCau.trangThai === "giasu_tu_choi" && (
-                <button
-                  type="button"
-                  disabled={dangXuLy}
-                  onClick={() => onTuChoi(yeuCau)}
-                  className="rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-60"
-                >
-                  Chốt từ chối
-                </button>
-              )}
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function mauYeuCauDoiBuoi(trangThai) {
-  return {
-    cho_duyet: "bg-amber-300/15 text-amber-100",
-    cho_gia_su_xac_nhan: "bg-blue-300/15 text-blue-100",
-    giasu_dong_y: "bg-emerald-300/15 text-emerald-100",
-    giasu_tu_choi: "bg-red-300/15 text-red-100",
-  }[trangThai] || "bg-white/10 text-white/60";
-}
 
 function TrangThaiBadge({ lich }) {
   return (
@@ -571,7 +448,7 @@ function NhanXacNhanNho({ active, warning, children }) {
   );
 }
 
-function ChiTietLichHoc({ lich }) {
+function ChiTietLichHoc({ lich, compact = false }) {
   if (!lich) {
     return (
       <aside className="rounded-2xl border border-white/10 bg-white p-6 text-center text-sm text-slate-500">
@@ -583,21 +460,19 @@ function ChiTietLichHoc({ lich }) {
   const xacNhan = lich.xacNhan || {};
 
   return (
-    <aside className="h-fit rounded-2xl border border-white/10 bg-white p-5 text-slate-900">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-blue-600">{lich.maGoi}</p>
-          <h2 className="mt-2 text-xl font-extrabold">{lich.monHoc?.tenHienThi || "Buổi học"}</h2>
-          <p className="mt-1 text-sm text-slate-500">{lich.thuText}, {lich.ngayHocText} · {lich.khungGio}</p>
-        </div>
-        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
-          {lich.loaiBuoiText}
-        </span>
-      </div>
-
-      <div className="mt-3 grid gap-3">
-        <KhoiThongTin title="Trạng thái">
-          <div className="flex items-center justify-between gap-3">
+    <aside className={`${compact ? "" : "h-fit rounded-2xl border border-white/10 bg-white p-5"} text-slate-900`}>
+      <div className="grid gap-3">
+        <KhoiThongTin title="Tổng quan">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-blue-600">{lich.maGoi}</p>
+              <p className="mt-1 text-sm text-slate-500">{lich.thuText}, {lich.ngayHocText} · {lich.khungGio}</p>
+            </div>
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+              {lich.loaiBuoiText}
+            </span>
+          </div>
+          <div className="mt-3 flex items-center justify-between gap-3">
             <span className="text-sm text-slate-500">Buổi học</span>
             <span className="text-sm font-bold text-slate-900">{lich.trangThaiText}</span>
           </div>
@@ -607,22 +482,19 @@ function ChiTietLichHoc({ lich }) {
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             <NhanXacNhan active={xacNhan.hocVienDaXacNhan} warning={xacNhan.hocVienBaoVanDe}>
-              Hoc vien
+              Học viên
             </NhanXacNhan>
             <NhanXacNhan active={xacNhan.giaSuDaXacNhan} warning={xacNhan.giaSuBaoVanDe}>
-              Gia su
+              Gia sư
             </NhanXacNhan>
           </div>
-        </KhoiThongTin>
-
-        <KhoiThongTin title="Người tham gia">
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <TheLienHe tieuDe="Học viên" nguoi={lich.hocVien} />
             <TheLienHe tieuDe="Gia sư" nguoi={lich.giaSu} />
           </div>
         </KhoiThongTin>
 
-        <KhoiThongTin title="Thông tin học">
+        <KhoiThongTin title="Thông tin">
           <div className="grid gap-2 sm:grid-cols-2">
             <OThongTin label="Hình thức" value={lich.hinhThucHocText} />
             <OThongTin label="Địa chỉ" value={lich.diaChiHoc || (lich.hinhThucHoc === "online" ? "Online" : "Chưa cập nhật")} />
@@ -631,8 +503,8 @@ function ChiTietLichHoc({ lich }) {
           </div>
         </KhoiThongTin>
 
-        <KhoiThongTin title="Đánh giá">
-          {lich.danhGia ? (
+        {lich.danhGia && (
+          <KhoiThongTin title="Đánh giá">
             <>
               <Dong label="Số sao" value={`${lich.danhGia.soSao}/5`} />
               <Dong label="Ngày đánh giá" value={lich.danhGia.ngayDanhGia} />
@@ -640,15 +512,12 @@ function ChiTietLichHoc({ lich }) {
                 {lich.danhGia.binhLuan || "Không có nội dung đánh giá."}
               </p>
             </>
-          ) : (
-            <div className="text-sm text-slate-500">Chưa có đánh giá.</div>
-          )}
-        </KhoiThongTin>
+          </KhoiThongTin>
+        )}
 
-        {(lich.ghiChu || lich.lyDoHuy) && (
+        {lich.lyDoHuy && (
           <KhoiThongTin title="Ghi chú">
-            {lich.ghiChu && <p className="text-sm leading-6 text-slate-600">{lich.ghiChu}</p>}
-            {lich.lyDoHuy && <p className="mt-2 text-sm leading-6 text-red-600">{lich.lyDoHuy}</p>}
+            <p className="text-sm leading-6 text-red-600">{lich.lyDoHuy}</p>
           </KhoiThongTin>
         )}
       </div>
@@ -677,7 +546,7 @@ function NhanXacNhan({ active, warning, children }) {
             : "bg-slate-100 text-slate-500",
       ].join(" ")}
     >
-      {children}: {warning ? "Bao van de" : active ? "Da xac nhan" : "Chua xac nhan"}
+      {children}: {warning ? "Báo vấn đề" : active ? "Đã xác nhận" : "Chưa xác nhận"}
     </span>
   );
 }

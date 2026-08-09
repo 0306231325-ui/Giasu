@@ -28,14 +28,52 @@ const dinhDangKinhNghiem = (mucKinhNghiem) => {
     return "";
 };
 
-function StatBox({ label, value, tone = "default" }) {
+function StatBox({ label, value, tone = "default", onClick, children, inlineAction = false }) {
     const toneClass = tone === "warm" ? "text-amber-200" : tone === "blue" ? "text-blue-200" : "text-white";
+    const Wrapper = onClick ? "button" : "div";
 
     return (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-4">
-            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">{label}</div>
-            <div className={`mt-2 text-base font-bold ${toneClass}`}>{value}</div>
-        </div>
+        <Wrapper
+            type={onClick ? "button" : undefined}
+            onClick={onClick}
+            className={[
+                "rounded-2xl border border-white/10 bg-white/[0.06] p-4 text-left",
+                onClick ? "transition hover:border-amber-300/50 hover:bg-amber-300/10" : "",
+            ].join(" ")}
+        >
+            <div className="flex items-start justify-between gap-3">
+                <div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">{label}</div>
+                    <div className={`mt-2 text-base font-bold ${toneClass}`}>{value}</div>
+                </div>
+                {onClick && inlineAction && (
+                    <span className="mt-1 shrink-0 text-xs font-extrabold text-amber-200 underline underline-offset-4">
+                        Xem chi tiết
+                    </span>
+                )}
+            </div>
+            {children}
+            {onClick && !inlineAction && (
+                <div className="mt-3 inline-flex items-center gap-1 text-xs font-extrabold text-amber-200">
+                    Xem đánh giá
+                    <span aria-hidden="true">→</span>
+                </div>
+            )}
+        </Wrapper>
+    );
+}
+
+function HienThiSao({ value, size = "text-base" }) {
+    const diem = Number(value || 0);
+
+    return (
+        <span className="inline-flex items-center gap-0.5">
+            {[1, 2, 3, 4, 5].map((sao) => (
+                <span key={sao} className={`${size} leading-none ${sao <= Math.round(diem) ? "text-amber-300" : "text-slate-600"}`}>
+                    ★
+                </span>
+            ))}
+        </span>
     );
 }
 
@@ -89,6 +127,7 @@ function GiaSuDetail() {
     const { id } = useParams();
     const [giaSus, setGiaSus] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [moDanhSachDanhGia, setMoDanhSachDanhGia] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
@@ -122,6 +161,8 @@ function GiaSuDetail() {
     const tenGiaSu = giaSu?.user?.ho_ten || "Gia sư";
     const rating = Number(giaSu?.danh_gias_avg_so_sao || 0).toFixed(1);
     const soDanhGia = giaSu?.danh_gias_count || 0;
+    const danhSachDanhGia = giaSu?.danh_gias || [];
+    const coDanhGia = Number(soDanhGia) > 0;
     const dienThoai = giaSu?.user?.sdt || "";
     const monDay = useMemo(
         () => (giaSu?.giasu_gias || []).filter((mucGia) => mucGia.mon_hoc),
@@ -193,12 +234,22 @@ function GiaSuDetail() {
                                 )}
                                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#08112d] to-transparent p-5">
                                 <div className="flex flex-wrap gap-2">
-                                        <span className="rounded-full bg-amber-300 px-3 py-1 text-xs font-semibold text-slate-950">
+                                        <button
+                                            type="button"
+                                            disabled={!coDanhGia}
+                                            onClick={() => setMoDanhSachDanhGia(true)}
+                                            className="rounded-full bg-amber-300 px-3 py-1 text-xs font-semibold text-slate-950 transition hover:bg-amber-200 disabled:cursor-default disabled:hover:bg-amber-300"
+                                        >
                                             {rating} sao
-                                        </span>
-                                        <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white">
+                                        </button>
+                                        <button
+                                            type="button"
+                                            disabled={!coDanhGia}
+                                            onClick={() => setMoDanhSachDanhGia(true)}
+                                            className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white transition hover:bg-white/25 disabled:cursor-default disabled:hover:bg-white/15"
+                                        >
                                             {soDanhGia} đánh giá
-                                        </span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -230,7 +281,13 @@ function GiaSuDetail() {
                         </p>
 
                         <div className="mt-7 grid gap-4 sm:grid-cols-3">
-                            <StatBox label="Đánh giá" value={`${rating}/5`} tone="warm" />
+                            <StatBox
+                                label="Đánh giá"
+                                value={`${rating}/5 sao`}
+                                tone="warm"
+                                onClick={coDanhGia ? () => setMoDanhSachDanhGia(true) : undefined}
+                                inlineAction
+                            />
                             <StatBox label="Học phí" value={dinhDangGia(giaSu)} tone="blue" />
                             <StatBox label="Khu vực" value={giaSu.dia_chi || "Linh hoạt"} />
                         </div>
@@ -343,6 +400,74 @@ function GiaSuDetail() {
                     </div>
                 </aside>
             </main>
+
+            {moDanhSachDanhGia && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 px-4 py-6 backdrop-blur-sm"
+                    role="dialog"
+                    aria-modal="true"
+                    onMouseDown={(event) => {
+                        if (event.target === event.currentTarget) setMoDanhSachDanhGia(false);
+                    }}
+                >
+                    <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-white/70 bg-white p-6 text-slate-950 shadow-2xl">
+                        <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                                <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-amber-600">Đánh giá gia sư</p>
+                                <h2 className="mt-2 text-2xl font-extrabold">{tenGiaSu}</h2>
+                                <div className="mt-3 flex flex-wrap items-center gap-3">
+                                    <HienThiSao value={rating} size="text-xl" />
+                                    <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-extrabold text-amber-700">
+                                        {rating}/5
+                                    </span>
+                                    <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-600">
+                                        {soDanhGia} đánh giá
+                                    </span>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setMoDanhSachDanhGia(false)}
+                                className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                            >
+                                Đóng
+                            </button>
+                        </div>
+
+                        <div className="mt-5 min-h-0 flex-1 space-y-3 overflow-y-auto pr-2 [scrollbar-color:#f59e0b_#f1f5f9] [scrollbar-width:thin]">
+                            {danhSachDanhGia.length > 0 ? (
+                                danhSachDanhGia.map((danhGia) => (
+                                    <article key={danhGia.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                        <div className="flex flex-wrap items-start justify-between gap-3">
+                                            <div>
+                                                <HienThiSao value={danhGia.soSao} />
+                                                <p className="mt-2 text-sm font-bold text-slate-900">
+                                                    {danhGia.monHoc || "Buổi học"}
+                                                </p>
+                                                {danhGia.ngayDanhGia && (
+                                                    <p className="mt-1 text-xs font-semibold text-slate-400">{danhGia.ngayDanhGia}</p>
+                                                )}
+                                            </div>
+                                            {danhGia.nguoiDanhGia && (
+                                                <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-500">
+                                                    Học viên: {danhGia.nguoiDanhGia}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700 [overflow-wrap:anywhere]">
+                                            {danhGia.noiDung || "Không có nhận xét."}
+                                        </p>
+                                    </article>
+                                ))
+                            ) : (
+                                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-center text-sm font-semibold text-slate-500">
+                                    Gia sư này chưa có đánh giá.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
