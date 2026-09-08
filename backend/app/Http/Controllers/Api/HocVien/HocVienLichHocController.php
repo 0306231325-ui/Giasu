@@ -203,24 +203,78 @@ class HocVienLichHocController extends Controller
             'gio_batdau' => $duLieu['gio_batdau'],
             'gio_ketthuc' => $duLieu['gio_ketthuc'],
             'ly_do' => trim($duLieu['ly_do']),
-            'trang_thai' => 'cho_duyet',
+            'trang_thai' => 'cho_gia_su_xac_nhan',
         ]);
 
-        User::query()->where('vai_tro', 'admin')->each(function (User $admin) use ($duLieu, $user) {
+        if ($lichHoc->giasu?->user_id) {
             ThongBao::create([
-                'user_id' => $admin->id,
+                'user_id' => $lichHoc->giasu->user_id,
                 'tieu_de' => 'Học viên yêu cầu đổi buổi học',
                 'noi_dung' => "{$user->ho_ten} muốn đổi buổi học sang {$duLieu['ngay_hoc']} {$duLieu['gio_batdau']} - {$duLieu['gio_ketthuc']}.",
-                'url' => '/admin/lich-hoc',
+                'url' => '/gia-su/quan-ly/lich-day',
                 'da_doc' => false,
             ]);
-        });
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Da gui yeu cau doi buoi hoc. Vui long cho gia su/admin duyet.',
             'data' => $this->dinhDangYeuCauHocBu($yeuCau),
         ], 201);
+    }
+
+    public function thongTinKhoangThoiGianBan(Request $request, int $lichHocId): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->vai_tro !== 'hocvien') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chuc nang nay chi danh cho tai khoan hoc vien.',
+            ], 403);
+        }
+
+        $ngayHoc = $request->query('ngay_hoc');
+        if (!$ngayHoc) {
+            return response()->json(['success' => true, 'data' => []]);
+        }
+
+        $lichHoc = LichHoc::query()
+            ->with(['goiHoc'])
+            ->whereHas('goiHoc', fn ($q) => $q->where('hocvien_id', $user->id))
+            ->find($lichHocId);
+
+        if (!$lichHoc) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Khong tim thay buoi hoc.',
+            ], 404);
+        }
+
+        $hocVienId = $user->id;
+        $giaSuId = $lichHoc->giasu_id;
+
+        $lichBan = LichHoc::query()
+            ->where('id', '<>', $lichHoc->id)
+            ->where('trang_thai', '<>', 'dahuy')
+            ->whereDate('ngay_hoc', $ngayHoc)
+            ->where(function ($q) use ($giaSuId, $hocVienId) {
+                $q->where('giasu_id', $giaSuId)
+                  ->orWhereHas('goiHoc', fn ($q2) => $q2->where('hocvien_id', $hocVienId));
+            })
+            ->get(['gio_batdau', 'gio_ketthuc'])
+            ->map(function ($lich) {
+                return [
+                    'gio_batdau' => substr((string) $lich->gio_batdau, 0, 5),
+                    'gio_ketthuc' => substr((string) $lich->gio_ketthuc, 0, 5),
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => $lichBan
+        ]);
     }
 
     private function dinhDangGoiHocChoHocVien(GoiHoc $goiHoc): array

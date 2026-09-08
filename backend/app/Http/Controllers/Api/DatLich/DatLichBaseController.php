@@ -566,9 +566,6 @@ class DatLichBaseController extends Controller
         $ngayHoc = Carbon::parse($lichHoc->ngay_hoc);
         $xacNhan = $this->thongTinXacNhanLichHoc($lichHoc);
         $trangThaiGoc = $lichHoc->trang_thai;
-        if ($trangThaiGoc === 'cho_xacnhan' && in_array($goiHoc?->trang_thai, ['danghoc', 'hoanthanh'], true)) {
-            $trangThaiGoc = 'da_nhan';
-        }
 
         return [
             'id' => $lichHoc->id,

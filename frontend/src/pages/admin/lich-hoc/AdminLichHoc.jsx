@@ -1,17 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import ModalNhapLyDo from "../../../components/ModalNhapLyDo";
 import api from "../../../services/api";
 
 const BO_LOC_TRANG_THAI = [
   { value: "", label: "Tất cả", countKey: "tat_ca" },
-  { value: "cho_xacnhan", label: "Chờ xác nhận", countKey: "cho_xacnhan" },
   { value: "da_nhan", label: "Đã nhận", countKey: "da_nhan" },
   { value: "hoanthanh", label: "Hoàn thành", countKey: "hoanthanh" },
   { value: "dahuy", label: "Đã hủy", countKey: "dahuy" },
 ];
 
 const MAU_TRANG_THAI = {
-  cho_xacnhan: "border-amber-300/30 bg-amber-500/10 text-amber-100",
   da_nhan: "border-blue-300/30 bg-blue-500/10 text-blue-100",
   hoanthanh: "border-emerald-300/30 bg-emerald-500/10 text-emerald-100",
   dahuy: "border-red-300/30 bg-red-500/10 text-red-100",
@@ -42,7 +39,6 @@ function AdminLichHoc() {
   const [dangXuLy, setDangXuLy] = useState(false);
   const [loi, setLoi] = useState("");
   const [thongBao, setThongBao] = useState("");
-  const [lichCanHuy, setLichCanHuy] = useState(null);
   const [lichDangChonId, setLichDangChonId] = useState(null);
   const [trangHienTai, setTrangHienTai] = useState(1);
   const [boLoc, setBoLoc] = useState({
@@ -146,42 +142,6 @@ function AdminLichHoc() {
     setTrangHienTai(1);
   };
 
-  const capNhatLichTrongDanhSach = (lichMoi) => {
-    setDanhSach((hienTai) =>
-      hienTai.map((lich) => (lich.id === lichMoi.id ? lichMoi : lich)),
-    );
-    setLichDangChonId(lichMoi.id);
-  };
-
-  const xuLyLichHoc = async (lich, hanhDong, duLieu) => {
-    if (!lich || dangXuLy) return false;
-
-    setDangXuLy(true);
-    setLoi("");
-    setThongBao("");
-
-    try {
-      const endpoint = hanhDong === "hoan-thanh"
-        ? `/admin/lich-hoc/${lich.id}/hoan-thanh`
-        : `/admin/lich-hoc/${lich.id}/huy`;
-      const response = await api.patch(endpoint, duLieu);
-
-      if (response.data.success) {
-        capNhatLichTrongDanhSach(response.data.data);
-        setThongBao(response.data.message || "Đã cập nhật buổi học.");
-        await taiLichHoc();
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      setLoi(error.response?.data?.message || "Không xử lý được buổi học.");
-      return false;
-    } finally {
-      setDangXuLy(false);
-    }
-  };
-
   const xuLyYeuCauDoiBuoi = async (yeuCau, hanhDong, duLieu = {}) => {
     if (!yeuCau || dangXuLy) return;
 
@@ -227,7 +187,7 @@ function AdminLichHoc() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-3 md:grid-cols-5">
+      <div className="mt-6 grid gap-3 md:grid-cols-4">
         {BO_LOC_TRANG_THAI.map((item) => (
           <button
             key={item.countKey}
@@ -458,7 +418,7 @@ function AdminLichHoc() {
           )}
         </section>
 
-        <ChiTietLichHoc lich={lichDangChon} dangXuLy={dangXuLy} onXuLy={xuLyLichHoc} />
+        <ChiTietLichHoc lich={lichDangChon} />
       </div>
     </div>
   );
@@ -611,7 +571,7 @@ function NhanXacNhanNho({ active, warning, children }) {
   );
 }
 
-function ChiTietLichHoc({ lich, dangXuLy, onXuLy }) {
+function ChiTietLichHoc({ lich }) {
   if (!lich) {
     return (
       <aside className="rounded-2xl border border-white/10 bg-white p-6 text-center text-sm text-slate-500">
@@ -635,7 +595,7 @@ function ChiTietLichHoc({ lich, dangXuLy, onXuLy }) {
         </span>
       </div>
 
-      <div className="mt-4 grid gap-3">
+      <div className="mt-3 grid gap-3">
         <KhoiThongTin title="Trạng thái">
           <div className="flex items-center justify-between gap-3">
             <span className="text-sm text-slate-500">Buổi học</span>
@@ -691,7 +651,7 @@ function ChiTietLichHoc({ lich, dangXuLy, onXuLy }) {
             {lich.lyDoHuy && <p className="mt-2 text-sm leading-6 text-red-600">{lich.lyDoHuy}</p>}
           </KhoiThongTin>
         )}
-        </div>
+      </div>
     </aside>
   );
 }

@@ -62,6 +62,7 @@ Route::middleware(['auth:sanctum', 'tai_khoan.hoat_dong'])->group(function () {
             Route::post('/{lichHocId}/xac-nhan-hoan-thanh', [HocVienLichHocDatGoiController::class, 'hocVienXacNhanHoanThanhBuoiHoc']);
             Route::post('/{lichHocId}/danh-gia', [HocVienLichHocController::class, 'danhGiaBuoiHoc']);
             Route::post('/{lichHocId}/doi-buoi', [HocVienLichHocController::class, 'yeuCauDoiBuoiHoc']);
+            Route::get('/{lichHocId}/khoang-thoi-gian-ban', [HocVienLichHocController::class, 'thongTinKhoangThoiGianBan']);
         });
 
         Route::get('/thanh-toan', [HocVienThanhToanController::class, 'lichSuThanhToan']);
